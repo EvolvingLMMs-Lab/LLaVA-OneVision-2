@@ -328,7 +328,8 @@ class QwenGRPOTrainer(Trainer):
                         if "embed_tokens" in m:
                             lora_module_names.remove(m)
                     return list(lora_module_names)
-                target_modules = find_all_linear_names(model, self.vision_modules_keywords)
+                # Use "visual" keyword to exclude vision modules from LoRA
+                target_modules = find_all_linear_names(model, ["visual"])
                 peft_config.target_modules = target_modules
                 model = get_peft_model(model, peft_config)
 
