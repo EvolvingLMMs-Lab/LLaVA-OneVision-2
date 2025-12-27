@@ -1,0 +1,57 @@
+# Data path configuration
+data:
+  # Directory of data samples
+  directory: "/data_1/llava_next_raw_full/split_json_files/"
+  # Temporary file for storing paired filenames
+  output_base: "base_name_v4_MR_sft_780k_8k.txt"
+  # Final output file (includes token length information)
+  output_token: "token_info_MR_sft_780k_8k.txt"
+
+# Model path
+model:
+  checkpoint: "/vlm/xiangan/pretrain_models/rice_vl/rice_vl_rice_300m_qwen2.5_7b_adapter_v1_fixed_tokenizer_huggingface"
+
+sample:
+  # Maximum length for training data
+  max_len: 8192
+  # Whether to remove one token (The current data preprocessing step is missing one token; this flag is used to decide if alignment is needed)
+  # Used in conjunction with the environment variable FILL_TOKEN_198：
+  # false:  FILL_TOKEN_198=1, Achieves faster convergence
+  # true:   FILL_TOKEN_198=0
+  del_one_token: false
+  # Decides the parsing method
+  task_type: sft 
+  max_prompt: null
+  max_answer: null
+
+# Image processing parameters
+image:
+  baidu_resolution: 1600 # baidu code's limit parameter (null)
+  min_pixels: 3136   # 4*28*28
+  max_pixels: 4014080 # 5120*28*28(4014080,8192)
+  # Maximum aspect ratio limit (images exceeding this value will be filtered out)
+  max_aspect_ratio: 200
+
+# Parallel processing parameters
+processing:
+  # Number of samples each process handles
+  chunk_size: 5000
+  # Merge parameter (sorting), merge N stage0 files into 1 stage1 file
+  stage1_merge_chunk: 20
+  n_workers: 64
+  # Minimum number of threads in the thread pool
+  min_workers: 10
+  # Maximum number of threads in the thread pool
+  max_workers: 32
+  # Timeout setting (based on data size, 1M data estimated to take 45 minutes (2700s))
+  time_out: 20000
+
+# Logging and temporary file configuration
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  level: "INFO"
+  # Log file path
+  file: "./logs/s1_processing_MR_sft_780k_8k.log"
+  # Whether to use /dev/shm as the temporary directory
+  use_shm: false
+

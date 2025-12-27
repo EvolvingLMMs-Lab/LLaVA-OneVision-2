@@ -6,9 +6,10 @@ raw_packing_data/
 ├── ps_00000000.img000.jpg
 ├── ps_00000000.img001.jpg
 ├── ps_00000000.json
+
 ...
 
-JSON 格式：
+JSON format(pretrain):
 {
   "images": ["img000.jpg", "img001.jpg", ...],
   "prompt": ["描述", "what about", ""],
@@ -17,9 +18,20 @@ JSON 格式：
 一条 json + 对应若干 jpg = 1 条 tar 记录
 """
 
-######-----------------------------------------######
-######-----------------------------------------######
-######-----------------------------------------######
+"""
+
+JSON format (multi-round + blend data for sft)：
+{
+  "images":   [["img000.jpg"], ["img001.jpg"], []],
+  "prompt":   [["描述这幅图"], ["what about this fig"], ["How are you?", "I am fine too."]],
+  "captions": [["stri"], ["str2"], ["I am fine and you?", "Have a nice day"]]
+}
+一条 json + 对应若干 jpg(可以为0) = 1 条 tar 记录
+"""
+
+# #####-----------------------------------------######
+# #####-----------------------------------------######
+# #####-----------------------------------------######
 
 import argparse
 import uuid
@@ -57,8 +69,8 @@ def sample_loader_template(media: str=None):
         "def part_filter(part: str) -> bool:",
         "    return True",
     ])
-    
-### ZXW   
+
+# ## ZXW   
 
 def sample_loader_template_caption(media=None):
     """适配整条多图 captioning 的 loader"""
@@ -107,7 +119,25 @@ def construct_sample_caption(args, entry):
     sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     return sample
 
-### ZXW
+def construct_bmr_sample(args, entry):
+    "multi-round & blend data package"
+    sample = {"__key__": entry["id"]}
+    for idx, img_name in enumerate(entry["images"]):
+        # print(img_name)
+        img_path = os.path.join(args.image_dir, f"{entry["id"]}.{img_name[0]}") if img_name else None
+        if img_name:
+            with open(img_path, "rb") as f:
+                sample[f"img{idx}.jpg"] = f.read()
+    payload = {
+        "prompts": entry["prompts"],
+        "captions": entry["captions"],
+        "images": entry["images"]
+    }
+
+    sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    return sample
+
+# ## ZXW
 
 def construct_sample(args, vision, path, entry):
     """ construct webdataset sample """
@@ -139,7 +169,7 @@ def convert_to_wds(args):
     
     tar = os.path.join(args.output_dir, 'pretrain-%06d.tar')
     if args.mode == "caption_pack":
-        # 新模式
+        # 新模式 1
         with wds.ShardWriter(tar, maxcount=args.maxcount, maxsize=args.maxsize) as sink:
             for entry in tqdm(stream_samples_caption(args.json_file)):
                 sample=construct_sample_caption(args, entry)
@@ -150,7 +180,21 @@ def convert_to_wds(args):
                 
         write_config(EPath(args.output_dir).absolute(), args.media,
                      template_func=sample_loader_template_caption,
-                     class_name="PackedCaptioningSample")   
+                     class_name="PackedCaptioningSample")
+    elif args.mode == "bmr_pack":
+        # 新模式 2
+        with wds.ShardWriter(tar, maxcount=args.maxcount, maxsize=args.maxsize) as sink:
+            for entry in tqdm(stream_samples_caption(args.json_file)):
+                sample=construct_bmr_sample(args, entry)
+                # print(sample.keys())
+                sink.write(sample)
+                # break
+                # sink.write(construct_sample_caption(args.image_dir, entry))
+                
+        write_config(EPath(args.output_dir).absolute(), args.media,
+                     template_func=sample_loader_template_caption,
+                     class_name="PackedCaptioningSample")
+        pass
     print(f"Dataset successfully converted to wds")
 
 
@@ -201,7 +245,7 @@ def _add_arguments(parser: argparse.ArgumentParser):
     group.add_argument('--columns_messages', type=str, default="messages", help='Column name for messages')
     # 新增模式选择
     group.add_argument('--mode', type=str,
-                       choices=["chat", "caption_pack"],
+                       choices=["chat", "caption_pack", "bmr_pack"],
                        default="chat",
                        help="chat=旧格式(单图对话); caption_pack=新格式(整条多图caption)")
     return parser

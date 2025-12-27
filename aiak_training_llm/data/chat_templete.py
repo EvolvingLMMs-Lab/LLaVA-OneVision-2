@@ -11,6 +11,7 @@ https://huggingface.co/docs/transformers/main/en/chat_templating#templates-for-c
 """
 
 import re
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Type, Dict, List, Optional, Sequence, Set, Tuple, Union
@@ -133,6 +134,9 @@ class ChatTemplate:
             messages = messages[1:]
 
         encoded_messages = self._encode(tokenizer, messages, system)
+        # ZXW: missing "/n"
+        if int(os.environ.get("FILL_TOKEN_198",0))==1:
+            encoded_messages[-1].append(198)
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def encode_oneturn(

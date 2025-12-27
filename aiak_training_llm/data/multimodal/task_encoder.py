@@ -188,6 +188,39 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                         context=sample.prompts[idx]
                     )                    
                     l_Qwen2VLImageTaskSample.append(self.encode_vqa4packing(cur_capsample))
+                elif int(os.environ.get("OFFLINE_PACKING_BMR",0))==1:
+                    def convert_to_messages(cur_prompt, cur_caption):
+                        """
+                        {cur_prompt, cur_caption}---> messages
+                        """
+
+                        if len(cur_prompt) != len(cur_caption):
+                            raise ValueError("cur_prompt & cur_caption have different lengths")
+                        
+                        messages = []
+                        for prompt, caption in zip(cur_prompt, cur_caption):
+                            messages.append({
+                                "content": prompt,
+                                "role": "user"
+                            })
+
+                            messages.append({
+                                "content": caption,
+                                "role": "assistant"
+                            })
+                        
+                        return messages
+                    cur_capsample = MultiMixQASample(
+                        __key__=f"{sample.__key__}.img{idx:03d}_jpg",
+                        __restore_key__=sample.__restore_key__,
+                        __subflavor__='BMR',
+                        __subflavors__=sample.__subflavors__,
+                        messages=convert_to_messages(sample.prompts[idx], sample.captions[idx]),
+                        video=None,
+                        system=None,
+                        image=[sample.images[idx]] if sample.images[idx] else None
+                    )                    
+                    l_Qwen2VLImageTaskSample.append(self.encode_multi_mix_qa(cur_capsample))         
                 else:
                     cur_capsample = CaptioningSample(
                         __key__=f"{sample.__key__}.img{idx:03d}_jpg",

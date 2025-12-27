@@ -2108,9 +2108,14 @@ class PackingTracker:
     def __init__(self, processor):
         self.processor = processor
         self.history = []
+        self.snapshots = []  # 添加状态快照(2025.09.12)
         
     def track_packing(self, strategy_name: str, **kwargs):
         """记录一次装箱操作"""
+        
+        # 保存状态快照 (2025.09.12)
+        self.save_current_state()
+
         before_state = self.processor.check_hash_buckets_state()
         # 支持返回详细统计（如 total_attempts），否则只返回箱子列表
         result = getattr(self.processor, strategy_name)(**kwargs)
@@ -2147,6 +2152,33 @@ class PackingTracker:
                 print(f"成功率: {rate:.1%} ({op['boxes_count']}/{op['total_attempts']})")
             else:
                 print(f"成功率: N/A")
+                
+    # (2025.09.12)
+    def save_current_state(self):
+        """保存当前状态快照"""
+        snapshot = {
+            'hash_buckets': {k: arr.copy() for k, arr in self.processor.hash_buckets.items()},
+            'timestamp': time.time()
+        }
+        self.snapshots.append(snapshot)  # 这里已经完成了追加操作
+        print("save checkpoint........")
+        # return snapshot
+    
+    # (2025.09.12)
+    # 
+    def restore_state(self, index: int):
+        """恢复到指定操作前的状态"""
+        if 0 <= index < len(self.snapshots):
+            snapshot = self.snapshots[index]
+            self.processor.hash_buckets = {
+                k: arr.copy() for k, arr in snapshot['hash_buckets'].items()
+            }
+            # 清理该索引之后的所有状态和历史记录
+            self.snapshots = self.snapshots[:index+1]
+            self.history = self.history[:index]
+            print(f"已恢复到操作 {index} 之前的状态")
+            return True
+        return False
 
 
 # # 使用示例
