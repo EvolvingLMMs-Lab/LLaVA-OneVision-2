@@ -17,9 +17,17 @@ except ImportError:
     HAVE_DEEP_EP = False
 
 import torch
-from transformer_engine.pytorch.constants import TE_DType
-
+# from transformer_engine.pytorch.constants import TE_DType
+# Try to import TE_DType from Transformer Engine, but fall back if unavailable
 logger = logging.getLogger(__name__)
+try:
+    from transformer_engine.pytorch.constants import TE_DType
+except Exception as e:
+    logger.warning(
+        f"TE_DType import failed, FP8 communication will be disabled: {str(e)}"
+    )
+    TE_DType = {}
+
 try:
     from transformer_engine.pytorch.tensor.float8_blockwise_tensor import (
         Float8BlockQuantizer,

@@ -186,6 +186,12 @@ def apply_rotary_pos_emb(
     """
     Reroute to the appropriate apply_rotary_pos_emb function depending on
     fused/unfused kernels, or bshd (conventional) / thd (packed seq) format
+        # DEBUG: Check input
+        if t is None:
+            print(f"[apply_rotary_pos_emb] ERROR: input t is None!", flush=True)
+            return None
+    
+        print(f"[apply_rotary_pos_emb] config.apply_rope_fusion={config.apply_rope_fusion}, cu_seqlens={cu_seqlens is not None}, fused available={fused_apply_rotary_pos_emb is not None}", flush=True)
     """
 
     if config.apply_rope_fusion and config.multi_latent_attention is False:

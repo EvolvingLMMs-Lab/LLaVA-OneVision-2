@@ -249,16 +249,21 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
     return train_iter, valid_iter, test_iter
 
-
+# This registers the function for model family "llava_ov_1_5" and phase "sft"
 @register_model_trainer(model_family=[constants.VisionLanguageModelFamilies.LLAVA_OV_1_5],
                         training_phase=constants.TrainingPhase.SFT)
 def default_pretrain_trainer(train_args):
     """build trainer"""
     from aiak_training_llm.train.pretrain import pretrain_llavaov_1_5
+    #imports the module containing model/dataset/forward functions for LLaVA-OV-1.5
     if train_args.encoder_pipeline_model_parallel_size in [0, None]:
-        model_type = ModelType.encoder_or_decoder
+        #check if model use pipeline parallelism with separate encoder and decoder stages
+        model_type = ModelType.encoder_or_decoder # unified model
+        print_rank_0("Using unified model type for training.")
     else:
         model_type = ModelType.encoder_and_decoder
+        print_rank_0("Using encoder-and-decoder model type for training.")
+    #created megatron trainer instance   
     trainer = MegatronTrainer(
         train_args=train_args,
         train_valid_test_dataset_provider=pretrain_llavaov_1_5.train_valid_test_dataset_provider,

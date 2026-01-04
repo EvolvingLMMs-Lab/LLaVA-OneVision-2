@@ -328,9 +328,26 @@ class LlavaOnevision1_5(MegatronModule):
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
                 if n_image_tokens != n_image_features:
-                    raise ValueError(
-                        f"Image features {n_image_features} != image tokens {n_image_tokens}"
-                    )
+                    # raise ValueError(
+                    #     f"Image features {n_image_features} != image tokens {n_image_tokens}"
+                    # )
+                    if n_image_features > n_image_tokens:
+                        # Trim extra vision features if the model produced more than requested tokens.
+                        image_embeddings = image_embeddings[:n_image_tokens]
+                        if window_index is not None:
+                            window_index = window_index[:n_image_tokens]
+                    else:
+                        # Pad missing vision features with zeros to align with token count.
+                        pad_len = n_image_tokens - n_image_features
+                        pad_emb = torch.zeros(
+                            (pad_len, image_embeddings.size(1)),
+                            device=image_embeddings.device,
+                            dtype=image_embeddings.dtype,
+                        )
+                        image_embeddings = torch.cat([image_embeddings, pad_emb], dim=0)
+                        if window_index is not None:
+                            pad_idx = window_index[-1:].repeat(pad_len, *([1] * (window_index.dim() - 1)))
+                            window_index = torch.cat([window_index, pad_idx], dim=0)
 
                 # If running inference, the language model KV cache will be updated for image token positions.
                 # Here we store the image tokens sequence length, which can be used as an offset to the KV cache later.

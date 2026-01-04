@@ -18,19 +18,130 @@ def _rotate_half(x):
     return torch.cat((-x2, x1), dim=-1)
 
 
+# def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interleaved=False):
+#     """" Apply rotation to positional embedding """
+#     orig_dtype = t.dtype
+#     t = t.float()
+#     if cu_seqlens is not None:
+#         freqs = freqs.squeeze(1)
+#         cos_ = freqs.cos().float().repeat(1, 1, 2)
+#         sin_ = freqs.sin().float().repeat(1, 1, 2)
+#     else:
+#         cos_ = freqs.cos().float().repeat(1, 1, 1, 2)
+#         sin_ = freqs.sin().float().repeat(1, 1, 1, 2)
+#     t = (t * cos_) + (_rotate_half(t) * sin_)
+#     return t.to(orig_dtype)
+
 def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interleaved=False):
-    """" Apply rotation to positional embedding """
+    """
+    Apply rotary positional embeddings to t in a robust way:
+    - build cos_/sin_ from freqs as before
+    - slice cos_/sin_ to match t sequence length
+    - expand/unsqueeze so broadcasting works for common layouts
+    """
+    # DEBUG: Check input
+    if t is None:
+        print(f"[apply_rotary_pos_emb_vision] ERROR: input t is None!", flush=True)
+        return None
+    
     orig_dtype = t.dtype
     t = t.float()
+
+    # Build cos_/sin_ as in your original code
     if cu_seqlens is not None:
-        freqs = freqs.squeeze(1)
-        cos_ = freqs.cos().float().repeat(1, 1, 2)
-        sin_ = freqs.sin().float().repeat(1, 1, 2)
+        # freqs shape expected something like [B, 1, S, C] or similar; you squeezed axis 1
+        freqs_work = freqs.squeeze(1)
+        cos_ = freqs_work.cos().float().repeat(1, 1, 2)   # -> [?, ?, 2*?] depending on freqs_work layout
+        sin_ = freqs_work.sin().float().repeat(1, 1, 2)
     else:
         cos_ = freqs.cos().float().repeat(1, 1, 1, 2)
         sin_ = freqs.sin().float().repeat(1, 1, 1, 2)
+
+    # --- Robust alignment code: make cos_/sin_ match t's sequence axis & length ----
+    # Determine candidate sequence axis in t. Prefer axis 0, then 1, then others.
+    # We'll detect the likely seq axis by comparing sizes; fallback to axis 0.
+    def _find_seq_axis_and_len(t, cos_):
+        t_shape = tuple(t.shape)
+        # Try to find an axis i where cos_.shape[0] matches t.shape[i]
+        for axis in range(len(t_shape)):
+            if cos_.shape[0] == t_shape[axis]:
+                return axis, t_shape[axis]
+        # If no exact match, prefer axis 0 if it's smaller or cos_ is larger and can be sliced
+        return 0, t_shape[0]
+
+    seq_axis, seq_len = _find_seq_axis_and_len(t, cos_)
+
+    # Slice cos_/sin_ on their first dimension to match seq_len (safe even if cos_ is smaller)
+    if cos_.shape[0] != seq_len:
+        # if cos_ is shorter than seq_len, we'll let broadcasting fail later (better to raise)
+        if cos_.shape[0] < seq_len:
+            # Recompute or raise — here we raise a helpful error so you can detect upstream bug
+            raise RuntimeError(
+                f"freqs/cos_ length ({cos_.shape[0]}) is smaller than the tensor sequence length ({seq_len}). "
+                "Recompute freqs for the required length or provide larger cached freqs."
+            )
+        # Slice axis 0
+        sl = [slice(None)] * cos_.ndim
+        sl[0] = slice(0, seq_len)
+        cos_ = cos_[tuple(sl)].contiguous()
+        sin_ = sin_[tuple(sl)].contiguous()
+
+    # Now make cos_/sin_ broadcast-compatible with t.
+    # Typical cases:
+    #  - t: [S, B, D] and cos_: [S, D] -> unsqueeze(1) -> [S,1,D]
+    #  - t: [B, S, D] and cos_: [S, D] -> unsqueeze(0) -> [1,S,D]
+    #  - t: [B, H, S, D] and cos_: [S, D] -> unsqueeze to [1,1,S,1,D...] not common
+    # We'll handle the common 2/3-dim cases and otherwise attempt to add singleton dims to the left.
+    if cos_.ndim == 2 and t.ndim == 3:
+        # cos_: [S, D]
+        if seq_axis == 0:
+            # t: [S, B, D] -> need [S, 1, D]
+            cos_ = cos_.unsqueeze(1)
+            sin_ = sin_.unsqueeze(1)
+        else:
+            # seq_axis == 1: t: [B, S, D] -> need [1, S, D]
+            cos_ = cos_.unsqueeze(0)
+            sin_ = sin_.unsqueeze(0)
+    elif cos_.ndim == 2 and t.ndim == 2:
+        # both [S, D] vs [S, D] -> ok
+        pass
+    elif cos_.ndim == 3 and t.ndim == 3:
+        # cos_ might already be [S, 1, D] or [B, S, D] style; try to match by permuting if necessary
+        # If cos_.shape[0] == seq_len then assume first dim is seq and cos_ probably is [S,1,D]
+        # else attempt no-op; broadcasting should handle remaining dims
+        pass
+    else:
+        # Generic approach: try to prefix cos_ with singleton dims so that cos_.ndim == t.ndim or cos_.ndim == t.ndim-1
+        # We want sequence dim at position seq_axis in t; ensure cos_ has seq at dim 0 currently (we sliced it)
+        # So add singleton dims to the left until cos_.ndim matches t.ndim with seq at that position.
+        if cos_.ndim < t.ndim:
+            # number of dims to add on left
+            to_add = t.ndim - cos_.ndim
+            for _ in range(to_add):
+                cos_ = cos_.unsqueeze(0)
+                sin_ = sin_.unsqueeze(0)
+        # If still not aligned, rely on broadcasting but print a debug warning:
+        # (you can remove/disable the print in production)
+        # debug print
+        # print(f"[rotary] after align: t.shape={tuple(t.shape)}, cos_.shape={tuple(cos_.shape)}")
+
+    # Final safety check: ensure cos_ can broadcast over t along seq_axis
+    # Map cos_ seq dim (we assumed it's axis 0) to the seq_axis in t via unsqueezing above.
+    # If the seq axis in t is not axis 0, the unsqueeze logic handled typical 3-D case above.
+
+    # Debug print (optional; remove when satisfied)
+    # print("rotary debug: t.shape", tuple(t.shape), "cos.shape", tuple(cos_.shape), "sin.shape", tuple(sin_.shape))
+
+    # Apply rotary
     t = (t * cos_) + (_rotate_half(t) * sin_)
-    return t.to(orig_dtype)
+
+    result = t.to(orig_dtype)
+    
+    # DEBUG: Check output
+    if result is None:
+        print(f"[apply_rotary_pos_emb_vision] ERROR: result is None after conversion!", flush=True)
+    
+    return result
 
 
 class PatchEmbed(torch.nn.Module):

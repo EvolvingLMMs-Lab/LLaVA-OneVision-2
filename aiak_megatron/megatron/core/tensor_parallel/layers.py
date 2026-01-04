@@ -854,7 +854,7 @@ class ColumnParallelLinear(torch.nn.Module):
                 "gradient accumulation fusion."
             )
         self.gradient_accumulation_fusion = config.gradient_accumulation_fusion
-
+        
         if self.allreduce_dgrad and self.sequence_parallel:
             raise RuntimeError(
                 "`allreduce_dgrad` and `sequence_parallel` cannot be enabled at the same time."
@@ -938,7 +938,7 @@ class ColumnParallelLinear(torch.nn.Module):
             self._forward_impl = linear_with_grad_accumulation_and_async_allreduce
 
         allreduce_dgrad = False if self.explicit_expert_comm else self.allreduce_dgrad
-
+        
         output_parallel = self._forward_impl(
             input=input_parallel,
             weight=weight,

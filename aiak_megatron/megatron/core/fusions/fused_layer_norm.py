@@ -8,25 +8,25 @@ import torch
 from torch import Tensor
 from torch.nn import init
 from torch.nn.parameter import Parameter
-
+import torch.nn.functional as F
 from megatron.core.transformer import TransformerConfig
 from megatron.core.utils import make_viewless_tensor
 
-try:
-    from apex.contrib.layer_norm.layer_norm import FastLayerNormFN
+# try:
+#     from apex.contrib.layer_norm.layer_norm import FastLayerNormFN
 
-    HAVE_PERSIST_LAYER_NORM = True
-except ImportError:
-    HAVE_PERSIST_LAYER_NORM = False
+#     HAVE_PERSIST_LAYER_NORM = True
+# except ImportError:
+#     HAVE_PERSIST_LAYER_NORM = False
 
-try:
-    from apex.normalization.fused_layer_norm import FusedLayerNormAffineFunction
+# try:
+#     from apex.normalization.fused_layer_norm import FusedLayerNormAffineFunction
 
-    HAVE_FUSED_LAYER_NORM = True
-except ImportError:
-    HAVE_FUSED_LAYER_NORM = False
-
-
+#     HAVE_FUSED_LAYER_NORM = True
+# except ImportError:
+#     HAVE_FUSED_LAYER_NORM = False
+HAVE_PERSIST_LAYER_NORM = False
+HAVE_FUSED_LAYER_NORM = False
 class FusedLayerNorm(torch.nn.Module):
     """Layer Norm, fused into a single CUDA kernel.
 
@@ -102,7 +102,12 @@ class FusedLayerNorm(torch.nn.Module):
 
         if not persist_layer_norm and not HAVE_FUSED_LAYER_NORM:
             # TODO: Add pytorch only layer norm
-            raise ValueError(f'Apex must be installed to use FusedLayerNorm.')
+            self._use_pytorch_fallback = True
+            persist_layer_norm = False
+        else:
+            self._use_pytorch_fallback = False
+                
+            
 
         if isinstance(hidden_size, numbers.Integral):
             hidden_size = (hidden_size,)
@@ -130,8 +135,15 @@ class FusedLayerNorm(torch.nn.Module):
             init.zeros_(self.bias)
 
     def forward(self, input: Tensor) -> Tensor:
-
+        
         weight = self.weight + 1 if self.zero_centered_gamma else self.weight
+        # If we flagged the pure-PyTorch fallback, use torch.nn.functional.layer_norm
+        if getattr(self, "_use_pytorch_fallback", False):
+            # weight should be offset when zero_centered_gamma is used (matches original behavior)
+            return F.layer_norm(input, tuple(self.hidden_size), weight=weight, bias=self.bias, eps=self.eps)
+
+
+       
 
         if self.persist_layer_norm:
             if 'memory_efficient' in inspect.getfullargspec(FastLayerNormFN.forward).args:

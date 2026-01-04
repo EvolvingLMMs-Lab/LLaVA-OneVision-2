@@ -79,7 +79,7 @@ def _add_extra_training_rice_vl_args(parser: argparse.ArgumentParser) -> argpars
     group.add_argument(
         '--training-rice-vl-max-answer-length',
         type=int,
-        default=4096,
+        default=512,  # Changed from 4096 to 512 to match seq_length
         help=(
             "The maximum number of characters allowed in an answer during training. "
             "Answers longer than this will be truncated."

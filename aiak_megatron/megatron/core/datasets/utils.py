@@ -22,8 +22,21 @@ def compile_helpers():
     """Compile C++ helper functions at runtime. Make sure this is invoked on a single process."""
     import os
     import subprocess
+    import glob
 
-    command = ["make", "-C", os.path.abspath(os.path.dirname(__file__))]
+    # Check if helpers_cpp is already compiled
+    helpers_dir = os.path.abspath(os.path.dirname(__file__))
+    so_files = glob.glob(os.path.join(helpers_dir, "helpers_cpp*.so"))
+    if so_files:
+        # Try to import to verify it works
+        try:
+            import helpers_cpp
+            log_single_rank(logger, logging.INFO, f"Using pre-compiled helpers: {so_files[0]}")
+            return
+        except ImportError:
+            pass
+
+    command = ["make", "-C", helpers_dir]
     if subprocess.run(command).returncode != 0:
         import sys
 

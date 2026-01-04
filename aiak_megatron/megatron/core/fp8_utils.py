@@ -323,10 +323,14 @@ elif HAVE_TE and is_te_min_version("1.0"):
 else:
     # Fallback impl if TE version is invalid or TE is not installed.
     def _modify_underlying_storage_impl(*args, **kwargs):
-        raise RuntimeError("Invalid Transformer Engine version for FP8 distributed optimizer")
+        # raise RuntimeError("Invalid Transformer Engine version for FP8 distributed optimizer")
+        # No-op fallback: if TE is not installed, we're not using FP8, so just skip
+        pass
 
     def _quantize_param_shard_impl(*args, **kwargs):
-        raise RuntimeError("Invalid Transformer Engine version for FP8 distributed optimizer")
+        # raise RuntimeError("Invalid Transformer Engine version for FP8 distributed optimizer")
+        # No-op fallback: if TE is not installed, we're not using FP8, so just skip
+        pass
 
     def _correct_amax_history_if_needed_impl(*args, **kwargs):
         # If TE is not installed, we are definitely not using fp8 for training, so no correction

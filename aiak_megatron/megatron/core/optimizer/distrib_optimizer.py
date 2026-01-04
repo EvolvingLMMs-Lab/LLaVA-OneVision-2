@@ -10,16 +10,19 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 
-HAVE_APEX_OR_TE = True
-try:
-    from transformer_engine.pytorch.optimizers import FusedAdam as Adam
-except ImportError:
-    try:
-        from apex.optimizers import FusedAdam as Adam
-    except ImportError:
-        from torch.optim import AdamW as Adam
+# HAVE_APEX_OR_TE = True
+# try:
+#     from transformer_engine.pytorch.optimizers import FusedAdam as Adam
+# except ImportError:
+#     try:
+#         from apex.optimizers import FusedAdam as Adam
+#     except ImportError:
+#         from torch.optim import AdamW as Adam
 
-        HAVE_APEX_OR_TE = False
+#         HAVE_APEX_OR_TE = False
+from torch.optim import AdamW as Adam
+
+HAVE_APEX_OR_TE = False
 
 from megatron.core.optimizer.cpu_offloading import HybridDeviceOptimizer
 
@@ -486,7 +489,7 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
         for model_chunk in self.model_chunks:
             assert self.ddp_config == model_chunk.ddp_config
         self.distributed_optimizer_instance_id = distributed_optimizer_instance_id
-
+        print(optimizer)
         assert isinstance(optimizer, (Adam, HybridDeviceOptimizer)) or optimizer is None, (
             "Only Adam and HybridDeviceOptimizer currently supported, due to checkpointing requirements."
         )
