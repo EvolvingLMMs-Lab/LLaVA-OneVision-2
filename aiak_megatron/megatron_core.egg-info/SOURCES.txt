@@ -115,6 +115,8 @@ megatron/core/export/trtllm/trtllm_weights_converter/distributed_trtllm_model_we
 megatron/core/export/trtllm/trtllm_weights_converter/single_device_trtllm_model_weights_converter.py
 megatron/core/extensions/__init__.py
 megatron/core/extensions/transformer_engine.py
+megatron/core/extensions/transformer_engine2.py
+megatron/core/extensions/transformer_engine_org.py
 megatron/core/fusions/__init__.py
 megatron/core/fusions/fused_bias_dropout.py
 megatron/core/fusions/fused_bias_geglu.py
@@ -123,6 +125,7 @@ megatron/core/fusions/fused_bias_swiglu.py
 megatron/core/fusions/fused_cross_entropy.py
 megatron/core/fusions/fused_indices_converter.py
 megatron/core/fusions/fused_layer_norm.py
+megatron/core/fusions/fused_layer_norm_org.py
 megatron/core/fusions/fused_pad_routing_map.py
 megatron/core/fusions/fused_softmax.py
 megatron/core/inference/__init__.py
@@ -248,6 +251,7 @@ megatron/core/transformer/__init__.py
 megatron/core/transformer/attention.py
 megatron/core/transformer/cuda_graphs.py
 megatron/core/transformer/dot_product_attention.py
+megatron/core/transformer/dot_product_attention_no_te.py
 megatron/core/transformer/enums.py
 megatron/core/transformer/identity_op.py
 megatron/core/transformer/mlp.py

@@ -7,12 +7,12 @@ TP="${1:-1}"
 PP="${2:-1}" # pipeline parallel
 # Defaults: TP=1, PP=1.
 # SEQ_LEN="${3:-32768}"
-SEQ_LEN="${3:-512}" 
+SEQ_LEN="${3:-1024}" 
 MBS="${4:-1}" # micro batch size 
 # GBS="${5:-8}" # global batch size
-GBS="${5:-1}"
+GBS="${5:-8}"
 # NSTEP="${6:-2500}" # number of training iterations
-NSTEP="${6:-20}" # number of training iterations
+NSTEP="${6:-50}" # number of training iterations
 # DATA_PATH=${DATA_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/data/LLaVA-558K-Webdataset"}
 # TOKENIZER_PATH=${TOKENIZER_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0"}
 # CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0_mcore_tp2_pp1"}
