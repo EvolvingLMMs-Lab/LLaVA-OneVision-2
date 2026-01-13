@@ -191,7 +191,7 @@ def get_vision_config(model_family, model_name):
     """ get vision config """
     config = VisionConfig(
         num_layers=24,
-        hidden_size=1024,
+        hidden_size=3072,
         ffn_hidden_size=4096,
         num_attention_heads=16,
         patch_size=14,

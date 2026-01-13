@@ -26,6 +26,7 @@ class TrainingArguments(HFTrainingArguments):
 
     max_seq_length: int = field(
         default=32768, # This is the default value of the qwen2-vl model
+        # default=2048,
         metadata={
             "help":
                 "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
@@ -73,6 +74,7 @@ class DPOArguments(DPOConfigTRL):
 
     max_seq_length: int = field(
         default=32768, # This is the default value of the qwen2-vl model
+        # default=2048,
         metadata={
             "help":
                 "Maximum sequence length. Sequences will be right padded (and possibly truncated)."

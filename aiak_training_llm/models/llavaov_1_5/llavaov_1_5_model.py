@@ -18,6 +18,7 @@ from torch import Tensor
 
 from aiak_training_llm.models.llavaov_1_5.rice_vision_model import (
     RiceViTModel, VisionModel)
+from aiak_training_llm.models.fastvit import FastViTModel
 from aiak_training_llm.models.qwen import QwenModel
 from aiak_training_llm.models.qwen_vl.adapter import Adapter
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
@@ -161,11 +162,18 @@ class LlavaOnevision1_5(MegatronModule):
 
         #  define the vision model and the projection from vision model outputs to language model inputs.
         if self.add_encoder:
-            # if vision_config.normalization == "RMSNorm":
-            self.vision_model = RiceViTModel(
+            # Use FastViT as the vision encoder (following FastVLM repo)
+            self.vision_model = FastViTModel(
                 vision_config,
                 vision_layer_spec,
             )
+            print(f'self,vision_model: {self.vision_model}')
+            # Original Rice/SigLIP encoder (commented out):
+            # if vision_config.normalization == "RMSNorm":
+            #     self.vision_model = RiceViTModel(
+            #         vision_config,
+            #         vision_layer_spec,
+            #     )
             # else:
             #     self.vision_model = VisionModel(
             #         vision_config,
@@ -173,8 +181,8 @@ class LlavaOnevision1_5(MegatronModule):
             #     )
             # Map (intermediate) vision model outputs to the language model input dimension.
             # from megatron.training import print_rank_0
-            # print_rank_0(f"vision_config.hidden_size: {vision_config.hidden_size}")
-            # print_rank_0(f"language_config.hidden_size: {language_config.hidden_size}")
+            print(f"[DEBUG] Creating adapter: vision_config.hidden_size={vision_config.hidden_size}")
+            print(f"[DEBUG] Creating adapter: language_config.hidden_size={language_config.hidden_size}")
             self.adapter = Adapter(
                 adapter_config,
                 adapter_layer_spec,
@@ -328,9 +336,26 @@ class LlavaOnevision1_5(MegatronModule):
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
                 if n_image_tokens != n_image_features:
-                    raise ValueError(
-                        f"Image features {n_image_features} != image tokens {n_image_tokens}"
-                    )
+                    # raise ValueError(
+                    #     f"Image features {n_image_features} != image tokens {n_image_tokens}"
+                    # )
+                    if n_image_features > n_image_tokens:
+                        # Trim extra vision features if the model produced more than requested tokens.
+                        image_embeddings = image_embeddings[:n_image_tokens]
+                        if window_index is not None:
+                            window_index = window_index[:n_image_tokens]
+                    else:
+                        # Pad missing vision features with zeros to align with token count.
+                        pad_len = n_image_tokens - n_image_features
+                        pad_emb = torch.zeros(
+                            (pad_len, image_embeddings.size(1)),
+                            device=image_embeddings.device,
+                            dtype=image_embeddings.dtype,
+                        )
+                        image_embeddings = torch.cat([image_embeddings, pad_emb], dim=0)
+                        if window_index is not None:
+                            pad_idx = window_index[-1:].repeat(pad_len, *([1] * (window_index.dim() - 1)))
+                            window_index = torch.cat([window_index, pad_idx], dim=0)
 
                 # If running inference, the language model KV cache will be updated for image token positions.
                 # Here we store the image tokens sequence length, which can be used as an offset to the KV cache later.

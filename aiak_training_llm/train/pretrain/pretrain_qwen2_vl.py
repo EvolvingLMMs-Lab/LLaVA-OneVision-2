@@ -331,7 +331,7 @@ def forward_step(data_iterator, model):
 
 def train_valid_test_dataset_provider(train_val_test_num_samples):
     """ Provides the datasets used by the trainer """
-
+    print("pretraining using Qwen2VLTaskEncoder data provider...")
     task_encoder = Qwen2VLTaskEncoder()
     train_dataset = get_train_dataset(task_encoder)
     collator = build_sft_data_collator(DataCollatorForSeq2Seq)

@@ -60,3 +60,6 @@ coverage.xml
 **/.ipynb_checkpoints/
 .vscode/
 checkpoints/
+stage_1_alignment_llava_ov_4b/
+tmp/
+Stage1/training_output.log

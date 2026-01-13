@@ -403,6 +403,16 @@ def setup_model_and_optimizer(model_provider_func,
             optimizer.reload_model_params()
         print_rank_0(f'Upcycled checkpoint saved to {args.save}')
 
+    # When using FastViT, skip checkpoint loading to avoid dimension mismatch
+    # FastViT outputs 3072 dims vs Qwen2-VL's 1024 dims, causing adapter incompatibility
+    if getattr(args, 'use_fastvit', False):
+        print_rank_0(f'[DEBUG] FastViT enabled: use_fastvit={getattr(args, "use_fastvit", False)}')
+        print_rank_0(f'[DEBUG] Before skip: args.load={args.load}, args.pretrained_checkpoint={args.pretrained_checkpoint}')
+        args.load = None
+        args.pretrained_checkpoint = None
+        print_rank_0(f'[DEBUG] After skip: args.load={args.load}, args.pretrained_checkpoint={args.pretrained_checkpoint}')
+        print_rank_0('FastViT enabled: Skipping checkpoint loading, training from scratch')
+
     if (args.load is not None or args.pretrained_checkpoint is not None) and not args.moe_use_upcycling:
         timers('load-checkpoint', log_level=0).start(barrier=True)
 

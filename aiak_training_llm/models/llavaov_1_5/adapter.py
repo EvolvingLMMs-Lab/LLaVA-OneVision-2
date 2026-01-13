@@ -26,6 +26,7 @@ class Adapter(MegatronModule):
     ) -> None:
         super().__init__(config=config)
         self.hidden_size = input_size * (spatial_merge_size**2)
+        print(f"[DEBUG] Adapter.__init__: input_size={input_size}, output_size={output_size}, hidden_size={self.hidden_size}")
 
         self.layernorm = build_module(
             submodules.layernorm,
@@ -62,6 +63,7 @@ class Adapter(MegatronModule):
 
     def forward(self, x: torch.Tensor, window_index: torch.LongTensor = None) -> torch.Tensor:
         """ Forward pass."""
+        print(f"[DEBUG] Adapter.forward: input shape={x.shape}, expected input_size={self.layernorm.weight.shape[0]}, hidden_size={self.hidden_size}")
         x = self.layernorm(x).view(-1, self.hidden_size)
         x, _ = self.linear_fc1(x)
         x = self.activation_func(x)

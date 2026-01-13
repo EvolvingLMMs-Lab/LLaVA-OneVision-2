@@ -49,12 +49,18 @@ def _gpu_backend_transformer_layer_modules() -> MultiAccModules:
         TENorm,
         TELinear,
     )
+    from megatron.core.transformer.dot_product_attention import DotProductAttention
 
     from megatron.core.fusions.fused_bias_dropout import get_bias_dropout_add
     from megatron.core.models.common.embeddings.rotary_pos_embedding import apply_rotary_pos_emb
     from aiak_training_llm.models.custom.common.local_norm import LocalNorm
 
     args = get_args()
+    
+    # Use local DotProductAttention if transformer_impl is "local", otherwise use TE version
+    # DotProductAttention=TEDotProductAttention (old hardcoded version, now commented)
+    use_te_attn = args.transformer_impl != "local"
+    attn_module = TEDotProductAttention if use_te_attn else DotProductAttention
     
     return MultiAccModules(
         # dense linear
@@ -68,7 +74,7 @@ def _gpu_backend_transformer_layer_modules() -> MultiAccModules:
         ColumnParallelLinear=ColumnParallelLinear,
         RowParallelLinear=RowParallelLinear,
         # attn
-        DotProductAttention=TEDotProductAttention,
+        DotProductAttention=attn_module,
         # norm
         TENorm=TENorm,
         LocalNorm=LocalNorm,

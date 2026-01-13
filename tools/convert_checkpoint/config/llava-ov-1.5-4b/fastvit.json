@@ -1,0 +1,8 @@
+{
+    "model_type": "fastvit",
+    "vision_model_from": "model.vision_tower.vision_tower",
+    "vision_model_to": "vision_model.vision_tower",
+    "num_layers": null,
+    "hidden_size": 3072,
+    "note": "FastViT/MobileCLIP vision encoder with 629 parameters"
+}

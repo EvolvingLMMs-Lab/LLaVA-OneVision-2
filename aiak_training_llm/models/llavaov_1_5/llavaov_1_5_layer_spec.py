@@ -1,10 +1,9 @@
 import torch
-from megatron.core.extensions.transformer_engine import (
-    TEDotProductAttention, TELayerNormColumnParallelLinear, TELinear,
-    TERowParallelLinear)
+from megatron.core.tensor_parallel.layers import ColumnParallelLinear, RowParallelLinear
+# DotProductAttention is in dot_product_attention.py in this repo.
+from megatron.core.transformer.dot_product_attention import DotProductAttention
 from megatron.core.fusions.fused_bias_dropout import get_bias_dropout_add
-from megatron.core.transformer.attention import (SelfAttention,
-                                                 SelfAttentionSubmodules)
+from megatron.core.transformer.attention import SelfAttention, SelfAttentionSubmodules
 from megatron.core.transformer.enums import AttnMaskType
 from megatron.core.transformer.identity_op import IdentityOp
 from megatron.core.transformer.mlp import MLP, MLPSubmodules
@@ -25,7 +24,7 @@ from .rice_vision_model import apply_rotary_pos_emb_vision
 
 
 def get_vision_layer_with_spec() -> ModuleSpec:
-    """Use this spec for an implementation using transformer, local or multi-accel engine."""
+    """Use this spec for a standard (non-Transformer-Engine) implementation."""
     return ModuleSpec(
         module=TransformerLayer,
         submodules=TransformerLayerSubmodules(
@@ -33,9 +32,10 @@ def get_vision_layer_with_spec() -> ModuleSpec:
                 module=SelfAttention,
                 params={"attn_mask_type": AttnMaskType.no_mask},
                 submodules=SelfAttentionSubmodules(
-                    linear_qkv=TELayerNormColumnParallelLinear,
-                    core_attention=TEDotProductAttention,
-                    linear_proj=TERowParallelLinear,
+                    # use standard (non-TE) parallel linears
+                    linear_qkv=ColumnParallelLinear,
+                    core_attention=DotProductAttention,
+                    linear_proj=RowParallelLinear,
                     apply_rotary_fn=apply_rotary_pos_emb_vision,
                 ),
             ),
@@ -43,13 +43,14 @@ def get_vision_layer_with_spec() -> ModuleSpec:
             mlp=ModuleSpec(
                 module=MLP,
                 submodules=MLPSubmodules(
-                    linear_fc1=TELayerNormColumnParallelLinear,
-                    linear_fc2=TERowParallelLinear,
+                    linear_fc1=ColumnParallelLinear,
+                    linear_fc2=RowParallelLinear,
                 ),
             ),
             mlp_bda=get_bias_dropout_add,
         ),
     )
+
 
 
 def _get_mlp_module_spec(

@@ -25,7 +25,9 @@ class Adapter(MegatronModule):
         spatial_merge_size: int = 2
     ) -> None:
         super().__init__(config=config)
-        self.hidden_size = input_size * (spatial_merge_size**2)
+        # self.hidden_size = input_size * (spatial_merge_size**2)  # OLD: assumes spatial merging
+        # Since input is already [seq_len, input_size], no spatial merging needed
+        self.hidden_size = input_size  # Use input_size directly
 
         self.layernorm = build_module(
             submodules.layernorm,
@@ -62,7 +64,8 @@ class Adapter(MegatronModule):
 
     def forward(self, x: torch.Tensor, window_index: torch.LongTensor = None) -> torch.Tensor:
         """ Forward pass."""
-        x = self.layernorm(x).view(-1, self.hidden_size)
+        # Input is already [seq_len, input_size], no spatial merging needed
+        x = self.layernorm(x)
         x, _ = self.linear_fc1(x)
         x = self.activation_func(x)
         x, _ = self.linear_fc2(x)

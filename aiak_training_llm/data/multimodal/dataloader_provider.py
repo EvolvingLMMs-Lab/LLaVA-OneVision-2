@@ -21,16 +21,21 @@ def get_train_dataset(task_encoder):
         worker_debug_path=None,
         worker_log_level=0
     )
+    #use megatron energon to get the training dataset
+    # a high performance data loading library for large-scale distributed training
+    #each gpu gets its shard of the data based on data parallel rank
+    # Supports packing: Multiple short sequences can be packed into one to maximize GPU utilization
+    # streaming: can load data on-the-fly without pre-downloading entire dataset into memory
     train_ds = energon.get_train_dataset(
-        args.data_path[0],
-        batch_size=args.micro_batch_size,
-        task_encoder=task_encoder,
-        worker_config=worker_config,
+        args.data_path[0], # Path to dataset (LLaVA-558K-Webdataset)
+        batch_size=args.micro_batch_size, #Batch size per GPU
+        task_encoder=task_encoder, # The Qwen2VLTaskEncoder we just created
+        worker_config=worker_config, #Distributed Config
         max_samples_per_sequence=None,
         shuffle_buffer_size=None,
-        packing_buffer_size=args.packing_batch_size,
-        handler=print_error_handler,
-        image_decode="pil",
+        packing_buffer_size=args.packing_batch_size, #Buffer size for packing sequences
+        handler=print_error_handler, #Error handler function
+        image_decode="pil", #Decode images using PIL
     )
     return train_ds
 
@@ -65,11 +70,12 @@ class EnergonDataloader:
     def __init__(self, dataloader, collator=None):
         self._dataloader = dataloader
         self._collator = collator
-        self._iter = iter(cyclic_iter(dataloader))
+        self._iter = iter(cyclic_iter(dataloader)) # Infinite iterator!
 
     def __next__(self):
-        features = self._iter.__next__()
+        features = self._iter.__next__() #get next batch
         if self._collator is not None:
+            # Apply padding using the collator
             padded = self._collator.tokenizer.pad(
                 {"input_ids": features['tokens']},
                 padding=self._collator.padding,
@@ -77,7 +83,10 @@ class EnergonDataloader:
                 pad_to_multiple_of=self._collator.pad_to_multiple_of,
             )
             paded_length = padded['input_ids'].shape[1] - features['tokens'].shape[1]
+            
+            # Update features with padded versions
             features['tokens'] = padded["input_ids"]
+            #pad labels and attention mask too
             features['labels'] = F.pad(
                 features['labels'],
                 (0, paded_length),
@@ -85,6 +94,11 @@ class EnergonDataloader:
                 self._collator.label_pad_token_id
             )
             features['attn_mask'] = F.pad(features['attn_mask'], (0, paded_length), "constant", True)
+        # return a batch 
+        print("Dataloader batch - tokens shape:", features['tokens'].shape)
+        print("Dataloader batch - labels shape:", features['labels'].shape)
+        print("Dataloader batch - attn_mask shape:", features['attn_mask'].shape)
+        print("Dataloader batch - image_grid_thw shape:", features['image_grid_thw'].shape)
         return features
 
     def __iter__(self):
@@ -94,7 +108,7 @@ class EnergonDataloader:
         """ Save the current state of this dataloader """
         return self._dataloader.save_state_rank()
 
-
+# This means training never runs out of data - it just loops back to the beginning.
 def cyclic_iter(iter):
     """ Infinite iteration over an iterator """
     while True:

@@ -79,7 +79,7 @@ def _add_extra_training_rice_vl_args(parser: argparse.ArgumentParser) -> argpars
     group.add_argument(
         '--training-rice-vl-max-answer-length',
         type=int,
-        default=4096,
+        default=512,  # Changed from 4096 to 512 to match seq_length
         help=(
             "The maximum number of characters allowed in an answer during training. "
             "Answers longer than this will be truncated."
@@ -415,6 +415,22 @@ def _add_extra_multimodal_args(parser):
 
     group.add_argument('--fps-max-frames', type=int, default=768,
                        help='The maximum number of frames of the video')
+    
+    # FastViT specific arguments (following FastVLM repo)
+    group.add_argument('--use-fastvit', action='store_true', default=False,
+                       help='Use FastViT vision encoder instead of Rice/SigLIP')
+    group.add_argument('--fastvit-image-size', type=int, default=384,
+                       help='FastViT input image size (default: 384)')
+    group.add_argument('--vision-tower-name', type=str, default='mobileclip_l_384',
+                       help='FastViT model variant (mobileclip_l_384, mobileclip_l_448, mobileclip_l_512)')
+    group.add_argument('--image-aspect-ratio', type=str, default='pad',
+                       choices=['pad', 'anyres', 'square'],
+                       help='Image aspect ratio handling: pad (expand to square with padding), '
+                            'anyres (variable resolution with patches), square (direct resize)')
+    group.add_argument('--image-grid-pinpoints', type=str,
+                       default='[(384, 384), (768, 384), (384, 768), (768, 768)]',
+                       help='Grid pinpoints for anyres image processing')
+    
     return parser
 
 

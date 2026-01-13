@@ -58,7 +58,7 @@ def qwen2vl_position_embedding_ranks(pp_ranks):
     Args:
         pp_ranks: A list of global ranks that constitute a pipeline group.
     """
-    args = get_args()
+    args = get_args() #get training arguments
 
     # encoder size is also the index to the first rank of the decoder.
     epp = args.encoder_pipeline_model_parallel_size or 0
@@ -81,9 +81,14 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
         MCoreModel: The returned model
     """
     args = get_args()
+    # Get model family: "llava-ov-1.5-4b" → "llava_ov_1_5"
     model_family = get_model_family(args.model_name)
+    # Lookup the registered provider
     model_provider = get_model_provider(model_family)
+        #   = MODEL_FAMILY_TO_PROVIDER["llava_ov_1_5"]
+    #   = rice_vl_model_provider
     assert model_provider is not None, f'model provider for {args.model_name} not found'
+    # call the provider to build the model and return the model
     return model_provider(pre_process, post_process, add_encoder, add_decoder)
 
 
@@ -235,7 +240,7 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         loss_reduced_dict
     )
 
-
+#called by megatron training loop during each training step (called once per micro batch during training)
 def forward_step(data_iterator, model):
     """Forward training step.
 
@@ -250,14 +255,28 @@ def forward_step(data_iterator, model):
 
     global stimer
     with stimer(bdata=True):
+        #get batch from data iterator
         images, image_grid_thw, pixel_values_videos, video_grid_thw, \
         input_ids, position_ids, attention_mask, \
         labels, loss_mask, attn_mask_type, packed_seq_params \
             = get_batch(data_iterator)
+        #returns:
+        # images: Tensor([num_images, C, H, W])          # Processed image pixels
+        # image_grid_thw: Tensor([num_images, 3])        # Grid dimensions [t, h, w]
+        # pixel_values_videos: Tensor or None            # Video frames (if present)
+        # video_grid_thw: Tensor or None                 # Video grid dimensions
+        # input_ids: Tensor([batch, seq_len])            # Token IDs (with <|image_pad|>)
+        # position_ids: Tensor([batch, seq_len]) or None # Position indices
+        # attention_mask: Tensor([batch, seq_len])       # Attention mask (False=attend, True=mask)
+        # labels: Tensor([batch, seq_len])               # Target labels for loss
+        # loss_mask: Tensor([batch, seq_len])            # Which tokens to compute loss on
+        # attn_mask_type: AttnMaskType                   # Causal or padding_causal
+        # packed_seq_params: PackedSeqParams or None     # For packed sequences
         
     timers('batch-generator').stop()
 
     with stimer:
+        # MODEL FORWARD PASS
         output_tensor = model(
             images,
             image_grid_thw,
@@ -273,16 +292,40 @@ def forward_step(data_iterator, model):
  
     return output_tensor, partial(loss_func, loss_mask)
 
-
+# Factory function that creates and returns train/valid/test data loaders for the Megatron trainer.
 def train_valid_test_dataset_provider(train_val_test_num_samples):
     """ Provides the datasets used by the trainer """
 
     args = get_args()
+    # create task encoder
     task_encoder = Qwen2VLTaskEncoder(args)
+    # Processes images/videos using processor
+    # Applies chat template to conversations
+    # Tokenizes text
+    # Creates attention masks
+    # Handles vision token placement (<|image_pad|>, <|video_pad|>)
+    # Packs sequences efficiently
+
+    #get train dataset
     train_dataset = get_train_dataset(task_encoder)
+
+    #Purpose: Combines multiple samples into a batch
+    # Input: List of individual samples (each with different sequence lengths)
+    # Output: Batched tensors with padding
     collator = build_sft_data_collator(DataCollatorForSeq2Seq)
+    # Example:
+    # Sample 1: [151652, 8932, 1234, ...]      # Length 50
+    # Sample 2: [151652, 9821, 5567, ...]      # Length 120
+                    #    ↓  (collate)
+    # Batch: [[151652, 8932, 1234, ..., <pad>, <pad>],   # Padded to 120
+    #         [151652, 9821, 5567, ..., ...., ....]]      # Already 120
+
+    #create dataloader
     train_dataloader = get_train_loader(train_dataset, collator)
-    return train_dataloader, None, None
+
+    return train_dataloader, None, None 
+    # For SFT, typically only training loop is needed
+    # valid_iterator and test_iterator are set to None
     
 
 @register_model_trainer(
