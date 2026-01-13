@@ -129,7 +129,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             #template for formatting conversations (user/assistant turns)
         
         # Load HuggingFace processor (tokenizer + image/ video processor from Qwen2-VL)
-        self.processor = AutoProcessor.from_pretrained(self.args.hf_tokenizer_path, trust_remote_code=True)
+        self.processor = AutoProcessor.from_pretrained(self.args.hf_tokenizer_path, trust_remote_code=True, local_files_only=True)
         print(f"Loaded processor from {self.args.hf_tokenizer_path}")
         print(f"Processor config: {self.processor}")
         

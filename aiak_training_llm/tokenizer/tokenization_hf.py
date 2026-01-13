@@ -29,6 +29,7 @@ class AutoTokenizerFromHF(MegatronTokenizer):
             split_special_tokens=split_special_tokens,
             model_max_length=model_max_length,
             trust_remote_code=True,
+            local_files_only=True,
             **kwargs,
         )
 

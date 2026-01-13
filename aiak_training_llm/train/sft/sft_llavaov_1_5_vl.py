@@ -188,7 +188,7 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
     tokenizer = get_tokenizer()
 
-    processor = AutoProcessor.from_pretrained(args.hf_tokenizer_path, trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(args.hf_tokenizer_path, trust_remote_code=True, local_files_only=True)
     if args.image_resolution:
         setattr(processor, "image_resolution", args.image_resolution)
 
