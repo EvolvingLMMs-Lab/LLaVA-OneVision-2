@@ -49,13 +49,6 @@ coverage.xml
 # Translations
 *.mo
 
-# Model checkpoints and weights
-*.safetensors
-*.pt
-*.bin
-**/hf_checkpoint/
-**/megatron_checkpoint/
-
 # Sphinx documentation
 /docs/_build/
 
