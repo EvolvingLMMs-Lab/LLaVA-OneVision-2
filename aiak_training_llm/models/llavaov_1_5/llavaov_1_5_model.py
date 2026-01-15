@@ -20,6 +20,7 @@ from aiak_training_llm.models.llavaov_1_5.rice_vision_model import (
     RiceViTModel, VisionModel)
 from aiak_training_llm.models.fastvit import FastViTModel
 from aiak_training_llm.models.qwen import QwenModel
+from aiak_training_llm.models.mobilellm import MobileLLMModel
 from aiak_training_llm.models.qwen_vl.adapter import Adapter
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
 
@@ -204,11 +205,10 @@ class LlavaOnevision1_5(MegatronModule):
         # # This attribute is needed to check if an all-reduce is required
         # # on the word embeddings inside `finalize_model_grads._allreduce_word_embedding_grads`.
         if self.add_decoder:
-            # self.rotary_emb = Qwen2VLRotaryEmbedding(
-            #     dim=language_config.hidden_size // language_config.num_attention_heads,
-            #     theta=language_rotary_base
-            # )
-            self.language_model = QwenModel(
+
+            # Use MobileLLM for smaller, efficient model
+            print("[INFO] Using MobileLLM-140M as language backbone")
+            self.language_model = MobileLLMModel(
                 config=language_config,
                 transformer_layer_spec=language_layer_spec,
                 vocab_size=language_vocab_size,
@@ -221,6 +221,22 @@ class LlavaOnevision1_5(MegatronModule):
                 rotary_base=language_rotary_base,
                 share_embeddings_and_output_weights=share_embeddings_and_output_weights,
             )
+
+                # # Use Qwen model (default for larger models)
+                # print("[INFO] Using Qwen model as language backbone")
+                # self.language_model = QwenModel(
+                #     config=language_config,
+                #     transformer_layer_spec=language_layer_spec,
+                #     vocab_size=language_vocab_size,
+                #     max_sequence_length=language_max_sequence_length,
+                #     parallel_output=parallel_output,
+                #     position_embedding_type=language_position_embedding_type,
+                #     rotary_percent=language_rotary_percent,
+                #     pre_process=self.pre_process,
+                #     post_process=self.post_process,
+                #     rotary_base=language_rotary_base,
+                #     share_embeddings_and_output_weights=share_embeddings_and_output_weights,
+                # )
             self.share_embeddings_and_output_weights = (
                 self.language_model.share_embeddings_and_output_weights
             )

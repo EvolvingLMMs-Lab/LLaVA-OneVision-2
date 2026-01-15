@@ -22,6 +22,12 @@ class AutoTokenizerFromHF(MegatronTokenizer):
                  **kwargs,
     ):
         super().__init__(name_or_path)
+        # Bypass HF repo validation for local paths
+        import os
+        if os.path.isdir(name_or_path) or os.path.isfile(name_or_path):
+            # For local paths, set token to False to avoid HF Hub validation
+            kwargs.setdefault('token', False)
+        
         self.tokenizer = AutoTokenizer.from_pretrained(
             name_or_path,
             use_fast=use_fast_tokenizer,

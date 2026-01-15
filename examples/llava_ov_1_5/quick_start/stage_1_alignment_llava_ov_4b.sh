@@ -7,12 +7,12 @@ TP="${1:-1}"
 PP="${2:-1}" # pipeline parallel
 # Defaults: TP=1, PP=1.
 # SEQ_LEN="${3:-32768}"
-SEQ_LEN="${3:-1024}" 
+SEQ_LEN="${3:-512}" 
 MBS="${4:-1}" # micro batch size 
 # GBS="${5:-8}" # global batch size
-GBS="${5:-8}"
+GBS="${5:-1}"
 # NSTEP="${6:-2500}" # number of training iterations
-NSTEP="${6:-50}" # number of training iterations
+NSTEP="${6:-5}" # number of training iterations - reduced to 5 samples for CUDA memory
 # DATA_PATH=${DATA_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/data/LLaVA-558K-Webdataset"}
 # TOKENIZER_PATH=${TOKENIZER_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0"}
 # CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0_mcore_tp2_pp1"}
@@ -90,7 +90,7 @@ TENSORBOARD_PATH="${SAVE_CKPT_PATH}/tensorboard"
 mkdir -p "$SAVE_CKPT_PATH"
 mkdir -p "$TENSORBOARD_PATH"
 mkdir -p "$SAVE_CKPT_PATH/dataloader"
-GPUS_PER_NODE=${GPUS_PER_NODE:-1}
+GPUS_PER_NODE=${GPUS_PER_NODE:-4}
 
 # Change for multinode config
 MASTER_ADDR=${MASTER_ADDR:-"${list_ip[0]}"}
@@ -99,6 +99,7 @@ MASTER_PORT=${MASTER_PORT:-"26000"}
 if [[ $SINGLE_NODE -eq 1 ]]; then
     DISTRIBUTED_ARGS=(
         --nproc_per_node "$GPUS_PER_NODE"
+        --master_port "$MASTER_PORT"
     )
 else
     DISTRIBUTED_ARGS=(
@@ -167,7 +168,7 @@ TRAINING_ARGS=(
     --ckpt-fully-parallel-load
     --recompute-granularity full
     --recompute-method uniform
-    --recompute-num-layers 4
+    --recompute-num-layers 8
 )
 
 MODEL_PARALLEL_ARGS=(
