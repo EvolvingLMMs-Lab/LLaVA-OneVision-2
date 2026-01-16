@@ -54,12 +54,16 @@ export LD_LIBRARY_PATH="/usr/local/cuda-12.1/lib64:/usr/local/cuda-12.1/targets/
 # Weights & Biases configuration
 export WANDB_API_KEY="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"
 export WANDB_PROJECT="llava-ov-1_5"
-export WANDB_NAME="fastvit_integration"
+export WANDB_NAME="mobilellm_integration"
 
 export CUDA_VISIBLE_DEVICES=4  
 export GPUS_PER_NODE=1
 export MASTER_PORT=26000
 
-# bash examples/llava_ov_1_5/quick_start/stage_1_alignment_mobilellm_140m.sh
+# Choose which backbone to use for training:
+# ============================================================
+# Option 1: MobileLLM-R1-140M (140M params, efficient for mobile/edge)
+bash examples/llava_ov_1_5/quick_start/stage_1_alignment_mobilellm_140m.sh
 
-bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh 
+# Option 2: Original Qwen2.5-4B backbone (4B params)
+# bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh 
