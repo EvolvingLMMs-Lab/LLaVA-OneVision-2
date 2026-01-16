@@ -1,4 +1,4 @@
-"""qwen model provider"""
+"""LLaVA-OneVision-1.5 model provider - supports Qwen and MobileLLM backbones"""
 
 from copy import deepcopy
 from dataclasses import asdict
@@ -6,9 +6,11 @@ from dataclasses import asdict
 from aiak_training_llm.models.factory import register_model_provider
 from aiak_training_llm.models.llavaov_1_5.llavaov_1_5_layer_spec import (
     get_adapeter_layer_with_spec, get_qwen_layer_with_te_spec,
-    get_vision_layer_with_spec)
+    get_mobilellm_layer_with_te_spec, get_vision_layer_with_spec)
 from aiak_training_llm.models.llavaov_1_5.llavaov_1_5_config import (
     get_adapeter_config, get_vision_config)
+from aiak_training_llm.models.llavaov_1_5.llavaov_mobilellm_config import (
+    get_language_config as get_mobilellm_language_config)
 from aiak_training_llm.utils import (build_transformer_config, get_args,
                                      print_rank_0)
 from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
@@ -52,6 +54,18 @@ def rice_vl_model_provider(
 
     from aiak_training_llm.models import get_model_family
     model_family = get_model_family(args.model_name)
+    
+    # Detect if using MobileLLM backbone
+    use_mobilellm = "mobilellm" in args.model_name.lower()
+    
+    if use_mobilellm:
+        print_rank_0(f'Using MobileLLM-R1-140M as language backbone')
+        # Load MobileLLM configuration
+        mobilellm_config = get_mobilellm_language_config(args.model_name)
+        for k, v in asdict(mobilellm_config).items():
+            setattr(language_config, k, v)
+        print_rank_0(f'MobileLLM language config: {language_config}')
+    
     # get vision specific config : no. of layers, hidden size, Patch size, Image resolution
     for k, v in asdict(get_vision_config(model_family, args.model_name)).items():
         setattr(vision_config, k, v)
@@ -110,7 +124,14 @@ def rice_vl_model_provider(
     else:
         adapter_layer_spec = get_adapeter_layer_with_spec()
         vision_layer_spec = get_vision_layer_with_spec()
-        language_layer_spec = get_qwen_layer_with_te_spec(language_config)
+        
+        # Choose language layer spec based on backbone
+        if use_mobilellm:
+            print_rank_0("Using MobileLLM layer specification")
+            language_layer_spec = get_mobilellm_layer_with_te_spec(language_config)
+        else:
+            print_rank_0("Using Qwen layer specification")
+            language_layer_spec = get_qwen_layer_with_te_spec(language_config)
 
 #     # Vision layer spec (Transformer block)
 # - MultiheadAttention
