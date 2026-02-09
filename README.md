@@ -372,6 +372,13 @@ Thanks so much to all of our amazing contributors!
 	<tbody>
 		<tr>
             <td align="center">
+                <a href="https://github.com/fengshikun">
+                    <img src="https://avatars.githubusercontent.com/u/2499990?v=4" width="80;" alt="fengshikun"/>
+                    <br />
+                    <sub><b>fengshikun</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/GeoffreyChen777">
                     <img src="https://avatars.githubusercontent.com/u/14183213?v=4" width="80;" alt="GeoffreyChen777"/>
                     <br />
@@ -407,12 +414,21 @@ Thanks so much to all of our amazing contributors!
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/didizhu-judy">
+                    <img src="https://avatars.githubusercontent.com/u/34787894?v=4" width="80;" alt="didizhu-judy"/>
+                    <br />
+                    <sub><b>didizhu-judy</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/yiyexy">
                     <img src="https://avatars.githubusercontent.com/u/35927125?v=4" width="80;" alt="yiyexy"/>
                     <br />
                     <sub><b>yiyexy</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/YunyaoYan">
                     <img src="https://avatars.githubusercontent.com/u/109638667?v=4" width="80;" alt="YunyaoYan"/>
@@ -427,8 +443,6 @@ Thanks so much to all of our amazing contributors!
                     <sub><b>FeilongTangmonash</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/chengzheng345">
                     <img src="https://avatars.githubusercontent.com/u/209475443?v=4" width="80;" alt="chengzheng345"/>
@@ -471,6 +485,8 @@ Thanks so much to all of our amazing contributors!
                     <sub><b>yunglechao</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/RobitYadda">
                     <img src="https://avatars.githubusercontent.com/u/6811311?v=4" width="80;" alt="RobitYadda"/>
