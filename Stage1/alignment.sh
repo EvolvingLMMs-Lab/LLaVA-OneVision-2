@@ -56,8 +56,8 @@ export WANDB_API_KEY="wandb_v1_5y5JqALBMdHhru8CR1gOLflJlRj_O8BG2XRb0S2x0TJVqW1xA
 export WANDB_PROJECT="llava-ov-1_5"
 export WANDB_NAME="mobilellm_integration"
 
-export CUDA_VISIBLE_DEVICES=4  
-export GPUS_PER_NODE=1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+export GPUS_PER_NODE=4
 export MASTER_PORT=26000
 
 # Choose which backbone to use for training:

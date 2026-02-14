@@ -129,7 +129,10 @@ def model_provider(
 
     # TODO: Make these configurable via input .yaml config.
     vision_transformer_config = deepcopy(language_transformer_config)
-    vision_transformer_config.num_layers = args.encoder_num_layers
+    # Only set num_layers from args for ViT models (like Qwen2-VL), not for FastViT
+    # FastViT determines its own layer count from architecture config
+    if not getattr(args, 'use_fastvit', False):
+        vision_transformer_config.num_layers = args.encoder_num_layers
     vision_transformer_config.first_pipeline_num_layers = None
     vision_transformer_config.last_pipeline_num_layers = None
     vision_transformer_config.vision_model_type = vision_model_type

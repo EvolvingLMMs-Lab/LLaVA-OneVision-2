@@ -128,18 +128,58 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             self.chat_template = get_chat_template() # Load conversation template
             #template for formatting conversations (user/assistant turns)
         
+        # OLD APPROACH (commented out - didn't work for MobileLLM):
         # Load HuggingFace processor (tokenizer + image/ video processor from Qwen2-VL)
-        self.processor = AutoProcessor.from_pretrained(self.args.hf_tokenizer_path, trust_remote_code=True, local_files_only=True)
-        print(f"Loaded processor from {self.args.hf_tokenizer_path}")
-        print(f"Processor config: {self.processor}")
+        # self.processor = AutoProcessor.from_pretrained(self.args.hf_tokenizer_path, trust_remote_code=True, local_files_only=False)
+        # print(f"Loaded processor from {self.args.hf_tokenizer_path}")
+        # print(f"Processor config: {self.processor}")
         
+        # NEW APPROACH: Handle FastVLM (MobileLLM + FastViT) vs Qwen2-VL separately
         # FastViT image processor (following FastVLM repo)
         # Use this for vision encoding instead of Qwen2-VL's processor
         self.use_fastvit = getattr(args, 'use_fastvit', False)
+        
         if self.use_fastvit:
+            # For FastVLM: Load only the language model tokenizer (e.g., MobileLLM)
+            # No need for a full processor since FastViT handles vision separately
+            from transformers import AutoTokenizer
+            self.tokenizer_hf = AutoTokenizer.from_pretrained(
+                self.args.hf_tokenizer_path, 
+                trust_remote_code=True, 
+                local_files_only=False
+            )
+            
+            # Set padding token if not present (required for batch processing)
+            if self.tokenizer_hf.pad_token is None:
+                self.tokenizer_hf.pad_token = self.tokenizer_hf.eos_token
+                print(f"Set pad_token to eos_token: {self.tokenizer_hf.eos_token}")
+            
+            # Create a wrapper that properly delegates all methods to the tokenizer
+            class TokenizerWrapper:
+                def __init__(self, tokenizer):
+                    self.tokenizer = tokenizer
+                
+                def __getattr__(self, name):
+                    # Delegate all other attributes/methods to the underlying tokenizer
+                    return getattr(self.tokenizer, name)
+            
+            self.processor = TokenizerWrapper(self.tokenizer_hf)
+            print(f"Loaded tokenizer (FastVLM mode) from {self.args.hf_tokenizer_path}")
+            
+            # Initialize FastViT image processor
             fastvit_image_size = getattr(args, 'fastvit_image_size', 1024)
             self.fastvit_processor = FastViTImageProcessor(image_size=fastvit_image_size)
             print(f"Initialized FastViT processor with image_size={fastvit_image_size}")
+        else:
+            # For Qwen2-VL: Load full processor (tokenizer + image/video processor)
+            self.processor = AutoProcessor.from_pretrained(
+                self.args.hf_tokenizer_path, 
+                trust_remote_code=True, 
+                local_files_only=False
+            )
+            print(f"Loaded Qwen2-VL processor from {self.args.hf_tokenizer_path}")
+            
+        print(f"Processor config: {self.processor}")
         
         #Resolution parameters for resizing images/videos
         if args.image_resolution:
@@ -484,7 +524,8 @@ class Qwen2VLTaskEncoder(TaskEncoder):
 
         # assert self.args.training_phase == constants.TrainingPhase.PRETRAIN, "Only support PRETRAIN phase"
 
-        text = IMAGE_TOKEN_WITH_TAGS + sample.caption + self.tokenizer.tokenizer.eos_token
+        # text = IMAGE_TOKEN_WITH_TAGS + sample.caption + self.tokenizer.tokenizer.eos_token
+        text = IMAGE_TOKEN_WITH_TAGS + sample.caption + self.tokenizer.eos_token
 
         input_ids, target, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
         num_tiles = [len(image_grid_thw)] if image_grid_thw is not None else [1]
@@ -650,7 +691,8 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 )
             else:
                 text = IMAGE_TOKEN_WITH_TAGS + sample.answers
-            text = text + self.tokenizer.tokenizer.eos_token
+            # text = text + self.tokenizer.tokenizer.eos_token
+            text = text + self.tokenizer.eos_token
             input_ids, target, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
         elif self.args.training_phase == constants.TrainingPhase.SFT:
 

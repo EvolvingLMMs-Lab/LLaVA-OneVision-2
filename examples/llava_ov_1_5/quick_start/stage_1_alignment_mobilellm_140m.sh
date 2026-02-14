@@ -13,8 +13,8 @@ TP="${1:-1}"  # Tensor parallel
 PP="${2:-1}"  # Pipeline parallel
 SEQ_LEN="${3:-512}"  # Sequence length (reduced for testing)
 MBS="${4:-1}"  # Micro batch size
-GBS="${5:-1}"  # Global batch size
-NSTEP="${6:-5}"  # Number of training iterations (reduced for testing)
+GBS="${5:-4}"  # Global batch size (4 examples for testing)
+NSTEP="${6:-1}"  # Number of training iterations (1 step with 4 examples)
 
 # Data paths - UPDATE THESE FOR YOUR SETUP
 DATA_PATH="${DATA_PATH:-"$REPO_ROOT/data/LLaVA-558K-Webdataset"}"
@@ -79,7 +79,7 @@ mkdir -p "$SAVE_CKPT_PATH"
 mkdir -p "$TENSORBOARD_PATH"
 mkdir -p "$SAVE_CKPT_PATH/dataloader"
 
-GPUS_PER_NODE=${GPUS_PER_NODE:-1}
+GPUS_PER_NODE=${GPUS_PER_NODE:-4}
 MASTER_PORT=${MASTER_PORT:-26000}
 
 if [[ $SINGLE_NODE -eq 1 ]]; then
@@ -101,7 +101,7 @@ fi
 # MODEL CONFIGURATION - MobileLLM Backbone
 # ========================================
 MODEL_ARGS=(
-    --model-name llava-ov-mobilellm-140m-fastvit
+    --model-name llava-ov-mobilellm-140m
 )
 
 # ========================================
@@ -112,22 +112,23 @@ DATA_ARGS=(
     --hf-tokenizer-path "$TOKENIZER_PATH"
     --data-path "$DATA_PATH"
     --dataloader-type external
-    --split 100,0,0
+    --split 100,0,0 # Data Splitting part 
     --num-workers 16
     
     # FastViT vision encoder configuration
     --use-fastvit
-    --fastvit-image-size 384  # MobileLLM is efficient, use 384
-    --vision-tower-name mobileclip_s_384  # Use smaller FastViT for efficiency
-    --image-aspect-ratio pad
+    --fastvit-image-size 384  # MobileLLM is efficient, use 384 (for testing)
+    --vision-tower-name mobileclip_l_384  # MobileCLIP-L with 384 resolution
+    --image-aspect-ratio pad # Pad images to square aspect ratio
 )
 
 # ========================================
 # TRAINING CONFIGURATION
 # ========================================
 TRAINING_ARGS=(
-    --training-phase sft
-    --trainable-modules adapter  # Only train adapter in Stage 1
+    --training-phase sft # supervised fine-tuning 
+    --chat-template llama3  # MobileLLM uses Llama3 tokenizer
+    --trainable-modules language_model adapter  # Train language model + adapter (vision frozen)
     --no-gradient-accumulation-fusion
     --seq-length "${SEQ_LEN}"
     --no-rope-fusion
@@ -153,13 +154,14 @@ TRAINING_ARGS=(
     --initial-loss-scale 65536
     --bf16
     --save "$SAVE_CKPT_PATH"
-    --save-interval 2000
+    # --save-interval 2000
+    --save-interval 1
     --ckpt-format torch
     --dataloader-save "${SAVE_CKPT_PATH}/dataloader"
     --ckpt-fully-parallel-load
     --recompute-granularity full
     --recompute-method uniform
-    --recompute-num-layers 4  # Fewer layers to recompute for 140M model
+    --recompute-num-layers 3  # Must divide evenly into 15 layers (15/3=5 chunks)
 )
 
 # ========================================
@@ -213,5 +215,3 @@ torchrun "${DISTRIBUTED_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \
     "${LOGGING_ARGS[@]}" \
     2>&1 | tee "$logfile"
-
-echo "Training completed. Logs saved to: $logfile"

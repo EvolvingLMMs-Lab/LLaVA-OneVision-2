@@ -6,9 +6,58 @@ instead of Qwen. It maintains the vision encoder (SigLIP or FastViT) and adapter
 while replacing the language model architecture.
 """
 
+import torch
 from dataclasses import dataclass
 from aiak_training_llm.models.factory import register_model_config
 from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
+
+
+@dataclass
+class LlavaOvMobileLLMConfig:
+    """Unified config for LLaVA-OV with MobileLLM backbone (matching LlavaOnevision1_5Config structure)"""
+    # Core architecture
+    num_layers: int = 15
+    hidden_size: int = 576
+    ffn_hidden_size: int = 2048
+    num_attention_heads: int = 9
+    
+    # GQA configuration
+    group_query_attention: bool = True
+    num_query_groups: int = 3
+    
+    # Position embeddings
+    position_embedding_type: str = "rope"
+    add_position_embedding: bool = False
+    rotary_interleaved: bool = False
+    rotary_base: int = 8000000
+    
+    # Normalization
+    normalization: str = "RMSNorm"
+    norm_epsilon: float = 1e-05
+    
+    # Activation
+    swiglu: bool = True
+    
+    # Dropout
+    attention_dropout: float = 0.0
+    hidden_dropout: float = 0.0
+    
+    # Bias settings
+    add_bias_linear: bool = False
+    add_qkv_bias: bool = False
+    qk_layernorm: bool = False
+    
+    # Embeddings
+    untie_embeddings_and_output_weights: bool = False
+    
+    # Vocabulary
+    vocab_size_in_config_file: int = 128256
+    make_vocab_size_divisible_by: int = 128
+    
+    # Optional
+    kv_channels: int = None
+    num_experts: int = None
+    moe_ffn_hidden_size: int = None
 
 
 @dataclass
@@ -79,15 +128,8 @@ class AdapterConfig:
 def get_llava_ov_mobilellm_140m_config():
     """
     Configuration for LLaVA-OneVision-1.5 with MobileLLM-R1-140M backbone
-    
-    Returns a dict with language, vision, and adapter configurations
     """
-    return {
-        "language": MobileLLMLanguageConfig(),
-        "vision": VisionConfig(),
-        "adapter": AdapterConfig(),
-        "model_type": "llava_ov_mobilellm"
-    }
+    return LlavaOvMobileLLMConfig()
 
 
 @register_model_config(
@@ -100,22 +142,8 @@ def get_llava_ov_mobilellm_140m_fastvit_config():
     
     Uses FastViT (MobileCLIP) as the vision encoder for efficiency
     """
-    # FastViT configuration (MobileCLIP-L-384)
-    vision_config = VisionConfig(
-        num_layers=12,  # FastViT is shallower
-        hidden_size=768,  # FastViT hidden dimension
-        num_attention_heads=12,
-        ffn_hidden_size=3072,
-        patch_size=16,
-        image_resolution=384
-    )
-    
-    return {
-        "language": MobileLLMLanguageConfig(),
-        "vision": vision_config,
-        "adapter": AdapterConfig(),
-        "model_type": "llava_ov_mobilellm_fastvit"
-    }
+    # Use default MobileLLM config (FastViT vision config can be handled separately)
+    return LlavaOvMobileLLMConfig()
 
 
 def get_vision_config(model_family: str, model_name: str):

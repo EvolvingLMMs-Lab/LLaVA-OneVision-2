@@ -105,7 +105,7 @@ setuptools.setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
     ],
-    packages=setuptools.find_namespace_packages(include=["megatron.core", "megatron.core.*"]),
+    packages=setuptools.find_namespace_packages(include=["megatron.core", "megatron.core.*","megatron.training","megatron.legacy"]),
     ext_modules=[
         Extension(
             "megatron.core.datasets.helpers_cpp",

@@ -77,7 +77,8 @@ def build_tokenizer(args, chat_template: Optional["ChatTemplate"] = None) -> Opt
         if args.training_phase == constants.TrainingPhase.PRETRAIN:
             if tokenizer.eos is None:
                 if args.model_family == constants.LanguageModelFamilies.QWEN:
-                    tokenizer.eos = tokenizer.tokenizer.eod_id
+                    # tokenizer.eos = tokenizer.tokenizer.eod_id
+                    tokenizer.eos = tokenizer.eod_id
 
         elif chat_template is not None:
             # update the tokenizer with chat template

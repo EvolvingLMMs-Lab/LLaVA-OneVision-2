@@ -22,7 +22,11 @@ export ROCM_HOME=${ROCM_HOME:-/opt/rocm}
 export PATH="${ROCM_HOME}/bin:${PATH}"
 export LD_LIBRARY_PATH="${ROCM_HOME}/lib:${ROCM_HOME}/lib64:${LD_LIBRARY_PATH}"
 
-export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0}
+
+# Force HuggingFace offline mode to use local files only
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
 
 
 # RCCL/NCCL runtime hints (tune as needed)
@@ -68,4 +72,10 @@ echo "TOKENIZER_PATH=${TOKENIZER_PATH}"
 echo "CHECKPOINT_PATH=${CHECKPOINT_PATH}"
 echo "SLURM_NODELIST=${SLURM_NODELIST}"
 echo "PYTHONPATH=${PYTHONPATH}"
+
+# Weights & Biases configuration
+export WANDB_API_KEY="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"
+export WANDB_PROJECT="llava-ov-1_5"
+export WANDB_NAME="fastvit_integration"
 bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh
+                                                                                                                                                                                        2,1           Top

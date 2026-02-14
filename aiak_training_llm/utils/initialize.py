@@ -46,6 +46,7 @@ def parse_arguments(
     ignore_unknown_args=False,
 ):
     """Parse arguments."""
+    print("parse arguments function called")
     args = parse_args(extra_args_provider, ignore_unknown_args)
     
     # Prep for checkpoint conversion.

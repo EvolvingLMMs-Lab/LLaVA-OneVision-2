@@ -452,6 +452,8 @@ def _validate_extra_model_args(args):
     if model_config is not None:
         # the structural configuration of model will be overwritten, such as num_layers, hidden_states..
         print_rank_0(f'-------------- Configure model to {args.model_name} --------------', args.rank)
+        print_rank_0(f'[DEBUG] Model config type: {type(model_config).__name__}', args.rank)
+        print_rank_0(f'[DEBUG] Is MobileLLM: {"mobilellm" in args.model_name.lower()}', args.rank)
 
         for field in fields(model_config.__class__):
             assert hasattr(args, field.name), f"The model config field ({field.name}) is not defined in args."
@@ -460,6 +462,8 @@ def _validate_extra_model_args(args):
             print_rank_0(f"  {key} = {value} ", args.rank)
 
         print_rank_0('---------------- End of configuration ----------------', args.rank)
+        print_rank_0(f'[DEBUG] Args now has: num_layers={args.num_layers}, hidden_size={args.hidden_size}, '
+                     f'num_attention_heads={args.num_attention_heads}, vocab_size={args.vocab_size_in_config_file}', args.rank)
 
     if args.enable_fa_within_mla:
         args.attention_backend = AttnBackend.flash
