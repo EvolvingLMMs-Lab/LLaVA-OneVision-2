@@ -20,12 +20,13 @@ NSTEP="${6:-1}"  # Number of training iterations (1 step with 4 examples)
 DATA_PATH="${DATA_PATH:-"$REPO_ROOT/data/LLaVA-558K-Webdataset"}"
 # MobileLLM tokenizer path - use facebook/MobileLLM-R1-140M from HuggingFace
 TOKENIZER_PATH="${TOKENIZER_PATH:-"facebook/MobileLLM-R1-140M"}"
-# Checkpoint path - for MobileLLM converted to Megatron format
-# CHECKPOINT_PATH="${CHECKPOINT_PATH:-"$REPO_ROOT/checkpoints/mobilellm-140m_mcore_tp1_pp1"}"
+# Pretrained checkpoint (MobileLLM-R1-140M + FastViT merged)
+PRETRAINED_CHECKPOINT="${PRETRAINED_CHECKPOINT:-"$REPO_ROOT/checkpoints/mobilellm-fastvit-merged-tp1-pp1"}"
 
 echo "AIAK_TRAINING_PATH=${AIAK_TRAINING_PATH}"
 echo "DATA_PATH=${DATA_PATH}"
 echo "TOKENIZER_PATH=${TOKENIZER_PATH}"
+echo "PRETRAINED_CHECKPOINT=${PRETRAINED_CHECKPOINT}"
 
 # Multi-node configuration
 declare -a list_ip=(
@@ -115,11 +116,15 @@ DATA_ARGS=(
     --split 100,0,0 # Data Splitting part 
     --num-workers 16
     
-    # FastViT vision encoder configuration
+    # FastViT vision encoder configuration  
+    # Using pretrained FastViT + MobileLLM-R1-140M (merged checkpoint)
     --use-fastvit
-    --fastvit-image-size 384  # MobileLLM is efficient, use 384 (for testing)
-    --vision-tower-name mobileclip_l_384  # MobileCLIP-L with 384 resolution
+    --fastvit-image-size 1024  # Match pretrained checkpoint resolution
+    --vision-tower-name mobileclip_l_1024  # MobileCLIP-L with 1024 resolution (from checkpoint)
     --image-aspect-ratio pad # Pad images to square aspect ratio
+    
+    # Load pretrained checkpoint (language model + vision encoder merged)
+    --pretrained-checkpoint "$PRETRAINED_CHECKPOINT"
 )
 
 # ========================================
