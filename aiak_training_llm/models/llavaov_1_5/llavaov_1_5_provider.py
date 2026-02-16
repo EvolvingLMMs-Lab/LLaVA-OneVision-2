@@ -77,23 +77,65 @@ def rice_vl_model_provider(
     else:
         print_rank_0(f'[DEBUG PROVIDER] Using Qwen2.5 as language backbone')
     
+    print_rank_0(f'[DEBUG PROVIDER] ========== LANGUAGE CONFIG ==========')
+    print_rank_0(f'{language_config}')
+    print_rank_0(f'[DEBUG PROVIDER] ======================================')
+    
     # get vision specific config : no. of layers, hidden size, Patch size, Image resolution
     print_rank_0(f'[DEBUG PROVIDER] Loading vision config...')
-    for k, v in asdict(get_vision_config(model_family, args.model_name)).items():
-        setattr(vision_config, k, v)
-    print_rank_0(f'[DEBUG PROVIDER] Vision config: layers={vision_config.num_layers}, hidden={vision_config.hidden_size}')
     
-    # Add FastViT-specific configuration if enabled
+    # Check if using FastViT - it has its own config system
     if getattr(args, 'use_fastvit', False):
-        vision_tower_name = getattr(args, 'vision_tower_name', 'mobileclip_l_384')
+        # FastViT loads config from mobileclip_l.json - set TransformerConfig to match
+        import json
+        import os
+        
+        vision_tower_name = getattr(args, 'vision_tower_name', 'mobileclip_l_1024')
         setattr(vision_config, 'vision_tower_name', vision_tower_name)
+        
+        # Parse resolution from vision_tower_name (e.g., "mobileclip_l_1024" -> 1024)
+        resolution = int(vision_tower_name.split('_')[-1]) if '_' in vision_tower_name else 1024
+        
+        # Load the actual mobileclip JSON config
+        json_config_path = os.path.join(
+            os.path.dirname(__file__), 
+            '../fastvit/mobileclip/configs/mobileclip_l.json'
+        )
+        with open(json_config_path, 'r') as f:
+            mobileclip_config = json.load(f)
+        
+        # Extract image_cfg from the JSON
+        image_cfg = mobileclip_config['image_cfg']
+        
+        # Set vision_config values from mobileclip_l.json
+        setattr(vision_config, 'num_layers', 24)  # RepMixer layers in main stage
+        setattr(vision_config, 'hidden_size', image_cfg['embed_dim'])  # 3072
+        setattr(vision_config, 'patch_size', image_cfg['patch_size'])  # 64
+        setattr(vision_config, 'image_size', resolution)  # from vision_tower_name (1024)
+        setattr(vision_config, 'num_attention_heads', image_cfg['embed_dim'] // 64)  # 48
+        
         print_rank_0(f'[DEBUG PROVIDER] ✓ Using FastViT with vision_tower_name: {vision_tower_name}')
+        print_rank_0(f'[DEBUG PROVIDER] FastViT config loaded from {json_config_path}')
+        print_rank_0(f'[DEBUG PROVIDER] image_cfg: embed_dim={image_cfg["embed_dim"]}, patch_size={image_cfg["patch_size"]}, model={image_cfg["model_name"]}')
+        print_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (FastViT) ==========')
+        print_rank_0(f'{vision_config}')
+        print_rank_0(f'[DEBUG PROVIDER] ================================================')
+    else:
+        # For SigLIP/Rice models, use generic vision config
+        for k, v in asdict(get_vision_config(model_family, args.model_name)).items():
+            setattr(vision_config, k, v)
+        print_rank_0(f'[DEBUG PROVIDER] Vision config (SigLIP/Rice): layers={vision_config.num_layers}, hidden={vision_config.hidden_size}')
+        print_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (SigLIP/Rice) ==========')
+        print_rank_0(f'{vision_config}')
+        print_rank_0(f'[DEBUG PROVIDER] ====================================================')
     
     # get adapter specific config : Projection dimension, Activation function
     print_rank_0(f'[DEBUG PROVIDER] Loading adapter config...')
     for k, v in asdict(get_adapeter_config(model_family)).items():
         setattr(adapter_config, k, v)
-    print_rank_0(f'[DEBUG PROVIDER] Adapter config loaded')
+    print_rank_0(f'[DEBUG PROVIDER] ========== ADAPTER CONFIG ==========')
+    print_rank_0(f'{adapter_config}')
+    print_rank_0(f'[DEBUG PROVIDER] ======================================')
 
     # set special token ids for language model
     setattr(language_config, "image_token_id", 151655)

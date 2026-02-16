@@ -147,7 +147,7 @@ class MobileLLMModel(LanguageModule):
         if self.post_process:
             self.output_layer = tensor_parallel.ColumnParallelLinear(
                 config.hidden_size,
-                self.vocab_size,
+              self.vocab_size,
                 config=config,
                 init_method=config.init_method,
                 bias=False,
