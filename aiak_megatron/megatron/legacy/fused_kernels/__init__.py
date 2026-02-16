@@ -15,6 +15,12 @@ os.environ["TORCH_CUDA_ARCH_LIST"] = ""
 
 
 def load(args):
+    
+    # Skip fused kernels on ROCm (AMD GPUs)
+    import torch
+    if torch.version.hip is not None:
+        print("Skipping fused kernels compilation on ROCm/AMD platform")
+        return
 
     # Check if cuda 11 is installed for compute capability 8.0
     cc_flag = []
