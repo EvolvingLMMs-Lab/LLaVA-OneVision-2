@@ -244,6 +244,16 @@ def pretrain(
     timers('model-and-optimizer-setup').stop()
     print_datetime('after model, optimizer, and learning rate scheduler are built')
     config = get_model_config(model[0])
+    
+    # Print full model structure
+    print_rank_0('FULL MODEL STRUCTURE:')
+    if isinstance(model, list):
+        for idx, m in enumerate(model):
+            print_rank_0(f'\n--- Model {idx} (pipeline rank {idx}) ---')
+            print_rank_0(m)
+    else:
+        print_rank_0(model)
+    print_rank_0('=' * 80)
 
     # Data stuff.
     timers('train/valid/test-data-iterators-setup', log_level=0).start(barrier=True)
@@ -360,6 +370,7 @@ def setup_model_and_optimizer(model_provider_func,
     timers = get_timers()
 
     model = get_model(model_provider_func, model_type)
+    print(model)
     unwrapped_model = unwrap_model(model)
 
     kwargs = {}
