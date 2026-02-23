@@ -22,13 +22,6 @@ export ROCM_HOME=${ROCM_HOME:-/opt/rocm}
 export PATH="${ROCM_HOME}/bin:${PATH}"
 export LD_LIBRARY_PATH="${ROCM_HOME}/lib:${ROCM_HOME}/lib64:${LD_LIBRARY_PATH}"
 
-export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0}
-
-# Force HuggingFace offline mode to use local files only
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-
-
 # RCCL/NCCL runtime hints (tune as needed)
 export NCCL_DEBUG=${NCCL_DEBUG:-WARN}
 export NCCL_COLLNET_ENABLE=${NCCL_COLLNET_ENABLE:-0}
@@ -61,7 +54,7 @@ export AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-$REPO_ROOT}"
 export AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-$REPO_ROOT/aiak_megatron}"
 export DATA_PATH="${DATA_PATH:-$REPO_ROOT/data/LLaVA-558K-Webdataset}"
 export TOKENIZER_PATH="${TOKENIZER_PATH:-$REPO_ROOT/checkpoints/LLaVA-OneVision-1.5-4B-stage0}"
-export CHECKPOINT_PATH="${CHECKPOINT_PATH:-$REPO_ROOT/checkpoints/LLaVA-OneVision-1.5-4B-stage0_mcore_tp1_pp1}"
+export CHECKPOINT_PATH="${CHECKPOINT_PATH:-$REPO_ROOT/checkpoints/mobilellm-fastvit-merged-tp1-pp1}"
 # Add megatron to PYTHONPATH so imports work
 export PYTHONPATH="${AIAK_MAGATRON_PATH}:${AIAK_TRAINING_PATH}:${PYTHONPATH}"
 
@@ -77,5 +70,13 @@ echo "PYTHONPATH=${PYTHONPATH}"
 export WANDB_API_KEY="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"
 export WANDB_PROJECT="llava-ov-1_5"
 export WANDB_NAME="fastvit_integration"
+
+# Fix HIP_VISIBLE_DEVICES to use both GPUs
+export HIP_VISIBLE_DEVICES=0,1
+
+# Set number of GPUs to match SLURM allocation (2 GPUs)
+export GPUS_PER_NODE=2
+
+# Run training with global batch size matching 2 GPUs
 bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh
-                                                                                                                                                                                        2,1           Top
+                                                                                                                                                                                                                                       14,1          Top

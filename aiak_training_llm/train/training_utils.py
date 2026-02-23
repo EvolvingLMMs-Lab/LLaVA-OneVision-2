@@ -246,13 +246,37 @@ def pretrain(
     config = get_model_config(model[0])
     
     # Print full model structure
+    print_rank_0('=' * 80)
     print_rank_0('FULL MODEL STRUCTURE:')
+    print_rank_0('=' * 80)
     if isinstance(model, list):
         for idx, m in enumerate(model):
             print_rank_0(f'\n--- Model {idx} (pipeline rank {idx}) ---')
             print_rank_0(m)
     else:
         print_rank_0(model)
+    print_rank_0('=' * 80)
+    
+    # Print parameter trainability status
+    print_rank_0('\n' + '=' * 80)
+    print_rank_0('PARAMETER TRAINABILITY STATUS:')
+    print_rank_0('=' * 80)
+    model_to_check = model[0] if isinstance(model, list) else model
+    trainable_params = 0
+    frozen_params = 0
+    for name, param in model_to_check.named_parameters():
+        status = "TRAINABLE" if param.requires_grad else "FROZEN"
+        print_rank_0(f"{status:12s} | {name:80s} | shape: {str(tuple(param.shape)):30s} | dtype: {param.dtype}")
+        if param.requires_grad:
+            trainable_params += param.numel()
+        else:
+            frozen_params += param.numel()
+    
+    print_rank_0('=' * 80)
+    print_rank_0(f'Total trainable parameters: {trainable_params:,} ({trainable_params/1e6:.2f}M)')
+    print_rank_0(f'Total frozen parameters: {frozen_params:,} ({frozen_params/1e6:.2f}M)')
+    print_rank_0(f'Total parameters: {trainable_params + frozen_params:,} ({(trainable_params + frozen_params)/1e6:.2f}M)')
+    print_rank_0(f'Trainable percentage: {100 * trainable_params / (trainable_params + frozen_params):.2f}%')
     print_rank_0('=' * 80)
 
     # Data stuff.

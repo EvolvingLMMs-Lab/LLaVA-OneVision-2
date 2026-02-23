@@ -133,7 +133,7 @@ DATA_ARGS=(
 TRAINING_ARGS=(
     --training-phase sft # supervised fine-tuning 
     --chat-template llama3  # MobileLLM uses Llama3 tokenizer
-    --trainable-modules language_model adapter  # Train language model + adapter (vision frozen)
+    --trainable-modules language_model adapter  # Stage 1: Train language model + adapter (vision frozen)
     --no-gradient-accumulation-fusion
     --seq-length "${SEQ_LEN}"
     --no-rope-fusion

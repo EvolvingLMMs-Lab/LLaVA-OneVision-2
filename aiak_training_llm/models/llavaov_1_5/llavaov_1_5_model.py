@@ -342,6 +342,12 @@ class LlavaOnevision1_5(MegatronModule):
         # )
         # print_rank_0(input_ids)
         # print_rank_0(position_ids)
+        print("training forward step: input_ids shape {}, images shape {}, image_grid_thw shape {}, attn_mask_type {}, position_ids shape {}".format(
+            input_ids.shape if input_ids is not None else None, 
+            images.shape if images is not None else None, 
+            image_grid_thw.shape if image_grid_thw is not None else None, 
+            attn_mask_type, 
+            position_ids.shape if position_ids is not None else None))
         use_inference_kv_cache = (
             inference_params is not None
             and "image_tokens_count" in inference_params.key_value_memory_dict
