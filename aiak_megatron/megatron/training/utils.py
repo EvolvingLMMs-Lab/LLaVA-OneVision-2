@@ -381,6 +381,9 @@ def print_rank_last(message):
 
 def get_device_arch_version():
     """Returns GPU arch version (8: Ampere, 9: Hopper, 10: Blackwell, ...)"""
+    # On AMD/ROCm, return a high version to skip CUDA-specific checks
+    if torch.version.hip is not None:
+        return 99  # Return high value to skip CUDA_DEVICE_MAX_CONNECTIONS checks
     return torch.cuda.get_device_properties(torch.device("cuda:0")).major
 
 
