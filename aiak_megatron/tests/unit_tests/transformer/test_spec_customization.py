@@ -150,7 +150,7 @@ class TestSpecCustomization:
             attn = DotProductAttention(
                 config, layer_number=1, attn_mask_type=AttnMaskType.causal, attention_type='self'
             )
-        except:
+        except Exception:
             threw = True
         finally:
             assert threw, 'Expected DotProductAttention to throw exception for SWA'
@@ -169,7 +169,7 @@ class TestSpecCustomization:
             attn = TEDotProductAttention(
                 config, layer_number=1, attn_mask_type=AttnMaskType.causal, attention_type='self'
             )
-        except:
+        except Exception:
             threw = True
         finally:
             assert threw, "Expected TEDotProductAttention to throw for integer window-size"

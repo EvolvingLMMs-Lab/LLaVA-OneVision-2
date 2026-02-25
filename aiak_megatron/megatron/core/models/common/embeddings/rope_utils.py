@@ -25,7 +25,7 @@ try:
 except ImportError:
     try:
         from megatron.core.extensions.transformer_engine import fused_apply_rotary_pos_emb
-    except:
+    except Exception:
         fused_apply_rotary_pos_emb = None
 
 

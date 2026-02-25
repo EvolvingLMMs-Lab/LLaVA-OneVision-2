@@ -121,7 +121,7 @@ def _worker_process(job_queue, result_list, base_dir, output_dir,
     while True:
         try:
             chunk = job_queue.get_nowait()
-        except:
+        except Exception:
             break
 
         logger.info(f"进程 {os.getpid()} 处理 chunk（{len(chunk)} 条）")
