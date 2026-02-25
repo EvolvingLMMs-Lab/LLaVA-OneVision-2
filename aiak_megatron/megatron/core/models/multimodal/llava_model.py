@@ -31,9 +31,9 @@ try:
         import transformer_engine_torch as tex
 
         HAVE_TEX = True
-    except:
+    except Exception:
         HAVE_TEX = False
-except:
+except Exception:
     HAVE_TE = False
     if get_context_parallel_world_size() > 1:
         raise RuntimeError("ContextParallelism requires TransformerEngine support, but not found.")

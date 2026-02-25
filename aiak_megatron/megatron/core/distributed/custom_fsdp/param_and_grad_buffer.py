@@ -24,12 +24,12 @@ from megatron.core.utils import is_submodule, is_te_min_version, log_on_each_pip
 
 try:
     from transformer_engine.pytorch import fp8_model_init
-except:
+except Exception:
     pass
 
 try:
     from transformer_engine.pytorch.module.base import TransformerEngineBaseModule
-except:
+except Exception:
     pass
 
 

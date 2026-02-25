@@ -33,7 +33,7 @@ try:
     from megatron.core.extensions.transformer_engine import TECudaRNGStatesTracker
 
     HAVE_TE_GRAPHS = True
-except:
+except Exception:
     HAVE_TE_GRAPHS = False
 
 _IS_GRAPH_CAPTURING = False

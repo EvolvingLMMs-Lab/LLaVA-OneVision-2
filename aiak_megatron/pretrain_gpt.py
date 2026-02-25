@@ -118,7 +118,7 @@ def model_provider(pre_process=True, post_process=True) -> Union[GPTModel, megat
                 # Check if fp8_model_init supports preserve_high_precision_init_val
                 if "preserve_high_precision_init_val" in inspect.signature(fp8_model_init).parameters:
                     build_model_context_args["preserve_high_precision_init_val"] = True
-            except:
+            except Exception:
                 raise RuntimeError("--fp8-param-gather requires `fp8_model_init` from TransformerEngine,but not found.")
 
         with build_model_context(**build_model_context_args):

@@ -25,7 +25,7 @@ from .transformer_config import TransformerConfig
 
 try:
     from flash_attn import flash_attn_with_kvcache
-except:
+except Exception:
     flash_attn_with_kvcache = None
 
 
