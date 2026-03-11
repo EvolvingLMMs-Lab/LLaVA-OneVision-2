@@ -67,6 +67,16 @@ def get_batch(data_iterator):
     else:
         data = None
 
+    print("=" * 80)
+    print("[DEBUG GET_BATCH] Checking data from iterator:")
+    print(f"  data is None: {data is None}")
+    if data is not None:
+        print(f"  data keys: {data.keys() if isinstance(data, dict) else 'not a dict'}")
+        if isinstance(data, dict) and 'images' in data:
+            print(f"  data['images'] is None: {data['images'] is None}")
+            print(f"  data['images'] shape: {data['images'].shape if data['images'] is not None else 'None'}")
+    print("=" * 80)
+
     data_i = tensor_parallel.broadcast_data([
         "input_ids", 
         # "position_ids", 
@@ -77,6 +87,11 @@ def get_batch(data_iterator):
         "loss_mask"
     ], data, torch.int64)
     data_f = tensor_parallel.broadcast_data(["images"], data, torch.float32)
+
+    print("[DEBUG GET_BATCH] After broadcast:")
+    print(f"  data_f['images'] is None: {data_f['images'] is None}")
+    print(f"  data_f['images'] shape: {data_f['images'].shape if data_f['images'] is not None else 'None'}")
+    print("=" * 80)
 
     # slice batch along sequence dimension for context parallelism
     assert mpu.get_context_parallel_world_size() == 1, "not implemented"

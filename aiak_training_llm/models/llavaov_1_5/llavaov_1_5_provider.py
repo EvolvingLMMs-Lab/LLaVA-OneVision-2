@@ -11,7 +11,7 @@ from aiak_training_llm.models.llavaov_1_5.llavaov_1_5_config import (
     get_adapeter_config, get_vision_config)
 # MobileLLM config is now in llavaov_1_5_config.py and applied via args
 from aiak_training_llm.utils import (build_transformer_config, get_args,
-                                     print_rank_0)
+                                     print_rank_0, get_tokenizer)
 from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
 from megatron.core import mpu
 from megatron.core.transformer.spec_utils import import_module
@@ -137,9 +137,39 @@ def rice_vl_model_provider(
     print_rank_0(f'{adapter_config}')
     print_rank_0(f'[DEBUG PROVIDER] ======================================')
 
-    # set special token ids for language model
-    setattr(language_config, "image_token_id", 151655)
-    setattr(language_config, "video_token_id", 151656)
+    # set special token ids for language model using the shared runtime tokenizer
+    image_token_id = 151655
+    video_token_id = 151656
+    try:
+        tokenizer = get_tokenizer()
+        image_token_id = tokenizer.convert_tokens_to_ids("<|image_pad|>")
+        video_token_id = tokenizer.convert_tokens_to_ids("<|video_pad|>")
+
+        if image_token_id is None or video_token_id is None:
+            vocab = getattr(tokenizer, "vocab", None)
+            if isinstance(vocab, dict):
+                if image_token_id is None:
+                    image_token_id = vocab.get("<|image_pad|>")
+                if video_token_id is None:
+                    video_token_id = vocab.get("<|video_pad|>")
+
+        if image_token_id is None:
+            image_token_id = 151655
+        if video_token_id is None:
+            video_token_id = 151656
+
+        print_rank_0(
+            f"[DEBUG PROVIDER] Resolved vision token ids from tokenizer: "
+            f"image_token_id={image_token_id}, video_token_id={video_token_id}"
+        )
+    except Exception as e:
+        print_rank_0(
+            f"[WARN PROVIDER] Failed to resolve vision token ids from tokenizer "
+            f"({e}); fallback to defaults image_token_id={image_token_id}, video_token_id={video_token_id}"
+        )
+
+    setattr(language_config, "image_token_id", int(image_token_id))
+    setattr(language_config, "video_token_id", int(video_token_id))
 
     #Handle pipeline parallelism 
 

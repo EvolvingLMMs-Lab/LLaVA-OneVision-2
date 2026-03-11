@@ -23,6 +23,7 @@ from aiak_training_llm.models.qwen import QwenModel
 from aiak_training_llm.models.mobilellm import MobileLLMModel
 from aiak_training_llm.models.qwen_vl.adapter import Adapter
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
+from aiak_training_llm.utils import print_rank_0
 
 
 def _rotate_half(x):
@@ -160,6 +161,7 @@ class LlavaOnevision1_5(MegatronModule):
         self.vision_model = None
         self.adapter = None
         self.language_model = None
+        self._big_debug_forward_step = 0
 
         #  define the vision model and the projection from vision model outputs to language model inputs.
         if self.add_encoder:
@@ -342,12 +344,17 @@ class LlavaOnevision1_5(MegatronModule):
         # )
         # print_rank_0(input_ids)
         # print_rank_0(position_ids)
-        print("training forward step: input_ids shape {}, images shape {}, image_grid_thw shape {}, attn_mask_type {}, position_ids shape {}".format(
-            input_ids.shape if input_ids is not None else None, 
-            images.shape if images is not None else None, 
-            image_grid_thw.shape if image_grid_thw is not None else None, 
-            attn_mask_type, 
-            position_ids.shape if position_ids is not None else None))
+        self._big_debug_forward_step += 1
+        debug_step = self._big_debug_forward_step
+        print_rank_0(
+            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+            f"input_ids={tuple(input_ids.shape) if input_ids is not None else None}, "
+            f"images={tuple(images.shape) if images is not None else None}, "
+            f"image_grid_thw={tuple(image_grid_thw.shape) if image_grid_thw is not None else None}, "
+            f"labels={tuple(labels.shape) if labels is not None else None}, "
+            f"attn_mask_type={attn_mask_type}, "
+            f"position_ids={tuple(position_ids.shape) if position_ids is not None else None}"
+        )
         use_inference_kv_cache = (
             inference_params is not None
             and "image_tokens_count" in inference_params.key_value_memory_dict
@@ -360,9 +367,25 @@ class LlavaOnevision1_5(MegatronModule):
             if images is not None:
                 image_embeddings, window_index = self.vision_model(images, \
                                     grid_thw=image_grid_thw) # [img_len, h_vision]
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"vision_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
+                    f"requires_grad={image_embeddings.requires_grad}, window_index_shape="
+                    f"{tuple(window_index.shape) if window_index is not None else None}"
+                )
                 image_embeddings = self.adapter(image_embeddings, window_index)
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"adapter_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
+                    f"requires_grad={image_embeddings.requires_grad}"
+                )
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"image_token_id={self.config.image_token_id}, token_count={n_image_tokens}, "
+                    f"feature_count={n_image_features}"
+                )
                 if n_image_tokens != n_image_features:
                     # raise ValueError(
                     #     f"Image features {n_image_features} != image tokens {n_image_tokens}"
@@ -430,13 +453,19 @@ class LlavaOnevision1_5(MegatronModule):
             language_embeddings = self.language_model.embedding(
                 input_ids=input_ids, position_ids=None
             )  # [text_seq_len, b, h_language]
+            print_rank_0(
+                f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                f"language_embeddings shape={tuple(language_embeddings.shape)}, dtype={language_embeddings.dtype}, "
+                f"requires_grad={language_embeddings.requires_grad}"
+            )
 
             # If running inference, we can skip image token computation if they were computed already
             # earlier for this sample.
             if use_inference_kv_cache or (images is None and pixel_values_videos is None):
                 combined_embeddings = language_embeddings
             else:
-                if images is not None and self.config.image_token_id in input_ids:
+                combined_embeddings = language_embeddings
+                if images is not None and (input_ids == self.config.image_token_id).any():
                     image_token_id = self.config.image_token_id
                     images_mask = (
                         (input_ids == image_token_id).transpose(0, 1)
@@ -445,9 +474,15 @@ class LlavaOnevision1_5(MegatronModule):
                         .to(language_embeddings.device)
                     )
                     image_embeddings = image_embeddings.to(language_embeddings.device, language_embeddings.dtype)
-                    combined_embeddings = language_embeddings.masked_scatter(images_mask, image_embeddings)
+                    combined_embeddings = combined_embeddings.masked_scatter(images_mask, image_embeddings)
+                    print_rank_0(
+                        f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                        f"image_inserted mask_true={int(images_mask.sum().item())}, "
+                        f"combined_embeddings shape={tuple(combined_embeddings.shape)}, "
+                        f"requires_grad={combined_embeddings.requires_grad}"
+                    )
 
-                if pixel_values_videos is not None and self.config.video_token_id in input_ids:
+                if pixel_values_videos is not None and (input_ids == self.config.video_token_id).any():
                     video_token_id = self.config.video_token_id
                     videos_mask = (
                         (input_ids == video_token_id).transpose(0, 1)
@@ -456,7 +491,7 @@ class LlavaOnevision1_5(MegatronModule):
                         .to(language_embeddings.device)
                     )
                     video_embeddings = video_embeddings.to(language_embeddings.device, language_embeddings.dtype)
-                    combined_embeddings = language_embeddings.masked_scatter(videos_mask, video_embeddings)
+                    combined_embeddings = combined_embeddings.masked_scatter(videos_mask, video_embeddings)
 
             if self.config.context_parallel_size > 1:
                 combined_embeddings = get_inputs_on_this_cp_rank(combined_embeddings)
@@ -479,6 +514,12 @@ class LlavaOnevision1_5(MegatronModule):
             inference_params=inference_params,
             packed_seq_params=packed_seq_params,
             extra_block_kwargs={},
+        )
+
+        print_rank_0(
+            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+            f"model_output shape={tuple(output.shape) if hasattr(output, 'shape') else None}, "
+            f"dtype={getattr(output, 'dtype', None)}, requires_grad={getattr(output, 'requires_grad', None)}"
         )
 
         return output

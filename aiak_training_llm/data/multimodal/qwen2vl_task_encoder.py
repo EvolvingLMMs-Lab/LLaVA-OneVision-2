@@ -29,7 +29,8 @@ from aiak_training_llm.models.fastvit.mm_utils import (
 
 from aiak_training_llm.data.multimodal import MultiMixQASample
 from aiak_training_llm.data.multimodal.length_sort_dataset import LengthPoolSortDataset
-from aiak_training_llm.utils import constants, get_chat_template
+from aiak_training_llm.utils import constants, get_chat_template, get_tokenizer
+from aiak_training_llm.tokenizer.special_tokens import ensure_multimodal_special_tokens
 
 from .task_encoder import (ImageTaskBatchPacked, ImageTaskSample,
                            ImageTaskSamplePacked, TaskEncoder)
@@ -143,11 +144,19 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             # For FastVLM: Load only the language model tokenizer (e.g., MobileLLM)
             # No need for a full processor since FastViT handles vision separately
             from transformers import AutoTokenizer
-            self.tokenizer_hf = AutoTokenizer.from_pretrained(
-                self.args.hf_tokenizer_path, 
-                trust_remote_code=True, 
-                local_files_only=False
-            )
+            shared_tokenizer = get_tokenizer()
+            if shared_tokenizer is not None and hasattr(shared_tokenizer, "hf_tokenizer"):
+                self.tokenizer_hf = shared_tokenizer.hf_tokenizer()
+                print("Using shared training tokenizer in FastVLM mode")
+            else:
+                self.tokenizer_hf = AutoTokenizer.from_pretrained(
+                    self.args.hf_tokenizer_path,
+                    trust_remote_code=True,
+                    local_files_only=False,
+                )
+
+            added_mm_tokens = ensure_multimodal_special_tokens(self.tokenizer_hf)
+            print(f"Ensured multimodal special tokens for FastVLM tokenizer; added={added_mm_tokens}")
             
             # Set padding token if not present (required for batch processing)
             if self.tokenizer_hf.pad_token is None:
@@ -196,6 +205,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
         # Image processing parameters
         self.min_pixels = args.min_pixels
         self.max_pixels = args.max_pixels
+        self._logged_multimodal_token_debug_once = False
 
     def _reisize_video(self, vision: VideoData, image_factor=28, frame_factor=2):
         """ Resize video: frame number, height, width """
@@ -287,6 +297,29 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             )
             input_ids = text_inputs['input_ids'][0]
             attn_mask = text_inputs['attention_mask'][0].logical_not()
+            fastvit_tokenizer = self.processor.tokenizer
+            vision_start_id, img_pad_id, vision_end_id = fastvit_tokenizer.convert_tokens_to_ids([
+                VISION_TAGS[0],
+                IMAGE_TOKEN,
+                VISION_TAGS[1]
+            ])
+            if vision_start_id is None or img_pad_id is None or vision_end_id is None:
+                vocab = fastvit_tokenizer.get_vocab()
+                if img_pad_id is None:
+                    img_pad_id = vocab.get(IMAGE_TOKEN)
+                if vision_start_id is None:
+                    vision_start_id = vocab.get(VISION_TAGS[0])
+                if vision_end_id is None:
+                    vision_end_id = vocab.get(VISION_TAGS[1])
+            if not self._logged_multimodal_token_debug_once:
+                img_count = int((input_ids == img_pad_id).sum().item()) if img_pad_id is not None else 0
+                vstart_count = int((input_ids == vision_start_id).sum().item()) if vision_start_id is not None else 0
+                print(
+                    f"[DEBUG PREPROCESS TOKENS] image_token='{IMAGE_TOKEN}' id={img_pad_id}, "
+                    f"vision_start='{VISION_TAGS[0]}' id={vision_start_id}, vision_end='{VISION_TAGS[1]}' id={vision_end_id}, "
+                    f"counts_in_input_ids: image={img_count}, vision_start={vstart_count}"
+                )
+                self._logged_multimodal_token_debug_once = True
             
             # Process image with FastVLM's preprocessing utilities
             # Default to 'pad' aspect ratio (expand to square with padding)
@@ -322,11 +355,6 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             
             # Create target tensor (same as Qwen2-VL path)
             target = input_ids.clone()
-            vision_start_id, img_pad_id, vision_end_id = self.tokenizer.convert_tokens_to_ids([
-                VISION_TAGS[0],
-                IMAGE_TOKEN,
-                VISION_TAGS[1]
-            ])
             target[target == vision_start_id] = IGNORE_INDEX
             target[target == img_pad_id] = IGNORE_INDEX
             target[target == vision_end_id] = IGNORE_INDEX
@@ -354,6 +382,15 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             IMAGE_TOKEN,
             VISION_TAGS[1]
         ])
+        if not self._logged_multimodal_token_debug_once:
+            img_count = int((input_ids == img_pad_id).sum().item()) if img_pad_id is not None else 0
+            vstart_count = int((input_ids == vision_start_id).sum().item()) if vision_start_id is not None else 0
+            print(
+                f"[DEBUG PREPROCESS TOKENS] image_token='{IMAGE_TOKEN}' id={img_pad_id}, "
+                f"vision_start='{VISION_TAGS[0]}' id={vision_start_id}, vision_end='{VISION_TAGS[1]}' id={vision_end_id}, "
+                f"counts_in_input_ids: image={img_count}, vision_start={vstart_count}"
+            )
+            self._logged_multimodal_token_debug_once = True
         target[target == vision_start_id] = IGNORE_INDEX
         target[target == img_pad_id] = IGNORE_INDEX
         target[target == vision_end_id] = IGNORE_INDEX

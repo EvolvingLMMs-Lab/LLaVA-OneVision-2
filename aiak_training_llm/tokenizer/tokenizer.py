@@ -11,6 +11,7 @@ from megatron.training.tokenizer import build_tokenizer as build_megatron_tokeni
 from aiak_training_llm.utils import constants, print_rank_0
 
 from .tokenization_hf import AutoTokenizerFromHF
+from .special_tokens import ensure_multimodal_special_tokens, MM_SPECIAL_TOKENS
 
 
 if TYPE_CHECKING:
@@ -65,6 +66,26 @@ def build_tokenizer(args, chat_template: Optional["ChatTemplate"] = None) -> Opt
                                         padding_side=args.padding_side,
                                         model_max_length=args.seq_length,
                                         split_special_tokens=args.split_special_tokens)
+
+        if (
+            args.model_family in constants.VisionLanguageModelFamilies.names()
+            or args.model_family in constants.VideoLanguageModelFamilies.names()
+        ):
+            added_mm_tokens = ensure_multimodal_special_tokens(tokenizer.hf_tokenizer())
+            print_rank_0(
+                f"INFO: ensured multimodal special tokens {MM_SPECIAL_TOKENS}; added={added_mm_tokens}",
+                args.rank,
+            )
+            current_tokenizer_vocab_size = tokenizer.vocab_size
+            if getattr(args, "vocab_size_in_config_file", None) is not None and \
+               current_tokenizer_vocab_size > args.vocab_size_in_config_file:
+                print_rank_0(
+                    f"WARNING: tokenizer vocab size increased from config size "
+                    f"{args.vocab_size_in_config_file} to {current_tokenizer_vocab_size}; "
+                    f"updating args.vocab_size_in_config_file to avoid embedding index OOB.",
+                    args.rank,
+                )
+                args.vocab_size_in_config_file = current_tokenizer_vocab_size
 
         if args.additional_special_tokens is not None:
             added_tokens = tokenizer.add_special_tokens(
