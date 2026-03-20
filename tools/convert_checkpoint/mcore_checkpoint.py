@@ -139,6 +139,15 @@ class McoreCheckpoint(AbstractCheckpoint):
             sub_dir_name = f"mp_rank_{t:02d}" if self.pp == 1 \
                     else f"mp_rank_{t:02d}_{p:03d}"
             checkpoint_path = os.path.join(self.load_path, sub_dir_name, checkpoint_name)
+            if not os.path.exists(checkpoint_path) and self.pp == 1:
+                # Fallback: checkpoint may be stored in EP-sharded layout (mp_rank_{t}_{e})
+                # even when this component doesn't use EP (e.g. ViT in an MoE checkpoint).
+                # Use ep=0 shard — non-EP weights are replicated across all EP ranks.
+                fallback_dir = f"mp_rank_{t:02d}_000"
+                fallback_path = os.path.join(self.load_path, fallback_dir, checkpoint_name)
+                if os.path.exists(fallback_path):
+                    print(f"load checkpoint (ep=0 fallback): {fallback_path}")
+                    return torch.load(fallback_path, map_location="cpu", weights_only=False)
             print(f"load checkpoint: {checkpoint_path}")
             return torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         else:

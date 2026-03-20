@@ -24,6 +24,7 @@ from convert_checkpoint.arguments import parse_args
 from convert_checkpoint.custom.llava_onevision2.util import (
     load_huggingface_checkpoint,
     load_megatron_checkpoint,
+    load_megatron_checkpoint_tp_pp_ep,
     save_huggingface_checkpoint,
     save_megatron_checkpoint,
 )
@@ -33,6 +34,16 @@ args = parse_args()
 name_map = {}  # megatron -> huggingface
 with open(args.common_config_path, "r", encoding="utf-8") as f:
     name_map = json.loads(f.read())
+
+
+def _get_non_ep_model_source(state_dict):
+    first = state_dict[0]
+    if isinstance(first, dict):
+        return first["model"]
+    first_rank = first[0]
+    if isinstance(first_rank, dict):
+        return first_rank["model"]
+    raise TypeError("Unsupported non-EP checkpoint structure")
 
 
 def _resolve_hf_source_key(source, source_key, target_key):
@@ -80,7 +91,9 @@ def _resolve_mcore_source_key(source, source_key, target_key):
                 print(f" ! fallback: {target_key} <- {candidate} (from {source_key})")
                 return candidate
 
-        auto_candidates = [key for key in source.keys() if key.startswith("adapter") and "abs" in key and key.endswith(".weight")]
+        auto_candidates = [
+            key for key in source.keys() if key.startswith("adapter") and "abs" in key and key.endswith(".weight")
+        ]
         if len(auto_candidates) == 1:
             print(f" ! auto-fallback: {target_key} <- {auto_candidates[0]} (from {source_key})")
             return auto_candidates[0]
@@ -90,14 +103,19 @@ def _resolve_mcore_source_key(source, source_key, target_key):
 
     raise KeyError(source_key)
 
+
 if (args.load_platform, args.save_platform) == ("mcore", "huggingface"):
     """ megatron to huggingface """
     if args.megatron_path is not None:
         sys.path.insert(0, args.megatron_path)
     print(" ====== convert adapter from Megatron Core to HuggingFace ======")
     target = {}
-    state_dict = load_megatron_checkpoint(args.load_ckpt_path)
-    source = state_dict[0]["model"] if args.pipeline_model_parallel_size == 1 else state_dict[0][0]["model"]
+    if args.expert_parallel_size is not None:
+        state_dict = load_megatron_checkpoint_tp_pp_ep(args.load_ckpt_path)
+        source = state_dict[0][0][0]["model"]
+    else:
+        state_dict = load_megatron_checkpoint(args.load_ckpt_path)
+        source = _get_non_ep_model_source(state_dict)
     for k1, k2 in name_map.items():
         resolved_source_key = _resolve_mcore_source_key(source, k1, k2)
         if resolved_source_key is None:
@@ -125,18 +143,18 @@ elif (args.load_platform, args.save_platform) == ("huggingface", "mcore"):
     save_megatron_checkpoint(state_dict, os.path.join(args.save_ckpt_path, "release"))
 
 elif (args.load_platform, args.save_platform) == ("mcore", "mcore"):
-    """ megatron to huggingface """
+    """ megatron to megatron """
     if args.megatron_path is not None:
         sys.path.insert(0, args.megatron_path)
     print(" ====== convert adapter from Megatron Core to Megatron Core ======")
     tp = args.tensor_model_parallel_size
-    state_dict = load_megatron_checkpoint(args.load_ckpt_path)
-    if args.pipeline_model_parallel_size == 1:
-        source = state_dict[0]["model"]
-        target = deepcopy(source)
+    if args.expert_parallel_size is not None:
+        state_dict = load_megatron_checkpoint_tp_pp_ep(args.load_ckpt_path)
+        source = state_dict[0][0][0]["model"]
     else:
-        source = state_dict[0][0]["model"]
-        target = deepcopy(source)
+        state_dict = load_megatron_checkpoint(args.load_ckpt_path)
+        source = _get_non_ep_model_source(state_dict)
+    target = deepcopy(source)
 
     # Create the new state dict structure
     new_state_dict = [{"model": deepcopy(target)} for i in range(tp)]

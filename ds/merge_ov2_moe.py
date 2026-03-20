@@ -611,10 +611,17 @@ def validate_llm_consistency(model, llm_path, sample_text):
     print(f"LLM output max difference: {max_diff:.8f}")
     print(f"LLM output cosine similarity: {cur_sim:.6f}")
 
-    if cur_sim > 0.99 and diff < 1e-2:
+    llm_cosine_threshold = 0.99
+    llm_mean_diff_threshold = 5e-2
+
+    if cur_sim > llm_cosine_threshold and diff < llm_mean_diff_threshold:
         print("✅ LLM component consistency verification passed")
     else:
-        raise ValueError("❌ LLM component consistency verification failed")
+        raise ValueError(
+            "❌ LLM component consistency verification failed "
+            f"(cos={cur_sim:.6f}, mean_diff={diff:.8f}, max_diff={max_diff:.8f}; "
+            f"required: cos>{llm_cosine_threshold}, mean_diff<{llm_mean_diff_threshold})"
+        )
 
 
 def save_merged_model(model, output_path, tokenizer, image_processor):

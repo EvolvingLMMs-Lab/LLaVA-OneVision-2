@@ -1,0 +1,66 @@
+{
+    "args": {
+        "common": {
+            "num_layers": 24,
+            "hidden_size": 1024,
+            "ffn_hidden_size": 4096,
+            "num_attention_heads": 16,
+            "num_key_value_heads": 16
+        },
+        "huggingface": {
+            "depth": 24,
+            "embed_dim": 1024,
+            "mlp_ratio": 4,
+            "num_heads": 16,
+            "in_chans": 3,
+            "patch_size": 14,
+            "spatial_merge_size": 2,
+            "spatial_patch_size": 14
+        },
+        "mcore": {
+            "num_layers_per_virtual_pipeline_stage": null,
+            "virtual_pipeline_model_parallel_size": null,
+            "tensor_model_parallel_size": 1,
+            "pipeline_model_parallel_size": 1,
+            "data_parallel_size": 1,
+            "use_rotary_position_embeddings": true,
+            "use_distributed_optimizer": false,
+            "transpose_mlp_dense": false,
+            "transpose_query_key_value": true
+        }
+    },
+    "name_map": {
+        "huggingface": {
+            "transformer": "visual",
+            "layer_prefix": "encoder.layers",
+            "input_layernorm": "layer_norm1",
+            "attention.query_key_value": "self_attn.qkv",
+            "attention.dense": "self_attn.proj",
+            "post_attention_layernorm": "layer_norm2",
+            "mlp.dense_h_to_4h": "mlp.fc1",
+            "mlp.dense_4h_to_h": "mlp.fc2"
+
+        },
+        "mcore": {
+            "transformer": "model",
+            "layer_prefix": "vision_model.decoder.layers",
+            "input_layernorm": "self_attention.linear_qkv.layer_norm",
+            "attention.query_key_value": "self_attention.linear_qkv",
+            "attention.dense": "self_attention.linear_proj",
+            "post_attention_layernorm": "mlp.linear_fc1.layer_norm",
+            "mlp.dense_h_to_4h": "mlp.linear_fc1",
+            "mlp.dense_4h_to_h": "mlp.linear_fc2",
+            "transformer_tpl": "model%d"
+        }
+    },
+    "tensor_parallel_dim": {
+        "attention.query_key_value.weight": 0,
+        "attention.query_key_value.bias": 0,
+        "attention.dense.weight": 1,
+        "mlp.dense_h_to_4h.weight": 0,
+        "mlp.dense_h_to_4h.bias": 0,
+        "mlp.dense_4h_to_h.weight": 1
+    },
+    "torch_dtype": "float32",
+    "transformers_version": "4.53.1"
+}

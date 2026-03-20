@@ -15,7 +15,7 @@ import torch
 from huggingface_hub import split_torch_state_dict_into_shards
 from safetensors.torch import load_file, save_file
 
-from transformers.modeling_utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME
+from transformers.utils import SAFE_WEIGHTS_INDEX_NAME
 
 
 def merge_transformers_sharded_states(path, num_checkpoints):

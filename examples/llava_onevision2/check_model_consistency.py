@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from contextlib import nullcontext
 from datetime import datetime
 from glob import glob
 from io import BytesIO
@@ -9,6 +10,7 @@ from typing import Any
 import numpy as np
 import requests
 import torch
+import torch.distributed as dist
 from megatron.core.enums import ModelType
 from megatron.training import print_rank_0
 from megatron.training.checkpointing import _load_base_checkpoint, fix_query_key_value_ordering
@@ -22,7 +24,12 @@ from aiak_training_llm.train.arguments import aiak_extra_train_args_provider, pa
 from aiak_training_llm.train.pretrain.pretrain_llava_onevision2 import model_provider
 from aiak_training_llm.utils import get_args, initialize_aiak_megatron
 from ds.llavaonevision2.configuration_llava_onevision2 import LlavaOnevision2Config
+from ds.llavaonevision2.configuration_llava_onevision2_moe import LlavaOnevision2MoeConfig
 from ds.llavaonevision2.modeling_llava_onevision2 import LlavaOnevision2ForConditionalGeneration, LlavaOnevision2Model
+from ds.llavaonevision2.modeling_llava_onevision2_moe import (
+    LlavaOnevision2ForConditionalGeneration as LlavaOnevision2MoeForConditionalGeneration,
+)
+from ds.llavaonevision2.modeling_llava_onevision2_moe import LlavaOnevision2Model as LlavaOnevision2MoeModel
 from transformers import AutoProcessor
 
 
@@ -340,11 +347,14 @@ class LlavaOnevision2ConsistencyTester:
         hf_model_path: str,
         preprocessor_path: str,
         test_image_path: str = "http://images.cocodataset.org/val2017/000000039769.jpg",
+        test_profile: str = "full",
     ):
         self.hf_model_path = hf_model_path
         self.preprocessor_path = preprocessor_path
         self.test_image_path = test_image_path
+        self.test_profile = test_profile
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.hf_cond_gen_model = None
 
         self.hf_processor = AutoProcessor.from_pretrained(self.preprocessor_path, trust_remote_code=True)
         self.image_processor = self.hf_processor.image_processor
@@ -352,6 +362,24 @@ class LlavaOnevision2ConsistencyTester:
         # Load models
         self.hf_model, self.hf_config = self._load_hf_model()
         self.megatron_model = self._load_megatron_model()
+
+    def _load_hf_config_dict(self) -> dict[str, Any]:
+        config_path = os.path.join(self.hf_model_path, "config.json")
+        with open(config_path) as f:
+            return json.load(f)
+
+    def _resolve_hf_classes(self, config_dict: dict[str, Any]):
+        if config_dict.get("model_type") == "llava_onevision2_moe":
+            return (
+                LlavaOnevision2MoeConfig.from_dict(config_dict),
+                LlavaOnevision2MoeModel,
+                LlavaOnevision2MoeForConditionalGeneration,
+            )
+        return (
+            LlavaOnevision2Config.from_dict(config_dict),
+            LlavaOnevision2Model,
+            LlavaOnevision2ForConditionalGeneration,
+        )
 
     def _generate_patch_positions(self, grid_thw: torch.Tensor, device: torch.device) -> torch.Tensor:
         patch_positions = []
@@ -366,13 +394,18 @@ class LlavaOnevision2ConsistencyTester:
 
     def _tokenize_and_preprocess(self, image, text):
         processed = self.hf_processor(text=text, images=image, return_tensors="pt")
-        processed = {k: v.to("cuda") if torch.is_tensor(v) else v for k, v in processed.items()}
+        processed = {k: v.to(self.device) if torch.is_tensor(v) else v for k, v in processed.items()}
         input_ids = processed["input_ids"][0]  # [seq_len]
         image_grid_thw = processed["image_grid_thw"]  # [num_images, 3] or similar
         pixel_values = processed["pixel_values"]  # wrap in list for consistency
         attention_mask_neg = processed["attention_mask"][0].logical_not()  # inverted mask
 
         return input_ids, pixel_values, image_grid_thw, attention_mask_neg
+
+    def _autocast_context(self):
+        if self.device == "cuda":
+            return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+        return nullcontext()
 
     def _process_image_for_mcore(self, image: Image.Image) -> tuple:
         """
@@ -407,26 +440,13 @@ class LlavaOnevision2ConsistencyTester:
         """Load HuggingFace LlavaOnevision2 model."""
         log("INFO", f"Loading HuggingFace model from: {self.hf_model_path}")
 
-        # Load config manually to avoid modelopt interference
-        config_path = os.path.join(self.hf_model_path, "config.json")
-        with open(config_path) as f:
-            config_dict = json.load(f)
-        config = LlavaOnevision2Config.from_dict(config_dict)
-        full_model = LlavaOnevision2Model.from_pretrained(self.hf_model_path)
-
-        # Store full model for LLM consistency testing (hidden states)
-        self.hf_full_model = full_model.to(dtype=torch.bfloat16, device=self.device).eval()
-
-        # Also load ForConditionalGeneration model to get logits
-        log("INFO", "Loading HuggingFace ForConditionalGeneration model for logits comparison...")
-        self.hf_cond_gen_model = LlavaOnevision2ForConditionalGeneration.from_pretrained(self.hf_model_path)
-        self.hf_cond_gen_model = self.hf_cond_gen_model.to(dtype=torch.bfloat16, device=self.device).eval()
-        log(
-            "INFO",
-            f"✓ HuggingFace ForConditionalGeneration model loaded with {sum(p.numel() for p in self.hf_cond_gen_model.parameters())} parameters",
-        )
+        config_dict = self._load_hf_config_dict()
+        config, model_cls, cond_gen_model_cls = self._resolve_hf_classes(config_dict)
+        self._hf_cond_gen_model_cls = cond_gen_model_cls
+        full_model = model_cls.from_pretrained(self.hf_model_path, low_cpu_mem_usage=True)
 
         vision_model = full_model.visual
+        del full_model
 
         # Convert to bfloat16 and move to cuda to match Megatron model
         vision_model = vision_model.to(dtype=torch.bfloat16, device=self.device)
@@ -435,12 +455,23 @@ class LlavaOnevision2ConsistencyTester:
             "INFO",
             f"✓ HuggingFace vision model loaded with {sum(p.numel() for p in vision_model.parameters())} parameters",
         )
-        log(
-            "INFO",
-            f"✓ HuggingFace full model loaded with {sum(p.numel() for p in self.hf_full_model.parameters())} parameters",
-        )
 
         return vision_model, config
+
+    def _get_hf_cond_gen_model(self):
+        if self.hf_cond_gen_model is None:
+            log("INFO", "Loading HuggingFace ForConditionalGeneration model for logits comparison...")
+            self.hf_cond_gen_model = self._hf_cond_gen_model_cls.from_pretrained(
+                self.hf_model_path,
+                low_cpu_mem_usage=True,
+            )
+            self.hf_cond_gen_model = self.hf_cond_gen_model.to(dtype=torch.bfloat16, device=self.device).eval()
+            log(
+                "INFO",
+                "✓ HuggingFace ForConditionalGeneration model loaded with "
+                f"{sum(p.numel() for p in self.hf_cond_gen_model.parameters())} parameters",
+            )
+        return self.hf_cond_gen_model
 
     def _load_megatron_model(self):
         """Load Megatron-LM model."""
@@ -528,7 +559,7 @@ class LlavaOnevision2ConsistencyTester:
 
             # Get outputs from both models using forward_debug
             # Both HF and Megatron models now receive (num_patches, patch_dim) format
-            with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+            with torch.no_grad(), self._autocast_context():
                 hf_debug_outputs = self.hf_model.forward_debug(
                     pixel_values_hf, grid_thw, patch_positions=patch_positions
                 )
@@ -610,7 +641,7 @@ class LlavaOnevision2ConsistencyTester:
         log("INFO", f"HF 448 input shape: {pixel_448_hf.shape}, Megatron 448 input shape: {pixel_448_mcore.shape}")
 
         # Get HF outputs for individual images
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             patch_pos_224 = self._generate_patch_positions(grid_thw_224, pixel_224_hf.device)
             patch_pos_336 = self._generate_patch_positions(grid_thw_336, pixel_336_hf.device)
             patch_pos_448 = self._generate_patch_positions(grid_thw_448, pixel_448_hf.device)
@@ -636,7 +667,7 @@ class LlavaOnevision2ConsistencyTester:
         log("INFO", f"HF 448 features shape: {hf_features_448.shape}")
 
         # Get Megatron outputs for individual images (using Megatron input format)
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             # Regenerate patch positions for mcore just in case
             patch_pos_224 = self._generate_patch_positions(grid_thw_224, pixel_224_mcore.device)
             patch_pos_336 = self._generate_patch_positions(grid_thw_336, pixel_336_mcore.device)
@@ -957,7 +988,7 @@ class LlavaOnevision2ConsistencyTester:
         patch_positions = self._generate_patch_positions(grid_thw, pixel_values_hf.device)
 
         # Get vision model debug outputs - this gives us encoder-level debug info
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             hf_vision_debug = self.hf_model.forward_debug(pixel_values_hf, grid_thw, patch_positions=patch_positions)
             mcore_vision_debug = self.megatron_model.vision_model.forward_debug(
                 pixel_values_mcore, grid_thw=grid_thw, patch_positions=patch_positions
@@ -1144,7 +1175,7 @@ class LlavaOnevision2ConsistencyTester:
         log("INFO", f"Grid THW: {grid_thw}")
 
         # Get HF model output using forward_debug (now includes after_merger)
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             patch_positions = self._generate_patch_positions(grid_thw, pixel_values_hf.device)
             hf_debug_output = self.hf_model.forward_debug(pixel_values_hf, grid_thw, patch_positions=patch_positions)
 
@@ -1163,7 +1194,7 @@ class LlavaOnevision2ConsistencyTester:
 
         # Get Megatron model output by running vision model + adapter separately
         # This is more reliable than forward_debug
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             # Step 1: Get vision encoder output
             mcore_vision_output = self.megatron_model.vision_model(pixel_values_mcore, grid_thw=image_grid_thw)
             log("INFO", f"Megatron vision output shape: {mcore_vision_output.shape}")
@@ -1291,8 +1322,10 @@ class LlavaOnevision2ConsistencyTester:
         patch_positions = torch.cat(patch_positions, dim=0)
 
         # Get HF model output using ForConditionalGeneration model (returns logits)
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-            hf_output = self.hf_cond_gen_model(
+        hf_cond_gen_model = self._get_hf_cond_gen_model()
+
+        with torch.no_grad(), self._autocast_context():
+            hf_output = hf_cond_gen_model(
                 input_ids=batch_input_id,
                 attention_mask=None,
                 pixel_values=pixel_values_hf,
@@ -1304,7 +1337,7 @@ class LlavaOnevision2ConsistencyTester:
         hf_logits = hf_output.logits
         log("INFO", f"HF logits shape: {hf_logits.shape}")
 
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             # The Megatron model forward returns loss if labels are provided, or logits otherwise
             mcore_output = self.megatron_model(
                 images=pixel_values_mcore,
@@ -1380,7 +1413,9 @@ class LlavaOnevision2ConsistencyTester:
         # Load model via from_pretrained (already loaded as self.hf_model)
         # We need to load again to get the full model
         log("INFO", "Loading HF model via from_pretrained...")
-        hf_from_pretrained = LlavaOnevision2Model.from_pretrained(self.hf_model_path)
+        config_dict = self._load_hf_config_dict()
+        config, model_cls, _ = self._resolve_hf_classes(config_dict)
+        hf_from_pretrained = model_cls.from_pretrained(self.hf_model_path, low_cpu_mem_usage=True)
         hf_from_pretrained_vision = hf_from_pretrained.visual
         hf_from_pretrained_vision = hf_from_pretrained_vision.to(dtype=torch.bfloat16, device=self.device).eval()
 
@@ -1388,13 +1423,7 @@ class LlavaOnevision2ConsistencyTester:
         log("INFO", "Loading HF model via load_file (safetensors)...")
 
         # Load config
-        config_path = os.path.join(self.hf_model_path, "config.json")
-        with open(config_path) as f:
-            config_dict = json.load(f)
-        config = LlavaOnevision2Config.from_dict(config_dict)
-
-        # Create model
-        hf_load_file_model = LlavaOnevision2Model(config)
+        hf_load_file_model = model_cls(config)
 
         # Find and load safetensors files
         safetensors_files = glob(os.path.join(self.hf_model_path, "*.safetensors"))
@@ -1482,7 +1511,7 @@ class LlavaOnevision2ConsistencyTester:
         patch_size = self.hf_config.vision_config.patch_size
         grid_thw = torch.tensor([[1, 336 // patch_size, 336 // patch_size]], dtype=torch.long, device=self.device)
 
-        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), self._autocast_context():
             patch_positions = self._generate_patch_positions(grid_thw, self.device)
             pretrained_output = hf_from_pretrained_vision.forward_debug(
                 pixel_values, grid_thw, patch_positions=patch_positions
@@ -1545,6 +1574,7 @@ class LlavaOnevision2ConsistencyTester:
                 "timestamp": datetime.now().isoformat(),
                 "hf_model_path": self.hf_model_path,
                 "device": str(self.device),
+                "test_profile": self.test_profile,
                 "torch_version": torch.__version__,
                 "transformers_version": transformers.__version__,
                 "test_image_path": self.test_image_path,
@@ -1552,28 +1582,29 @@ class LlavaOnevision2ConsistencyTester:
             "tests": {},
         }
 
-        # Run HF loading consistency test first
-        # results["tests"]["hf_loading_consistency"] = self.test_hf_loading_consistency()
-
         # Run weight consistency test
         results["tests"]["weight_consistency"] = self.test_weight_consistency()
 
         # Run encoder layer-by-layer consistency test
         results["tests"]["encoder_layer_wise"] = self.test_encoder_layer_wise_consistency(336)
 
-        # Run layer-wise consistency tests
-        results["tests"]["vision_encoder_layerwise"] = self.test_vision_encoder_consistency([336, 448])
+        if self.test_profile == "low_vram":
+            results["tests"]["vision_encoder_layerwise"] = self.test_vision_encoder_consistency([336])
+            results["tests"]["mllm_after_merger"] = self.test_mllm_after_merger_consistency(336)
+        else:
+            # Run layer-wise consistency tests
+            results["tests"]["vision_encoder_layerwise"] = self.test_vision_encoder_consistency([336, 448])
 
-        # Run multi-size test
-        results["tests"]["multisize_vision_encoder"] = self.test_multisize_vision_encoder()
+            # Run multi-size test
+            results["tests"]["multisize_vision_encoder"] = self.test_multisize_vision_encoder()
 
-        # Run after-merger consistency test (vision encoder + adapter/merger)
-        results["tests"]["mllm_after_merger"] = self.test_mllm_after_merger_consistency(336)
+            # Run after-merger consistency test (vision encoder + adapter/merger)
+            results["tests"]["mllm_after_merger"] = self.test_mllm_after_merger_consistency(336)
 
-        # Run LLM output consistency test
-        results["tests"]["llm_output_336"] = self.test_llm_output_consistency(336)
-        results["tests"]["llm_output_448"] = self.test_llm_output_consistency(448)
-        results["tests"]["llm_output_1120"] = self.test_llm_output_consistency(1120)
+            # Run LLM output consistency test
+            results["tests"]["llm_output_336"] = self.test_llm_output_consistency(336)
+            results["tests"]["llm_output_448"] = self.test_llm_output_consistency(448)
+            results["tests"]["llm_output_1120"] = self.test_llm_output_consistency(1120)
 
         # Print summary
         log("INFO", "=" * 60)
@@ -1621,6 +1652,13 @@ def _add_extra_check_args(parser: argparse.ArgumentParser):
         default="http://images.cocodataset.org/val2017/000000039769.jpg",
         help="Path to test image (URL or local path)",
     )
+    group.add_argument(
+        "--test-profile",
+        type=str,
+        choices=["full", "low_vram"],
+        default="full",
+        help="Consistency test profile. 'low_vram' skips the heaviest full-model checks.",
+    )
     return parser
 
 
@@ -1644,6 +1682,7 @@ def main():
         hf_model_path=args.hf_model_path,
         preprocessor_path=args.preprocessor_path,
         test_image_path=args.test_image_path,
+        test_profile=args.test_profile,
     )
 
     results = tester.run_all_tests()
