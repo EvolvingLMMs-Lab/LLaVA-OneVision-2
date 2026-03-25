@@ -4,16 +4,16 @@ import os
 from contextlib import nullcontext
 from datetime import datetime
 from glob import glob
-from io import BytesIO
 from typing import Any
 
 import numpy as np
-import requests
 import torch
 import torch.distributed as dist
+from megatron.core import mpu
 from megatron.core.enums import ModelType
+from megatron.core.tensor_parallel.mappings import _gather_along_first_dim, _gather_along_last_dim
 from megatron.training import print_rank_0
-from megatron.training.checkpointing import _load_base_checkpoint, fix_query_key_value_ordering
+from megatron.training.checkpointing import load_checkpoint
 from megatron.training.training import get_model, unwrap_model
 from PIL import Image
 from safetensors.torch import load_file
@@ -49,6 +49,80 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     a, b = a[:min_len], b[:min_len]
     norm_a, norm_b = np.linalg.norm(a), np.linalg.norm(b)
     return 0.0 if norm_a == 0 or norm_b == 0 else float(np.dot(a, b) / (norm_a * norm_b))
+
+
+def align_rotary_debug_tensors(
+    hf_output: torch.Tensor, megatron_output: torch.Tensor
+) -> tuple[np.ndarray, np.ndarray]:
+    hf_tensor = hf_output.float().cpu()
+    megatron_tensor = megatron_output.float().cpu()
+
+    if hf_tensor.dim() == 3 and hf_tensor.shape[0] == 1:
+        hf_tensor = hf_tensor.squeeze(0)
+
+    if hf_tensor.dim() == 2 and megatron_tensor.dim() == 2:
+        if hf_tensor.shape[0] == megatron_tensor.shape[0] and hf_tensor.shape[1] == megatron_tensor.shape[1] * 2:
+            megatron_tensor = torch.cat([megatron_tensor, megatron_tensor], dim=-1)
+
+    return hf_tensor.numpy(), megatron_tensor.numpy()
+
+
+def align_encoder_debug_tensors(
+    hf_output: torch.Tensor, megatron_output: torch.Tensor
+) -> tuple[np.ndarray, np.ndarray]:
+    hf_tensor = hf_output.float().cpu()
+    megatron_tensor = megatron_output.float().cpu()
+
+    if hf_tensor.dim() == 3 and hf_tensor.shape[0] == 1:
+        hf_tensor = hf_tensor.squeeze(0)
+
+    if megatron_tensor.dim() == 3 and megatron_tensor.shape[1] == 1:
+        megatron_tensor = megatron_tensor.squeeze(1)
+
+    return hf_tensor.numpy(), megatron_tensor.numpy()
+
+
+def compare_arrays(hf_array: np.ndarray, mcore_array: np.ndarray, threshold: float = 0.99) -> dict[str, Any]:
+    hf_flat = hf_array.flatten()
+    mcore_flat = mcore_array.flatten()
+    min_len = min(len(hf_flat), len(mcore_flat))
+    diff = np.abs(hf_flat[:min_len] - mcore_flat[:min_len])
+    similarity = cosine_similarity(hf_array, mcore_array)
+    return {
+        "similarity": float(similarity),
+        "max_diff": float(np.max(diff)) if min_len > 0 else 0.0,
+        "hf_shape": list(hf_array.shape),
+        "mcore_shape": list(mcore_array.shape),
+        "status": "match" if similarity > threshold else "mismatch",
+    }
+
+
+def summarize_named_results(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    mismatches = {key: value for key, value in results.items() if value.get("status") != "match"}
+    return {
+        "total": len(results),
+        "matched": len(results) - len(mismatches),
+        "mismatched": len(mismatches),
+        "mismatches": mismatches,
+    }
+
+
+def summarize_layer_results(layer_comparisons: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    mismatched_layers = {}
+    for layer_name, layer_result in layer_comparisons.items():
+        layer_mismatches = {
+            key: value
+            for key, value in layer_result.items()
+            if isinstance(value, dict) and value.get("status") == "mismatch"
+        }
+        if layer_mismatches:
+            mismatched_layers[layer_name] = layer_mismatches
+
+    return {
+        "total_layers": len(layer_comparisons),
+        "mismatched_layers": len(mismatched_layers),
+        "mismatch_details": mismatched_layers,
+    }
 
 
 def convert_hf_qkv_to_mcore_layout(hf_weight: np.ndarray, num_heads: int, is_bias: bool = False) -> np.ndarray:
@@ -145,21 +219,18 @@ def convert_hf_qkv_to_mcore_layout(hf_weight: np.ndarray, num_heads: int, is_bia
 
 
 def load_and_resize_image(image_path: str, image_size: int = 336) -> Image.Image:
-    """Load image from path and resize to specified size."""
-    try:
-        if image_path.startswith("http"):
-            response = requests.get(image_path)
-            img = Image.open(BytesIO(response.content))
-        else:
-            img = Image.open(image_path)
-        img = img.resize((image_size, image_size)).convert("RGB")
-        log("INFO", f"Successfully loaded and resized image to {image_size}x{image_size}")
-        return img
-    except Exception as e:
-        log("ERROR", f"Error loading image: {e}")
-        # Fallback to creating a simple test image
-        img = Image.new("RGB", (image_size, image_size), color="red")
-        return img
+    if image_path.startswith("http://") or image_path.startswith("https://"):
+        raise ValueError(
+            "Remote test_image_path is disabled for consistency tests. Please provide a local image path."
+        )
+
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Test image does not exist: {image_path}")
+
+    img = Image.open(image_path)
+    img = img.resize((image_size, image_size)).convert("RGB")
+    log("INFO", f"Successfully loaded and resized image to {image_size}x{image_size}")
+    return img
 
 
 def convert_mcore_pixel_values_to_hf_format(
@@ -354,6 +425,7 @@ class LlavaOnevision2ConsistencyTester:
         self.test_image_path = test_image_path
         self.test_profile = test_profile
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.rank = dist.get_rank() if dist.is_available() and dist.is_initialized() else 0
         self.hf_cond_gen_model = None
 
         self.hf_processor = AutoProcessor.from_pretrained(self.preprocessor_path, trust_remote_code=True)
@@ -362,6 +434,46 @@ class LlavaOnevision2ConsistencyTester:
         # Load models
         self.hf_model, self.hf_config = self._load_hf_model()
         self.megatron_model = self._load_megatron_model()
+
+    def _has_encoder_stage(self) -> bool:
+        return bool(
+            getattr(self.megatron_model, "add_encoder", False)
+            and getattr(self.megatron_model, "vision_model", None) is not None
+        )
+
+    def _has_adapter_stage(self) -> bool:
+        return bool(self._has_encoder_stage() and getattr(self.megatron_model, "adapter", None) is not None)
+
+    def _can_run_llm_output_test(self) -> bool:
+        return bool(
+            getattr(self.megatron_model, "add_decoder", False)
+            and getattr(self.megatron_model, "post_process", False)
+            and mpu.get_pipeline_model_parallel_world_size() == 1
+        )
+
+    def _skip_result(self, test_type: str, reason: str, resolution: str | None = None) -> dict[str, Any]:
+        result = {
+            "test_type": test_type,
+            "timestamp": datetime.now().isoformat(),
+            "status": "skipped",
+            "reason": reason,
+        }
+        if resolution is not None:
+            result["resolution"] = resolution
+        return result
+
+    def _maybe_gather_tp_weight(self, weight: torch.Tensor, mcore_key: str) -> torch.Tensor:
+        if mcore_key.endswith("self_attention.linear_qkv.weight") or mcore_key.endswith(
+            "self_attention.linear_qkv.bias"
+        ):
+            return _gather_along_first_dim(weight)
+        if mcore_key.endswith("mlp.linear_fc1.weight") or mcore_key.endswith("mlp.linear_fc1.bias"):
+            return _gather_along_first_dim(weight)
+        if mcore_key.endswith("self_attention.linear_proj.weight"):
+            return _gather_along_last_dim(weight)
+        if mcore_key.endswith("mlp.linear_fc2.weight"):
+            return _gather_along_last_dim(weight)
+        return weight
 
     def _load_hf_config_dict(self) -> dict[str, Any]:
         config_path = os.path.join(self.hf_model_path, "config.json")
@@ -477,22 +589,13 @@ class LlavaOnevision2ConsistencyTester:
         """Load Megatron-LM model."""
         log("INFO", "Loading Megatron-LM model")
 
-        args = get_args()
-
         model_type = ModelType.encoder_or_decoder
         model = get_model(model_provider, model_type)
 
-        # Load checkpoint
-        state_dict, _, _, _ = _load_base_checkpoint(load_dir=args.load, args=args, rank0=False)
-        model = unwrap_model(model)
+        load_checkpoint(model, None, None)
 
-        if len(model) == 1:
-            model[0].load_state_dict(state_dict["model"], strict=True)
-
-        checkpoint_version = state_dict.get("checkpoint_version", 0)
-        fix_query_key_value_ordering(model, checkpoint_version)
-
-        megatron_model = model[0].to(self.device).eval()
+        unwrapped_model = unwrap_model(model)
+        megatron_model = unwrapped_model[0].to(self.device).eval()
         log(
             "INFO", f"✓ Megatron-LM model loaded with {sum(p.numel() for p in megatron_model.parameters())} parameters"
         )
@@ -500,6 +603,16 @@ class LlavaOnevision2ConsistencyTester:
         return megatron_model
 
     def test_vision_encoder_consistency(self, resolutions: list[int] = [336, 448, 672]) -> list[dict[str, Any]]:
+        if not self._has_encoder_stage():
+            return [
+                self._skip_result(
+                    "vision_encoder_layerwise_consistency",
+                    "vision_model is not present on this pipeline stage",
+                    f"{image_size}x{image_size}",
+                )
+                for image_size in resolutions
+            ]
+
         """
         Test vision encoder consistency between HuggingFace and Megatron-LM
         for multiple image resolutions.
@@ -586,8 +699,11 @@ class LlavaOnevision2ConsistencyTester:
 
                 # No conversion needed - HF model now uses the same 2x2 memory layout as mcore
 
-                hf_tensor = hf_output.float().cpu().numpy()
-                megatron_tensor = megatron_output.float().cpu().numpy()
+                if layer_key == "rotary_pos_emb":
+                    hf_tensor, megatron_tensor = align_rotary_debug_tensors(hf_output, megatron_output)
+                else:
+                    hf_tensor = hf_output.float().cpu().numpy()
+                    megatron_tensor = megatron_output.float().cpu().numpy()
 
                 # Calculate cosine similarity
                 similarity = cosine_similarity(hf_tensor, megatron_tensor)
@@ -615,6 +731,9 @@ class LlavaOnevision2ConsistencyTester:
         return all_results
 
     def test_multisize_vision_encoder(self) -> dict[str, Any]:
+        if not self._has_encoder_stage():
+            return self._skip_result("multisize_vision_encoder", "vision_model is not present on this pipeline stage")
+
         """
         Test vision encoder with multiple image sizes in a single batch.
         Verifies that batched processing produces consistent results.
@@ -714,6 +833,9 @@ class LlavaOnevision2ConsistencyTester:
         }
 
     def test_weight_consistency(self) -> dict[str, Any]:
+        if not self._has_encoder_stage():
+            return self._skip_result("weight_consistency", "vision_model is not present on this pipeline stage")
+
         """
         Test weight consistency between HuggingFace and Megatron-LM models.
         Compares key layers to verify weights are correctly loaded/converted.
@@ -885,7 +1007,7 @@ class LlavaOnevision2ConsistencyTester:
                 continue
 
             hf_weight = hf_state_dict[hf_key].float().cpu().numpy()
-            mcore_weight = mcore_state_dict[mcore_key].float().cpu().numpy()
+            mcore_weight = self._maybe_gather_tp_weight(mcore_state_dict[mcore_key], mcore_key).float().cpu().numpy()
 
             # Check shape
             if hf_weight.shape != mcore_weight.shape:
@@ -912,26 +1034,21 @@ class LlavaOnevision2ConsistencyTester:
                 hf_weight = convert_hf_qkv_to_mcore_layout(hf_weight, num_heads, is_bias=is_qkv_bias)
 
             # Calculate metrics
-            similarity = cosine_similarity(hf_weight, mcore_weight)
-            max_diff = float(np.max(np.abs(hf_weight - mcore_weight)))
+            comparison = compare_arrays(hf_weight, mcore_weight, threshold=0.9999)
             mean_diff = float(np.mean(np.abs(hf_weight - mcore_weight)))
 
-            status = "match" if similarity > 0.9999 else "mismatch"
+            status = comparison["status"]
             if status == "mismatch":
                 all_passed = False
 
             log(
                 "INFO",
-                f"{description}: similarity={similarity:.6f}, max_diff={max_diff:.6e}, mean_diff={mean_diff:.6e}",
+                f"{description}: similarity={comparison['similarity']:.6f}, max_diff={comparison['max_diff']:.6e}, mean_diff={mean_diff:.6e}",
             )
 
             weight_comparisons[description] = {
-                "status": status,
-                "similarity": float(similarity),
-                "max_diff": max_diff,
+                **comparison,
                 "mean_diff": mean_diff,
-                "hf_shape": list(hf_weight.shape),
-                "mcore_shape": list(mcore_weight.shape),
                 "hf_key": hf_key,
                 "mcore_key": mcore_key,
             }
@@ -949,13 +1066,20 @@ class LlavaOnevision2ConsistencyTester:
         return {
             "test_type": "weight_consistency",
             "timestamp": datetime.now().isoformat(),
-            "weight_comparisons": weight_comparisons,
+            "weight_comparisons_summary": summarize_named_results(weight_comparisons),
             "hf_total_params": len(hf_state_dict),
             "mcore_total_params": len(mcore_state_dict),
             "status": "success" if all_passed else "failed",
         }
 
     def test_encoder_layer_wise_consistency(self, resolution: int = 336) -> dict[str, Any]:
+        if not self._has_encoder_stage():
+            return self._skip_result(
+                "encoder_layer_wise_consistency",
+                "vision_model is not present on this pipeline stage",
+                f"{resolution}x{resolution}",
+            )
+
         """
         Test encoder layer-by-layer consistency between HuggingFace and Megatron-LM.
         Uses the forward_debug methods of OneVisionEncoderEncoder (HF) and TransformerBlock (Megatron)
@@ -1028,30 +1152,16 @@ class LlavaOnevision2ConsistencyTester:
 
                 # No conversion needed - HF model now uses the same 2x2 memory layout as mcore
 
-                hf_input = hf_input_tensor.float().cpu().numpy()
-                mcore_input = mcore_input_tensor.float().cpu().numpy()
+                hf_input, mcore_input = align_encoder_debug_tensors(hf_input_tensor, mcore_input_tensor)
 
-                input_sim = cosine_similarity(hf_input, mcore_input)
-                input_max_diff = float(
-                    np.max(
-                        np.abs(
-                            hf_input.flatten()[: min(len(hf_input.flatten()), len(mcore_input.flatten()))]
-                            - mcore_input.flatten()[: min(len(hf_input.flatten()), len(mcore_input.flatten()))]
-                        )
-                    )
+                layer_result["input_comparison"] = compare_arrays(hf_input, mcore_input)
+
+                log(
+                    "INFO",
+                    f"Layer {i} Input: similarity={layer_result['input_comparison']['similarity']:.6f}, max_diff={layer_result['input_comparison']['max_diff']:.6e}",
                 )
 
-                layer_result["input_comparison"] = {
-                    "similarity": float(input_sim),
-                    "max_diff": input_max_diff,
-                    "hf_shape": list(hf_input.shape),
-                    "mcore_shape": list(mcore_input.shape),
-                    "status": "match" if input_sim > 0.99 else "mismatch",
-                }
-
-                log("INFO", f"Layer {i} Input: similarity={input_sim:.6f}, max_diff={input_max_diff:.6e}")
-
-                if input_sim <= 0.99:
+                if layer_result["input_comparison"]["status"] != "match":
                     all_passed = False
             else:
                 layer_result["input_comparison"] = {"status": "key_not_found"}
@@ -1064,30 +1174,16 @@ class LlavaOnevision2ConsistencyTester:
 
                 # No conversion needed - HF model now uses the same 2x2 memory layout as mcore
 
-                hf_output = hf_output_tensor.float().cpu().numpy()
-                mcore_output = mcore_output_tensor.float().cpu().numpy()
+                hf_output, mcore_output = align_encoder_debug_tensors(hf_output_tensor, mcore_output_tensor)
 
-                output_sim = cosine_similarity(hf_output, mcore_output)
-                output_max_diff = float(
-                    np.max(
-                        np.abs(
-                            hf_output.flatten()[: min(len(hf_output.flatten()), len(mcore_output.flatten()))]
-                            - mcore_output.flatten()[: min(len(hf_output.flatten()), len(mcore_output.flatten()))]
-                        )
-                    )
+                layer_result["output_comparison"] = compare_arrays(hf_output, mcore_output)
+
+                log(
+                    "INFO",
+                    f"Layer {i} Output: similarity={layer_result['output_comparison']['similarity']:.6f}, max_diff={layer_result['output_comparison']['max_diff']:.6e}",
                 )
 
-                layer_result["output_comparison"] = {
-                    "similarity": float(output_sim),
-                    "max_diff": output_max_diff,
-                    "hf_shape": list(hf_output.shape),
-                    "mcore_shape": list(mcore_output.shape),
-                    "status": "match" if output_sim > 0.99 else "mismatch",
-                }
-
-                log("INFO", f"Layer {i} Output: similarity={output_sim:.6f}, max_diff={output_max_diff:.6e}")
-
-                if output_sim <= 0.99:
+                if layer_result["output_comparison"]["status"] != "match":
                     all_passed = False
             else:
                 layer_result["output_comparison"] = {"status": "key_not_found"}
@@ -1103,16 +1199,10 @@ class LlavaOnevision2ConsistencyTester:
 
             # No conversion needed - HF model now uses the same 2x2 memory layout as mcore
 
-            hf_enc_input = hf_enc_input_tensor.float().cpu().numpy()
-            mcore_enc_input = mcore_enc_input_tensor.float().cpu().numpy()
+            hf_enc_input, mcore_enc_input = align_encoder_debug_tensors(hf_enc_input_tensor, mcore_enc_input_tensor)
 
-            enc_input_sim = cosine_similarity(hf_enc_input, mcore_enc_input)
-            encoder_input_comparison = {
-                "similarity": float(enc_input_sim),
-                "hf_shape": list(hf_enc_input.shape),
-                "mcore_shape": list(mcore_enc_input.shape),
-            }
-            log("INFO", f"Encoder Input: similarity={enc_input_sim:.6f}")
+            encoder_input_comparison = compare_arrays(hf_enc_input, mcore_enc_input)
+            log("INFO", f"Encoder Input: similarity={encoder_input_comparison['similarity']:.6f}")
 
         # Compare encoder final outputs
         encoder_output_comparison = {}
@@ -1122,16 +1212,12 @@ class LlavaOnevision2ConsistencyTester:
 
             # No conversion needed - HF model now uses the same 2x2 memory layout as mcore
 
-            hf_enc_output = hf_enc_output_tensor.float().cpu().numpy()
-            mcore_enc_output = mcore_enc_output_tensor.float().cpu().numpy()
+            hf_enc_output, mcore_enc_output = align_encoder_debug_tensors(
+                hf_enc_output_tensor, mcore_enc_output_tensor
+            )
 
-            enc_output_sim = cosine_similarity(hf_enc_output, mcore_enc_output)
-            encoder_output_comparison = {
-                "similarity": float(enc_output_sim),
-                "hf_shape": list(hf_enc_output.shape),
-                "mcore_shape": list(mcore_enc_output.shape),
-            }
-            log("INFO", f"Encoder Final Output: similarity={enc_output_sim:.6f}")
+            encoder_output_comparison = compare_arrays(hf_enc_output, mcore_enc_output)
+            log("INFO", f"Encoder Final Output: similarity={encoder_output_comparison['similarity']:.6f}")
 
         return {
             "test_type": "encoder_layer_wise_consistency",
@@ -1139,12 +1225,19 @@ class LlavaOnevision2ConsistencyTester:
             "timestamp": datetime.now().isoformat(),
             "num_layers": num_layers,
             "encoder_input_comparison": encoder_input_comparison,
-            "layer_comparisons": layer_comparisons,
+            "layer_comparisons_summary": summarize_layer_results(layer_comparisons),
             "encoder_output_comparison": encoder_output_comparison,
             "status": "success" if all_passed else "failed",
         }
 
     def test_mllm_after_merger_consistency(self, resolution: int = 336) -> dict[str, Any]:
+        if not self._has_adapter_stage():
+            return self._skip_result(
+                "mllm_after_merger_consistency",
+                "vision adapter is not present on this pipeline stage",
+                f"{resolution}x{resolution}",
+            )
+
         """
         Test MLLM after-merger output consistency between HuggingFace and Megatron-LM.
 
@@ -1274,6 +1367,13 @@ class LlavaOnevision2ConsistencyTester:
         return results
 
     def test_llm_output_consistency(self, resolution: int = 336) -> dict[str, Any]:
+        if not self._can_run_llm_output_test():
+            return self._skip_result(
+                "llm_output_consistency",
+                "llm output test requires a post-process decoder stage with PP=1",
+                f"{resolution}x{resolution}",
+            )
+
         """
         Test LLM output consistency between HuggingFace and Megatron-LM.
 
@@ -1618,12 +1718,12 @@ class LlavaOnevision2ConsistencyTester:
                     status = result.get("status", "unknown")
                     resolution = result.get("resolution", "N/A")
                     log("INFO", f"  {test_name} ({resolution}): {status}")
-                    if status != "success":
+                    if status in {"failed", "error"}:
                         all_passed = False
             else:
                 status = test_results.get("status", "unknown")
                 log("INFO", f"  {test_name}: {status}")
-                if status != "success":
+                if status in {"failed", "error"}:
                     all_passed = False
 
         results["overall_status"] = "success" if all_passed else "failed"
@@ -1649,8 +1749,8 @@ def _add_extra_check_args(parser: argparse.ArgumentParser):
     group.add_argument(
         "--test-image-path",
         type=str,
-        default="http://images.cocodataset.org/val2017/000000039769.jpg",
-        help="Path to test image (URL or local path)",
+        default="asset/performance.png",
+        help="Path to local test image",
     )
     group.add_argument(
         "--test-profile",
@@ -1688,10 +1788,11 @@ def main():
     results = tester.run_all_tests()
 
     # Save results
-    with open(args.output_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False, default=str)
+    if not dist.is_available() or not dist.is_initialized() or dist.get_rank() == 0:
+        with open(args.output_path, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2, ensure_ascii=False, default=str)
 
-    log("INFO", f"Results saved to: {args.output_path}")
+        log("INFO", f"Results saved to: {args.output_path}")
 
 
 if __name__ == "__main__":

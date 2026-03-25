@@ -1,7 +1,7 @@
 #!/bin/bash
 # LLaVA-OneVision2 Model Consistency Check Script
 #
-# This script compares the model outputs between HuggingFace and Megatron-LM 
+# This script compares the model outputs between HuggingFace and Megatron-LM
 # implementations to verify layer-by-layer consistency for both vision encoder
 # and language model.
 #
@@ -17,7 +17,7 @@
 #   MCORE_CHECKPOINT_PATH: Path to Megatron checkpoint (default: /ov2/pretrain_models/llava_onevision2/llava_onevision2_qwen3_2b_stage0_mcore_tp1_pp1)
 #   TEST_IMAGE_PATH: Path to test image (default: http://images.cocodataset.org/val2017/000000039769.jpg)
 
-set -e
+set -euo pipefail
 
 # ============================================================================
 # Environment Setup
@@ -26,21 +26,45 @@ set -e
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-# Model paths
-HF_MODEL_PATH="${HF_MODEL_PATH:-/ov2/pretrain_models/llava_onevision2/llava_onevision2_qwen3_2b_stage0}"
-MCORE_CHECKPOINT_PATH="${MCORE_CHECKPOINT_PATH:-/ov2/pretrain_models/llava_onevision2/llava_onevision2_qwen3_2b_stage0_mcore_tp1_pp1}"
-PREPROCESSOR_PATH="${PREPROCESSOR_PATH:-/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5}"
-TEST_IMAGE_PATH="${TEST_IMAGE_PATH:-http://images.cocodataset.org/val2017/000000039769.jpg}"
-
-# Parallelism settings
 TP="${1:-1}"
 PP="${2:-1}"
 
+MODEL_NAME="${MODEL_NAME:-llava-onevision2-2b}"
+HF_MODEL_PATH="${HF_MODEL_PATH:-/ov2/pretrain_models/llava_onevision2/llava_onevision2_qwen3_2b_stage0}"
+MCORE_CHECKPOINT_PREFIX="${MCORE_CHECKPOINT_PREFIX:-/ov2/pretrain_models/llava_onevision2/llava_onevision2_qwen3_2b_stage0_mcore}"
+MCORE_CHECKPOINT_PATH="${MCORE_CHECKPOINT_PATH:-${MCORE_CHECKPOINT_PREFIX}_tp${TP}_pp${PP}}"
+PREPROCESSOR_PATH="${PREPROCESSOR_PATH:-/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5}"
+TEST_IMAGE_PATH="${TEST_IMAGE_PATH:-${AIAK_TRAINING_PATH%/}/asset/performance.png}"
+TEST_PROFILE="${TEST_PROFILE:-full}"
+
 # Output settings
 OUTPUT_DIR="outputs/model_consistency_check"
-OUTPUT_PATH="${OUTPUT_DIR}/results_$(date +%Y%m%d_%H%M%S).json"
+RUN_TAG="tp${TP}_pp${PP}_$(date +%Y%m%d_%H%M%S)"
+OUTPUT_PATH="${OUTPUT_DIR}/results_${RUN_TAG}.json"
 
 mkdir -p "$OUTPUT_DIR"
+
+if [[ ! -d "$HF_MODEL_PATH" ]]; then
+    echo "Error: HF_MODEL_PATH does not exist: $HF_MODEL_PATH"
+    exit 1
+fi
+
+if [[ ! -d "$MCORE_CHECKPOINT_PATH" ]]; then
+    echo "Error: MCORE_CHECKPOINT_PATH does not exist: $MCORE_CHECKPOINT_PATH"
+    echo "Hint: set MCORE_CHECKPOINT_PATH explicitly, or set MCORE_CHECKPOINT_PREFIX so it resolves to *_tp${TP}_pp${PP}."
+    exit 1
+fi
+
+if [[ ! -e "$TEST_IMAGE_PATH" ]]; then
+    echo "Error: TEST_IMAGE_PATH does not exist: $TEST_IMAGE_PATH"
+    exit 1
+fi
+
+AVAILABLE_GPUS=$(python -c 'import torch; print(torch.cuda.device_count())')
+if [[ "$AVAILABLE_GPUS" -lt $((TP * PP)) ]]; then
+    echo "Error: requested TP=${TP}, PP=${PP}, need $((TP * PP)) GPUs but only found ${AVAILABLE_GPUS}."
+    exit 1
+fi
 
 # ============================================================================
 # Node Configuration
@@ -77,7 +101,7 @@ else
             break
         fi
     done
-    
+
     if [ "$NODE_RANK" -eq -1 ]; then
         echo "Error: Current IP ($CURRENT_IP) not found in the IP list."
         exit 1
@@ -98,6 +122,8 @@ MASTER_PORT=${MASTER_PORT:-"26500"}
 if [[ $SINGLE_NODE -eq 1 ]]; then
     DISTRIBUTED_ARGS=(
         --nproc_per_node "$GPUS_PER_NODE"
+        --master_addr "$MASTER_ADDR"
+        --master_port "$MASTER_PORT"
     )
 else
     DISTRIBUTED_ARGS=(
@@ -114,7 +140,7 @@ fi
 # ============================================================================
 
 MODEL_ARGS=(
-    --model-name llava-onevision2-2b
+    --model-name "$MODEL_NAME"
 
     --tokenizer-type HFTokenizer
     --hf-tokenizer-path $HF_MODEL_PATH
@@ -134,6 +160,7 @@ CHECK_ARGS=(
     --preprocessor-path "$PREPROCESSOR_PATH"
     --output-path "$OUTPUT_PATH"
     --test-image-path "$TEST_IMAGE_PATH"
+    --test-profile "$TEST_PROFILE"
 )
 
 # ============================================================================
@@ -173,6 +200,7 @@ echo "Megatron Checkpoint: ${MCORE_CHECKPOINT_PATH}"
 echo "Preprocessor Path:   ${PREPROCESSOR_PATH}"
 echo "Test Image:          ${TEST_IMAGE_PATH}"
 echo "Output Path:         ${OUTPUT_PATH}"
+echo "Test Profile:        ${TEST_PROFILE}"
 echo "TP: ${TP}, PP: ${PP}"
 echo "GPUs per node:       ${GPUS_PER_NODE}"
 echo "============================================================"
@@ -183,14 +211,14 @@ echo "============================================================"
 
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 
-PYTHONPATH="ds/llavaonevision2:$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
+PYTHONPATH="ds/llavaonevision2:$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:${PYTHONPATH:-}" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/examples/llava_onevision2/check_model_consistency.py" \
     "${MODEL_ARGS[@]}" \
     "${CHECK_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \
-    2>&1 | tee "${OUTPUT_DIR}/check_$(date +%Y%m%d_%H%M%S).log"
+    2>&1 | tee "${OUTPUT_DIR}/check_${RUN_TAG}.log"
 
 echo "============================================================"
 echo "Check completed. Results saved to: ${OUTPUT_PATH}"

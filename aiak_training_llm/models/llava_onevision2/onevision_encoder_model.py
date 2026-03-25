@@ -12,6 +12,14 @@ from aiak_training_llm.models.llava_onevision2.llava_onevision2_config import (
 from aiak_training_llm.models.llava_onevision2.vision_transformer_block import TransformerBlock
 
 
+def _load_state_dict_hook_ignore_extra_state(module, incompatible_keys):
+    keys_to_remove = [key for key in incompatible_keys.missing_keys if "pre_layernorm._extra_state" in key]
+
+    for key in keys_to_remove:
+        if key in incompatible_keys.missing_keys:
+            incompatible_keys.missing_keys.remove(key)
+
+
 class PatchEmbed(torch.nn.Module):
     """
     Image to Patch Embedding module.
@@ -230,6 +238,7 @@ class OneVisionEncoderModel(VisionModule):
         spatial_merge_size: int = 2,
     ) -> None:
         super().__init__(config)
+        self.register_load_state_dict_post_hook(_load_state_dict_hook_ignore_extra_state)
         self.model_type = ModelType.encoder_or_decoder
         self.spatial_merge_size = spatial_merge_size
         self.patch_size = config.patch_size
@@ -267,7 +276,9 @@ class OneVisionEncoderModel(VisionModule):
         # without SP-aware parameter marking the per-rank gradients would not be
         # reduced, leading to incorrect weight updates).  eps=1e-4 matches the
         # original torch.nn.LayerNorm value.
-        self.pre_layernorm = TENorm(config, config.hidden_size, eps=1e-4)    # TODO: Confirm that config.normalization and hidden_size are correctly set for TENorm.
+        self.pre_layernorm = TENorm(
+            config, config.hidden_size, eps=1e-4
+        )  # TODO: Confirm that config.normalization and hidden_size are correctly set for TENorm.
 
     def set_input_tensor(self, input_tensor: torch.Tensor) -> None:
         """
@@ -285,18 +296,18 @@ class OneVisionEncoderModel(VisionModule):
         cu_seqlens: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int]:
         """Pad token tensors to a TP-size multiple and scatter across TP ranks.
-        
+
         When ``config.sequence_parallel`` is True the ``ColumnParallelLinear``
         layers inside the ``TransformerBlock`` expect the input to be already
         scattered along the first (token) dimension.  This helper pads all
         token-indexed tensors so that ``total_tokens`` is divisible by
         ``tp_size``, then performs the scatter.
-        
+
         Args:
             x: Hidden states of shape ``[total_tokens, 1, hidden]``.
             rotary_pos_emb: RoPE frequencies of shape ``[total_tokens, half]``.
             cu_seqlens: Packed-sequence cumulative lengths (int32 tensor).
-            
+
         Returns:
             Tuple of ``(x, rotary_pos_emb, cu_seqlens, total_tokens, sp_pad_size)``.
             ``total_tokens`` is the *original* (pre-padding) count.
@@ -327,13 +338,13 @@ class OneVisionEncoderModel(VisionModule):
         sp_pad_size: int,
     ) -> torch.Tensor:
         """Gather and de-pad after a sequence-parallel transformer block.
-        
+
         Args:
             x: Scattered output of shape ``[total_padded/tp, 1, hidden]``.
             total_tokens: Original (pre-padding) token count.
             sp_pad_size: Number of padding tokens that were appended before
                 scattering (0 if none).
-                
+
         Returns:
             Tensor of shape ``[total_tokens, 1, hidden]``.
         """
@@ -462,8 +473,8 @@ class OneVisionEncoderModel(VisionModule):
         # and replicated across all ranks (not scattered), so that the packed-
         # sequence attention kernel on each rank can access the complete sequence
         # metadata.
-        x, rotary_pos_emb, cu_seqlens, total_tokens, sp_pad_size = (
-            self._scatter_for_sequence_parallel(x, rotary_pos_emb, cu_seqlens)
+        x, rotary_pos_emb, cu_seqlens, total_tokens, sp_pad_size = self._scatter_for_sequence_parallel(
+            x, rotary_pos_emb, cu_seqlens
         )
 
         # Apply pre-layer normalization on the local (possibly scattered) shard.
@@ -661,8 +672,8 @@ class OneVisionEncoderModel(VisionModule):
         # Scatter before pre_layernorm so the decoder's first
         # TELayerNormColumnParallelLinear receives already-scattered input and
         # does not need to immediately all-gather what was just scattered.
-        x, rotary_pos_emb, cu_seqlens, total_tokens, sp_pad_size = (
-            self._scatter_for_sequence_parallel(x, rotary_pos_emb, cu_seqlens)
+        x, rotary_pos_emb, cu_seqlens, total_tokens, sp_pad_size = self._scatter_for_sequence_parallel(
+            x, rotary_pos_emb, cu_seqlens
         )
 
         # Apply pre-layer normalization on the (possibly scattered) local shard.
@@ -689,7 +700,7 @@ class OneVisionEncoderModel(VisionModule):
         # Extract layer outputs and final output from decoder
         output["layer_outputs"] = decoder_debug_output.get("layer_outputs", {})
         x = decoder_debug_output.get("final_output", decoder_debug_output.get("before_final_layernorm", x))
-        
+
         # Gather output back to full sequence and remove any SP padding.
         x = self._gather_from_sequence_parallel(x, total_tokens, sp_pad_size)
 
