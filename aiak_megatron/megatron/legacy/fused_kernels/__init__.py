@@ -15,6 +15,12 @@ os.environ["TORCH_CUDA_ARCH_LIST"] = ""
 
 
 def load(args):
+    
+    # Skip fused kernels on ROCm (AMD GPUs)
+    import torch
+    if torch.version.hip is not None:
+        print("Skipping fused kernels compilation on ROCm/AMD platform")
+        return
 
     # Check if cuda 11 is installed for compute capability 8.0
     cc_flag = []
@@ -56,8 +62,20 @@ def load(args):
 
 
 def _get_cuda_bare_metal_version(cuda_dir):
+    # Handle case where cuda_dir might be None or nvcc not in expected location
+    if cuda_dir is None:
+        cuda_dir = "/usr/local/cuda"
+    
+    nvcc_path = cuda_dir + "/bin/nvcc"
+    if not os.path.exists(nvcc_path):
+        # Try alternate locations
+        for alt_path in ["/usr/local/cuda/bin/nvcc", "/usr/local/cuda-12.8/bin/nvcc", "/usr/local/cuda-12.1/bin/nvcc", "/usr/bin/nvcc"]:
+            if os.path.exists(alt_path):
+                nvcc_path = alt_path
+                break
+    
     raw_output = subprocess.check_output(
-        [cuda_dir + "/bin/nvcc", "-V"], universal_newlines=True
+        [nvcc_path, "-V"], universal_newlines=True
     )
     output = raw_output.split()
     release_idx = output.index("release") + 1

@@ -30,10 +30,118 @@ from aiak_training_llm.data.multimodal.qwen2vl_task_encoder import Qwen2VLTaskEn
 
 stimer = StragglerDetector()
 
-# TODO: get token id from tokenizer
-image_token_id = 151655
-video_token_id = 151656
-vision_start_token_id = 151652
+# Resolve vision token ids lazily from the active tokenizer (works for Qwen and MobileLLM tokenizers)
+image_token_id = None
+video_token_id = None
+vision_start_token_id = None
+_logged_token_presence_once = False
+_big_debug_step = 0
+
+
+def _log_big_batch_debug(
+    step_id: int,
+    tokens: torch.Tensor,
+    labels: torch.Tensor,
+    loss_mask: torch.Tensor,
+    attn_mask: Optional[torch.Tensor],
+    imgs: Optional[torch.Tensor],
+    image_grid_thw: Optional[torch.Tensor],
+    cu_lengths: torch.Tensor,
+    max_lengths: torch.Tensor,
+    has_image: bool,
+    has_video: bool,
+):
+    sample_idx = 0
+    sample_tokens = tokens[sample_idx]
+    sample_labels = labels[sample_idx]
+    sample_loss_mask = loss_mask[sample_idx]
+
+    image_token_count = int((tokens == image_token_id).sum().item()) if image_token_id is not None else 0
+    video_token_count = int((tokens == video_token_id).sum().item()) if video_token_id is not None else 0
+    vision_start_count = int((tokens == vision_start_token_id).sum().item()) if vision_start_token_id is not None else 0
+    sample_valid_label_count = int((sample_labels != -100).sum().item())
+
+    sample_decoded = "<decode unavailable>"
+    try:
+        tokenizer = get_tokenizer()
+        ids_for_decode = sample_tokens[:128].tolist()
+        if hasattr(tokenizer, "decode"):
+            sample_decoded = tokenizer.decode(ids_for_decode)
+        elif hasattr(tokenizer, "detokenize"):
+            sample_decoded = tokenizer.detokenize(ids_for_decode)
+    except Exception as exc:
+        sample_decoded = f"<decode failed: {exc}>"
+
+    img_stats = "None"
+    if imgs is not None:
+        img_stats = (
+            f"shape={tuple(imgs.shape)}, dtype={imgs.dtype}, "
+            f"min={float(imgs.min().item()):.4f}, max={float(imgs.max().item()):.4f}, "
+            f"mean={float(imgs.mean().item()):.4f}"
+        )
+
+    attn_stats = "None"
+    if attn_mask is not None:
+        attn_stats = (
+            f"shape={tuple(attn_mask.shape)}, dtype={attn_mask.dtype}, "
+            f"masked={(attn_mask == True).sum().item()}, unmasked={(attn_mask == False).sum().item()}"
+        )
+
+    print_rank_0("\n" + "=" * 120)
+    print_rank_0(f"[BIG DEBUG][BATCH][STEP {step_id}]")
+    print_rank_0(
+        f"tokens.shape={tuple(tokens.shape)} dtype={tokens.dtype} | "
+        f"labels.shape={tuple(labels.shape)} dtype={labels.dtype} | "
+        f"loss_mask.shape={tuple(loss_mask.shape)} dtype={loss_mask.dtype}"
+    )
+    print_rank_0(
+        f"token_ids: image={image_token_id}, video={video_token_id}, vision_start={vision_start_token_id} | "
+        f"counts: image={image_token_count}, video={video_token_count}, vision_start={vision_start_count}"
+    )
+    print_rank_0(
+        f"has_image={has_image}, has_video={has_video} | imgs={img_stats} | "
+        f"image_grid_thw={tuple(image_grid_thw.shape) if image_grid_thw is not None else None}"
+    )
+    print_rank_0(
+        f"attn_mask={attn_stats} | cu_lengths.shape={tuple(cu_lengths.shape)} values={cu_lengths[0].tolist()} | "
+        f"max_lengths.shape={tuple(max_lengths.shape)} values={max_lengths[0].tolist()}"
+    )
+    print_rank_0(
+        f"sample[{sample_idx}] first_64_tokens={sample_tokens[:64].tolist()} | "
+        f"first_64_labels={sample_labels[:64].tolist()}"
+    )
+    print_rank_0(
+        f"sample[{sample_idx}] valid_label_count={sample_valid_label_count} | "
+        f"loss_mask_active={(sample_loss_mask == 1).sum().item()} | decoded_prefix={sample_decoded}"
+    )
+    print_rank_0("=" * 120)
+
+
+def _ensure_vision_token_ids():
+    """Resolve multimodal special token ids once from the active tokenizer."""
+    global image_token_id, video_token_id, vision_start_token_id
+    if image_token_id is not None and video_token_id is not None and vision_start_token_id is not None:
+        return
+
+    tokenizer = get_tokenizer()
+    image_token_id = tokenizer.convert_tokens_to_ids("<|image_pad|>")
+    video_token_id = tokenizer.convert_tokens_to_ids("<|video_pad|>")
+    vision_start_token_id = tokenizer.convert_tokens_to_ids("<|vision_start|>")
+
+    if image_token_id is None or video_token_id is None or vision_start_token_id is None:
+        vocab = getattr(tokenizer, "vocab", None)
+        if isinstance(vocab, dict):
+            if image_token_id is None:
+                image_token_id = vocab.get("<|image_pad|>")
+            if video_token_id is None:
+                video_token_id = vocab.get("<|video_pad|>")
+            if vision_start_token_id is None:
+                vision_start_token_id = vocab.get("<|vision_start|>")
+
+    print_rank_0(
+        f"[DEBUG TOKEN IDS] image_token_id={image_token_id}, "
+        f"video_token_id={video_token_id}, vision_start_token_id={vision_start_token_id}"
+    )
 
 
 def qwen2vl_embedding_ranks(pp_ranks):
@@ -58,7 +166,7 @@ def qwen2vl_position_embedding_ranks(pp_ranks):
     Args:
         pp_ranks: A list of global ranks that constitute a pipeline group.
     """
-    args = get_args()
+    args = get_args() #get training arguments
 
     # encoder size is also the index to the first rank of the decoder.
     epp = args.encoder_pipeline_model_parallel_size or 0
@@ -81,17 +189,38 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
         MCoreModel: The returned model
     """
     args = get_args()
+    # Get model family: "llava-ov-1.5-4b" → "llava_ov_1_5"
     model_family = get_model_family(args.model_name)
+    # Lookup the registered provider
     model_provider = get_model_provider(model_family)
+        #   = MODEL_FAMILY_TO_PROVIDER["llava_ov_1_5"]
+    #   = rice_vl_model_provider
     assert model_provider is not None, f'model provider for {args.model_name} not found'
+    # call the provider to build the model and return the model
     return model_provider(pre_process, post_process, add_encoder, add_decoder)
 
 
 def get_batch(data_iterator):
     """Generate a batch"""
+    global _logged_token_presence_once, _big_debug_step
     args = get_args()
+    _ensure_vision_token_ids()
+
+    print("=" * 80)
+    print("[DEBUG GET_BATCH - pretrain_llavaov_1_5.py]")
+    
     if data_iterator is not None and mpu.get_tensor_model_parallel_rank() == 0:
         data = next(data_iterator)
+        
+        print(f"  Data from iterator is dict: {isinstance(data, dict)}")
+        if isinstance(data, dict):
+            print(f"  Data keys: {list(data.keys())}")
+            print(f"  'imgs' in data: {'imgs' in data}")
+            print(f"  'image_grid_thw' in data: {'image_grid_thw' in data}")
+            if 'imgs' in data:
+                print(f"  data['imgs'] is None: {data['imgs'] is None}")
+                print(f"  data['imgs'] shape: {data['imgs'].shape if data['imgs'] is not None else 'None'}")
+        
         if isinstance(data.get('tokens'), torch.Tensor):
             orig_dtype = data['tokens'].dtype
             if data['tokens'].dtype != torch.long:
@@ -107,14 +236,26 @@ def get_batch(data_iterator):
     else:
         data = None
 
+    print(f"  Broadcasting data...")
     tokens = tensor_parallel.broadcast_data(["tokens"], data, torch.int64)["tokens"]
     labels = tensor_parallel.broadcast_data(["labels"], data, torch.int64)["labels"]
     attn_mask = tensor_parallel.broadcast_data(["attn_mask"], data, torch.bool)["attn_mask"]
     cu_lengths = tensor_parallel.broadcast_data(["cu_lengths"], data, torch.int32)["cu_lengths"]
     max_lengths = tensor_parallel.broadcast_data(["max_lengths"], data, torch.int32)["max_lengths"]
-
-    has_video = video_token_id in tokens
-    has_image = image_token_id in tokens
+    
+    has_video = False  # Video path intentionally disabled for this training setup.
+    has_image = image_token_id is not None and image_token_id in tokens
+    if not _logged_token_presence_once:
+        image_token_count = int((tokens == image_token_id).sum().item()) if image_token_id is not None else 0
+        vision_start_count = int((tokens == vision_start_token_id).sum().item()) if vision_start_token_id is not None else 0
+        print_rank_0(
+            f"[DEBUG TRAIN TOKENS] image_token_id={image_token_id} count={image_token_count}, "
+            f"vision_start_token_id={vision_start_token_id} count={vision_start_count}, "
+            f"first_32_ids={tokens[0, :32].tolist()}"
+        )
+        _logged_token_presence_once = True
+    print(f"  has_image token in batch: {has_image}")
+    print(f"  has_video token in batch: {has_video}")
     thw = None
     video_grid_thw = None
     imgs = None
@@ -122,6 +263,10 @@ def get_batch(data_iterator):
     if has_image:
         imgs = tensor_parallel.broadcast_data(["imgs"], data, torch.float32)["imgs"]
         thw = tensor_parallel.broadcast_data(["image_grid_thw"], data, torch.int32)["image_grid_thw"]
+        print(f"  Broadcasted imgs: {imgs.shape if imgs is not None else 'None'}")
+        print(f"  Broadcasted image_grid_thw: {thw.shape if thw is not None else 'None'}")
+    else:
+        print("  No image tokens in this packed batch (imgs not forwarded to model).")
     if has_video:
         pixel_values_videos = tensor_parallel.broadcast_data(
             ["pixel_values_videos"],
@@ -132,8 +277,10 @@ def get_batch(data_iterator):
             data,
             torch.int32)["video_grid_thw"]
 
+    print("=" * 80)
+
     packed_seq_params = None
-    is_video = video_token_id in tokens
+    is_video = False
 
     attn_mask_type = AttnMaskType.padding_causal if attn_mask.any() else AttnMaskType.causal
 
@@ -161,6 +308,21 @@ def get_batch(data_iterator):
     if args.context_parallel_size > 1:
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
+
+    _big_debug_step += 1
+    _log_big_batch_debug(
+        step_id=_big_debug_step,
+        tokens=tokens,
+        labels=labels,
+        loss_mask=loss_mask,
+        attn_mask=attn_mask,
+        imgs=imgs,
+        image_grid_thw=thw,
+        cu_lengths=cu_lengths,
+        max_lengths=max_lengths,
+        has_image=bool(has_image),
+        has_video=bool(has_video),
+    )
 
     # TODO
     attn_mask_type = AttnMaskType.causal
@@ -235,7 +397,7 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         loss_reduced_dict
     )
 
-
+#called by megatron training loop during each training step (called once per micro batch during training)
 def forward_step(data_iterator, model):
     """Forward training step.
 
@@ -250,14 +412,28 @@ def forward_step(data_iterator, model):
 
     global stimer
     with stimer(bdata=True):
+        #get batch from data iterator
         images, image_grid_thw, pixel_values_videos, video_grid_thw, \
         input_ids, position_ids, attention_mask, \
         labels, loss_mask, attn_mask_type, packed_seq_params \
             = get_batch(data_iterator)
+        #returns:
+        # images: Tensor([num_images, C, H, W])          # Processed image pixels
+        # image_grid_thw: Tensor([num_images, 3])        # Grid dimensions [t, h, w]
+        # pixel_values_videos: Tensor or None            # Video frames (if present)
+        # video_grid_thw: Tensor or None                 # Video grid dimensions
+        # input_ids: Tensor([batch, seq_len])            # Token IDs (with <|image_pad|>)
+        # position_ids: Tensor([batch, seq_len]) or None # Position indices
+        # attention_mask: Tensor([batch, seq_len])       # Attention mask (False=attend, True=mask)
+        # labels: Tensor([batch, seq_len])               # Target labels for loss
+        # loss_mask: Tensor([batch, seq_len])            # Which tokens to compute loss on
+        # attn_mask_type: AttnMaskType                   # Causal or padding_causal
+        # packed_seq_params: PackedSeqParams or None     # For packed sequences
         
     timers('batch-generator').stop()
 
     with stimer:
+        # MODEL FORWARD PASS
         output_tensor = model(
             images,
             image_grid_thw,
@@ -273,16 +449,40 @@ def forward_step(data_iterator, model):
  
     return output_tensor, partial(loss_func, loss_mask)
 
-
+# Factory function that creates and returns train/valid/test data loaders for the Megatron trainer.
 def train_valid_test_dataset_provider(train_val_test_num_samples):
     """ Provides the datasets used by the trainer """
 
     args = get_args()
+    # create task encoder
     task_encoder = Qwen2VLTaskEncoder(args)
+    # Processes images/videos using processor
+    # Applies chat template to conversations
+    # Tokenizes text
+    # Creates attention masks
+    # Handles vision token placement (<|image_pad|>, <|video_pad|>)
+    # Packs sequences efficiently
+
+    #get train dataset
     train_dataset = get_train_dataset(task_encoder)
+
+    #Purpose: Combines multiple samples into a batch
+    # Input: List of individual samples (each with different sequence lengths)
+    # Output: Batched tensors with padding
     collator = build_sft_data_collator(DataCollatorForSeq2Seq)
+    # Example:
+    # Sample 1: [151652, 8932, 1234, ...]      # Length 50
+    # Sample 2: [151652, 9821, 5567, ...]      # Length 120
+                    #    ↓  (collate)
+    # Batch: [[151652, 8932, 1234, ..., <pad>, <pad>],   # Padded to 120
+    #         [151652, 9821, 5567, ..., ...., ....]]      # Already 120
+
+    #create dataloader
     train_dataloader = get_train_loader(train_dataset, collator)
-    return train_dataloader, None, None
+
+    return train_dataloader, None, None 
+    # For SFT, typically only training loop is needed
+    # valid_iterator and test_iterator are set to None
     
 
 @register_model_trainer(

@@ -67,6 +67,16 @@ def get_batch(data_iterator):
     else:
         data = None
 
+    print("=" * 80)
+    print("[DEBUG GET_BATCH] Checking data from iterator:")
+    print(f"  data is None: {data is None}")
+    if data is not None:
+        print(f"  data keys: {data.keys() if isinstance(data, dict) else 'not a dict'}")
+        if isinstance(data, dict) and 'images' in data:
+            print(f"  data['images'] is None: {data['images'] is None}")
+            print(f"  data['images'] shape: {data['images'].shape if data['images'] is not None else 'None'}")
+    print("=" * 80)
+
     data_i = tensor_parallel.broadcast_data([
         "input_ids", 
         # "position_ids", 
@@ -77,6 +87,11 @@ def get_batch(data_iterator):
         "loss_mask"
     ], data, torch.int64)
     data_f = tensor_parallel.broadcast_data(["images"], data, torch.float32)
+
+    print("[DEBUG GET_BATCH] After broadcast:")
+    print(f"  data_f['images'] is None: {data_f['images'] is None}")
+    print(f"  data_f['images'] shape: {data_f['images'].shape if data_f['images'] is not None else 'None'}")
+    print("=" * 80)
 
     # slice batch along sequence dimension for context parallelism
     assert mpu.get_context_parallel_world_size() == 1, "not implemented"
@@ -188,7 +203,7 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
     tokenizer = get_tokenizer()
 
-    processor = AutoProcessor.from_pretrained(args.hf_tokenizer_path, trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(args.hf_tokenizer_path, trust_remote_code=True, local_files_only=False)
     if args.image_resolution:
         setattr(processor, "image_resolution", args.image_resolution)
 
@@ -249,16 +264,21 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
     return train_iter, valid_iter, test_iter
 
-
+# This registers the function for model family "llava_ov_1_5" and phase "sft"
 @register_model_trainer(model_family=[constants.VisionLanguageModelFamilies.LLAVA_OV_1_5],
                         training_phase=constants.TrainingPhase.SFT)
 def default_pretrain_trainer(train_args):
     """build trainer"""
     from aiak_training_llm.train.pretrain import pretrain_llavaov_1_5
+    #imports the module containing model/dataset/forward functions for LLaVA-OV-1.5
     if train_args.encoder_pipeline_model_parallel_size in [0, None]:
-        model_type = ModelType.encoder_or_decoder
+        #check if model use pipeline parallelism with separate encoder and decoder stages
+        model_type = ModelType.encoder_or_decoder # unified model
+        print_rank_0("Using unified model type for training.")
     else:
         model_type = ModelType.encoder_and_decoder
+        print_rank_0("Using encoder-and-decoder model type for training.")
+    #created megatron trainer instance   
     trainer = MegatronTrainer(
         train_args=train_args,
         train_valid_test_dataset_provider=pretrain_llavaov_1_5.train_valid_test_dataset_provider,

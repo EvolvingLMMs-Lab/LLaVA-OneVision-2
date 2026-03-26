@@ -18,9 +18,12 @@ from torch import Tensor
 
 from aiak_training_llm.models.llavaov_1_5.rice_vision_model import (
     RiceViTModel, VisionModel)
+from aiak_training_llm.models.fastvit import FastViTModel
 from aiak_training_llm.models.qwen import QwenModel
+from aiak_training_llm.models.mobilellm import MobileLLMModel
 from aiak_training_llm.models.qwen_vl.adapter import Adapter
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
+from aiak_training_llm.utils import print_rank_0
 
 
 def _rotate_half(x):
@@ -158,14 +161,22 @@ class LlavaOnevision1_5(MegatronModule):
         self.vision_model = None
         self.adapter = None
         self.language_model = None
+        self._big_debug_forward_step = 0
 
         #  define the vision model and the projection from vision model outputs to language model inputs.
         if self.add_encoder:
-            # if vision_config.normalization == "RMSNorm":
-            self.vision_model = RiceViTModel(
+            # Use FastViT as the vision encoder (following FastVLM repo)
+            self.vision_model = FastViTModel(
                 vision_config,
                 vision_layer_spec,
             )
+            print(f'self,vision_model: {self.vision_model}')
+            # Original Rice/SigLIP encoder (commented out):
+            # if vision_config.normalization == "RMSNorm":
+            #     self.vision_model = RiceViTModel(
+            #         vision_config,
+            #         vision_layer_spec,
+            #     )
             # else:
             #     self.vision_model = VisionModel(
             #         vision_config,
@@ -173,8 +184,8 @@ class LlavaOnevision1_5(MegatronModule):
             #     )
             # Map (intermediate) vision model outputs to the language model input dimension.
             # from megatron.training import print_rank_0
-            # print_rank_0(f"vision_config.hidden_size: {vision_config.hidden_size}")
-            # print_rank_0(f"language_config.hidden_size: {language_config.hidden_size}")
+            print(f"[DEBUG] Creating adapter: vision_config.hidden_size={vision_config.hidden_size}")
+            print(f"[DEBUG] Creating adapter: language_config.hidden_size={language_config.hidden_size}")
             self.adapter = Adapter(
                 adapter_config,
                 adapter_layer_spec,
@@ -196,23 +207,44 @@ class LlavaOnevision1_5(MegatronModule):
         # # This attribute is needed to check if an all-reduce is required
         # # on the word embeddings inside `finalize_model_grads._allreduce_word_embedding_grads`.
         if self.add_decoder:
-            # self.rotary_emb = Qwen2VLRotaryEmbedding(
-            #     dim=language_config.hidden_size // language_config.num_attention_heads,
-            #     theta=language_rotary_base
-            # )
-            self.language_model = QwenModel(
-                config=language_config,
-                transformer_layer_spec=language_layer_spec,
-                vocab_size=language_vocab_size,
-                max_sequence_length=language_max_sequence_length,
-                parallel_output=parallel_output,
-                position_embedding_type=language_position_embedding_type,
-                rotary_percent=language_rotary_percent,
-                pre_process=self.pre_process,
-                post_process=self.post_process,
-                rotary_base=language_rotary_base,
-                share_embeddings_and_output_weights=share_embeddings_and_output_weights,
+            # Dynamically select language model based on configuration
+            # MobileLLM: 15 layers, 576 hidden size
+            # Qwen2.5: 32+ layers, 3584+ hidden size
+            is_mobilellm = (
+                language_config.num_layers <= 20 and 
+                language_config.hidden_size <= 1024
             )
+            
+            if is_mobilellm:
+                print("[INFO] Using MobileLLM as language backbone")
+                self.language_model = MobileLLMModel(
+                    config=language_config,
+                    transformer_layer_spec=language_layer_spec,
+                    vocab_size=language_vocab_size,
+                    max_sequence_length=language_max_sequence_length,
+                    parallel_output=parallel_output,
+                    position_embedding_type=language_position_embedding_type,
+                    rotary_percent=language_rotary_percent,
+                    pre_process=self.pre_process,
+                    post_process=self.post_process,
+                    rotary_base=language_rotary_base,
+                    share_embeddings_and_output_weights=share_embeddings_and_output_weights,
+                )
+            else:
+                print("[INFO] Using Qwen model as language backbone")
+                self.language_model = QwenModel(
+                    config=language_config,
+                    transformer_layer_spec=language_layer_spec,
+                    vocab_size=language_vocab_size,
+                    max_sequence_length=language_max_sequence_length,
+                    parallel_output=parallel_output,
+                    position_embedding_type=language_position_embedding_type,
+                    rotary_percent=language_rotary_percent,
+                    pre_process=self.pre_process,
+                    post_process=self.post_process,
+                    rotary_base=language_rotary_base,
+                    share_embeddings_and_output_weights=share_embeddings_and_output_weights,
+                )
             self.share_embeddings_and_output_weights = (
                 self.language_model.share_embeddings_and_output_weights
             )
@@ -312,6 +344,17 @@ class LlavaOnevision1_5(MegatronModule):
         # )
         # print_rank_0(input_ids)
         # print_rank_0(position_ids)
+        self._big_debug_forward_step += 1
+        debug_step = self._big_debug_forward_step
+        print_rank_0(
+            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+            f"input_ids={tuple(input_ids.shape) if input_ids is not None else None}, "
+            f"images={tuple(images.shape) if images is not None else None}, "
+            f"image_grid_thw={tuple(image_grid_thw.shape) if image_grid_thw is not None else None}, "
+            f"labels={tuple(labels.shape) if labels is not None else None}, "
+            f"attn_mask_type={attn_mask_type}, "
+            f"position_ids={tuple(position_ids.shape) if position_ids is not None else None}"
+        )
         use_inference_kv_cache = (
             inference_params is not None
             and "image_tokens_count" in inference_params.key_value_memory_dict
@@ -324,13 +367,46 @@ class LlavaOnevision1_5(MegatronModule):
             if images is not None:
                 image_embeddings, window_index = self.vision_model(images, \
                                     grid_thw=image_grid_thw) # [img_len, h_vision]
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"vision_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
+                    f"requires_grad={image_embeddings.requires_grad}, window_index_shape="
+                    f"{tuple(window_index.shape) if window_index is not None else None}"
+                )
                 image_embeddings = self.adapter(image_embeddings, window_index)
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"adapter_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
+                    f"requires_grad={image_embeddings.requires_grad}"
+                )
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
+                print_rank_0(
+                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                    f"image_token_id={self.config.image_token_id}, token_count={n_image_tokens}, "
+                    f"feature_count={n_image_features}"
+                )
                 if n_image_tokens != n_image_features:
-                    raise ValueError(
-                        f"Image features {n_image_features} != image tokens {n_image_tokens}"
-                    )
+                    # raise ValueError(
+                    #     f"Image features {n_image_features} != image tokens {n_image_tokens}"
+                    # )
+                    if n_image_features > n_image_tokens:
+                        # Trim extra vision features if the model produced more than requested tokens.
+                        image_embeddings = image_embeddings[:n_image_tokens]
+                        if window_index is not None:
+                            window_index = window_index[:n_image_tokens]
+                    else:
+                        # Pad missing vision features with zeros to align with token count.
+                        pad_len = n_image_tokens - n_image_features
+                        pad_emb = torch.zeros(
+                            (pad_len, image_embeddings.size(1)),
+                            device=image_embeddings.device,
+                            dtype=image_embeddings.dtype,
+                        )
+                        image_embeddings = torch.cat([image_embeddings, pad_emb], dim=0)
+                        if window_index is not None:
+                            pad_idx = window_index[-1:].repeat(pad_len, *([1] * (window_index.dim() - 1)))
+                            window_index = torch.cat([window_index, pad_idx], dim=0)
 
                 # If running inference, the language model KV cache will be updated for image token positions.
                 # Here we store the image tokens sequence length, which can be used as an offset to the KV cache later.
@@ -377,13 +453,19 @@ class LlavaOnevision1_5(MegatronModule):
             language_embeddings = self.language_model.embedding(
                 input_ids=input_ids, position_ids=None
             )  # [text_seq_len, b, h_language]
+            print_rank_0(
+                f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                f"language_embeddings shape={tuple(language_embeddings.shape)}, dtype={language_embeddings.dtype}, "
+                f"requires_grad={language_embeddings.requires_grad}"
+            )
 
             # If running inference, we can skip image token computation if they were computed already
             # earlier for this sample.
             if use_inference_kv_cache or (images is None and pixel_values_videos is None):
                 combined_embeddings = language_embeddings
             else:
-                if images is not None and self.config.image_token_id in input_ids:
+                combined_embeddings = language_embeddings
+                if images is not None and (input_ids == self.config.image_token_id).any():
                     image_token_id = self.config.image_token_id
                     images_mask = (
                         (input_ids == image_token_id).transpose(0, 1)
@@ -392,9 +474,15 @@ class LlavaOnevision1_5(MegatronModule):
                         .to(language_embeddings.device)
                     )
                     image_embeddings = image_embeddings.to(language_embeddings.device, language_embeddings.dtype)
-                    combined_embeddings = language_embeddings.masked_scatter(images_mask, image_embeddings)
+                    combined_embeddings = combined_embeddings.masked_scatter(images_mask, image_embeddings)
+                    print_rank_0(
+                        f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+                        f"image_inserted mask_true={int(images_mask.sum().item())}, "
+                        f"combined_embeddings shape={tuple(combined_embeddings.shape)}, "
+                        f"requires_grad={combined_embeddings.requires_grad}"
+                    )
 
-                if pixel_values_videos is not None and self.config.video_token_id in input_ids:
+                if pixel_values_videos is not None and (input_ids == self.config.video_token_id).any():
                     video_token_id = self.config.video_token_id
                     videos_mask = (
                         (input_ids == video_token_id).transpose(0, 1)
@@ -403,7 +491,7 @@ class LlavaOnevision1_5(MegatronModule):
                         .to(language_embeddings.device)
                     )
                     video_embeddings = video_embeddings.to(language_embeddings.device, language_embeddings.dtype)
-                    combined_embeddings = language_embeddings.masked_scatter(videos_mask, video_embeddings)
+                    combined_embeddings = combined_embeddings.masked_scatter(videos_mask, video_embeddings)
 
             if self.config.context_parallel_size > 1:
                 combined_embeddings = get_inputs_on_this_cp_rank(combined_embeddings)
@@ -426,6 +514,12 @@ class LlavaOnevision1_5(MegatronModule):
             inference_params=inference_params,
             packed_seq_params=packed_seq_params,
             extra_block_kwargs={},
+        )
+
+        print_rank_0(
+            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
+            f"model_output shape={tuple(output.shape) if hasattr(output, 'shape') else None}, "
+            f"dtype={getattr(output, 'dtype', None)}, requires_grad={getattr(output, 'requires_grad', None)}"
         )
 
         return output

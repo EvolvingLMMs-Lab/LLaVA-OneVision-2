@@ -1,0 +1,11 @@
+{
+  "_from_model_config": true,
+  "bos_token_id": 128000,
+  "cache_implementation": "dynamic",
+  "eos_token_id": [
+    128001,
+    128008,
+    128009
+  ],
+  "transformers_version": "4.55.0"
+}

@@ -1,1 +1,0 @@
-python -u ./convert_packedsample_to_wds.py  --output_dir /mnt/cluster/emova_wds_3000tk  --json_file /mnt/cluster/raw_packing_data_emova_3000tk  --video_dir /mnt/cluster/raw_packing_data_emova_3000tk   --image_dir /mnt/cluster/raw_packing_data_emova_3000tk  --mode caption_pack   --maxcount 5000 2>&1 | tee s3_proc.log

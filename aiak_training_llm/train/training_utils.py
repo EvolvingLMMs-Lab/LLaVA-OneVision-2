@@ -244,6 +244,40 @@ def pretrain(
     timers('model-and-optimizer-setup').stop()
     print_datetime('after model, optimizer, and learning rate scheduler are built')
     config = get_model_config(model[0])
+    
+    # Print full model structure
+    print_rank_0('=' * 80)
+    print_rank_0('FULL MODEL STRUCTURE:')
+    print_rank_0('=' * 80)
+    if isinstance(model, list):
+        for idx, m in enumerate(model):
+            print_rank_0(f'\n--- Model {idx} (pipeline rank {idx}) ---')
+            print_rank_0(m)
+    else:
+        print_rank_0(model)
+    print_rank_0('=' * 80)
+    
+    # Print parameter trainability status
+    print_rank_0('\n' + '=' * 80)
+    print_rank_0('PARAMETER TRAINABILITY STATUS:')
+    print_rank_0('=' * 80)
+    model_to_check = model[0] if isinstance(model, list) else model
+    trainable_params = 0
+    frozen_params = 0
+    for name, param in model_to_check.named_parameters():
+        status = "TRAINABLE" if param.requires_grad else "FROZEN"
+        print_rank_0(f"{status:12s} | {name:80s} | shape: {str(tuple(param.shape)):30s} | dtype: {param.dtype}")
+        if param.requires_grad:
+            trainable_params += param.numel()
+        else:
+            frozen_params += param.numel()
+    
+    print_rank_0('=' * 80)
+    print_rank_0(f'Total trainable parameters: {trainable_params:,} ({trainable_params/1e6:.2f}M)')
+    print_rank_0(f'Total frozen parameters: {frozen_params:,} ({frozen_params/1e6:.2f}M)')
+    print_rank_0(f'Total parameters: {trainable_params + frozen_params:,} ({(trainable_params + frozen_params)/1e6:.2f}M)')
+    print_rank_0(f'Trainable percentage: {100 * trainable_params / (trainable_params + frozen_params):.2f}%')
+    print_rank_0('=' * 80)
 
     # Data stuff.
     timers('train/valid/test-data-iterators-setup', log_level=0).start(barrier=True)
@@ -279,6 +313,20 @@ def pretrain(
 
         iteration = 0
         if args.do_train and args.train_iters > 0:
+            print_rank_0('\n' + '=' * 80)
+            print_rank_0("training with the following parameter status:")
+            print_rank_0('=' * 80)
+            model_to_check = model[0] if isinstance(model, list) else model
+            trainable_params = 0
+            frozen_params = 0
+            for name, param in model_to_check.named_parameters():
+                status = "TRAINABLE" if param.requires_grad else "FROZEN"
+                print_rank_0(f"{status:12s} | {name:80s} | shape: {str(tuple(param.shape)):30s} | dtype: {param.dtype}")
+                if param.requires_grad:
+                    trainable_params += param.numel()
+                else:
+                    frozen_params += param.numel()
+                    
             iteration, num_floating_point_operations_so_far = train(
                 forward_step_func=forward_step_func,
                 model=model,
@@ -360,6 +408,7 @@ def setup_model_and_optimizer(model_provider_func,
     timers = get_timers()
 
     model = get_model(model_provider_func, model_type)
+    print(model)
     unwrapped_model = unwrap_model(model)
 
     kwargs = {}
@@ -402,6 +451,27 @@ def setup_model_and_optimizer(model_provider_func,
         if (args.fp16 or args.bf16) and optimizer is not None:
             optimizer.reload_model_params()
         print_rank_0(f'Upcycled checkpoint saved to {args.save}')
+
+    # When using FastViT with pretrained checkpoint, we need special handling
+    # The checkpoint may contain incompatible language model weights (e.g., Qwen2-1.5B vs MobileLLM-140M)
+    # So we only load the vision tower weights if pretrained_checkpoint is specified
+    if getattr(args, 'use_fastvit', False):
+        print_rank_0(f'[DEBUG] FastViT enabled: use_fastvit={getattr(args, "use_fastvit", False)}')
+        print_rank_0(f'[DEBUG] Before handling: args.load={args.load}, args.pretrained_checkpoint={args.pretrained_checkpoint}')
+        
+        if args.pretrained_checkpoint is not None:
+            # We have a pretrained checkpoint - load only vision tower from HF checkpoint
+            print_rank_0(f'FastViT enabled: Will load vision tower from pretrained checkpoint: {args.pretrained_checkpoint}')
+            # Keep args.pretrained_checkpoint for vision tower loading
+            # Clear args.load to prevent Megatron checkpoint loading
+            args.load = None
+        else:
+            # No pretrained checkpoint - train vision from scratch
+            args.load = None
+            args.pretrained_checkpoint = None
+            print_rank_0('FastViT enabled: No pretrained checkpoint, training vision from scratch')
+        
+        print_rank_0(f'[DEBUG] After handling: args.load={args.load}, args.pretrained_checkpoint={args.pretrained_checkpoint}')
 
     if (args.load is not None or args.pretrained_checkpoint is not None) and not args.moe_use_upcycling:
         timers('load-checkpoint', log_level=0).start(barrier=True)

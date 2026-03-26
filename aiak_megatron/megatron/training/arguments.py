@@ -254,7 +254,9 @@ def validate_args(args, defaults={}):
     )
 
     if args.attention_backend == AttnBackend.local:
-        assert args.spec[0] == 'local' , '--attention-backend local is only supported with --spec local'
+        # assert args.spec[0] == 'local' , '--attention-backend local is only supported with --spec local'
+        if args.spec is not None and len(args.spec) > 0:
+            assert args.spec[0] == 'local' , '--attention-backend local is only supported with --spec local'
 
     # Pipeline model parallel size.
     args.transformer_pipeline_model_parallel_size = args.pipeline_model_parallel_size

@@ -1283,14 +1283,214 @@ def load_checkpoint(model, optimizer, opt_param_scheduler, load_arg='load', stri
             print_rank_0('could not find arguments in the checkpoint ...')
 
     # Model.
-    strict = False if args.retro_add_retriever else strict
+    # For fine-tuning/stage1 alignment, use non-strict loading to allow architecture mismatches.
+    # This is especially important when loading HF checkpoints into Megatron models.
+    if args.finetune or hasattr(args, 'trainable_modules'):
+        strict = False
+    else:
+        strict = False if args.retro_add_retriever else strict
     if not skip_load_to_model_and_opt:
+        # Get device from model parameters
+        device = next(ddp_model[0].parameters()).device
+        print_rank_0(f"Loading checkpoint with device: {device}, strict={strict}")
+        
+        # Move all tensors in state_dict to device before loading
+        model_state = {}
+        for k, v in state_dict['model'].items():
+            if isinstance(v, torch.Tensor):
+                model_state[k] = v.to(device)
+            else:
+                model_state[k] = v
+        
         if len(ddp_model) == 1:
-            ddp_model[0].load_state_dict(state_dict['model'], strict=strict)
+            ddp_model[0].load_state_dict(model_state, strict=strict)
+            # Ensure entire model is on device (handles newly created layers from strict=False)
+            ddp_model[0].to(device)
+            # After checkpoint load, initialize any lazy TE linear modules with their loaded weights
+            try:
+                from megatron.core.extensions import transformer_engine as _te
+                
+                for name, module in ddp_model[0].named_modules():
+                    if isinstance(module, getattr(_te, '_FallbackLinear', tuple())):
+                        # If this is a lazy linear (self.linear is None), try to initialize it from loaded weights
+                        if hasattr(module, 'linear') and module.linear is None:
+                            # Look for corresponding weights in the loaded state_dict
+                            weight_key = None
+                            bias_key = None
+                            for state_key in model_state.keys():
+                                if name in state_key and 'weight' in state_key:
+                                    weight_key = state_key
+                                if name in state_key and 'bias' in state_key:
+                                    bias_key = state_key
+                            
+                            if weight_key and weight_key in model_state:
+                                weight = model_state[weight_key]
+                                bias_tensor = model_state.get(bias_key) if bias_key else None
+                                # Create linear with loaded shape
+                                out_features, in_features = weight.shape
+                                module.linear = torch.nn.Linear(in_features, out_features, bias=(bias_tensor is not None))
+                                module.linear.weight.data.copy_(weight)
+                                if bias_tensor is not None:
+                                    module.linear.bias.data.copy_(bias_tensor)
+                                module.linear = module.linear.to(device=device, dtype=weight.dtype)
+            except Exception:
+                pass
+            # Ensure model params/buffers have correct dtype for mixed precision
+            try:
+                if getattr(args, 'bf16', False):
+                    target_dtype = torch.bfloat16
+                elif getattr(args, 'fp16', False):
+                    target_dtype = torch.float16
+                else:
+                    target_dtype = None
+
+                if target_dtype is not None:
+                    for p in ddp_model[0].parameters():
+                        p.data = p.data.to(dtype=target_dtype, device=p.device)
+                    for name, buf in ddp_model[0].named_buffers(recurse=True):
+                        if buf is not None:
+                            try:
+                                buf.data = buf.data.to(dtype=target_dtype, device=buf.device)
+                            except Exception:
+                                # some buffers may be non-tensor or empty
+                                pass
+            except Exception:
+                pass
+            # Also ensure any fallback TE linear modules are moved to device
+            try:
+                from megatron.core.extensions import transformer_engine as _te
+
+                for m in ddp_model[0].modules():
+                    if isinstance(m, getattr(_te, '_FallbackLinear', tuple())):
+                        m.to(device)
+            except Exception:
+                pass
+            # Final dtype enforcement after moving any fallback modules
+            try:
+                if getattr(args, 'bf16', False):
+                    target_dtype = torch.bfloat16
+                elif getattr(args, 'fp16', False):
+                    target_dtype = torch.float16
+                else:
+                    target_dtype = None
+
+                if target_dtype is not None:
+                    mismatches = []
+                    total = 0
+                    for name, p in ddp_model[0].named_parameters():
+                        total += 1
+                        if p.dtype != target_dtype:
+                            mismatches.append((name, str(p.device), str(p.dtype)))
+                            p.data = p.data.to(device=p.device, dtype=target_dtype)
+                    for name, b in ddp_model[0].named_buffers(recurse=True):
+                        if isinstance(b, torch.Tensor) and b.dtype != target_dtype:
+                            mismatches.append((f'buffer:{name}', str(b.device), str(b.dtype)))
+                            try:
+                                b.data = b.data.to(device=b.device, dtype=target_dtype)
+                            except Exception:
+                                pass
+                    if mismatches:
+                        print_rank_0(f'Post-load converted {len(mismatches)}/{total} params/buffers to {target_dtype}. Examples: {mismatches[:10]}')
+            except Exception:
+                pass
         else:
             for i in range(len(ddp_model)):
                 mpu.set_virtual_pipeline_model_parallel_rank(i)
-                ddp_model[i].load_state_dict(state_dict['model%d' % i], strict=strict)
+                model_state_i = {}
+                for k, v in state_dict['model%d' % i].items():
+                    if isinstance(v, torch.Tensor):
+                        model_state_i[k] = v.to(device)
+                    else:
+                        model_state_i[k] = v
+                ddp_model[i].load_state_dict(model_state_i, strict=strict)
+                # Ensure entire model is on device
+                ddp_model[i].to(device)
+                # After checkpoint load, initialize any lazy TE linear modules with their loaded weights
+                try:
+                    from megatron.core.extensions import transformer_engine as _te
+                    
+                    for name, module in ddp_model[i].named_modules():
+                        if isinstance(module, getattr(_te, '_FallbackLinear', tuple())):
+                            # If this is a lazy linear (self.linear is None), try to initialize it from loaded weights
+                            if hasattr(module, 'linear') and module.linear is None:
+                                # Look for corresponding weights in the loaded state_dict
+                                weight_key = None
+                                bias_key = None
+                                for state_key in model_state_i.keys():
+                                    if name in state_key and 'weight' in state_key:
+                                        weight_key = state_key
+                                    if name in state_key and 'bias' in state_key:
+                                        bias_key = state_key
+                                
+                                if weight_key and weight_key in model_state_i:
+                                    weight = model_state_i[weight_key]
+                                    bias_tensor = model_state_i.get(bias_key) if bias_key else None
+                                    # Create linear with loaded shape
+                                    out_features, in_features = weight.shape
+                                    module.linear = torch.nn.Linear(in_features, out_features, bias=(bias_tensor is not None))
+                                    module.linear.weight.data.copy_(weight)
+                                    if bias_tensor is not None:
+                                        module.linear.bias.data.copy_(bias_tensor)
+                                    module.linear = module.linear.to(device=device, dtype=weight.dtype)
+                except Exception:
+                    pass
+                # Ensure any fallback TE linears are on the same device
+                try:
+                    from megatron.core.extensions import transformer_engine as _te
+
+                    for m in ddp_model[i].modules():
+                        if isinstance(m, getattr(_te, '_FallbackLinear', tuple())):
+                            m.to(device)
+                except Exception:
+                    pass
+                # Ensure model params/buffers have correct dtype for mixed precision
+                try:
+                    if getattr(args, 'bf16', False):
+                        target_dtype = torch.bfloat16
+                    elif getattr(args, 'fp16', False):
+                        target_dtype = torch.float16
+                    else:
+                        target_dtype = None
+
+                    if target_dtype is not None:
+                        for p in ddp_model[i].parameters():
+                            p.data = p.data.to(dtype=target_dtype, device=p.device)
+                        for name, buf in ddp_model[i].named_buffers(recurse=True):
+                            if buf is not None:
+                                try:
+                                    buf.data = buf.data.to(dtype=target_dtype, device=buf.device)
+                                except Exception:
+                                    pass
+                except Exception:
+                    pass
+                # Final dtype enforcement after moving any fallback modules
+                try:
+                    if getattr(args, 'bf16', False):
+                        target_dtype = torch.bfloat16
+                    elif getattr(args, 'fp16', False):
+                        target_dtype = torch.float16
+                    else:
+                        target_dtype = None
+
+                    if target_dtype is not None:
+                        mismatches = []
+                        total = 0
+                        for name, p in ddp_model[i].named_parameters():
+                            total += 1
+                            if p.dtype != target_dtype:
+                                mismatches.append((name, str(p.device), str(p.dtype)))
+                                p.data = p.data.to(device=p.device, dtype=target_dtype)
+                        for name, b in ddp_model[i].named_buffers(recurse=True):
+                            if isinstance(b, torch.Tensor) and b.dtype != target_dtype:
+                                mismatches.append((f'buffer:{name}', str(b.device), str(b.dtype)))
+                                try:
+                                    b.data = b.data.to(device=b.device, dtype=target_dtype)
+                                except Exception:
+                                    pass
+                        if mismatches:
+                            print_rank_0(f'Post-load converted {len(mismatches)}/{total} params/buffers to {target_dtype}. Examples: {mismatches[:10]}')
+                except Exception:
+                    pass
 
     # Fix up query/key/value matrix ordering if needed.
     checkpoint_version = get_checkpoint_version()

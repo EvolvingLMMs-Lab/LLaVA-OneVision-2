@@ -23,6 +23,7 @@ class StrategyAction(Enum):
 
 default_strategies: DefaultDict[str, dict[tuple, Any]] = defaultdict(dict)
 
+
 async_calls = AsyncCallsQueue()
 
 

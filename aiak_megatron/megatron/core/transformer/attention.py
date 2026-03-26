@@ -106,6 +106,16 @@ class Attention(MegatronModule, ABC):
         else:
             self.apply_rotary_fn = None
 
+        # Log which rotary function is bound (once for early layer to avoid spam)
+        if self.apply_rotary_fn is not None and getattr(self, 'layer_number', 0) in [0, 1]:
+            try:
+                fn = self.apply_rotary_fn
+                fn_name = getattr(fn, '__name__', type(fn).__name__)
+                fn_mod = getattr(fn, '__module__', str(fn))
+                print(f"[Attention] apply_rotary_fn bound to: {fn_mod}.{fn_name}", flush=True)
+            except Exception as e:
+                print(f"[Attention] apply_rotary_fn identification failed: {e}", flush=True)
+
         # To support both CUDA Graphs and key value with different hidden size
         self.key_hidden_size = self.hidden_size_per_attention_head
         self.val_hidden_size = self.hidden_size_per_attention_head
@@ -358,6 +368,8 @@ class Attention(MegatronModule, ABC):
         packed_seq_params=None,
         sequence_len_offset=None,
     ):
+        # DEBUG: Log input status
+        print(f"[Attention.forward] INPUT: hidden_states={hidden_states is not None}, key_value_states={key_value_states is not None}", flush=True)
         """
         Perform a forward pass through the attention module.
         """
@@ -378,6 +390,9 @@ class Attention(MegatronModule, ABC):
         # self or cross attn.
 
         query, key, value = self.get_query_key_value_tensors(hidden_states, key_value_states)
+        
+        # DEBUG: Log query/key/value status
+        print(f"[Attention.forward] After get_query_key_value_tensors: query={query is not None}, key={key is not None}, value={value is not None}, hidden_states={hidden_states is not None}, key_value_states={key_value_states is not None}", flush=True)
 
         # ===================================================
         # Adjust key, value, and rotary_pos_emb for inference
@@ -421,6 +436,10 @@ class Attention(MegatronModule, ABC):
             attn_mask_type,
             sequence_len_offset,
         )
+        
+        # DEBUG: Check query/key/value after _adjust_key_value_for_inference
+        if query is None or key is None:
+            print(f"[Attention] WARNING: query/key became None after _adjust_key_value_for_inference! query={query is not None}, key={key is not None}, value={value is not None}", flush=True)
 
         if packed_seq_params is not None:
             query = query.squeeze(1)
@@ -446,8 +465,30 @@ class Attention(MegatronModule, ABC):
                 cu_seqlens_q = cu_seqlens_kv = None
 
             assert self.apply_rotary_fn is not None, "apply_rotary_fn must be defined"
-            query = self.apply_rotary_fn(query, q_pos_emb, config=self.config, cu_seqlens=cu_seqlens_q)
-            key = self.apply_rotary_fn(key, k_pos_emb, config=self.config, cu_seqlens=cu_seqlens_kv)
+            # Keep originals as fallback in case RoPE function misbehaves
+            _orig_query = query
+            _orig_key = key
+            try:
+                query = self.apply_rotary_fn(query, q_pos_emb, config=self.config, cu_seqlens=cu_seqlens_q)
+                if query is None:
+                    print(f"[Attention] ERROR: apply_rotary_fn returned None for query! Using unrotated query.", flush=True)
+                    query = _orig_query
+            except Exception as e:
+                print(f"[Attention] EXCEPTION in apply_rotary_fn(query): {e}. Using unrotated query.", flush=True)
+                query = _orig_query
+            
+            try:
+                key = self.apply_rotary_fn(key, k_pos_emb, config=self.config, cu_seqlens=cu_seqlens_kv)
+                if key is None:
+                    print(f"[Attention] ERROR: apply_rotary_fn returned None for key! Using unrotated key.", flush=True)
+                    key = _orig_key
+            except Exception as e:
+                print(f"[Attention] EXCEPTION in apply_rotary_fn(key): {e}. Using unrotated key.", flush=True)
+                key = _orig_key
+            
+            # DEBUG: Check query/key after apply_rotary_fn
+            if query is None or key is None:
+                print(f"[Attention] WARNING: query/key became None after apply_rotary_fn! query={query is not None}, key={key is not None}", flush=True)
 
             # TODO, can apply positional embedding to value_layer so it has
             # absolute positional embedding.
@@ -457,6 +498,14 @@ class Attention(MegatronModule, ABC):
         # ==================================
         # core attention computation
         # ==================================
+        
+        # Safety check: if query, key, or value are None, return a zero tensor with matching shape
+        if query is None or key is None or value is None:
+            print(f"[Attention] WARNING: query/key/value is None before core_attention! query={query is not None}, key={key is not None}, value={value is not None}", flush=True)
+            # Return zeros with expected shape matching hidden_states [sq, b, hidden_size]
+            # hidden_states shape should be preserved through the projection
+            return (torch.zeros_like(hidden_states), None)
+        
         if self.checkpoint_core_attention and self.training:
             core_attn_out = self._checkpointed_attention_forward(
                 query,
@@ -629,26 +678,39 @@ class SelfAttention(Attention):
         # Attention heads [sq, b, h] --> [sq, b, ng * (np/ng + 2) * hn)]
         mixed_qkv, _ = self.linear_qkv(hidden_states)
 
-        # [sq, b, hp] --> [sq, b, ng, (np/ng + 2) * hn]
-        new_tensor_shape = mixed_qkv.size()[:-1] + (
-            self.num_query_groups_per_partition,
-            (
-                (self.num_attention_heads_per_partition // self.num_query_groups_per_partition + 2)
-                * self.hidden_size_per_attention_head
-            ),
-        )
-        mixed_qkv = mixed_qkv.view(*new_tensor_shape)
+        # [sq, b, hp] --> [sq, b, ng, inferred_group_width]
+        # old static shape assumption kept for reference:
+        # new_tensor_shape = mixed_qkv.size()[:-1] + (
+        #     self.num_query_groups_per_partition,
+        #     (
+        #         (self.num_attention_heads_per_partition // self.num_query_groups_per_partition + 2)
+        #         * self.hidden_size_per_attention_head
+        #     ),
+        # )
+        # mixed_qkv = mixed_qkv.view(*new_tensor_shape)
 
-        split_arg_list = [
-            (
-                self.num_attention_heads_per_partition
-                // self.num_query_groups_per_partition
-                * self.hidden_size_per_attention_head
-            ),
-            self.hidden_size_per_attention_head,
-            self.hidden_size_per_attention_head,
-        ]
+        ng = self.num_query_groups_per_partition
+        last_dim = mixed_qkv.size(-1)
+        group_width = last_dim // ng
+        mixed_qkv = mixed_qkv.reshape(mixed_qkv.size(0), mixed_qkv.size(1), ng, group_width)
 
+        q_width = (
+            self.num_attention_heads_per_partition // self.num_query_groups_per_partition
+        ) * self.hidden_size_per_attention_head
+        remaining = group_width - q_width
+        # if the original assumption does not hold, split the remainder evenly for k and v
+        kv_width = max(0, remaining // 2)
+        split_arg_list = [q_width, kv_width, group_width - q_width - kv_width]
+        
+        # DEBUG: Check if any split size is 0
+        if any(s == 0 for s in split_arg_list):
+            print(f"[get_query_key_value_tensors] WARNING: Zero-sized split detected!", flush=True)
+            print(f"  ng={ng}, group_width={group_width}, q_width={q_width}, kv_width={kv_width}", flush=True)
+            print(f"  split_arg_list={split_arg_list}", flush=True)
+            print(f"  num_attention_heads_per_partition={self.num_attention_heads_per_partition}", flush=True)
+            print(f"  num_query_groups_per_partition={self.num_query_groups_per_partition}", flush=True)
+            print(f"  hidden_size_per_attention_head={self.hidden_size_per_attention_head}", flush=True)
+        
         if SplitAlongDim is not None:
             # [sq, b, ng, (np/ng + 2) * hn]
             # --> [sq, b, ng, np/ng * hn], [sq, b, ng, hn], [sq, b, ng, hn]
@@ -657,6 +719,14 @@ class SelfAttention(Attention):
             # [sq, b, ng, (np/ng + 2) * hn]
             # --> [sq, b, ng, np/ng * hn], [sq, b, ng, hn], [sq, b, ng, hn]
             (query, key, value) = torch.split(mixed_qkv, split_arg_list, dim=3)
+
+        # DEBUG: Check if split produced None or empty tensors
+        if query is None or query.numel() == 0:
+            print(f"[get_query_key_value_tensors] ERROR: query is None or empty! query={query}", flush=True)
+        if key is None or key.numel() == 0:
+            print(f"[get_query_key_value_tensors] ERROR: key is None or empty! key={key}", flush=True)
+        if value is None or value.numel() == 0:
+            print(f"[get_query_key_value_tensors] ERROR: value is None or empty! value={value}", flush=True)
 
         # [sq, b, ng, np/ng * hn] -> [sq, b, np, hn]
         query = query.reshape(query.size(0), query.size(1), -1, self.hidden_size_per_attention_head)

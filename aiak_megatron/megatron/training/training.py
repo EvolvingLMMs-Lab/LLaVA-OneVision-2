@@ -413,6 +413,21 @@ def pretrain(
 
         iteration = 0
         if args.do_train and args.train_iters > 0:
+            # Print parameter trainability status
+            print_rank_0('\n' + '=' * 80)
+            print_rank_0("training with the following parameter status:")
+            print_rank_0('=' * 80)
+            model_to_check = model[0] if isinstance(model, list) else model
+            trainable_params = 0
+            frozen_params = 0
+            for name, param in model_to_check.named_parameters():
+                status = "TRAINABLE" if param.requires_grad else "FROZEN"
+                print_rank_0(f"{status:12s} | {name:80s} | shape: {str(tuple(param.shape)):30s} | dtype: {param.dtype}")
+                if param.requires_grad:
+                    trainable_params += param.numel()
+                else:
+                    frozen_params += param.numel()
+
             iteration, num_floating_point_operations_so_far = train(
                 forward_step_func,
                 model, optimizer, opt_param_scheduler,

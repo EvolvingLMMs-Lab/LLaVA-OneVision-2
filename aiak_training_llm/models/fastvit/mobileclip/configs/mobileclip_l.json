@@ -1,0 +1,20 @@
+{
+    "embed_dim": 768,
+    "image_cfg": {
+        "image_size": 1024,
+        "model_name": "fastvithd",
+        "embed_dim": 3072,
+        "patch_size": 64
+    },
+    "text_cfg": {
+        "context_length": 77,
+        "vocab_size": 49408,
+        "dim": 768,
+        "ffn_multiplier_per_layer": 4.0,
+        "n_heads_per_layer": 12,
+        "n_transformer_layers": 12,
+        "norm_layer": "layer_norm_fp32",
+        "causal_masking": false,
+        "model_name": "base"
+    }
+}

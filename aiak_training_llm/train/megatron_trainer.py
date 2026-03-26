@@ -43,15 +43,17 @@ class MegatronTrainer(object):
 
     def train(self):
         """start training"""
+        # Mark dataset provider as distributed (multi-GPU)
         self.train_valid_test_datasets_provider.is_distributed = True
 
         pretrain(
-            train_args=self.train_args,
+            train_args=self.train_args, #All training arguments (like batch size, lr, etc)
             train_valid_test_dataset_provider=self.train_valid_test_datasets_provider,
-            model_provider=self.model_provider,
-            model_type=self.model_type,
-            forward_step_func=self.forward_step_func,
-            process_non_loss_data_func=self.process_non_loss_data_func,
-            get_embedding_ranks=self.get_embedding_ranks,
-            get_position_embedding_ranks=self.get_position_embedding_ranks,
+            # function that provides train/valid/test datasets (preprocessing handled inside)
+            model_provider=self.model_provider, #function that provides the model architecture
+            model_type=self.model_type, #type of model being trained (e.g., language model, vision model, etc)(encoder or decoder)
+            forward_step_func=self.forward_step_func, #function that computes loss for one batch
+            process_non_loss_data_func=self.process_non_loss_data_func, #Optional function for logging/visualization
+            get_embedding_ranks=self.get_embedding_ranks, #for distributed embedding tables
+            get_position_embedding_ranks=self.get_position_embedding_ranks, # for distributed position embeddings
         )

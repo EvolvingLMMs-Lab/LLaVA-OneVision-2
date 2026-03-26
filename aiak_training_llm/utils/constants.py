@@ -73,6 +73,7 @@ class LanguageModelFamilies(_BaseFamilies):
     QWEN3 = "qwen3"
     MIXTRAL = "mixtral"
     DEEPSEEK = "deepseek"
+    MOBILELLM = "mobilellm"
 
 
 class VideoLanguageModelFamilies(_BaseFamilies):

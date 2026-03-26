@@ -22,6 +22,15 @@ class AutoTokenizerFromHF(MegatronTokenizer):
                  **kwargs,
     ):
         super().__init__(name_or_path)
+        # Add local_files_only=True if path is a local directory (absolute or relative path)
+        import os
+        # Detect local path: starts with / or ./ or ../ or contains path separator
+        is_local_path = (
+            os.path.isabs(name_or_path) or 
+            name_or_path.startswith('./') or 
+            name_or_path.startswith('../') or
+            os.path.exists(name_or_path)
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(
             name_or_path,
             use_fast=use_fast_tokenizer,
@@ -29,6 +38,7 @@ class AutoTokenizerFromHF(MegatronTokenizer):
             split_special_tokens=split_special_tokens,
             model_max_length=model_max_length,
             trust_remote_code=True,
+            local_files_only=is_local_path,
             **kwargs,
         )
 

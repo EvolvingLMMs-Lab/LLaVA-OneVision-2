@@ -98,6 +98,7 @@ class ChatTemplate:
     efficient_eos: bool = False
     replace_eos: bool = False
     mm_plugin: Optional[MMPlugin] = None
+    use_tokenizer_template: bool = False  # If True, use tokenizer's built-in chat template
 
     def __post_init__(self):
         if self.format_user is None:
@@ -163,6 +164,11 @@ class ChatTemplate:
         Turn 0: prefix + system + query     resp
         Turn t: sep + query                 resp
         """
+        # Use tokenizer's built-in chat template if enabled
+        if self.use_tokenizer_template:
+            return self._encode_with_tokenizer_template(tokenizer, messages, system)
+        
+        # Original custom template encoding
         system = system or self.default_system
         encoded_messages = []
         for i, message in enumerate(messages):
@@ -185,6 +191,58 @@ class ChatTemplate:
 
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
+        return encoded_messages
+
+    def _encode_with_tokenizer_template(
+        self,
+        tokenizer: "AutoTokenizerFromHF",
+        messages: Sequence[Dict[str, str]],
+        system: Optional[str],
+    ) -> List[List[int]]:
+        """
+        Use tokenizer's built-in apply_chat_template for encoding.
+        This is useful for models like MobileLLM-R1 that have their own chat template.
+        """
+        # Prepare messages with system prompt if provided
+        formatted_messages = []
+        if system:
+            formatted_messages.append({"role": "system", "content": system})
+        
+        # Add all user/assistant messages
+        for msg in messages:
+            formatted_messages.append(msg)
+        
+        # Apply tokenizer's chat template
+        # Split into pairs: (user+system, assistant), (user, assistant), ...
+        encoded_messages = []
+        
+        # Process each turn separately to get proper tokenization per turn
+        for i in range(0, len(messages), 2):
+            # User message (with system if first turn)
+            user_msgs = []
+            if i == 0 and system:
+                user_msgs.append({"role": "system", "content": system})
+            user_msgs.append(messages[i])
+            
+            # Tokenize user turn
+            user_text = tokenizer.apply_chat_template(
+                user_msgs,
+                tokenize=False,
+                add_generation_prompt=True  # Add assistant prompt
+            )
+            user_ids = tokenizer.encode(user_text, add_special_tokens=False)
+            encoded_messages.append(user_ids)
+            
+            # Assistant message
+            if i + 1 < len(messages):
+                # Just the content, no special formatting
+                assistant_text = messages[i + 1]["content"]
+                # Add EOS if not efficient_eos
+                if not self.efficient_eos:
+                    assistant_text += tokenizer.eos_token
+                assistant_ids = tokenizer.encode(assistant_text, add_special_tokens=False)
+                encoded_messages.append(assistant_ids)
+        
         return encoded_messages
 
     def _convert_elements_to_ids(
@@ -279,6 +337,7 @@ def _register_chat_template(
     efficient_eos: bool = False,
     replace_eos: bool = False,
     mm_plugin: Optional[MMPlugin] = None,
+    use_tokenizer_template: bool = False,  # New parameter for auto template
 ) -> None:
     """
     Registers a chat template.
@@ -320,6 +379,7 @@ def _register_chat_template(
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         mm_plugin=mm_plugin,
+        use_tokenizer_template=use_tokenizer_template,  # Pass the new parameter
     )
     
 
@@ -458,4 +518,14 @@ _register_chat_template(
     name="deepseek3",
     format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+
+# Auto template - uses tokenizer's built-in chat template
+# Perfect for MobileLLM-R1 and other models with embedded templates
+_register_chat_template(
+    name="auto",
+    cls=ChatTemplate,
+    use_tokenizer_template=True,
+    efficient_eos=True,
 )

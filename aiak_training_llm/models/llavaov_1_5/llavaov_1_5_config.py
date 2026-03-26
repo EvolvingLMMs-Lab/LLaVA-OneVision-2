@@ -157,6 +157,45 @@ def llava_one_vision_1_5_14b():
     )
 
 
+@register_model_config(model_family=VisionLanguageModelFamilies.LLAVA_OV_1_5, model_arch="llava-ov-mobilellm-140m")
+def llava_ov_mobilellm_140m():
+    """
+    LLaVA-OneVision-1.5 with MobileLLM-R1-140M backbone
+    
+    Integrates Facebook's MobileLLM-R1-140M (140M params) as the language model
+    replacing Qwen2.5. Architecture specs from:
+    https://github.com/facebookresearch/MobileLLM-R1
+    """
+    return LlavaOnevision1_5Config(
+        # Core architecture from MobileLLM-R1-140M
+        num_layers=15,                      # 15 transformer layers (vs 36 in Qwen2.5-3B)
+        hidden_size=576,                    # 576 hidden dimension (vs 2048 in Qwen2.5-3B)
+        ffn_hidden_size=2048,              # 2048 FFN dimension
+        num_attention_heads=9,             # 9 attention heads
+        
+        # Grouped Query Attention (GQA) - efficiency optimization
+        group_query_attention=True,        # Enable GQA
+        num_query_groups=3,                # 3 KV heads for GQA (9 Q heads / 3 KV heads)
+        
+        # Vocabulary - MobileLLM uses Llama3 tokenizer (128,256 tokens)
+        vocab_size_in_config_file=128256,  # Llama3 vocab (vs 151936 in Qwen)
+        make_vocab_size_divisible_by=128,  # Keep same for efficiency
+        
+        # Embeddings - MobileLLM ties embeddings (shared input/output weights)
+        untie_embeddings_and_output_weights=False,  # Tied embeddings (saves params)
+        
+        # Position embeddings - RoPE with extended base for long context
+        rotary_base=8000000,               # 8M RoPE base (vs 1M in Qwen, supports 32k context)
+        
+        # Bias settings - MobileLLM uses no bias
+        add_qkv_bias=False,                # No bias in attention (efficiency)
+        qk_layernorm=True,                 # MobileLLM-R1 uses QK layernorm (use_qk_norm: true in config.json)
+        
+        # Normalization - standard RMSNorm
+        norm_epsilon=1e-05,                # 1e-5 epsilon (vs 1e-6 in Qwen)
+    )
+
+
 @dataclass
 class VisionConfig:
     """configuration for vision model
@@ -191,7 +230,7 @@ def get_vision_config(model_family, model_name):
     """ get vision config """
     config = VisionConfig(
         num_layers=24,
-        hidden_size=1024,
+        hidden_size=3072,
         ffn_hidden_size=4096,
         num_attention_heads=16,
         patch_size=14,
