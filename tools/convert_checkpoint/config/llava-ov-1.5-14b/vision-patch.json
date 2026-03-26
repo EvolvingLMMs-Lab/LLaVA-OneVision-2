@@ -1,7 +1,0 @@
-{
-    "vision_model.patch_embed.proj.weight": "visual.patch_embed.proj.weight",
-    "vision_model.class_embedding": "visual.class_embedding",
-    "vision_model.class_pos_emb": "visual.class_pos_emb",
-    "vision_model.pre_layernorm.weight": "visual.pre_layernorm.weight",
-    "vision_model.pre_layernorm.bias": "visual.pre_layernorm.bias"
-}

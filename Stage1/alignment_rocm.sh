@@ -4,9 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=128
-#SBATCH --gres=gpu:4
-#SBATCH --time=72:00:00
-#SBATCH --mem=230G
+#SBATCH --gres=gpu:8
 #SBATCH --qos=skqos
 #SBATCH --partition=faculty
 #SBATCH --output=/vast/users/salman.khan/mobile_vlm/llava_ov1.5/LLaVA-OneVision-1.5/Stage1/logs/%x-%j.out
@@ -22,12 +20,11 @@ export ROCM_HOME=${ROCM_HOME:-/opt/rocm}
 export PATH="${ROCM_HOME}/bin:${PATH}"
 export LD_LIBRARY_PATH="${ROCM_HOME}/lib:${ROCM_HOME}/lib64:${LD_LIBRARY_PATH}"
 
-export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1,2,3}
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}
 
 # Force HuggingFace offline mode to use local files only
-# Commented out to allow downloading MobileLLM tokenizer on first run
-# export HF_HUB_OFFLINE=1
-# export TRANSFORMERS_OFFLINE=1
+#export HF_HUB_OFFLINE=1
+#export TRANSFORMERS_OFFLINE=1
 
 
 # RCCL/NCCL runtime hints (tune as needed)
@@ -35,7 +32,7 @@ export NCCL_DEBUG=${NCCL_DEBUG:-WARN}
 export NCCL_COLLNET_ENABLE=${NCCL_COLLNET_ENABLE:-0}
 export NCCL_P2P_ENABLE=${NCCL_P2P_ENABLE:-1}
 # export NCCL_SOCKET_IFNAME=eno1   # uncomment and set to your NIC if needed
-
+ 
 # Resolve repo root relative to this script (Stage1/..)
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=/vast/users/salman.khan/mobile_vlm/llava_ov1.5/LLaVA-OneVision-1.5
@@ -71,7 +68,6 @@ echo "AIAK_TRAINING_PATH=${AIAK_TRAINING_PATH}"
 echo "AIAK_MAGATRON_PATH=${AIAK_MAGATRON_PATH}"
 echo "DATA_PATH=${DATA_PATH}"
 echo "TOKENIZER_PATH=${TOKENIZER_PATH}"
-echo "PRETRAINED_CHECKPOINT=${PRETRAINED_CHECKPOINT}"
 echo "SLURM_NODELIST=${SLURM_NODELIST}"
 echo "PYTHONPATH=${PYTHONPATH}"
 
@@ -79,5 +75,4 @@ echo "PYTHONPATH=${PYTHONPATH}"
 export WANDB_API_KEY="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"
 export WANDB_PROJECT="llava-ov-1_5"
 export WANDB_NAME="fastvit_integration"
-# bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh
 bash examples/llava_ov_1_5/quick_start/stage_1_alignment_mobilellm_140m.sh

@@ -11,10 +11,10 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-$REPO_ROOT/aiak_megatron}"
 # Model parallelism configuration
 TP="${1:-1}"  # Tensor parallel
 PP="${2:-1}"  # Pipeline parallel
-SEQ_LEN="${3:-512}"  # Sequence length (reduced for testing)
+SEQ_LEN="${3:-32768}"  # Sequence length (reduced for testing)
 MBS="${4:-1}"  # Micro batch size
-GBS="${5:-4}"  # Global batch size (4 examples for testing)
-NSTEP="${6:-1}"  # Number of training iterations (1 step with 4 examples)
+GBS="${5:-8}"  # Global batch size (4 examples for testing)
+NSTEP="${6:-20}"  # Number of training iterations (1 step with 4 examples)
 
 # Data paths - UPDATE THESE FOR YOUR SETUP
 DATA_PATH="${DATA_PATH:-"$REPO_ROOT/data/LLaVA-558K-Webdataset"}"
@@ -80,7 +80,7 @@ mkdir -p "$SAVE_CKPT_PATH"
 mkdir -p "$TENSORBOARD_PATH"
 mkdir -p "$SAVE_CKPT_PATH/dataloader"
 
-GPUS_PER_NODE=${GPUS_PER_NODE:-4}
+GPUS_PER_NODE=${GPUS_PER_NODE:-8}
 MASTER_PORT=${MASTER_PORT:-26000}
 
 if [[ $SINGLE_NODE -eq 1 ]]; then
@@ -137,7 +137,7 @@ TRAINING_ARGS=(
     --no-gradient-accumulation-fusion
     --seq-length "${SEQ_LEN}"
     --no-rope-fusion
-    --training-rice-vl-max-answer-length 512
+    --training-rice-vl-max-answer-length 32768
     --transformer-impl local
     --max-position-embeddings 32768  # MobileLLM supports 32k context
     --init-method-std 0.02

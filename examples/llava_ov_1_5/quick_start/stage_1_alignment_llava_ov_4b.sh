@@ -6,13 +6,12 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-$REPO_ROOT/aiak_megatron}" # Megatron-
 TP="${1:-1}"
 PP="${2:-1}" # pipeline parallel
 # Defaults: TP=1, PP=1.
-# SEQ_LEN="${3:-32768}"
-SEQ_LEN="${3:-512}" 
+SEQ_LEN="${3:-32768}"
 MBS="${4:-1}" # micro batch size 
 # GBS="${5:-8}" # global batch size
 GBS="${5:-4}"
 # NSTEP="${6:-2500}" # number of training iterations
-NSTEP="${6:-1}" # number of training iterations - reduced to 5 samples for CUDA memory
+NSTEP="${6:-5}" # number of training iterations - reduced to 5 samples for CUDA memory
 # DATA_PATH=${DATA_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/data/LLaVA-558K-Webdataset"}
 # TOKENIZER_PATH=${TOKENIZER_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0"}
 # CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/l/users/rana.zayed/new_fastvlm/LLaVA-OneVision-1.5/checkpoints/LLaVA-OneVision-1.5-4B-stage0_mcore_tp2_pp1"}
