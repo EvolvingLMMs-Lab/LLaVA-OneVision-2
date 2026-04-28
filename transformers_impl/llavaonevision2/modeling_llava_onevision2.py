@@ -456,8 +456,7 @@ def convert_rope_to_block_layout_by_positions(
 
         # Check if all samples share the same (h, w) — common for video frames
         all_same_hw = (
-            torch.all(grid_thw[:, 1] == grid_thw[0, 1]).item()
-            and torch.all(grid_thw[:, 2] == grid_thw[0, 2]).item()
+            torch.all(grid_thw[:, 1] == grid_thw[0, 1]).item() and torch.all(grid_thw[:, 2] == grid_thw[0, 2]).item()
         )
         if all_same_hw:
             total_t = grid_thw[:, 0].sum().item()
@@ -473,8 +472,8 @@ def convert_rope_to_block_layout_by_positions(
             h = grid_thw[i, 1].item()
             w = grid_thw[i, 2].item()
             n = int(t * h * w)
-            result[offset:offset + n] = convert_rope_to_block_layout(
-                freqs[offset:offset + n], t=t, h=h, w=w, spatial_merge_size=sms
+            result[offset : offset + n] = convert_rope_to_block_layout(
+                freqs[offset : offset + n], t=t, h=h, w=w, spatial_merge_size=sms
             )
             offset += n
         return result
@@ -1106,7 +1105,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         # Use position-based grouping for videos with variable frame sizes
         # Pass grid_thw for reliable h, w extraction (especially for non-square images)
         freqs_visible = convert_rope_to_block_layout_by_positions(
-            freqs_visible, patch_positions, spatial_merge_size=2, grid_thw=grid_thw
+            freqs_visible, patch_positions, spatial_merge_size=self.spatial_merge_size, grid_thw=grid_thw
         )
 
         # Concatenate D/2 + D/2 -> D for applying rope
@@ -1235,7 +1234,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         # Use position-based grouping for videos with variable frame sizes
         # Pass grid_thw for reliable h, w extraction (especially for non-square images)
         freqs_visible = convert_rope_to_block_layout_by_positions(
-            freqs_visible, patch_positions, spatial_merge_size=2, grid_thw=grid_thw
+            freqs_visible, patch_positions, spatial_merge_size=self.spatial_merge_size, grid_thw=grid_thw
         )
 
         # Concatenate D/2 + D/2 -> D for applying rope
