@@ -35,6 +35,12 @@ from aiak_training_llm.tokenizer.special_tokens import ensure_multimodal_special
 from .task_encoder import (ImageTaskBatchPacked, ImageTaskSample,
                            ImageTaskSamplePacked, TaskEncoder)
 
+# Print helper: only emit from rank-0 process so multi-GPU runs don't duplicate output.
+import os as _os
+def _rank0_print(*args, **kwargs):
+    if _os.environ.get("RANK", "0") == "0":
+        print(*args, **kwargs)
+
 from megatron.energon.flavors.base_dataset import (
     BaseCoreDatasetFactory,
     PinMemoryMixin,
@@ -147,7 +153,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             shared_tokenizer = get_tokenizer()
             if shared_tokenizer is not None and hasattr(shared_tokenizer, "hf_tokenizer"):
                 self.tokenizer_hf = shared_tokenizer.hf_tokenizer()
-                print("Using shared training tokenizer in FastVLM mode")
+                _rank0_print("Using shared training tokenizer in FastVLM mode")
             else:
                 self.tokenizer_hf = AutoTokenizer.from_pretrained(
                     self.args.hf_tokenizer_path,
@@ -156,45 +162,45 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 )
 
             added_mm_tokens = ensure_multimodal_special_tokens(self.tokenizer_hf)
-            print(f"Ensured multimodal special tokens for FastVLM tokenizer; added={added_mm_tokens}")
-            
+            _rank0_print(f"Ensured multimodal special tokens for FastVLM tokenizer; added={added_mm_tokens}")
+
             # Set padding token if not present (required for batch processing)
             if self.tokenizer_hf.pad_token is None:
                 self.tokenizer_hf.pad_token = self.tokenizer_hf.eos_token
-                print(f"Set pad_token to eos_token: {self.tokenizer_hf.eos_token}")
-            
+                _rank0_print(f"Set pad_token to eos_token: {self.tokenizer_hf.eos_token}")
+
             # Create a wrapper that properly delegates all methods to the tokenizer
             class TokenizerWrapper:
                 def __init__(self, tokenizer):
                     self.tokenizer = tokenizer
-                
+
                 def __getattr__(self, name):
                     # Delegate all other attributes/methods to the underlying tokenizer
                     return getattr(self.tokenizer, name)
-            
+
             self.processor = TokenizerWrapper(self.tokenizer_hf)
-            print(f"Loaded tokenizer (FastVLM mode) from {self.args.hf_tokenizer_path}")
-            
+            _rank0_print(f"Loaded tokenizer (FastVLM mode) from {self.args.hf_tokenizer_path}")
+
             # Initialize FastViT image processor
             fastvit_image_size = getattr(args, 'fastvit_image_size', 1024)
             self.fastvit_processor = FastViTImageProcessor(image_size=fastvit_image_size)
-            print(f"Initialized FastViT processor with image_size={fastvit_image_size}")
+            _rank0_print(f"Initialized FastViT processor with image_size={fastvit_image_size}")
         else:
             # For Qwen2-VL: Load full processor (tokenizer + image/video processor)
             self.processor = AutoProcessor.from_pretrained(
-                self.args.hf_tokenizer_path, 
-                trust_remote_code=True, 
+                self.args.hf_tokenizer_path,
+                trust_remote_code=True,
                 local_files_only=False
             )
-            print(f"Loaded Qwen2-VL processor from {self.args.hf_tokenizer_path}")
-            
-        print(f"Processor config: {self.processor}")
-        
+            _rank0_print(f"Loaded Qwen2-VL processor from {self.args.hf_tokenizer_path}")
+
+        _rank0_print(f"Processor config: {self.processor}")
+
         #Resolution parameters for resizing images/videos
         if args.image_resolution:
             setattr(self.processor, 'image_resolution', args.image_resolution)
-            # resolution parameters for resizing images/videos 
-        print("image_resolution:", getattr(self.processor, 'image_resolution', None))
+            # resolution parameters for resizing images/videos
+        _rank0_print("image_resolution:", getattr(self.processor, 'image_resolution', None))
         # Video processing parameters
         self.frame_min_pixels = args.frame_min_pixels
         self.frame_max_pixels = args.frame_max_pixels
@@ -247,7 +253,6 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             # FastViT: Use FastVLM's preprocessing approach
             # For single image, we'll handle aspect ratio in _process
             # Just return the PIL image as-is for now
-            print(f"FastViT: Keeping original image size {image.width}x{image.height} for aspect ratio handling")
             return image
         
         # Original Rice/SigLIP preprocessing
@@ -278,15 +283,12 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             min_pixels=self.min_pixels, # e.g., 256*28*28
             max_pixels=self.max_pixels,  # e.g., 1280*28*28
         )
-        print(f"Original image size: {image.width}x{image.height}")
         image = image.resize((resized_width, resized_height))
-        print(f"Resized image to {resized_width}x{resized_height}")
 
         return image # return resized PIL image
 
     def _process(self, image, text):
         """" Process the data to get the model's input """
-        print("Processing image and text...")
         if self.use_fastvit and image is not None:
             # FastViT preprocessing using FastVLM's approach
             # Tokenize text only
@@ -314,25 +316,21 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             if not self._logged_multimodal_token_debug_once:
                 img_count = int((input_ids == img_pad_id).sum().item()) if img_pad_id is not None else 0
                 vstart_count = int((input_ids == vision_start_id).sum().item()) if vision_start_id is not None else 0
-                print(
+                _rank0_print(
                     f"[DEBUG PREPROCESS TOKENS] image_token='{IMAGE_TOKEN}' id={img_pad_id}, "
                     f"vision_start='{VISION_TAGS[0]}' id={vision_start_id}, vision_end='{VISION_TAGS[1]}' id={vision_end_id}, "
                     f"counts_in_input_ids: image={img_count}, vision_start={vstart_count}"
                 )
                 self._logged_multimodal_token_debug_once = True
-            
+
             # Process image with FastVLM's preprocessing utilities
             # Default to 'pad' aspect ratio (expand to square with padding)
             image_aspect_ratio = getattr(self.args, 'image_aspect_ratio', 'pad')
-            print("image_size:", image.size)
             if image_aspect_ratio == 'pad':
                 # Expand to square with mean color padding
                 mean_color = tuple(int(x * 255) for x in self.fastvit_processor.image_mean)
                 image = expand2square(image, mean_color)
                 pixel_values = self.fastvit_processor(image)
-                print("image_aspect_ratio: pad")
-                print(f"Processed padded image to shape: {pixel_values.shape}")
-                print("size after pad:", image.size)
                 
                 
             elif image_aspect_ratio == 'anyres':
@@ -385,7 +383,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
         if not self._logged_multimodal_token_debug_once:
             img_count = int((input_ids == img_pad_id).sum().item()) if img_pad_id is not None else 0
             vstart_count = int((input_ids == vision_start_id).sum().item()) if vision_start_id is not None else 0
-            print(
+            _rank0_print(
                 f"[DEBUG PREPROCESS TOKENS] image_token='{IMAGE_TOKEN}' id={img_pad_id}, "
                 f"vision_start='{VISION_TAGS[0]}' id={vision_start_id}, vision_end='{VISION_TAGS[1]}' id={vision_end_id}, "
                 f"counts_in_input_ids: image={img_count}, vision_start={vstart_count}"
@@ -528,16 +526,12 @@ class Qwen2VLTaskEncoder(TaskEncoder):
         # Convert to Tensors and Create Attention Mask
         input_ids = torch.tensor(input_ids) # Shape: [seq_len]
         # input_ids: Tensor([151644, 8948, 198, ..., 8122, 4758, ...]) 
-        print("shape of input_ids:", input_ids.shape)
         target = torch.tensor(target)
         # target: Tensor([-100, -100, ..., 8122, 4758, ...])
 
         # Create attention mask (all False = attend to all tokens)
         attn_mask = torch.zeros_like(input_ids).bool()
         # attn_mask: Tensor([False, False, False, ..., False, False])  # Shape: [seq_len]
-
-        print("pixel_values_images:", pixel_values_images)
-        print("image_grid_thw:", image_grid_thw)
         
 
         return input_ids, target, attn_mask, pixel_values_images, image_grid_thw, \
@@ -605,7 +599,6 @@ class Qwen2VLTaskEncoder(TaskEncoder):
         if text[-1] == '\n':
             text = text[:-1]
             pass  
-        print("image_size in encode_vqa4packing:", sample.image.size)   
         input_ids, _, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
         target = torch.ones_like(input_ids) * IGNORE_INDEX
         answers = self.tokenizer.tokenize(sample.answers)
@@ -669,18 +662,11 @@ class Qwen2VLTaskEncoder(TaskEncoder):
     # For SFT with multi-modal data, it calls:
     def encode_multi_mix_qa(self, sample: MultiMixQASample) -> ImageTaskSample:
         """Encode sample in Qwen2VL style."""
-        print("Encoding multi-mix qa")
         if self.args.training_phase == constants.TrainingPhase.SFT:
             num_tiles = [] #store number of tiles for each image/ video after processing
-            print("calling process_sft_qa for multi-mix sample")
             # call main processing function process_sft_qa
             input_ids, target, attn_mask, imgs, image_grid_thw, pixel_values_videos, video_grid_thw = \
                         self.process_sft_qa(sample.messages, sample.system, sample.video, sample.image)
-            print("imgs:", imgs)
-            print("image_grid_thw:", image_grid_thw)
-            print("pixel_values_images:", pixel_values_images)
-            print("video_grid_thw:", video_grid_thw)
-            print("pixel_values_videos:", pixel_values_videos)
             if sample.video is not None:
                 num_tiles = [len(video_grid_thw)] if video_grid_thw is not None else [1]
             elif sample.image is not None:
@@ -771,7 +757,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                     # Fallback to a hard cut of the original preliminary string if no sentence ender is found.
                     sample.answers = preliminary_cut
 
-                print(
+                _rank0_print(
                     f"Answer truncated to a full sentence. "
                     f"Original length: {original_length}, New length: {len(sample.answers)}"
                 )

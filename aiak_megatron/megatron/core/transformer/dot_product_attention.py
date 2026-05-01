@@ -189,9 +189,6 @@ class DotProductAttention(MegatronModule):
     ):
         packed_seq_params=None
         """Forward."""
-        # DEBUG: Log inputs
-        print(f"[DotProductAttention.forward] INPUT: query={query is not None}, key={key is not None}, value={value is not None}", flush=True)
-        
         assert packed_seq_params is None, (
             "Packed sequence is not supported by DotProductAttention."
             "Please use TEDotProductAttention instead."
@@ -216,9 +213,6 @@ class DotProductAttention(MegatronModule):
             if value is not None and value.dim() == 4:
                 value = value.repeat_interleave(repeat_times, dim=2)
         
-        # Debug: safely print shapes
-        print(f"query.shape={tuple(query.shape) if query is not None else None}, key.shape={tuple(key.shape) if key is not None else None}, value.shape={tuple(value.shape) if value is not None else None}", flush=True)
-
         # Normalize shapes to 3D for baddbmm and derive (b, np, sq, sk)
         if query.dim() == 4:
             # [sq, b, np, hn]

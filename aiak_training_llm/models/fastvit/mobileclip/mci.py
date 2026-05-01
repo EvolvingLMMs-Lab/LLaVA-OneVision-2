@@ -1425,19 +1425,12 @@ class FastViT(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward_embeddings(self, x: torch.Tensor) -> torch.Tensor:
-        print(f"[FastViT] Input shape: {x.shape}")
         x = self.patch_embed(x)
-        print(f"[FastViT] After convolutional stem: {x.shape}")
         return x
 
     def forward_tokens(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
-        stage_idx = 0
-        for idx, block in enumerate(self.network):
+        for block in self.network:
             x = block(x)
-            # Print after each stage (skip intermediate pos_emb/downsample layers)
-            if hasattr(block, '__class__') and 'FastViT' in str(block.__class__.__name__):
-                stage_idx += 1
-                print(f"[FastViT] After Stage {stage_idx}: {x.shape}")
         return x
 
     def forward(self, x: torch.Tensor, *args, **kwargs) -> Union[Tensor, Dict[str, Tensor]]:
@@ -1447,7 +1440,6 @@ class FastViT(nn.Module):
         x = self.forward_tokens(x)
         # for image classification/embedding
         x = self.conv_exp(x)
-        print(f"[FastViT] After expansion layer: {x.shape}")
         cls_out = self.head(x)
 
         out_dict = dict()

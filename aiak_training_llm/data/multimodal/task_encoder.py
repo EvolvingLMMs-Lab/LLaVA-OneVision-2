@@ -7,6 +7,11 @@ import re
 import os
 import sys
 import traceback
+
+def _rank0_print(*args, **kwargs):
+    """Print only from rank-0 process to avoid duplicated output in multi-GPU runs."""
+    if os.environ.get("RANK", "0") == "0":
+        print(*args, **kwargs)
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Union
 import logging
@@ -161,20 +166,14 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
 
     @stateless(restore_seeds=True)
     def encode_sample(self, sample: Union[CaptioningSample, OCRSample, VQASample, SimilarityInterleavedSample]):
-        print("encoding samples")
-        print("sample:", sample)
         """ Generates an encoded sample from a raw sample. """
         if isinstance(sample, CaptioningSample):
-            print("encode_captioning")
             yield self.encode_captioning(sample)
         elif isinstance(sample, VQASample):
-            print("encode_vqa")
             yield self.encode_vaq(sample)
         elif isinstance(sample, MultiVidQASample):
-            print("encode_multi_vid_qa")
             yield self.encode_multi_vid_qa(sample)
         elif isinstance(sample, MultiMixQASample):
-            print("encode_multi_mix_qa")
             yield self.encode_multi_mix_qa(sample)
         elif isinstance(sample, PackedCaptioningSample):
             # print(f"-------------PackedCaptioningSample---------------")
@@ -619,7 +618,7 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
             keep_len = min(orig_len, remaining, packing_seq_len)
 
             if keep_len < orig_len:
-                print(f"[pack] truncating sample idx={idx} from {orig_len} -> {keep_len} (remaining={remaining}) key={getattr(sample, '__key__', 'N/A')})")
+                _rank0_print(f"[pack] truncating sample idx={idx} from {orig_len} -> {keep_len} (remaining={remaining}) key={getattr(sample, '__key__', 'N/A')})")
 
             t_tokens = slice_by_seq(tokens, keep_len) if tokens is not None else None
             t_labels = slice_by_seq(labels, keep_len) if labels is not None else None

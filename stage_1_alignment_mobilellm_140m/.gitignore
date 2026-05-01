@@ -1,0 +1,9 @@
+# Exclude all checkpoint binary weights (too large for GitHub without LFS on fork)
+# Checkpoint weights are stored on the training server at:
+#   /share/data/drive_3/mobile_vlm/LLaVA-OneVision-1.5/stage_1_alignment_mobilellm_140m/iter_0000500/
+iter_*/
+
+# Exclude large binary / ephemeral directories
+wandb/
+tensorboard/
+dataloader/

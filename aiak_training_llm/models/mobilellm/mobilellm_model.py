@@ -197,19 +197,25 @@ class MobileLLMModel(LanguageModule):
                 # decoder will get hidden_states from encoder.input_tensor
                 decoder_input = None
 
-        # Rotary positional embeddings
-        if rotary_pos_emb is None and self.position_embedding_type == 'rope':
-            rotary_seq_len = self.max_sequence_length
-            if inference_params is not None:
-                rotary_seq_len = inference_params.max_sequence_length
-            
-            # Check cache
-            cache_key = rotary_seq_len
-            if cache_key in self.rotary_pos_emb_cache:
-                rotary_pos_emb = self.rotary_pos_emb_cache[cache_key]
-            else:
-                rotary_pos_emb = self.rotary_pos_emb(rotary_seq_len)
-                self.rotary_pos_emb_cache[cache_key] = rotary_pos_emb
+        # Rotary positional embeddings.
+        if (
+            rotary_pos_emb is None
+            and self.position_embedding_type == 'rope'
+            and not self.config.multi_latent_attention
+        ):
+            rotary_seq_len = self.rotary_pos_emb.get_rotary_seq_len(
+                inference_params, self.decoder, decoder_input, self.config, packed_seq_params
+            )
+            cache_key = (
+                rotary_seq_len,
+                packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
+            )
+            if cache_key not in self.rotary_pos_emb_cache:
+                self.rotary_pos_emb_cache[cache_key] = self.rotary_pos_emb(
+                    rotary_seq_len,
+                    packed_seq=packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
+                )
+            rotary_pos_emb = self.rotary_pos_emb_cache[cache_key]
 
         # Forward through transformer
         hidden_states = self.decoder(

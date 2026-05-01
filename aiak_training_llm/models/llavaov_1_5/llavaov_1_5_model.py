@@ -161,7 +161,7 @@ class LlavaOnevision1_5(MegatronModule):
         self.vision_model = None
         self.adapter = None
         self.language_model = None
-        self._big_debug_forward_step = 0
+        self._pipeline_step = 0
 
         #  define the vision model and the projection from vision model outputs to language model inputs.
         if self.add_encoder:
@@ -170,7 +170,6 @@ class LlavaOnevision1_5(MegatronModule):
                 vision_config,
                 vision_layer_spec,
             )
-            print(f'self,vision_model: {self.vision_model}')
             # Original Rice/SigLIP encoder (commented out):
             # if vision_config.normalization == "RMSNorm":
             #     self.vision_model = RiceViTModel(
@@ -183,9 +182,6 @@ class LlavaOnevision1_5(MegatronModule):
             #         vision_layer_spec,
             #     )
             # Map (intermediate) vision model outputs to the language model input dimension.
-            # from megatron.training import print_rank_0
-            print(f"[DEBUG] Creating adapter: vision_config.hidden_size={vision_config.hidden_size}")
-            print(f"[DEBUG] Creating adapter: language_config.hidden_size={language_config.hidden_size}")
             self.adapter = Adapter(
                 adapter_config,
                 adapter_layer_spec,
@@ -333,28 +329,22 @@ class LlavaOnevision1_5(MegatronModule):
             output (torch.Tensor): Loss of shape [b, s] if labels are provided, otherwise logits of shape
                 [b, s, vocab_size].
         """
-        # from megatron.training import print_rank_0
-        # print_rank_0(
-        #     f"> forward step: input_ids shape {input_ids.shape}, "
-        #     f"images shape {images.shape}, "
-        #     f"image_grid_thw shape {image_grid_thw.shape}, "
-        #     # f"labels shape {labels.shape}, "
-        #     f"attn_mask_type {attn_mask_type}, "
-        #     f"position_ids shape {position_ids.shape if position_ids is not None else None}"
-        # )
-        # print_rank_0(input_ids)
-        # print_rank_0(position_ids)
-        self._big_debug_forward_step += 1
-        debug_step = self._big_debug_forward_step
-        print_rank_0(
-            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-            f"input_ids={tuple(input_ids.shape) if input_ids is not None else None}, "
-            f"images={tuple(images.shape) if images is not None else None}, "
-            f"image_grid_thw={tuple(image_grid_thw.shape) if image_grid_thw is not None else None}, "
-            f"labels={tuple(labels.shape) if labels is not None else None}, "
-            f"attn_mask_type={attn_mask_type}, "
-            f"position_ids={tuple(position_ids.shape) if position_ids is not None else None}"
-        )
+        self._pipeline_step += 1
+        step = self._pipeline_step
+        SEP = "=" * 68
+        print_rank_0(f"\n{SEP}")
+        print_rank_0(f"  PIPELINE — STEP {step}  (Stage 1 Alignment: adapter only)")
+        print_rank_0(f"{SEP}\n")
+
+        # ── [1/6] BATCH ──────────────────────────────────────────────────
+        print_rank_0(f"[1/6] BATCH")
+        print_rank_0(f"  input_ids  : {tuple(input_ids.shape) if input_ids is not None else None}  {input_ids.dtype if input_ids is not None else ''}")
+        print_rank_0(f"  images     : {tuple(images.shape) if images is not None else None}  {images.dtype if images is not None else ''}")
+        if labels is not None:
+            loss_positions = (labels != -100).sum().item()
+            total_positions = labels.numel()
+            print_rank_0(f"  labels     : {tuple(labels.shape)}  {labels.dtype}")
+            print_rank_0(f"  loss_mask  : {loss_positions} / {total_positions} tokens ({100*loss_positions/max(total_positions,1):.1f}%) contribute to loss")
         use_inference_kv_cache = (
             inference_params is not None
             and "image_tokens_count" in inference_params.key_value_memory_dict
@@ -365,27 +355,20 @@ class LlavaOnevision1_5(MegatronModule):
             image_embeddings = None
         elif self.add_encoder:
             if images is not None:
-                image_embeddings, window_index = self.vision_model(images, \
-                                    grid_thw=image_grid_thw) # [img_len, h_vision]
-                print_rank_0(
-                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-                    f"vision_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
-                    f"requires_grad={image_embeddings.requires_grad}, window_index_shape="
-                    f"{tuple(window_index.shape) if window_index is not None else None}"
-                )
+                # ── [2/6] VISION ENCODER ────────────────────────────────────────
+                print_rank_0(f"\n[2/6] VISION ENCODER  [FastViT MobileCLIP-L  |  FROZEN]")
+                print_rank_0(f"  in  : {tuple(images.shape)}  {images.dtype}")
+                image_embeddings, window_index = self.vision_model(images, grid_thw=image_grid_thw)
+                print_rank_0(f"  out : {tuple(image_embeddings.shape)}  {image_embeddings.dtype}  grad={image_embeddings.requires_grad}")
+
+                # ── [3/6] ADAPTER ───────────────────────────────────────────────
+                print_rank_0(f"\n[3/6] ADAPTER  [2-layer MLP {image_embeddings.shape[-1]}→?  |  TRAINABLE]")
+                print_rank_0(f"  in  : {tuple(image_embeddings.shape)}")
                 image_embeddings = self.adapter(image_embeddings, window_index)
-                print_rank_0(
-                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-                    f"adapter_out shape={tuple(image_embeddings.shape)}, dtype={image_embeddings.dtype}, "
-                    f"requires_grad={image_embeddings.requires_grad}"
-                )
+                print_rank_0(f"  out : {tuple(image_embeddings.shape)}  grad={image_embeddings.requires_grad}")
+
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
-                print_rank_0(
-                    f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-                    f"image_token_id={self.config.image_token_id}, token_count={n_image_tokens}, "
-                    f"feature_count={n_image_features}"
-                )
                 if n_image_tokens != n_image_features:
                     # raise ValueError(
                     #     f"Image features {n_image_features} != image tokens {n_image_tokens}"
@@ -450,14 +433,12 @@ class LlavaOnevision1_5(MegatronModule):
             return vision_embeddings
 
         if self.pre_process:
+            # ── [4/6] TOKEN FUSION ──────────────────────────────────────────
+            print_rank_0(f"\n[4/6] TOKEN FUSION")
             language_embeddings = self.language_model.embedding(
                 input_ids=input_ids, position_ids=None
             )  # [text_seq_len, b, h_language]
-            print_rank_0(
-                f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-                f"language_embeddings shape={tuple(language_embeddings.shape)}, dtype={language_embeddings.dtype}, "
-                f"requires_grad={language_embeddings.requires_grad}"
-            )
+            print_rank_0(f"  text embeddings : {tuple(language_embeddings.shape)}  {language_embeddings.dtype}  grad={language_embeddings.requires_grad}")
 
             # If running inference, we can skip image token computation if they were computed already
             # earlier for this sample.
@@ -475,12 +456,9 @@ class LlavaOnevision1_5(MegatronModule):
                     )
                     image_embeddings = image_embeddings.to(language_embeddings.device, language_embeddings.dtype)
                     combined_embeddings = combined_embeddings.masked_scatter(images_mask, image_embeddings)
-                    print_rank_0(
-                        f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-                        f"image_inserted mask_true={int(images_mask.sum().item())}, "
-                        f"combined_embeddings shape={tuple(combined_embeddings.shape)}, "
-                        f"requires_grad={combined_embeddings.requires_grad}"
-                    )
+                    n_slots_filled = int(images_mask[..., 0].sum().item())
+                    print_rank_0(f"  image slots     : {n_slots_filled} tokens replaced with vision embeddings")
+                    print_rank_0(f"  combined        : {tuple(combined_embeddings.shape)}  grad={combined_embeddings.requires_grad}")
 
                 if pixel_values_videos is not None and (input_ids == self.config.video_token_id).any():
                     video_token_id = self.config.video_token_id
@@ -502,6 +480,10 @@ class LlavaOnevision1_5(MegatronModule):
 
         # rotary_pos_emb = self.rotary_emb(position_ids).transpose(0, 2).contiguous()
 
+        # ── [5/6] LANGUAGE MODEL ────────────────────────────────────────
+        print_rank_0(f"\n[5/6] LANGUAGE MODEL  [MobileLLM-R1-140M  |  FROZEN]")
+        if combined_embeddings is not None:
+            print_rank_0(f"  in  : {tuple(combined_embeddings.shape)}  {combined_embeddings.dtype}")
         output = self.language_model(
             input_ids=None,
             position_ids=None,
@@ -515,13 +497,57 @@ class LlavaOnevision1_5(MegatronModule):
             packed_seq_params=packed_seq_params,
             extra_block_kwargs={},
         )
+        out_shape = tuple(output.shape) if hasattr(output, 'shape') else None
+        print_rank_0(f"  out : {out_shape}  {getattr(output, 'dtype', None)}  grad={getattr(output, 'requires_grad', None)}")
 
-        print_rank_0(
-            f"[BIG DEBUG][FORWARD][STEP {debug_step}] "
-            f"model_output shape={tuple(output.shape) if hasattr(output, 'shape') else None}, "
-            f"dtype={getattr(output, 'dtype', None)}, requires_grad={getattr(output, 'requires_grad', None)}"
-        )
+        # ── [6/6] LOSS / LOGITS ─────────────────────────────────────────
+        print_rank_0(f"\n[6/6] LOSS / LOGITS")
+        if labels is not None:
+            # output is per-token loss with the same layout as labels [b, s]
+            loss_mask = (labels != -100)
+            if loss_mask.any():
+                # Ensure same shape as labels for boolean indexing
+                loss_tensor = output
+                if loss_tensor.shape != labels.shape:
+                    # Megatron may return [s, b]; transpose to [b, s]
+                    loss_tensor = loss_tensor.transpose(0, 1).contiguous()
+                valid_loss = loss_tensor[loss_mask]
+                mean_loss = valid_loss.mean().item()
+                print_rank_0(f"  loss (mean over {loss_mask.sum().item()} tokens) : {mean_loss:.4f}")
 
+                # Top-1 token accuracy: no-grad logit pass
+                try:
+                    with torch.no_grad():
+                        _emb = combined_embeddings.detach() if combined_embeddings is not None else None
+                        logits = self.language_model(
+                            input_ids=None,
+                            position_ids=None,
+                            attention_mask=attention_mask,
+                            attn_mask_type=attn_mask_type,
+                            decoder_input=_emb,
+                            labels=None,
+                            rotary_pos_emb=None,
+                            inference_params=None,
+                            packed_seq_params=packed_seq_params,
+                            extra_block_kwargs={},
+                        )  # [s, b, vocab] or [b, s, vocab]
+                    # Normalise to [b, s, vocab]
+                    if logits.dim() == 3 and logits.shape[0] != labels.shape[0]:
+                        logits = logits.transpose(0, 1).contiguous()  # [s,b,v] → [b,s,v]
+                    # Shift: predict token i+1 from position i
+                    pred = logits[:, :-1, :].argmax(dim=-1)   # [b, s-1]
+                    tgt  = labels[:, 1:]                       # [b, s-1]
+                    mask = (tgt != -100)
+                    if mask.any():
+                        correct = ((pred == tgt) & mask).sum().item()
+                        total   = mask.sum().item()
+                        print_rank_0(f"  top-1 accuracy  : {correct}/{total} = {100*correct/total:.1f}%")
+                except Exception as acc_err:
+                    print_rank_0(f"  top-1 accuracy  : (skipped — {acc_err})")
+        else:
+            print_rank_0(f"  returning logits : {out_shape}")
+
+        print_rank_0("")
         return output
 
 

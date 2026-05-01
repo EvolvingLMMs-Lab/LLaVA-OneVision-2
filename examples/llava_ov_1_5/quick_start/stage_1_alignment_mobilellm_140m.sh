@@ -13,8 +13,8 @@ TP="${1:-1}"  # Tensor parallel
 PP="${2:-1}"  # Pipeline parallel
 SEQ_LEN="${3:-32768}"  # Sequence length (reduced for testing)
 MBS="${4:-1}"  # Micro batch size
-GBS="${5:-8}"  # Global batch size (4 examples for testing)
-NSTEP="${6:-20}"  # Number of training iterations (1 step with 4 examples)
+GBS="${5:-4}"  # Global batch size (for TP=1, PP=1, 8 GPUs -> DP=8)
+NSTEP="${6:-100}"  # Number of training iterations (1 step with 4 examples)
 
 # Data paths - UPDATE THESE FOR YOUR SETUP
 DATA_PATH="${DATA_PATH:-"$REPO_ROOT/data/LLaVA-558K-Webdataset"}"
@@ -80,8 +80,9 @@ mkdir -p "$SAVE_CKPT_PATH"
 mkdir -p "$TENSORBOARD_PATH"
 mkdir -p "$SAVE_CKPT_PATH/dataloader"
 
-GPUS_PER_NODE=${GPUS_PER_NODE:-8}
+GPUS_PER_NODE=${GPUS_PER_NODE:-4}
 MASTER_PORT=${MASTER_PORT:-26000}
+SAVE_INTERVAL=${SAVE_INTERVAL:-1}
 
 if [[ $SINGLE_NODE -eq 1 ]]; then
     DISTRIBUTED_ARGS=(
@@ -158,9 +159,10 @@ TRAINING_ARGS=(
     --lr-warmup-fraction 0.002
     --initial-loss-scale 65536
     --bf16
+    --load "$SAVE_CKPT_PATH"
     --save "$SAVE_CKPT_PATH"
     # --save-interval 2000
-    --save-interval 1
+    --save-interval "$SAVE_INTERVAL"
     --ckpt-format torch
     --dataloader-save "${SAVE_CKPT_PATH}/dataloader"
     --ckpt-fully-parallel-load
@@ -168,6 +170,13 @@ TRAINING_ARGS=(
     --recompute-method uniform
     --recompute-num-layers 3  # Must divide evenly into 15 layers (15/3=5 chunks)
 )
+
+if [[ "${NO_LOAD_OPTIM_RNG:-0}" == "1" ]]; then
+    TRAINING_ARGS+=(
+        --no-load-optim
+        --no-load-rng
+    )
+fi
 
 # ========================================
 # MODEL PARALLELISM CONFIGURATION

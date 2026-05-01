@@ -11,6 +11,7 @@ import io
 import os
 import pickle
 import warnings
+from contextlib import nullcontext
 from typing import Any, Callable, Optional, Tuple, Dict
 
 import torch
@@ -698,7 +699,7 @@ Fp8Unpadding = None
 
 def get_cpu_offload_context(enabled, num_layers, model_layers, activation_offloading, weight_offloading):
     warnings.warn("get_cpu_offload_context fallback: no TE CPU-offload context available.", UserWarning)
-    return None, (lambda: None)
+    return nullcontext(), (lambda: None)
 
 
 def te_checkpoint(

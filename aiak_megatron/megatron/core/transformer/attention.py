@@ -368,8 +368,6 @@ class Attention(MegatronModule, ABC):
         packed_seq_params=None,
         sequence_len_offset=None,
     ):
-        # DEBUG: Log input status
-        print(f"[Attention.forward] INPUT: hidden_states={hidden_states is not None}, key_value_states={key_value_states is not None}", flush=True)
         """
         Perform a forward pass through the attention module.
         """
@@ -391,9 +389,6 @@ class Attention(MegatronModule, ABC):
 
         query, key, value = self.get_query_key_value_tensors(hidden_states, key_value_states)
         
-        # DEBUG: Log query/key/value status
-        print(f"[Attention.forward] After get_query_key_value_tensors: query={query is not None}, key={key is not None}, value={value is not None}, hidden_states={hidden_states is not None}, key_value_states={key_value_states is not None}", flush=True)
-
         # ===================================================
         # Adjust key, value, and rotary_pos_emb for inference
         # ===================================================

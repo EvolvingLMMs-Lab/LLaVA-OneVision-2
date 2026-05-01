@@ -67,7 +67,6 @@ class FastViTModel(MegatronModule):
             Vision features [batch, num_tokens, hidden_size]
             window_index: None (FastViT doesn't use windowing)
         """
-        print(f"[FastViTModel] Input images shape: {images.shape}, grid_thw: {grid_thw}")
         # MobileCLIPVisionTower expects single images or list of images
         # For batch processing, we need to handle it appropriately
         if images.dim() == 4:
@@ -76,7 +75,6 @@ class FastViTModel(MegatronModule):
         else:
             raise ValueError(f"Unexpected image tensor shape: {images.shape}")
         
-        print(f"[FastViTModel] Output features shape: {image_features.shape}")
         # Return features and None for window_index (compatibility with Qwen2-VL API)
         return image_features, None
     

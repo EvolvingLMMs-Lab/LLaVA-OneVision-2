@@ -44,7 +44,6 @@ class MCi(nn.Module):
 
         # Create model
         self.model = create_model(model_name, projection_dim=self.projection_dim)
-        print(f"Loaded MobileCLIP model: {model_name}")
         # Build out projection head.
         if self.projection_dim is not None:
             if hasattr(self.model, "head"):

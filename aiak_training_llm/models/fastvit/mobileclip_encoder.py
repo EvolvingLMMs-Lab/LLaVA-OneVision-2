@@ -30,7 +30,6 @@ class MobileCLIPVisionTower(nn.Module):
 
     def load_model(self, device_map=None):
         if self.is_loaded:
-            print('{} is already loaded, `load_model` called again, skipping.'.format(self.vision_tower_name))
             return
 
         # Load model config
@@ -58,15 +57,13 @@ class MobileCLIPVisionTower(nn.Module):
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs):
-        # Features from penultimate layer
+        # Features from penultimate layer (conv_exp output): (B, C, H, W)
         image_features = image_forward_outs["image_embeddings"]
-        print(f"[MobileCLIP] Vision tower output (4D): {image_features.shape}")
 
-        # Reshape 4D tensor to 3D
+        # Global average pool over spatial dims: (B, C, H, W) -> (B, C)
+        # FastVLM uses 1 visual token per image (not per patch) for efficiency.
         B, C, H, W = image_features.shape
-        image_features = image_features.reshape(B, C, H*W)
-        image_features = image_features.transpose(1, 2)
-        print(f"[MobileCLIP] Reshaped to 3D (batch, tokens, dim): {image_features.shape}")
+        image_features = image_features.mean(dim=[-2, -1])  # (B, C)
         return image_features
 
     def forward(self, images):

@@ -18,6 +18,7 @@ The goal is that:
     can run without touching any real TE code.
 """
 
+from contextlib import nullcontext
 from typing import Any, Callable, Optional
 
 import torch
@@ -666,12 +667,14 @@ def get_cpu_offload_context(
     """
     Stub for TE CPU offload context.
 
-    We simply return (None, lambda: None).
+    Return a no-op context manager so Megatron's transformer block can always
+    use the result in a `with` statement, even when Transformer Engine is not
+    installed and CPU offload is disabled.
     """
     def _sync():
         return None
 
-    return None, _sync
+    return nullcontext(), _sync
 
 
 # def fused_apply_rotary_pos_emb(

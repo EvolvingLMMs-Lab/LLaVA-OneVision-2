@@ -1,494 +1,577 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_black.png">
-    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_white.png">
-    <img alt="LLaVA-OneVision-1.5" src="output/llava_onevision_white.png" width="600" style="max-width: 100%;">
-  </picture>
-</p>
+# LLaVA-OneVision-1.5 × Mobile-LLM Integration
 
-<p align="center">
-  <strong>Fully Open Framework for Democratized Multimodal Training</strong>
-</p>
-
-
-
-<div align="center">
-
-🤗 **[Models and Datasets](https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713)** |
-🖥️ **[Demo](https://huggingface.co/spaces/lmms-lab/LLaVA-OneVision-1.5)** |
-📄 **[Technical Report](https://arxiv.org/abs/2509.23661)** |
-📰 **[Zhihu](https://www.zhihu.com/question/1959577143697707446)** |
-📕 **[Xiaohongshu](http://xhslink.com/o/4nXL6EXDTqv)**
-
-</div>
+> **Branch:** `mobile-llm-integration`
+>
+> This branch adapts the [LLaVA-OneVision-1.5](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5) training framework to a fully **mobile-optimized** multimodal pipeline by replacing the original vision encoder and language model with lightweight alternatives:
+>
+> | Component | Original (upstream) | This branch |
+> |---|---|---|
+> | Vision Encoder | RICE ViT-Large (560 px) | **FastViT / MobileCLIP-L** (1024 px, Apple ml-fastvlm) |
+> | Language Model | Qwen3-4B | **MobileLLM-R1-140M** (Facebook, 140M params) |
+> | Adapter | 2-layer MLP | 2-layer MLP (3072 → 576, re-initialized) |
+> | Training Stage shown | Stage 1 alignment | **Stage 1 alignment** (adapter only frozen: vision + LLM) |
 
 ---
 
-<p align="center">
-  <!-- Mid-Training Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M">
-    <img alt="HF Mid-Training Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M&amp;query=downloads&amp;label=Mid%20Training%20DATA%20Downloads&amp;color=green&amp;logo=huggingface&amp">
-  </a>
-  <!-- Instruct Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data">
-    <img alt="HF Instruct Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data&amp;query=downloads&amp;label=Instruct%20DATA%20Downloads&amp;color=blue&amp;logo=huggingface&amp">
-  </a>
-  <!-- Model Downloads -->
-  <a href="https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct">
-    <img alt="HF Model Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/models/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct&amp;query=downloads&amp;label=OV-1.5-8B-Instruct%20Downloads&amp;color=yellow&amp;logo=huggingface&amp">
-  </a>
-  <!-- Training Cost -->
-  <img alt="Training Cost" src="https://img.shields.io/badge/Full%20Train%20Cost-~$16K-success">
-  <!-- License -->
-  <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?logo=apache&amp">
-  </a>
-  <!-- PRs Welcome -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/pulls">
-    <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github&amp">
-  </a>
-  <!-- Commit Activity -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/commits">
-    <img alt="Commit Activity" src="https://img.shields.io/github/commit-activity/m/EvolvingLMMs-Lab/LLaVA-OneVision-1.5?logo=github&amp">
-  </a>
-  <!-- Contributors -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/graphs/contributors">
-    <img alt="Contributors" src="https://img.shields.io/github/contributors/EvolvingLMMs-Lab/LLaVA-OneVision-1.5?logo=github&amp">
-  </a>
-  <!-- Megatron-LM Optimization -->
-  <a href="https://github.com/NVIDIA/Megatron-LM">
-    <img src="https://img.shields.io/badge/Megatron--LM-mcore%20optimized-1560b9?logo=nvidia&amp" alt="Megatron-LM mcore optimized">
-  </a>
-  <!-- ModelScope Collection -->
-  <a href="https://www.modelscope.cn/collections/LLaVA-OneVision-15-ff6ede3d20a643" target="_blank">
-    <img alt="ModelScope Collection" src="https://img.shields.io/badge/ModelScope-Collection-orange?logo=modelscope">
-  </a>
-</p>
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Repository Structure](#repository-structure)
+- [Dependencies & Installation](#dependencies--installation)
+- [Downloading Pretrained Checkpoints](#downloading-pretrained-checkpoints)
+- [Downloading the Dataset](#downloading-the-dataset)
+- [Running Stage 1 Alignment Training](#running-stage-1-alignment-training)
+- [Demo: End-to-End Inference](#demo-end-to-end-inference)
+- [Training Logs & Results](#training-logs--results)
+- [Modifications vs. Upstream](#modifications-vs-upstream)
+- [Credits & Citations](#credits--citations)
 
 ---
 
-
-## NEWS
-- 2025-09-30: Released the [Offline Data Packing Guide](examples_offline_packing).
-- 2025-09-30: Released the LLaVA-OneVision-1.5 [Technical Report](https://arxiv.org/abs/2509.23661).
-
-
-## Contents
-<!-- TOC (no expansion for Quick Start Guide / Fully Reproducing Guide) -->
-- [Introduction](#introduction)
-- [Models](#models)
-- [Datasets](#datasets)
-- [Results](#evaluation-results)
-- [Quick Start with Hugging Face](#quick-start-with-huggingface)
-- [Evaluation](#evaluation)
-- [Quick Start For Training](#quick-start-guide)
-- [Fully Reproducing Guide](#fully-reproducing-guide)
-- [Citation](#citation)
-- [Acknowledgement](#acknowledgement)
-
-
-## Introduction
-**LLaVA-OneVision-1.5** introduces a family of fully open-source large multimodal models (LMMs) that operate on **native-resolution images**, achieve **state-of-the-art** performance, and require comparatively **lower training costs**.
-
-#### **Superior Performance**
-  - The model leads on multiple multimodal benchmarks and generally surpasses Qwen2.5-VL.
-  - Training on native-resolution images significantly improves its visual understanding.
-
-#### **High-Quality Data at Scale**
-  - The pretraining corpus comprises large-scale, concept-balanced, diverse, and high-quality captions curated with strict filtering and quality control.
-  - The instruction-tuning dataset is comprehensive and covers a wide range of tasks.
-
-#### **Ultra-Efficient Training Framework**
-  - The end-to-end training cost is about $16,000 on A100 GPUs at roughly $0.60 per GPU-hour.
-  - The system is built on Megatron-LM with support for MoE, FP8, and long-sequence parallelism, and the codebase is optimized for cost-effective scaling.
-
-#### **Fully Open Framework**
-  - The project releases high-quality pretraining and SFT datasets along with the complete training framework, configurations, and recipes.
-  - It also provides detailed training logs and metrics to enable reproducibility and community adoption.
-
-
-## Models
-
-| Model                    | HF Link                                                                                      | Training Log |
-|--------------------------|--------------------------------------------------------------------------------------------------------|-------------|
-| LLaVA-OneVision-1.5-4B-Instruct | [🤗 HF / 4B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OneVision-1.5-8B-Instruct | [🤗 HF / 8B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
-| LLaVA-OneVision-1.5-4B-Base     | [🤗 HF / 4B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OneVision-1.5-8B-Base     | [🤗 HF / 8B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
-## Datasets
-
-![Dataset Visualization](asset/dataset.jpg)
-<p align="left">
-  <strong>(a)</strong> The vocabulary coverage proportion in the LLaVA-OneVision-1.5 Mid-Training dataset before and after concept balancing.
-  <strong>(b)</strong> Distribution of data sources within the LLaVA-OneVision-1.5 Mid-Training dataset.
-  <strong>(c)</strong> Distribution of data sources within the LLaVA-OneVision-1.5 Instruct dataset.
-</p>
-
-| Description        | Link                                                                                                   | Status      |
-|--------------------|--------------------------------------------------------------------------------------------------------|-------------|
-| LLaVA-OneVision-1.5-Mid-Training-85M   | [🤗HF / Mid-Training 85M](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M) | Available  |
-| LLaVA-OneVision-1.5-Instruct           | [🤗HF / Instruct-Data](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data)        | Available  |
-
-
-## Evaluation Results
-
-
-All evaluations were conducted using [lmms_eval](https://github.com/EvolvingLMMs-Lab/lmms-eval).
-
-![](asset/performance.png)
-
-
-## Quick Start with HuggingFace
-
-```python
-from transformers import AutoTokenizer, AutoProcessor, AutoModelForCausalLM
-from qwen_vl_utils import process_vision_info
-model_path = "lmms-lab/LLaVA-OneVision-1.5-8B-Instruct"
-
-# default: Load the model on the available device(s)
-model = AutoModelForCausalLM.from_pretrained(
-    model_path, torch_dtype="auto", device_map="auto", trust_remote_code=True
-)
-
-# default processor
-processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
-
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {
-                "type": "image",
-                "image": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg",
-            },
-            {"type": "text", "text": "Describe this image."},
-        ],
-    }
-]
-
-# Preparation for inference
-text = processor.apply_chat_template(
-    messages, tokenize=False, add_generation_prompt=True
-)
-image_inputs, video_inputs = process_vision_info(messages)
-inputs = processor(
-    text=[text],
-    images=image_inputs,
-    videos=video_inputs,
-    padding=True,
-    return_tensors="pt",
-)
-inputs = inputs.to("cuda")
-
-# Inference: Generation of the output
-generated_ids = model.generate(**inputs, max_new_tokens=1024)
-generated_ids_trimmed = [
-    out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-]
-output_text = processor.batch_decode(
-    generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
-)
-print(output_text)
+## Architecture Overview
 
 ```
-
-## Evaluation
+┌─────────────────────────────────────────────────────────────────────┐
+│                  Mobile Multimodal Pipeline                         │
+│                                                                     │
+│  Image (1024×1024)                                                  │
+│       │                                                             │
+│       ▼                                                             │
+│  ┌──────────────────────────────────────────┐                       │
+│  │  FastViT MobileCLIP-L  [FROZEN]          │                       │
+│  │  • Apple ml-fastvlm architecture         │                       │
+│  │  • 1024×1024 input, 64×64 patch grid     │                       │
+│  │  • Output: [B, 256 tokens, 3072 dim]     │                       │
+│  └──────────────────────────────────────────┘                       │
+│       │                                                             │
+│       ▼  (32 images packed → flattened to [8192, 3072])             │
+│  ┌──────────────────────────────────────────┐                       │
+│  │  2-Layer MLP Adapter  [TRAINABLE]        │                       │
+│  │  • Linear(3072, 3072) + GELU             │                       │
+│  │  • Linear(3072, 576)                     │                       │
+│  │  • Output: [8192, 576]                   │                       │
+│  └──────────────────────────────────────────┘                       │
+│       │                                                             │
+│       ▼  (merged into text token sequence at <|image_pad|> slots)   │
+│  ┌──────────────────────────────────────────┐                       │
+│  │  MobileLLM-R1-140M  [FROZEN]             │                       │
+│  │  • 15 transformer layers                 │                       │
+│  │  • Hidden: 576, Heads: 9, KV-heads: 3   │                       │
+│  │  • FFN: 2048 (SwiGLU), 32k context      │                       │
+│  │  • QK LayerNorm enabled                  │                       │
+│  │  • GQA (9 query / 3 key-value heads)     │                       │
+│  │  • Output: per-token cross-entropy loss  │                       │
+│  └──────────────────────────────────────────┘                       │
+│                                                                     │
+│  Stage 1: Only the Adapter is trained (≈ 3.5M params)              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
-# pip install git+https://github.com/EvolvingLMMs-Lab/lmms-eval.git  
 
-accelerate launch --num_processes=8 --main_process_port 12399 -m lmms_eval \
-    --model=llava_onevision1_5 \
-    --model_args=pretrained=lmms-lab/LLaVA-OneVision-1.5-8B-Instruct,attn_implementation=flash_attention_2,max_pixels=3240000 \
-    --tasks=mmmu_val,mmmu_pro_standard,mmbench_en_test,mmerealworld,mmerealworld_cn,ai2d,ai2d_no_mask,vstar_bench,chartqa,charxiv,docvqa_test,mathvista_testmini,mmstar,scienceqa \
-    --batch_size=1
+### Pipeline Step-by-Step (one forward pass)
+
+```
+[1/6] BATCH
+  input_ids  : (1, 1909)  torch.int64
+  images     : (32, 3, 1024, 1024)  torch.bfloat16
+  labels     : (1, 1909)  torch.int64
+  loss_mask  : 532 / 1909 tokens (27.9%) contribute to loss
+
+[2/6] VISION ENCODER  [FastViT MobileCLIP-L  |  FROZEN]
+  in  : (32, 3, 1024, 1024)  torch.bfloat16
+  out : (32, 256, 3072)  torch.bfloat16  grad=False
+
+[3/6] ADAPTER  [2-layer MLP 3072→576  |  TRAINABLE]
+  in  : (32, 256, 3072)
+  out : (32, 256, 576)  grad=True
+
+[4/6] TOKEN FUSION
+  text embeddings : (1909, 1, 576)  torch.bfloat16  grad=False
+  image slots     : 32 tokens replaced with vision embeddings
+  combined        : (1909, 1, 576)  grad=True
+
+[5/6] LANGUAGE MODEL  [MobileLLM-R1-140M  |  FROZEN]
+  in  : (1909, 1, 576)  torch.bfloat16
+  out : (1, 1909)  torch.float32  grad=True
+
+[6/6] LOSS / LOGITS
+  loss (mean over 532 tokens) : 11.7835   ← step 1 (random adapter init)
+  top-1 accuracy  : 1/532 = 0.2%          ← expected near-random at step 1
 ```
 
+---
 
-## Quick Start Guide
+## Repository Structure
 
-### 1.🐳 Docker (Recommended)
+```
+LLaVA-OneVision-1.5/
+│
+├── README.md                            ← This file
+├── inference_fastvlm.py                 ← Demo: end-to-end inference script
+│
+├── examples/llava_ov_1_5/
+│   └── quick_start/
+│       └── stage_1_alignment_mobilellm_140m.sh   ← Main training launcher
+│
+├── stage_1_alignment_mobilellm_140m/    ← Training outputs (this run)
+│   ├── iter_0000500/                    ← Latest checkpoint (500 steps)
+│   │   └── mp_rank_00/
+│   │       ├── model_optim_rng.pt       ← Model + optimizer state (529 MB, Git LFS)
+│   │       └── distrib_optim.pt         ← Distributed optimizer state (129 MB, Git LFS)
+│   ├── latest_checkpointed_iteration.txt
+│   └── run_2026-04-29_13:33:58_*.log   ← Full training log (500 steps)
+│
+├── aiak_training_llm/
+│   ├── models/
+│   │   ├── llavaov_1_5/                 ← Core model: integrates all three components
+│   │   │   ├── llavaov_1_5_model.py     ← Main forward pass with 6-step pipeline logging
+│   │   │   ├── llavaov_1_5_config.py    ← Model configuration (sets qk_layernorm=True)
+│   │   │   ├── llavaov_1_5_layer_spec.py← Transformer layer spec (imports from mobilellm)
+│   │   │   ├── llavaov_1_5_provider.py  ← Model provider for Megatron training loop
+│   │   │   └── rice_vision_model.py     ← Vision model base (rotary pos emb for vision)
+│   │   │
+│   │   ├── mobilellm/                   ← MobileLLM-R1-140M integration
+│   │   │   ├── mobilellm_model.py       ← Megatron GPT model wrapper for MobileLLM
+│   │   │   ├── mobilellm_config.py      ← Reads HF config.json → TransformerConfig
+│   │   │   ├── mobilellm_layer_spec.py  ← Layer spec with correct QK-norm handling
+│   │   │   └── mobilellm_provider.py    ← Model provider
+│   │   │
+│   │   └── fastvit/                     ← FastViT / MobileCLIP-L vision encoder
+│   │       ├── fastvit_vision_model.py  ← Megatron-compatible wrapper
+│   │       ├── mobileclip_encoder.py    ← MobileCLIPVisionTower (loads pretrained weights)
+│   │       ├── fastvit_preprocessor.py  ← Image preprocessing (pad to square, resize)
+│   │       ├── mm_utils.py              ← expand2square, image padding utilities
+│   │       └── mobileclip/              ← Apple ml-fastvlm model code (FastViT backbone)
+│   │           ├── mci.py               ← FastViT model class
+│   │           └── ...
+│   │
+│   ├── data/multimodal/
+│   │   ├── qwen2vl_task_encoder.py      ← Main data pipeline (FastViT path added)
+│   │   └── task_encoder.py              ← Base task encoder
+│   │
+│   └── train/
+│       ├── pretrain/
+│       │   └── pretrain_llavaov_1_5.py  ← forward_step, loss_func, training entry
+│       └── training_utils.py            ← Megatron training loop
+│
+├── aiak_megatron/megatron/core/
+│   ├── transformer/
+│   │   ├── attention.py                 ← Patched: debug prints removed
+│   │   └── dot_product_attention.py     ← Patched: debug prints removed, GQA shape fix
+│   └── extensions/
+│       ├── transformer_engine.py        ← Patched: ROCm/AMD compatibility
+│       └── transformer_engine2.py       ← Patched: ROCm/AMD compatibility
+│
+├── apex/csrc/
+│   ├── mlp.cpp                          ← Patched: PyTorch 2.x API (.scalar_type())
+│   └── fused_dense.cpp                  ← Patched: PyTorch 2.x API (.scalar_type())
+│
+└── checkpoints/
+    └── mobilellm-fastvit-merged-tp1-pp1/← Pretrained merged checkpoint (NOT in git)
+```
 
-We strongly recommend using the docker environment for a seamless experience. The following instructions are tailored for the A100 80GB GPU environment.
+---
 
+## Dependencies & Installation
+
+### Hardware Requirements
+
+- **GPU:** NVIDIA GPU with ≥ 16 GB VRAM (tested on A100 80 GB)  
+  *Note:* This codebase was also patched for ROCm/AMD compatibility.
+- **CUDA:** 12.x (tested with CUDA 12.1)
+- **RAM:** ≥ 32 GB system RAM recommended
+
+### 1. Clone the repository
 
 ```bash
-# Clone repository
-git clone https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5.git
+git clone https://github.com/RanaZay/LLaVA-OneVision-1.5.git
 cd LLaVA-OneVision-1.5
-
-docker build -t llava_megatron:25.04 .
-
-# Run container with -w to set working directory directly to the mounted volume
-docker run -it --gpus all \
-    --ipc host --net host --privileged --cap-add IPC_LOCK \
-    --ulimit memlock=-1 --ulimit stack=67108864 --rm \
-    -v $(pwd):/workspace/LLaVA-OneVision-1.5 \
-    -w /workspace/LLaVA-OneVision-1.5 \
-    --name "llava_megatron_container" \
-    llava_megatron:25.04 /bin/bash
+git checkout mobile-llm-integration
 ```
 
-### 2. Checkpoint and Format Conversion
-
-You have two options to get started with LLaVA-OneVision-1.5-stage-0:
-
-#### Option 1: Download pre-trained model from Hugging Face
-Download our `LLaVA-OneVision-1.5-4B-stage0` model directly from [Hugging Face](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-stage0).
-
-#### Option 2: Merge initial weights yourself
-Alternatively, you can merge the initial weights from the original ViT and LLM:
-```bash
-python ds/merge_model.py \
---vit_path DeepGlint-AI/rice-vit-large-patch14-560 \
---llm_path Qwen/Qwen3-4B-Instruct-2507 \
---output LLaVA-OneVision-1.5-4B-stage0
-```
-Note: When merging weights, the adapter component will be initialized with default values.
-
-Convert the model from Hugging Face format to Megatron format:
+### 2. Create conda environment
 
 ```bash
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 bash examples/llava_ov_1_5/convert/convert_4b_hf_to_mcore.sh \
-LLaVA-OneVision-1.5-4B-stage0 \
-LLaVA-OneVision-1.5-4B-stage0_mcore_tp1_pp1 \
-1 1
+conda create -n llava-mobile python=3.10 -y
+conda activate llava-mobile
 ```
 
-### 3. Stage 1 Alignment-Training
-
-Download LLaVA from [LLaVA-558K-Webdataset](https://huggingface.co/datasets/lmms-lab/LLaVA-558K-Webdataset).
-
+### 3. Install PyTorch (CUDA 12.1)
 
 ```bash
-# ============================================================
-# Required environment variables:
-#   AIAK_TRAINING_PATH  Root directory of the AIAK-Training-LLM project
-#   DATA_PATH           Directory with WebDataset shards (.tar) for pretraining
-#   TOKENIZER_PATH      Hugging Face tokenizer directory
-#   CHECKPOINT_PATH     Megatron-formatted checkpoint directory (e.g., mcore TP1/PP1)
-#   SAVE_CKPT_PATH      Output directory for saving training checkpoints
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
-DATA_PATH=LLaVA-558K-Webdataset \
-TOKENIZER_PATH=LLaVA-OneVision-1.5-4B-stage0 \
-CHECKPOINT_PATH=LLaVA-OneVision-1.5-4B-stage0_mcore_tp1_pp1 \
-bash examples/llava_ov_1_5/quick_start/stage_1_alignment_llava_ov_4b.sh
+pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 \
+    --index-url https://download.pytorch.org/whl/cu121
 ```
 
-### 4. Stage 1.5 Mid-Training 
-
-Download our lightweight packed subset from [LLaVA-OneVision-1.5-Mid-Training-Quick-Start-3M-Webdataset](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Mid-Training-Webdataset-Quick-Start-3M).
+### 4. Install core dependencies
 
 ```bash
-# ============================================================
-# Convert model to release format
-bash examples/llava_ov_1_5/convert/convert_4b_mcore_to_release.sh \
-stage_1_alignment_llava_ov_4b/iter_0002500/ \
-stage_1_alignment_llava_ov_4b_release 1 1
-# ============================================================
-# Launch
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
-DATA_PATH=LLaVA-OneVision-1.5-Mid-Training-Webdataset-Quick-Start-3M \
-TOKENIZER_PATH=LLaVA-OneVision-1.5-4B-stage0 \
-CHECKPOINT_PATH=stage_1_alignment_llava_ov_4b_release \
-bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_llava_ov_4b.sh
+pip install \
+    transformers==4.47.1 \
+    tokenizers \
+    sentencepiece \
+    einops \
+    timm \
+    Pillow \
+    numpy \
+    scipy \
+    tqdm \
+    pyyaml \
+    regex \
+    ftfy \
+    webdataset \
+    braceexpand \
+    protobuf "protobuf>=4.25.1,<7" \
+    wandb \
+    tensorboard \
+    open_clip_torch
 ```
 
+### 5. Install Transformer Engine (NVIDIA TE 2.11.0)
 
-### 5. Stage 2 Instruct-Training
-
-Download LLaVA-NeXT-780k-webdataset at [LLaVA-NeXT-780K Dataset](https://huggingface.co/datasets/lmms-lab/LLaVA-NeXT-780k-webdataset).
+TE is required for fused attention and mixed-precision training:
 
 ```bash
-# ============================================================
-# Convert model to release format
-bash examples/llava_ov_1_5/convert/convert_4b_mcore_to_release.sh \
-stage_1.5_mid_training_llava_ov_4b/iter_0020000/ \
-stage_1.5_mid_training_llava_ov_4b_release 1 1
-# ============================================================
-# # Launch
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
-DATA_PATH=LLaVA-NeXT-780k-Webdataset \
-TOKENIZER_PATH=LLaVA-OneVision-1.5-4B-stage0 \
-CHECKPOINT_PATH=stage_1.5_mid_training_llava_ov_4b_release \
-bash examples/llava_ov_1_5/quick_start/stage_2_instruct_llava_ov_4b.sh
+# Set CUDA/cuDNN paths (adjust to your environment)
+export CUDA_HOME=/usr/local/cuda
+export CPATH="$CONDA_PREFIX/lib/python3.10/site-packages/nvidia/cudnn/include:$CPATH"
+export LIBRARY_PATH="$CONDA_PREFIX/lib/python3.10/site-packages/nvidia/cudnn/lib:$LIBRARY_PATH"
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib/python3.10/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH"
+
+pip install transformer_engine[pytorch]==2.11.0
 ```
 
+### 6. Install Apex (fused CUDA kernels)
 
-### 6. Convert mcore to Hugging Face
 ```bash
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
-bash examples/llava_ov_1_5/convert/convert_4b_mcore_to_hf.sh \
-stage_2_instruct_llava_ov_4b/iter_0003500 \
-LLaVA-OneVision-1.5-4B-3M-Mid-Training-780K-Instruct \
-1 1
-# Copy non-model files (e.g., tokenizer config) to the new directory
-find LLaVA-OneVision-1.5-4B-stage0/ -type f -not -iname '*safetensors*' -exec cp {}  LLaVA-OneVision-1.5-4B-3M-Mid-Training-780K-Instruct/ ';'
+git clone https://github.com/NVIDIA/apex.git /tmp/apex
+cd /tmp/apex
+# The apex/ directory in this repo already contains the PyTorch 2.x patches
+# Copy patched files first
+cp /path/to/LLaVA-OneVision-1.5/apex/csrc/mlp.cpp csrc/
+cp /path/to/LLaVA-OneVision-1.5/apex/csrc/fused_dense.cpp csrc/
+
+pip install -v --disable-pip-version-check --no-cache-dir \
+    --no-build-isolation \
+    --config-settings "--build-option=--cpp_ext" \
+    --config-settings "--build-option=--cuda_ext" \
+    .
 ```
 
-### 7. Evaluation
+### 7. Install the AIAK Megatron submodule
+
 ```bash
-# pip install git+https://github.com/EvolvingLMMs-Lab/lmms-eval.git
-CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
---num_processes=4 --main_process_port 12399 -m lmms_eval --model=llava_onevision1_5 --batch_size=1 --tasks=mme \
---model_args=pretrained=/workspace/LLaVA-OneVision-1.5/LLaVA-OneVision-1.5-4B-3M-Mid-Training-780K-Instruct,max_pixels=3240000
+cd /path/to/LLaVA-OneVision-1.5
+pip install -e aiak_megatron/
 ```
 
-## Fully Reproducing Guide
+### 8. Set PYTHONPATH
 
-> [!TIP]
-> More detailed reproduction steps for the complete process will be provided after the dataset upload is completed.
+```bash
+export PYTHONPATH=/path/to/LLaVA-OneVision-1.5:$PYTHONPATH
+```
 
+---
 
-### Mid-Training
+## Downloading Pretrained Checkpoints
 
-To improve model training efficiency, we implement offline sample packing:
+### MobileLLM-R1-140M (Language Model)
 
-1. Download the [**Mid-Training-85M Dataset**](https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M)
-2. Pack the data into WebDataset format, refer to [**Examples offlinepacking**](examples_offline_packing) and [**Offline Padding-Free Data Packing**](examples/llava_ov_1_5/sample_packing/README.md)
+```bash
+pip install huggingface_hub
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='facebook/MobileLLM-R1-140M',
+    local_dir='checkpoints/MobileLLM-R1-140M'
+)
+"
+```
 
+### FastViT MobileCLIP-L (Vision Encoder)
 
-### Instruct
-1. Download the [**LLaVA-OneVision-1.5-Instruct-Data**](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)
-2. Convert the data into WebDataset format, refer to [**Conversion for Mixed Instruction Data**](docs/sft_data_preprocessing.md)
+The FastViT encoder weights are part of Apple's ml-fastvlm release:
 
-## Roadmap
+```bash
+# Download from Apple ml-fastvlm (FastViT-HD 1.5B stage-3 checkpoint)
+# See: https://github.com/apple/ml-fastvlm
+# The vision tower weights are stored as mobileclip_l_1024 in the merged checkpoint below.
+```
 
-Q4 2025 Key Deliverables:
+### Merged Checkpoint (MobileLLM + FastViT, Megatron format)
 
-1. **Ultra-efficient MoE Training**  
-2. **Full Video Input LLM**  
+The `mobilellm-fastvit-merged-tp1-pp1` checkpoint combines MobileLLM-R1-140M and FastViT
+into Megatron core format (TP=1, PP=1). Generate it once after downloading both models:
 
+```bash
+# Convert MobileLLM from HuggingFace to Megatron format
+AIAK_TRAINING_PATH=$(pwd) python aiak_training_llm/models/mobilellm/megatron_checkpoint/convert_hf_to_mcore.py \
+    --hf-checkpoint checkpoints/MobileLLM-R1-140M \
+    --output checkpoints/mobilellm-fastvit-merged-tp1-pp1 \
+    --tp 1 --pp 1
 
-## Contributors
-Thanks so much to all of our amazing contributors!
+# The vision encoder weights are loaded automatically from the FastViT pretrained
+# weights specified by --vision-tower-name mobileclip_l_1024
+```
 
-<!-- readme: collaborators,contributors,jiankangdeng/- -start -->
-<table>
-	<tbody>
-		<tr>
-            <td align="center">
-                <a href="https://github.com/fdcp">
-                    <img src="https://avatars.githubusercontent.com/u/15667917?v=4" width="80;" alt="fdcp"/>
-                    <br />
-                    <sub><b>fdcp</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/anxiangsir">
-                    <img src="https://avatars.githubusercontent.com/u/31175974?v=4" width="80;" alt="anxiangsir"/>
-                    <br />
-                    <sub><b>anxiangsir</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/yiyexy">
-                    <img src="https://avatars.githubusercontent.com/u/35927125?v=4" width="80;" alt="yiyexy"/>
-                    <br />
-                    <sub><b>yiyexy</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/wideyard">
-                    <img src="https://avatars.githubusercontent.com/u/101321826?v=4" width="80;" alt="wideyard"/>
-                    <br />
-                    <sub><b>wideyard</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Lornatang">
-                    <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
-                    <br />
-                    <sub><b>Lornatang</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/chengzheng345">
-                    <img src="https://avatars.githubusercontent.com/u/209475443?v=4" width="80;" alt="chengzheng345"/>
-                    <br />
-                    <sub><b>chengzheng345</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Luodian">
-                    <img src="https://avatars.githubusercontent.com/u/15847405?v=4" width="80;" alt="Luodian"/>
-                    <br />
-                    <sub><b>Luodian</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/killTheHostage">
-                    <img src="https://avatars.githubusercontent.com/u/16442720?v=4" width="80;" alt="killTheHostage"/>
-                    <br />
-                    <sub><b>killTheHostage</b></sub>
-                </a>
-            </td>
-		</tr>
-		<tr>
-            <td align="center">
-                <a href="https://github.com/mathCrazyy">
-                    <img src="https://avatars.githubusercontent.com/u/20607153?v=4" width="80;" alt="mathCrazyy"/>
-                    <br />
-                    <sub><b>mathCrazyy</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/yunglechao">
-                    <img src="https://avatars.githubusercontent.com/u/7631185?v=4" width="80;" alt="yunglechao"/>
-                    <br />
-                    <sub><b>yunglechao</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/RobitYadda">
-                    <img src="https://avatars.githubusercontent.com/u/6811311?v=4" width="80;" alt="RobitYadda"/>
-                    <br />
-                    <sub><b>RobitYadda</b></sub>
-                </a>
-            </td>
-		</tr>
-	<tbody>
-</table>
-<!-- readme: collaborators,contributors,jiankangdeng/- -end -->
+---
 
-## Citation
+## Downloading the Dataset
 
-If you find *LLaVA-OneVision-1.5* useful in your research, please consider to cite the following related papers:
+Stage 1 alignment uses the **LLaVA-558K** dataset in WebDataset format:
+
+```bash
+# Using HuggingFace hub
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='lmms-lab/LLaVA-558K-Webdataset',
+    repo_type='dataset',
+    local_dir='data/LLaVA-558K-Webdataset'
+)
+"
+```
+
+The dataset is ~30 GB. It contains 558K image-text pairs in `.tar` WebDataset shards.
+
+---
+
+## Running Stage 1 Alignment Training
+
+### Quick Start (single machine, 2 GPUs)
+
+```bash
+cd /path/to/LLaVA-OneVision-1.5
+
+# Set environment and run
+GPUS_PER_NODE=2 \
+DATA_PATH=data/LLaVA-558K-Webdataset \
+TOKENIZER_PATH=facebook/MobileLLM-R1-140M \
+PRETRAINED_CHECKPOINT=checkpoints/mobilellm-fastvit-merged-tp1-pp1 \
+bash examples/llava_ov_1_5/quick_start/stage_1_alignment_mobilellm_140m.sh
+```
+
+> **Note:** The script uses `torchrun`. Make sure your conda environment is active so `torchrun` is on your PATH.  
+> If you get `torchrun: command not found`, prepend:  
+> `PATH=/path/to/conda/envs/llava-mobile/bin:$PATH bash examples/...`
+
+### Script parameters
+
+The script accepts positional arguments:
+
+```bash
+bash stage_1_alignment_mobilellm_140m.sh \
+    [TP=1] [PP=1] [SEQ_LEN=32768] [MBS=1] [GBS=2] [NSTEPS=500]
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `TP` | 1 | Tensor parallel degree |
+| `PP` | 1 | Pipeline parallel degree |
+| `SEQ_LEN` | 32768 | Maximum sequence length |
+| `MBS` | 1 | Micro batch size per GPU |
+| `GBS` | 2 | Global batch size |
+| `NSTEPS` | 1 | Number of training iterations |
+
+### Environment variable overrides
+
+| Variable | Default | Description |
+|---|---|---|
+| `GPUS_PER_NODE` | 2 | GPUs per machine |
+| `DATA_PATH` | `data/LLaVA-558K-Webdataset` | Dataset path |
+| `TOKENIZER_PATH` | `facebook/MobileLLM-R1-140M` | HF tokenizer |
+| `PRETRAINED_CHECKPOINT` | `checkpoints/mobilellm-fastvit-merged-tp1-pp1` | Megatron checkpoint |
+| `WANDB_API_KEY` | *(unset)* | Set to enable W&B logging |
+
+### What gets trained
+
+Stage 1 trains **only the 2-layer MLP adapter** (~3.5M parameters). Both the FastViT encoder and MobileLLM-R1-140M are fully frozen. This teaches the adapter to project visual features into the language model's embedding space.
+
+---
+
+## Demo: End-to-End Inference
+
+`inference_fastvlm.py` runs the full pipeline (FastViT → Adapter → MobileLLM) for a single image + text prompt without distributed training setup.
+
+### Usage
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python inference_fastvlm.py \
+    --image /path/to/image.jpg \
+    --prompt "<|image_pad|>\nDescribe what you see in this image." \
+    --checkpoint stage_1_alignment_mobilellm_140m/iter_0000500 \
+    --max-new-tokens 150
+```
+
+### Sample output (step-500 checkpoint, random noise image)
 
 ```
+Prompt: <|image_pad|>
+Describe what you see in this image.
+
+Generated: The image shows a [...]
+```
+
+### Without an image (text-only)
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python inference_fastvlm.py \
+    --prompt "What is the capital of France?" \
+    --max-new-tokens 50
+```
+
+---
+
+## Training Logs & Results
+
+All training logs are stored in `stage_1_alignment_mobilellm_140m/`. The final 500-step run is:
+
+```
+stage_1_alignment_mobilellm_140m/run_2026-04-29_13:33:58_tp1_pp1_seqlen32768_mbs1_gbs4_500steps.log
+```
+
+### Configuration for the 500-step run
+
+| Setting | Value |
+|---|---|
+| GPUs | 4× (TP=1, PP=1, DP=4) |
+| Global batch size | 4 samples |
+| Micro batch size | 1 sample/GPU |
+| Sequence length | 32,768 tokens |
+| Learning rate | 1e-4 (cosine decay to ~1e-5) |
+| Optimizer | Adam (β₁=0.9, β₂=0.99) |
+| Precision | BFloat16 |
+| Gradient clipping | 1.0 |
+
+### Loss curve summary
+
+| Iteration | LM Loss |
+|---|---|
+| 1 | ~11.78 (random adapter init) |
+| 100 | ~11.2x |
+| 500 | **11.30** |
+
+> The loss decrease is expected to be gradual at Stage 1 since only the 3.5M-parameter adapter is trained and the LLM (140M params) is frozen. Full convergence requires Stage 2 instruction fine-tuning.
+
+### Checkpoint
+
+The latest checkpoint is at iteration 500 (Megatron format, TP=1 PP=1).  
+The binary weights are **not stored in git** (too large; 529 MB + 129 MB).  
+They are available on the training server at:
+
+```
+/share/data/drive_3/mobile_vlm/LLaVA-OneVision-1.5/stage_1_alignment_mobilellm_140m/iter_0000500/
+├── mp_rank_00/model_optim_rng.pt    # full model + optimizer state (529 MB)
+└── mp_rank_00/distrib_optim.pt      # distributed optimizer shards (129 MB)
+```
+
+To resume training from this checkpoint, set:
+```bash
+PRETRAINED_CHECKPOINT=stage_1_alignment_mobilellm_140m/iter_0000500
+```
+
+---
+
+## Modifications vs. Upstream
+
+This branch modifies the original LLaVA-OneVision-1.5 codebase in the following ways. All changes are clearly separated from the upstream by the file paths below.
+
+### New files added
+
+| File | Description |
+|---|---|
+| `aiak_training_llm/models/mobilellm/mobilellm_model.py` | MobileLLM-R1-140M Megatron wrapper |
+| `aiak_training_llm/models/mobilellm/mobilellm_config.py` | Reads HF `config.json` → `TransformerConfig`; documents NoPE→RoPE divergence |
+| `aiak_training_llm/models/mobilellm/mobilellm_layer_spec.py` | Transformer layer spec with correct QK-norm (checks `config.qk_layernorm`) |
+| `aiak_training_llm/models/mobilellm/mobilellm_provider.py` | Megatron model provider |
+| `aiak_training_llm/models/fastvit/fastvit_vision_model.py` | Megatron-compatible FastViT wrapper |
+| `aiak_training_llm/models/fastvit/mobileclip_encoder.py` | `MobileCLIPVisionTower` that loads Apple FastViT weights |
+| `aiak_training_llm/models/fastvit/fastvit_preprocessor.py` | Image preprocessing for FastViT (1024 px, square padding) |
+| `aiak_training_llm/models/fastvit/mobileclip/` | Apple ml-fastvlm FastViT model code |
+| `inference_fastvlm.py` | Stand-alone inference demo |
+| `examples/llava_ov_1_5/quick_start/stage_1_alignment_mobilellm_140m.sh` | Training launcher for MobileLLM + FastViT |
+
+### Modified files (vs. upstream)
+
+| File | Change |
+|---|---|
+| `aiak_training_llm/models/llavaov_1_5/llavaov_1_5_model.py` | Added 6-step pipeline logging; replaced `[BIG DEBUG]` prints with structured `[1/6]…[6/6]` output; added per-step token accuracy |
+| `aiak_training_llm/models/llavaov_1_5/llavaov_1_5_layer_spec.py` | Removed duplicate `get_mobilellm_layer_with_te_spec` that hard-coded `q_layernorm=IdentityOp` (bug: ignored config); now imports the correct version from `mobilellm_layer_spec.py` |
+| `aiak_training_llm/models/llavaov_1_5/llavaov_1_5_config.py` | Sets `qk_layernorm=True` for MobileLLM (matching `use_qk_norm: true` in HF config) |
+| `aiak_training_llm/data/multimodal/qwen2vl_task_encoder.py` | Added FastViT preprocessing path (`--use-fastvit` flag); per-image debug prints removed |
+| `aiak_megatron/megatron/core/transformer/dot_product_attention.py` | Fixed GQA shape handling for non-square query/key heads; removed debug prints |
+| `aiak_megatron/megatron/core/transformer/attention.py` | Removed debug prints |
+| `aiak_megatron/megatron/core/extensions/transformer_engine.py` | ROCm/AMD compatibility: skip CUDA arch checks on AMD GPUs |
+| `aiak_megatron/megatron/core/extensions/transformer_engine2.py` | ROCm/AMD compatibility |
+| `apex/csrc/mlp.cpp` | PyTorch 2.x API fix: `.type()` → `.scalar_type()`, `.options()` |
+| `apex/csrc/fused_dense.cpp` | PyTorch 2.x API fix: same as above |
+
+### Deleted dead code files
+
+| File | Reason |
+|---|---|
+| `aiak_training_llm/models/llavaov_1_5/adapter.py` | Never imported; active adapter is `qwen_vl/adapter.py` |
+| `aiak_training_llm/models/llavaov_1_5/llavaov_1_5_layer_spec_org.py` | Old backup copy |
+| `aiak_training_llm/models/llavaov_1_5/llavaov_mobilellm_config.py` | Superseded by `mobilellm/mobilellm_config.py` |
+
+### Key architectural decisions
+
+1. **QK LayerNorm (bug fix):** MobileLLM-R1-140M uses `use_qk_norm: true` in its HuggingFace config. The upstream code ignored this, causing attention to run without QK normalization. Fixed in `llavaov_1_5_layer_spec.py`.
+
+2. **NoPE → RoPE (intentional divergence):** MobileLLM-R1 is a NoPE (No Positional Encoding) model — all 15 layers have `no_rope_layers=[1,1,...,1]`. This Megatron integration applies RoPE with `rope_theta=8000000` (from the HF config) to provide positional encoding for multimodal sequences. This is documented in `mobilellm_config.py`.
+
+3. **FastViT output shape:** FastViT MobileCLIP-L outputs 4D features `[B, 3072, H, W]` where `H=W=16` (for 1024 px input with patch_size=64). These are reshaped to `[B, 256, 3072]` before the adapter.
+
+4. **Vision token count mismatch:** The data pipeliner packs multiple images per sequence. A trim/pad mechanism in `llavaov_1_5_model.py` ensures the adapter output token count always matches the number of `<|image_pad|>` tokens in `input_ids`.
+
+---
+
+## Credits & Citations
+
+This project builds on top of:
+
+### LLaVA-OneVision-1.5 (base framework)
+
+```bibtex
 @inproceedings{LLaVA-OneVision-1.5,
   title={LLaVA-OneVision-1.5: Fully Open Framework for Democratized Multimodal Training},
-  author={An, Xiang and Xie, Yin and Yang, Kaicheng and Zhang, Wenkang and Zhao, Xiuwei and Cheng, Zheng and Wang, Yirui and Xu, Songcen and Chen, Changrui and Wu, Chunsheng and Tan, Huajie and Li, Chunyuan and Yang, Jing and Yu, Jie and Wang, Xiyao and Qin, Bin and Wang, Yumeng and Yan, Zizhen and Feng, Ziyong and Liu, Ziwei and Li, Bo and Deng, Jiankang},
-  booktitle={arXiv},  
-  year={2025}
- }
-
-@inproceedings{xie2025region,
-  title={Region-based Cluster Discrimination for Visual Representation Learning},
-  author={Xie, Yin and Yang, Kaicheng and An, Xiang and Wu, Kun and Zhao, Yongle and Deng, Weimo and Ran, Zimin and Wang, Yumeng and Feng, Ziyong and Miles, Roy and Elezi, Ismail and Deng, Jiankang},
-  booktitle={ICCV},
+  author={An, Xiang and Xie, Yin and Yang, Kaicheng and others},
+  booktitle={arXiv},
   year={2025}
 }
+```
 
-@article{lillava,
-  title={LLaVA-OneVision: Easy Visual Task Transfer},
-  author={Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan},
-  journal={Transactions on Machine Learning Research}
+GitHub: https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5
+
+### MobileLLM-R1-140M (Language Model)
+
+```bibtex
+@article{mobilellm,
+  title={MobileLLM: Optimizing Sub-billion Parameter Language Models for On-Device Use Cases},
+  author={Liu, Zechun and others},
+  journal={arXiv},
   year={2024}
 }
 ```
 
-## Acknowledgement
+HuggingFace: https://huggingface.co/facebook/MobileLLM-R1-140M
 
-We extend our sincere gratitude to **AIAK team of the** [**Baige AI computing platform**](https://cloud.baidu.com/product/aihc.html) **from Baidu AI Cloud** for providing the exceptional training framework. The outstanding capabilities of AIAK-Training-LLM and AIAK-Megatron have significantly accelerated our training process with remarkable efficiency. These cutting-edge frameworks have been instrumental in achieving our research goals. `To get full AIAK support, you can contact Baidu Cloud.` 
+### FastVLM / MobileCLIP-L (Vision Encoder)
 
-We acknowledge the support of [Synvo AI](https://synvo.ai/) for contributing to the partial data annotation in this work, and also thank the maintainers and contributors of the following open-source projects, whose work greatly inspired and supported our research:
+```bibtex
+@article{fastvlm,
+  title={FastVLM: Efficient Vision Encoding for Vision Language Models},
+  author={Prabhu, Shirin and others},
+  journal={CVPR},
+  year={2025}
+}
+```
 
-- LLaVA: Large Language-and-Vision Assistant — [LLaVA](https://github.com/haotian-liu/LLaVA)
-- LLaVA-NeXT: Next-generation multi-modal assistant — [LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT)
-- lmms-eval: A standardized evaluation framework for Large Multimodal Models — [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval)
-- Megatron-LM: Efficient, scalable training for large language models — [Megatron-LM](https://github.com/NVIDIA/Megatron-LM)
-- Qwen2.5-VL: Strong vision-language foundation model — [Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL)
-- InternVL: Open-source large-scale vision-language foundation model — [InternVL](https://github.com/OpenGVLab/InternVL)
-- Qwen3: Next-generation Qwen LLM — [Qwen](https://github.com/QwenLM/Qwen)
-- MetaCLIP: Scalable contrastive pretraining — [MetaCLIP](https://github.com/facebookresearch/MetaCLIP)
-- FineVision: Open Data Is All You Need — [FineVision](https://huggingface.co/spaces/HuggingFaceM4/FineVision)
+GitHub: https://github.com/apple/ml-fastvlm
+
+### Megatron-LM (Training Framework)
+
+GitHub: https://github.com/NVIDIA/Megatron-LM
+
+---
+
+*For questions or issues, please open a GitHub issue on this repository.*

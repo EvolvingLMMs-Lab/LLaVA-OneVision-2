@@ -459,7 +459,12 @@ def setup_model_and_optimizer(model_provider_func,
         print_rank_0(f'[DEBUG] FastViT enabled: use_fastvit={getattr(args, "use_fastvit", False)}')
         print_rank_0(f'[DEBUG] Before handling: args.load={args.load}, args.pretrained_checkpoint={args.pretrained_checkpoint}')
         
-        if args.pretrained_checkpoint is not None:
+        if args.load is not None:
+            # Keep explicit resume checkpoints. If the resume directory does not
+            # contain a checkpoint yet, Megatron can still fall back to
+            # args.pretrained_checkpoint below.
+            print_rank_0(f'FastViT enabled: Will resume/load checkpoint from: {args.load}')
+        elif args.pretrained_checkpoint is not None:
             # We have a pretrained checkpoint - load only vision tower from HF checkpoint
             print_rank_0(f'FastViT enabled: Will load vision tower from pretrained checkpoint: {args.pretrained_checkpoint}')
             # Keep args.pretrained_checkpoint for vision tower loading
