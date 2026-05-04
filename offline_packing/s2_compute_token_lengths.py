@@ -1015,6 +1015,20 @@ def process_chunk(args: tuple) -> Optional[str]:
             use_fast=False,
         )
 
+        # Extract spatial merge_size from the image processor for NPY-mode token math.
+        # Patch tokens after spatial merging = npy.shape[0] // (merge_size ** 2).
+        # Default to 2 (Qwen2-VL / Qwen2.5-VL) if not present, but log it loudly.
+        image_processor = getattr(processor, "image_processor", None)
+        merge_size = getattr(image_processor, "merge_size", None) if image_processor is not None else None
+        if merge_size is None:
+            merge_size = 2
+            logger.warning(
+                f"merge_size not found on processor.image_processor; defaulting to {merge_size}. "
+                f"This will give WRONG NPY token counts for models with merge_size != 2."
+            )
+        merge_factor = int(merge_size) ** 2
+        logger.info(f"NPY-mode token math: merge_size={merge_size}, merge_factor={merge_factor}")
+
         # Initialize template based on task type
         if task_type == "pretrain":
             template = Template("<|vision_start|><|image_pad|><|vision_end|>{{ captions[0].content }}<|im_end|>")
@@ -1085,7 +1099,7 @@ def process_chunk(args: tuple) -> Optional[str]:
             Supports two modes:
             1. Standard mode: Process image and text using processor
             2. NPY mode: If npy_path is provided, calculate patch tokens directly
-               from npy file's first dimension (patches = npy_dim0 / 4)
+               from npy file's first dimension (patches = npy_dim0 // merge_size**2)
             
             Args:
                 json_path: Path to JSON file.
@@ -1116,12 +1130,10 @@ def process_chunk(args: tuple) -> Optional[str]:
                 # NPY mode: Calculate token length from npy file directly
                 if npy_path and npy_path != "_____.npy" and os.path.exists(npy_path):
                     try:
-                        # Load npy file and get first dimension
                         npy_data = np.load(npy_path, allow_pickle=False)
                         npy_first_dim = npy_data.shape[0]
-                        
-                        # Calculate patch tokens: first_dim / 4
-                        patch_tokens = npy_first_dim // 4
+
+                        patch_tokens = npy_first_dim // merge_factor
                         
                         # Count image placeholders in text
                         # Each <|image_pad|> in text will be tokenized as 1 token,
