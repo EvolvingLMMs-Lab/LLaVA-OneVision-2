@@ -1,0 +1,2687 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1289.43pt" height="1779.6096pt" viewBox="0 0 1289.43 1779.6096" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<style type="text/css"><![CDATA[
+@keyframes tbl-fade-down { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tbl-fade-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes tbl-pop { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes tbl-pulse { 0%, 100% { filter: none; } 50% { filter: drop-shadow(0 0 4px #f5c518); } }
+@keyframes tbl-col-fade { from { opacity: 0; } to { opacity: 1; } }
+g[id='tbl-header'] { animation: tbl-fade-down 0.45s ease-out 0.1s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-ours-col'] { animation: tbl-col-fade 0.6s ease-out 0.25s both; }
+g[id='tbl-row-0'] { animation: tbl-fade-in 0.32s ease-out 0.550s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-1'] { animation: tbl-fade-in 0.32s ease-out 0.595s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-2'] { animation: tbl-fade-in 0.32s ease-out 0.640s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-3'] { animation: tbl-fade-in 0.32s ease-out 0.685s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-4'] { animation: tbl-fade-in 0.32s ease-out 0.730s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-5'] { animation: tbl-fade-in 0.32s ease-out 0.775s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-6'] { animation: tbl-fade-in 0.32s ease-out 0.820s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-7'] { animation: tbl-fade-in 0.32s ease-out 0.865s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-8'] { animation: tbl-fade-in 0.32s ease-out 0.910s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-9'] { animation: tbl-fade-in 0.32s ease-out 0.955s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-10'] { animation: tbl-fade-in 0.32s ease-out 1.000s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-11'] { animation: tbl-fade-in 0.32s ease-out 1.045s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-12'] { animation: tbl-fade-in 0.32s ease-out 1.090s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-13'] { animation: tbl-fade-in 0.32s ease-out 1.135s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-14'] { animation: tbl-fade-in 0.32s ease-out 1.180s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-15'] { animation: tbl-fade-in 0.32s ease-out 1.225s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-16'] { animation: tbl-fade-in 0.32s ease-out 1.270s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-17'] { animation: tbl-fade-in 0.32s ease-out 1.315s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-18'] { animation: tbl-fade-in 0.32s ease-out 1.360s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-19'] { animation: tbl-fade-in 0.32s ease-out 1.405s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-20'] { animation: tbl-fade-in 0.32s ease-out 1.450s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-21'] { animation: tbl-fade-in 0.32s ease-out 1.495s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-22'] { animation: tbl-fade-in 0.32s ease-out 1.540s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-23'] { animation: tbl-fade-in 0.32s ease-out 1.585s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-24'] { animation: tbl-fade-in 0.32s ease-out 1.630s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-25'] { animation: tbl-fade-in 0.32s ease-out 1.675s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-26'] { animation: tbl-fade-in 0.32s ease-out 1.720s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-27'] { animation: tbl-fade-in 0.32s ease-out 1.765s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-28'] { animation: tbl-fade-in 0.32s ease-out 1.810s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-29'] { animation: tbl-fade-in 0.32s ease-out 1.855s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-30'] { animation: tbl-fade-in 0.32s ease-out 1.900s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-31'] { animation: tbl-fade-in 0.32s ease-out 1.945s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-32'] { animation: tbl-fade-in 0.32s ease-out 1.990s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-33'] { animation: tbl-fade-in 0.32s ease-out 2.035s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-34'] { animation: tbl-fade-in 0.32s ease-out 2.080s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-35'] { animation: tbl-fade-in 0.32s ease-out 2.125s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-36'] { animation: tbl-fade-in 0.32s ease-out 2.170s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-37'] { animation: tbl-fade-in 0.32s ease-out 2.215s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-38'] { animation: tbl-fade-in 0.32s ease-out 2.260s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-39'] { animation: tbl-fade-in 0.32s ease-out 2.305s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-40'] { animation: tbl-fade-in 0.32s ease-out 2.350s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-41'] { animation: tbl-fade-in 0.32s ease-out 2.395s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-42'] { animation: tbl-fade-in 0.32s ease-out 2.440s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-43'] { animation: tbl-fade-in 0.32s ease-out 2.485s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-best-0'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.630s both, tbl-pulse 2.4s ease-in-out 3.130s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-1'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.660s both, tbl-pulse 2.4s ease-in-out 3.160s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-2'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.690s both, tbl-pulse 2.4s ease-in-out 3.190s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-3'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.720s both, tbl-pulse 2.4s ease-in-out 3.220s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-4'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.750s both, tbl-pulse 2.4s ease-in-out 3.250s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-5'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.780s both, tbl-pulse 2.4s ease-in-out 3.280s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-6'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.810s both, tbl-pulse 2.4s ease-in-out 3.310s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-7'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.840s both, tbl-pulse 2.4s ease-in-out 3.340s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-8'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.870s both, tbl-pulse 2.4s ease-in-out 3.370s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-9'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.900s both, tbl-pulse 2.4s ease-in-out 3.400s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-10'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.930s both, tbl-pulse 2.4s ease-in-out 3.430s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-11'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.960s both, tbl-pulse 2.4s ease-in-out 3.460s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-12'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.990s both, tbl-pulse 2.4s ease-in-out 3.490s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-13'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.020s both, tbl-pulse 2.4s ease-in-out 3.520s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-14'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.050s both, tbl-pulse 2.4s ease-in-out 3.550s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-15'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.080s both, tbl-pulse 2.4s ease-in-out 3.580s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-16'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.110s both, tbl-pulse 2.4s ease-in-out 3.610s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-17'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.140s both, tbl-pulse 2.4s ease-in-out 3.640s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-18'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.170s both, tbl-pulse 2.4s ease-in-out 3.670s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-19'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.200s both, tbl-pulse 2.4s ease-in-out 3.700s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-20'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.230s both, tbl-pulse 2.4s ease-in-out 3.730s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-21'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.260s both, tbl-pulse 2.4s ease-in-out 3.760s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-22'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.290s both, tbl-pulse 2.4s ease-in-out 3.790s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-23'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.320s both, tbl-pulse 2.4s ease-in-out 3.820s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-24'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.350s both, tbl-pulse 2.4s ease-in-out 3.850s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-25'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.380s both, tbl-pulse 2.4s ease-in-out 3.880s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-26'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.410s both, tbl-pulse 2.4s ease-in-out 3.910s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-27'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.440s both, tbl-pulse 2.4s ease-in-out 3.940s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-28'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.470s both, tbl-pulse 2.4s ease-in-out 3.970s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-29'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.500s both, tbl-pulse 2.4s ease-in-out 4.000s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-30'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.530s both, tbl-pulse 2.4s ease-in-out 4.030s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-31'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.560s both, tbl-pulse 2.4s ease-in-out 4.060s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-32'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.590s both, tbl-pulse 2.4s ease-in-out 4.090s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-33'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.620s both, tbl-pulse 2.4s ease-in-out 4.120s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-34'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.650s both, tbl-pulse 2.4s ease-in-out 4.150s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-35'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.680s both, tbl-pulse 2.4s ease-in-out 4.180s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-36'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.710s both, tbl-pulse 2.4s ease-in-out 4.210s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-37'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.740s both, tbl-pulse 2.4s ease-in-out 4.240s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-38'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.770s both, tbl-pulse 2.4s ease-in-out 4.270s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-39'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.800s both, tbl-pulse 2.4s ease-in-out 4.300s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-40'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.830s both, tbl-pulse 2.4s ease-in-out 4.330s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-41'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.860s both, tbl-pulse 2.4s ease-in-out 4.360s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-42'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.890s both, tbl-pulse 2.4s ease-in-out 4.390s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-43'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.920s both, tbl-pulse 2.4s ease-in-out 4.420s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-0'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.730s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-1'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.760s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-2'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.790s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-3'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.820s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-4'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.850s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-5'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.880s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-6'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.910s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-7'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.940s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-8'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 2.970s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-9'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.000s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-10'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.030s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-11'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.060s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-12'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.090s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-13'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.120s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-14'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.150s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-15'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.180s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-16'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.210s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-17'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.240s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-18'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.270s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-19'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.300s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-20'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.330s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-21'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.360s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-22'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.390s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-23'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.420s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-24'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.450s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-25'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.480s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-26'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.510s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-27'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.540s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-28'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.570s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-29'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.600s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-30'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.630s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-31'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.660s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-32'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.690s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-33'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.720s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-34'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.750s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-35'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.780s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-36'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.810s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-37'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.840s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-38'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.870s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-39'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.900s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-40'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.930s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-41'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.960s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-42'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 3.990s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-second-43'] { animation: tbl-pop 0.45s cubic-bezier(.34,1.56,.64,1) 4.020s both; transform-box: fill-box; transform-origin: center; }
+]]></style>
+<defs>
+  <clipPath id="pc9338b86ba">
+   <rect x="7.2" y="7.2" width="1275.03" height="1765.2096"/>
+  </clipPath>
+ </defs>
+<defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 1779.6096 
+L 1289.43 1779.6096 
+L 1289.43 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="FillBetweenPolyCollection_1">
+    <defs>
+     <path id="mcb77026c12" d="M 43.47 -1570.608 
+L 43.47 -1606.644 
+L 1245.96 -1606.644 
+L 1245.96 -1570.608 
+L 1245.96 -1570.608 
+L 43.47 -1570.608 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mcb77026c12" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_2">
+    <defs>
+     <path id="md416e2b2d1" d="M 43.47 -1498.536 
+L 43.47 -1534.572 
+L 1245.96 -1534.572 
+L 1245.96 -1498.536 
+L 1245.96 -1498.536 
+L 43.47 -1498.536 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#md416e2b2d1" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_3">
+    <defs>
+     <path id="m619bc75152" d="M 43.47 -1426.464 
+L 43.47 -1462.5 
+L 1245.96 -1462.5 
+L 1245.96 -1426.464 
+L 1245.96 -1426.464 
+L 43.47 -1426.464 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m619bc75152" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_4">
+    <defs>
+     <path id="m433e43e8cd" d="M 43.47 -1354.392 
+L 43.47 -1390.428 
+L 1245.96 -1390.428 
+L 1245.96 -1354.392 
+L 1245.96 -1354.392 
+L 43.47 -1354.392 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m433e43e8cd" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_5">
+    <defs>
+     <path id="mc31390c4c2" d="M 43.47 -1282.32 
+L 43.47 -1318.356 
+L 1245.96 -1318.356 
+L 1245.96 -1282.32 
+L 1245.96 -1282.32 
+L 43.47 -1282.32 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mc31390c4c2" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_6">
+    <defs>
+     <path id="mc6f584668c" d="M 43.47 -1210.248 
+L 43.47 -1246.284 
+L 1245.96 -1246.284 
+L 1245.96 -1210.248 
+L 1245.96 -1210.248 
+L 43.47 -1210.248 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mc6f584668c" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_7">
+    <defs>
+     <path id="mcc4cf31f31" d="M 43.47 -1138.176 
+L 43.47 -1174.212 
+L 1245.96 -1174.212 
+L 1245.96 -1138.176 
+L 1245.96 -1138.176 
+L 43.47 -1138.176 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mcc4cf31f31" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_8">
+    <defs>
+     <path id="m9101cfd7c1" d="M 43.47 -1066.104 
+L 43.47 -1102.14 
+L 1245.96 -1102.14 
+L 1245.96 -1066.104 
+L 1245.96 -1066.104 
+L 43.47 -1066.104 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m9101cfd7c1" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_9">
+    <defs>
+     <path id="mdb4bd85c1d" d="M 43.47 -994.032 
+L 43.47 -1030.068 
+L 1245.96 -1030.068 
+L 1245.96 -994.032 
+L 1245.96 -994.032 
+L 43.47 -994.032 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mdb4bd85c1d" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_10">
+    <defs>
+     <path id="m460308d3ea" d="M 43.47 -921.96 
+L 43.47 -957.996 
+L 1245.96 -957.996 
+L 1245.96 -921.96 
+L 1245.96 -921.96 
+L 43.47 -921.96 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m460308d3ea" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_11">
+    <defs>
+     <path id="m3c8be281d0" d="M 43.47 -849.888 
+L 43.47 -885.924 
+L 1245.96 -885.924 
+L 1245.96 -849.888 
+L 1245.96 -849.888 
+L 43.47 -849.888 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m3c8be281d0" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_12">
+    <defs>
+     <path id="mf9ea5402d9" d="M 43.47 -777.816 
+L 43.47 -813.852 
+L 1245.96 -813.852 
+L 1245.96 -777.816 
+L 1245.96 -777.816 
+L 43.47 -777.816 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#mf9ea5402d9" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_13">
+    <defs>
+     <path id="m0df9882985" d="M 43.47 -705.744 
+L 43.47 -741.78 
+L 1245.96 -741.78 
+L 1245.96 -705.744 
+L 1245.96 -705.744 
+L 43.47 -705.744 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m0df9882985" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_14">
+    <defs>
+     <path id="m3da02358e0" d="M 43.47 -633.672 
+L 43.47 -669.708 
+L 1245.96 -669.708 
+L 1245.96 -633.672 
+L 1245.96 -633.672 
+L 43.47 -633.672 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m3da02358e0" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_15">
+    <defs>
+     <path id="m2597df28f7" d="M 43.47 -561.6 
+L 43.47 -597.636 
+L 1245.96 -597.636 
+L 1245.96 -561.6 
+L 1245.96 -561.6 
+L 43.47 -561.6 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m2597df28f7" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_16">
+    <defs>
+     <path id="m25cd3dac9e" d="M 43.47 -489.528 
+L 43.47 -525.564 
+L 1245.96 -525.564 
+L 1245.96 -489.528 
+L 1245.96 -489.528 
+L 43.47 -489.528 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m25cd3dac9e" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_17">
+    <defs>
+     <path id="m57e8b0694b" d="M 43.47 -417.456 
+L 43.47 -453.492 
+L 1245.96 -453.492 
+L 1245.96 -417.456 
+L 1245.96 -417.456 
+L 43.47 -417.456 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m57e8b0694b" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_18">
+    <defs>
+     <path id="m879b212a5b" d="M 43.47 -345.384 
+L 43.47 -381.42 
+L 1245.96 -381.42 
+L 1245.96 -345.384 
+L 1245.96 -345.384 
+L 43.47 -345.384 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m879b212a5b" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_19">
+    <defs>
+     <path id="m1ca2088b9f" d="M 43.47 -273.312 
+L 43.47 -309.348 
+L 1245.96 -309.348 
+L 1245.96 -273.312 
+L 1245.96 -273.312 
+L 43.47 -273.312 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m1ca2088b9f" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_20">
+    <defs>
+     <path id="m7096a0e34d" d="M 43.47 -201.24 
+L 43.47 -237.276 
+L 1245.96 -237.276 
+L 1245.96 -201.24 
+L 1245.96 -201.24 
+L 43.47 -201.24 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m7096a0e34d" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_21">
+    <defs>
+     <path id="m4f255c8e9f" d="M 43.47 -129.168 
+L 43.47 -165.204 
+L 1245.96 -165.204 
+L 1245.96 -129.168 
+L 1245.96 -129.168 
+L 43.47 -129.168 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m4f255c8e9f" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="FillBetweenPolyCollection_22">
+    <defs>
+     <path id="m0f01c83dc5" d="M 43.47 -57.096 
+L 43.47 -93.132 
+L 1245.96 -93.132 
+L 1245.96 -57.096 
+L 1245.96 -57.096 
+L 43.47 -57.096 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m0f01c83dc5" x="0" y="1779.6096" style="fill: #f3f5f7"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="m1cfa6c4f21" d="M 325.26 -57.096 
+L 325.26 -1689.2496 
+L 478.71 -1689.2496 
+L 478.71 -57.096 
+L 478.71 -57.096 
+L 325.26 -57.096 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pc9338b86ba)">
+     <use xlink:href="#m1cfa6c4f21" x="0" y="1779.6096" style="fill: #f6f8fa"/>
+    </g>
+   </g>
+   <g id="patch_2">
+    <path d="M 46.818 47.1168 
+L 57.978 47.1168 
+Q 61.326 47.1168 61.326 50.4432 
+L 61.326 60.4224 
+Q 61.326 63.7488 57.978 63.7488 
+L 46.818 63.7488 
+Q 43.47 63.7488 43.47 60.4224 
+L 43.47 50.4432 
+Q 43.47 47.1168 46.818 47.1168 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 107.64 47.1168 
+L 118.8 47.1168 
+Q 122.148 47.1168 122.148 50.4432 
+L 122.148 60.4224 
+Q 122.148 63.7488 118.8 63.7488 
+L 107.64 63.7488 
+Q 104.292 63.7488 104.292 60.4224 
+L 104.292 50.4432 
+Q 104.292 47.1168 107.64 47.1168 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-0">
+    <path d="M 796.77 140.256 
+L 927.9 140.256 
+Q 933.48 140.256 933.48 145.8 
+L 933.48 164.0952 
+Q 933.48 169.6392 927.9 169.6392 
+L 796.77 169.6392 
+Q 791.19 169.6392 791.19 164.0952 
+L 791.19 145.8 
+Q 791.19 140.256 796.77 140.256 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-0">
+    <path d="M 950.22 140.256 
+L 1081.35 140.256 
+Q 1086.93 140.256 1086.93 145.8 
+L 1086.93 164.0952 
+Q 1086.93 169.6392 1081.35 169.6392 
+L 950.22 169.6392 
+Q 944.64 169.6392 944.64 164.0952 
+L 944.64 145.8 
+Q 944.64 140.256 950.22 140.256 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-1">
+    <path d="M 489.87 176.292 
+L 621 176.292 
+Q 626.58 176.292 626.58 181.836 
+L 626.58 200.1312 
+Q 626.58 205.6752 621 205.6752 
+L 489.87 205.6752 
+Q 484.29 205.6752 484.29 200.1312 
+L 484.29 181.836 
+Q 484.29 176.292 489.87 176.292 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-1">
+    <path d="M 950.22 176.292 
+L 1081.35 176.292 
+Q 1086.93 176.292 1086.93 181.836 
+L 1086.93 200.1312 
+Q 1086.93 205.6752 1081.35 205.6752 
+L 950.22 205.6752 
+Q 944.64 205.6752 944.64 200.1312 
+L 944.64 181.836 
+Q 944.64 176.292 950.22 176.292 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-2">
+    <path d="M 336.42 212.328 
+L 467.55 212.328 
+Q 473.13 212.328 473.13 217.872 
+L 473.13 236.1672 
+Q 473.13 241.7112 467.55 241.7112 
+L 336.42 241.7112 
+Q 330.84 241.7112 330.84 236.1672 
+L 330.84 217.872 
+Q 330.84 212.328 336.42 212.328 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-2">
+    <path d="M 643.32 212.328 
+L 774.45 212.328 
+Q 780.03 212.328 780.03 217.872 
+L 780.03 236.1672 
+Q 780.03 241.7112 774.45 241.7112 
+L 643.32 241.7112 
+Q 637.74 241.7112 637.74 236.1672 
+L 637.74 217.872 
+Q 637.74 212.328 643.32 212.328 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-3">
+    <path d="M 336.42 248.364 
+L 467.55 248.364 
+Q 473.13 248.364 473.13 253.908 
+L 473.13 272.2032 
+Q 473.13 277.7472 467.55 277.7472 
+L 336.42 277.7472 
+Q 330.84 277.7472 330.84 272.2032 
+L 330.84 253.908 
+Q 330.84 248.364 336.42 248.364 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-3">
+    <path d="M 643.32 248.364 
+L 774.45 248.364 
+Q 780.03 248.364 780.03 253.908 
+L 780.03 272.2032 
+Q 780.03 277.7472 774.45 277.7472 
+L 643.32 277.7472 
+Q 637.74 277.7472 637.74 272.2032 
+L 637.74 253.908 
+Q 637.74 248.364 643.32 248.364 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-4">
+    <path d="M 336.42 284.4 
+L 467.55 284.4 
+Q 473.13 284.4 473.13 289.944 
+L 473.13 308.2392 
+Q 473.13 313.7832 467.55 313.7832 
+L 336.42 313.7832 
+Q 330.84 313.7832 330.84 308.2392 
+L 330.84 289.944 
+Q 330.84 284.4 336.42 284.4 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-4">
+    <path d="M 643.32 284.4 
+L 774.45 284.4 
+Q 780.03 284.4 780.03 289.944 
+L 780.03 308.2392 
+Q 780.03 313.7832 774.45 313.7832 
+L 643.32 313.7832 
+Q 637.74 313.7832 637.74 308.2392 
+L 637.74 289.944 
+Q 637.74 284.4 643.32 284.4 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-5">
+    <path d="M 336.42 320.436 
+L 467.55 320.436 
+Q 473.13 320.436 473.13 325.98 
+L 473.13 344.2752 
+Q 473.13 349.8192 467.55 349.8192 
+L 336.42 349.8192 
+Q 330.84 349.8192 330.84 344.2752 
+L 330.84 325.98 
+Q 330.84 320.436 336.42 320.436 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-5">
+    <path d="M 489.87 320.436 
+L 621 320.436 
+Q 626.58 320.436 626.58 325.98 
+L 626.58 344.2752 
+Q 626.58 349.8192 621 349.8192 
+L 489.87 349.8192 
+Q 484.29 349.8192 484.29 344.2752 
+L 484.29 325.98 
+Q 484.29 320.436 489.87 320.436 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-6">
+    <path d="M 336.42 356.472 
+L 467.55 356.472 
+Q 473.13 356.472 473.13 362.016 
+L 473.13 380.3112 
+Q 473.13 385.8552 467.55 385.8552 
+L 336.42 385.8552 
+Q 330.84 385.8552 330.84 380.3112 
+L 330.84 362.016 
+Q 330.84 356.472 336.42 356.472 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-6">
+    <path d="M 489.87 356.472 
+L 621 356.472 
+Q 626.58 356.472 626.58 362.016 
+L 626.58 380.3112 
+Q 626.58 385.8552 621 385.8552 
+L 489.87 385.8552 
+Q 484.29 385.8552 484.29 380.3112 
+L 484.29 362.016 
+Q 484.29 356.472 489.87 356.472 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-7">
+    <path d="M 336.42 392.508 
+L 467.55 392.508 
+Q 473.13 392.508 473.13 398.052 
+L 473.13 416.3472 
+Q 473.13 421.8912 467.55 421.8912 
+L 336.42 421.8912 
+Q 330.84 421.8912 330.84 416.3472 
+L 330.84 398.052 
+Q 330.84 392.508 336.42 392.508 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-7">
+    <path d="M 489.87 392.508 
+L 621 392.508 
+Q 626.58 392.508 626.58 398.052 
+L 626.58 416.3472 
+Q 626.58 421.8912 621 421.8912 
+L 489.87 421.8912 
+Q 484.29 421.8912 484.29 416.3472 
+L 484.29 398.052 
+Q 484.29 392.508 489.87 392.508 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-8">
+    <path d="M 336.42 428.544 
+L 467.55 428.544 
+Q 473.13 428.544 473.13 434.088 
+L 473.13 452.3832 
+Q 473.13 457.9272 467.55 457.9272 
+L 336.42 457.9272 
+Q 330.84 457.9272 330.84 452.3832 
+L 330.84 434.088 
+Q 330.84 428.544 336.42 428.544 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-8">
+    <path d="M 489.87 428.544 
+L 621 428.544 
+Q 626.58 428.544 626.58 434.088 
+L 626.58 452.3832 
+Q 626.58 457.9272 621 457.9272 
+L 489.87 457.9272 
+Q 484.29 457.9272 484.29 452.3832 
+L 484.29 434.088 
+Q 484.29 428.544 489.87 428.544 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-9">
+    <path d="M 643.32 464.58 
+L 774.45 464.58 
+Q 780.03 464.58 780.03 470.124 
+L 780.03 488.4192 
+Q 780.03 493.9632 774.45 493.9632 
+L 643.32 493.9632 
+Q 637.74 493.9632 637.74 488.4192 
+L 637.74 470.124 
+Q 637.74 464.58 643.32 464.58 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-9">
+    <path d="M 796.77 464.58 
+L 927.9 464.58 
+Q 933.48 464.58 933.48 470.124 
+L 933.48 488.4192 
+Q 933.48 493.9632 927.9 493.9632 
+L 796.77 493.9632 
+Q 791.19 493.9632 791.19 488.4192 
+L 791.19 470.124 
+Q 791.19 464.58 796.77 464.58 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-10">
+    <path d="M 336.42 500.616 
+L 467.55 500.616 
+Q 473.13 500.616 473.13 506.16 
+L 473.13 524.4552 
+Q 473.13 529.9992 467.55 529.9992 
+L 336.42 529.9992 
+Q 330.84 529.9992 330.84 524.4552 
+L 330.84 506.16 
+Q 330.84 500.616 336.42 500.616 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-10">
+    <path d="M 489.87 500.616 
+L 621 500.616 
+Q 626.58 500.616 626.58 506.16 
+L 626.58 524.4552 
+Q 626.58 529.9992 621 529.9992 
+L 489.87 529.9992 
+Q 484.29 529.9992 484.29 524.4552 
+L 484.29 506.16 
+Q 484.29 500.616 489.87 500.616 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-11">
+    <path d="M 336.42 536.652 
+L 467.55 536.652 
+Q 473.13 536.652 473.13 542.196 
+L 473.13 560.4912 
+Q 473.13 566.0352 467.55 566.0352 
+L 336.42 566.0352 
+Q 330.84 566.0352 330.84 560.4912 
+L 330.84 542.196 
+Q 330.84 536.652 336.42 536.652 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-11">
+    <path d="M 489.87 536.652 
+L 621 536.652 
+Q 626.58 536.652 626.58 542.196 
+L 626.58 560.4912 
+Q 626.58 566.0352 621 566.0352 
+L 489.87 566.0352 
+Q 484.29 566.0352 484.29 560.4912 
+L 484.29 542.196 
+Q 484.29 536.652 489.87 536.652 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-12">
+    <path d="M 336.42 572.688 
+L 467.55 572.688 
+Q 473.13 572.688 473.13 578.232 
+L 473.13 596.5272 
+Q 473.13 602.0712 467.55 602.0712 
+L 336.42 602.0712 
+Q 330.84 602.0712 330.84 596.5272 
+L 330.84 578.232 
+Q 330.84 572.688 336.42 572.688 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-12">
+    <path d="M 489.87 572.688 
+L 621 572.688 
+Q 626.58 572.688 626.58 578.232 
+L 626.58 596.5272 
+Q 626.58 602.0712 621 602.0712 
+L 489.87 602.0712 
+Q 484.29 602.0712 484.29 596.5272 
+L 484.29 578.232 
+Q 484.29 572.688 489.87 572.688 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-13">
+    <path d="M 336.42 608.724 
+L 467.55 608.724 
+Q 473.13 608.724 473.13 614.268 
+L 473.13 632.5632 
+Q 473.13 638.1072 467.55 638.1072 
+L 336.42 638.1072 
+Q 330.84 638.1072 330.84 632.5632 
+L 330.84 614.268 
+Q 330.84 608.724 336.42 608.724 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-13">
+    <path d="M 489.87 608.724 
+L 621 608.724 
+Q 626.58 608.724 626.58 614.268 
+L 626.58 632.5632 
+Q 626.58 638.1072 621 638.1072 
+L 489.87 638.1072 
+Q 484.29 638.1072 484.29 632.5632 
+L 484.29 614.268 
+Q 484.29 608.724 489.87 608.724 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-14">
+    <path d="M 336.42 644.76 
+L 467.55 644.76 
+Q 473.13 644.76 473.13 650.304 
+L 473.13 668.5992 
+Q 473.13 674.1432 467.55 674.1432 
+L 336.42 674.1432 
+Q 330.84 674.1432 330.84 668.5992 
+L 330.84 650.304 
+Q 330.84 644.76 336.42 644.76 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-14">
+    <path d="M 489.87 644.76 
+L 621 644.76 
+Q 626.58 644.76 626.58 650.304 
+L 626.58 668.5992 
+Q 626.58 674.1432 621 674.1432 
+L 489.87 674.1432 
+Q 484.29 674.1432 484.29 668.5992 
+L 484.29 650.304 
+Q 484.29 644.76 489.87 644.76 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-15">
+    <path d="M 336.42 680.796 
+L 467.55 680.796 
+Q 473.13 680.796 473.13 686.34 
+L 473.13 704.6352 
+Q 473.13 710.1792 467.55 710.1792 
+L 336.42 710.1792 
+Q 330.84 710.1792 330.84 704.6352 
+L 330.84 686.34 
+Q 330.84 680.796 336.42 680.796 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-15">
+    <path d="M 643.32 680.796 
+L 774.45 680.796 
+Q 780.03 680.796 780.03 686.34 
+L 780.03 704.6352 
+Q 780.03 710.1792 774.45 710.1792 
+L 643.32 710.1792 
+Q 637.74 710.1792 637.74 704.6352 
+L 637.74 686.34 
+Q 637.74 680.796 643.32 680.796 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-16">
+    <path d="M 336.42 716.832 
+L 467.55 716.832 
+Q 473.13 716.832 473.13 722.376 
+L 473.13 740.6712 
+Q 473.13 746.2152 467.55 746.2152 
+L 336.42 746.2152 
+Q 330.84 746.2152 330.84 740.6712 
+L 330.84 722.376 
+Q 330.84 716.832 336.42 716.832 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-16">
+    <path d="M 489.87 716.832 
+L 621 716.832 
+Q 626.58 716.832 626.58 722.376 
+L 626.58 740.6712 
+Q 626.58 746.2152 621 746.2152 
+L 489.87 746.2152 
+Q 484.29 746.2152 484.29 740.6712 
+L 484.29 722.376 
+Q 484.29 716.832 489.87 716.832 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-17">
+    <path d="M 336.42 752.868 
+L 467.55 752.868 
+Q 473.13 752.868 473.13 758.412 
+L 473.13 776.7072 
+Q 473.13 782.2512 467.55 782.2512 
+L 336.42 782.2512 
+Q 330.84 782.2512 330.84 776.7072 
+L 330.84 758.412 
+Q 330.84 752.868 336.42 752.868 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-17">
+    <path d="M 489.87 752.868 
+L 621 752.868 
+Q 626.58 752.868 626.58 758.412 
+L 626.58 776.7072 
+Q 626.58 782.2512 621 782.2512 
+L 489.87 782.2512 
+Q 484.29 782.2512 484.29 776.7072 
+L 484.29 758.412 
+Q 484.29 752.868 489.87 752.868 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-18">
+    <path d="M 336.42 788.904 
+L 467.55 788.904 
+Q 473.13 788.904 473.13 794.448 
+L 473.13 812.7432 
+Q 473.13 818.2872 467.55 818.2872 
+L 336.42 818.2872 
+Q 330.84 818.2872 330.84 812.7432 
+L 330.84 794.448 
+Q 330.84 788.904 336.42 788.904 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-18">
+    <path d="M 489.87 788.904 
+L 621 788.904 
+Q 626.58 788.904 626.58 794.448 
+L 626.58 812.7432 
+Q 626.58 818.2872 621 818.2872 
+L 489.87 818.2872 
+Q 484.29 818.2872 484.29 812.7432 
+L 484.29 794.448 
+Q 484.29 788.904 489.87 788.904 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-19">
+    <path d="M 336.42 824.94 
+L 467.55 824.94 
+Q 473.13 824.94 473.13 830.484 
+L 473.13 848.7792 
+Q 473.13 854.3232 467.55 854.3232 
+L 336.42 854.3232 
+Q 330.84 854.3232 330.84 848.7792 
+L 330.84 830.484 
+Q 330.84 824.94 336.42 824.94 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-19">
+    <path d="M 489.87 824.94 
+L 621 824.94 
+Q 626.58 824.94 626.58 830.484 
+L 626.58 848.7792 
+Q 626.58 854.3232 621 854.3232 
+L 489.87 854.3232 
+Q 484.29 854.3232 484.29 848.7792 
+L 484.29 830.484 
+Q 484.29 824.94 489.87 824.94 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-20">
+    <path d="M 336.42 860.976 
+L 467.55 860.976 
+Q 473.13 860.976 473.13 866.52 
+L 473.13 884.8152 
+Q 473.13 890.3592 467.55 890.3592 
+L 336.42 890.3592 
+Q 330.84 890.3592 330.84 884.8152 
+L 330.84 866.52 
+Q 330.84 860.976 336.42 860.976 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-20">
+    <path d="M 489.87 860.976 
+L 621 860.976 
+Q 626.58 860.976 626.58 866.52 
+L 626.58 884.8152 
+Q 626.58 890.3592 621 890.3592 
+L 489.87 890.3592 
+Q 484.29 890.3592 484.29 884.8152 
+L 484.29 866.52 
+Q 484.29 860.976 489.87 860.976 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-21">
+    <path d="M 336.42 897.012 
+L 467.55 897.012 
+Q 473.13 897.012 473.13 902.556 
+L 473.13 920.8512 
+Q 473.13 926.3952 467.55 926.3952 
+L 336.42 926.3952 
+Q 330.84 926.3952 330.84 920.8512 
+L 330.84 902.556 
+Q 330.84 897.012 336.42 897.012 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-21">
+    <path d="M 950.22 897.012 
+L 1081.35 897.012 
+Q 1086.93 897.012 1086.93 902.556 
+L 1086.93 920.8512 
+Q 1086.93 926.3952 1081.35 926.3952 
+L 950.22 926.3952 
+Q 944.64 926.3952 944.64 920.8512 
+L 944.64 902.556 
+Q 944.64 897.012 950.22 897.012 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-22">
+    <path d="M 336.42 933.048 
+L 467.55 933.048 
+Q 473.13 933.048 473.13 938.592 
+L 473.13 956.8872 
+Q 473.13 962.4312 467.55 962.4312 
+L 336.42 962.4312 
+Q 330.84 962.4312 330.84 956.8872 
+L 330.84 938.592 
+Q 330.84 933.048 336.42 933.048 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-22">
+    <path d="M 489.87 933.048 
+L 621 933.048 
+Q 626.58 933.048 626.58 938.592 
+L 626.58 956.8872 
+Q 626.58 962.4312 621 962.4312 
+L 489.87 962.4312 
+Q 484.29 962.4312 484.29 956.8872 
+L 484.29 938.592 
+Q 484.29 933.048 489.87 933.048 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-23">
+    <path d="M 336.42 969.084 
+L 467.55 969.084 
+Q 473.13 969.084 473.13 974.628 
+L 473.13 992.9232 
+Q 473.13 998.4672 467.55 998.4672 
+L 336.42 998.4672 
+Q 330.84 998.4672 330.84 992.9232 
+L 330.84 974.628 
+Q 330.84 969.084 336.42 969.084 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-23">
+    <path d="M 489.87 969.084 
+L 621 969.084 
+Q 626.58 969.084 626.58 974.628 
+L 626.58 992.9232 
+Q 626.58 998.4672 621 998.4672 
+L 489.87 998.4672 
+Q 484.29 998.4672 484.29 992.9232 
+L 484.29 974.628 
+Q 484.29 969.084 489.87 969.084 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-24">
+    <path d="M 336.42 1005.12 
+L 467.55 1005.12 
+Q 473.13 1005.12 473.13 1010.664 
+L 473.13 1028.9592 
+Q 473.13 1034.5032 467.55 1034.5032 
+L 336.42 1034.5032 
+Q 330.84 1034.5032 330.84 1028.9592 
+L 330.84 1010.664 
+Q 330.84 1005.12 336.42 1005.12 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-24">
+    <path d="M 489.87 1005.12 
+L 621 1005.12 
+Q 626.58 1005.12 626.58 1010.664 
+L 626.58 1028.9592 
+Q 626.58 1034.5032 621 1034.5032 
+L 489.87 1034.5032 
+Q 484.29 1034.5032 484.29 1028.9592 
+L 484.29 1010.664 
+Q 484.29 1005.12 489.87 1005.12 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-25">
+    <path d="M 336.42 1041.156 
+L 467.55 1041.156 
+Q 473.13 1041.156 473.13 1046.7 
+L 473.13 1064.9952 
+Q 473.13 1070.5392 467.55 1070.5392 
+L 336.42 1070.5392 
+Q 330.84 1070.5392 330.84 1064.9952 
+L 330.84 1046.7 
+Q 330.84 1041.156 336.42 1041.156 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-25">
+    <path d="M 489.87 1041.156 
+L 621 1041.156 
+Q 626.58 1041.156 626.58 1046.7 
+L 626.58 1064.9952 
+Q 626.58 1070.5392 621 1070.5392 
+L 489.87 1070.5392 
+Q 484.29 1070.5392 484.29 1064.9952 
+L 484.29 1046.7 
+Q 484.29 1041.156 489.87 1041.156 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-26">
+    <path d="M 336.42 1077.192 
+L 467.55 1077.192 
+Q 473.13 1077.192 473.13 1082.736 
+L 473.13 1101.0312 
+Q 473.13 1106.5752 467.55 1106.5752 
+L 336.42 1106.5752 
+Q 330.84 1106.5752 330.84 1101.0312 
+L 330.84 1082.736 
+Q 330.84 1077.192 336.42 1077.192 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-26">
+    <path d="M 489.87 1077.192 
+L 621 1077.192 
+Q 626.58 1077.192 626.58 1082.736 
+L 626.58 1101.0312 
+Q 626.58 1106.5752 621 1106.5752 
+L 489.87 1106.5752 
+Q 484.29 1106.5752 484.29 1101.0312 
+L 484.29 1082.736 
+Q 484.29 1077.192 489.87 1077.192 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-27">
+    <path d="M 489.87 1113.228 
+L 621 1113.228 
+Q 626.58 1113.228 626.58 1118.772 
+L 626.58 1137.0672 
+Q 626.58 1142.6112 621 1142.6112 
+L 489.87 1142.6112 
+Q 484.29 1142.6112 484.29 1137.0672 
+L 484.29 1118.772 
+Q 484.29 1113.228 489.87 1113.228 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-27">
+    <path d="M 950.22 1113.228 
+L 1081.35 1113.228 
+Q 1086.93 1113.228 1086.93 1118.772 
+L 1086.93 1137.0672 
+Q 1086.93 1142.6112 1081.35 1142.6112 
+L 950.22 1142.6112 
+Q 944.64 1142.6112 944.64 1137.0672 
+L 944.64 1118.772 
+Q 944.64 1113.228 950.22 1113.228 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-28">
+    <path d="M 336.42 1149.264 
+L 467.55 1149.264 
+Q 473.13 1149.264 473.13 1154.808 
+L 473.13 1173.1032 
+Q 473.13 1178.6472 467.55 1178.6472 
+L 336.42 1178.6472 
+Q 330.84 1178.6472 330.84 1173.1032 
+L 330.84 1154.808 
+Q 330.84 1149.264 336.42 1149.264 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-28">
+    <path d="M 489.87 1149.264 
+L 621 1149.264 
+Q 626.58 1149.264 626.58 1154.808 
+L 626.58 1173.1032 
+Q 626.58 1178.6472 621 1178.6472 
+L 489.87 1178.6472 
+Q 484.29 1178.6472 484.29 1173.1032 
+L 484.29 1154.808 
+Q 484.29 1149.264 489.87 1149.264 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-29">
+    <path d="M 336.42 1185.3 
+L 467.55 1185.3 
+Q 473.13 1185.3 473.13 1190.844 
+L 473.13 1209.1392 
+Q 473.13 1214.6832 467.55 1214.6832 
+L 336.42 1214.6832 
+Q 330.84 1214.6832 330.84 1209.1392 
+L 330.84 1190.844 
+Q 330.84 1185.3 336.42 1185.3 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-29">
+    <path d="M 489.87 1185.3 
+L 621 1185.3 
+Q 626.58 1185.3 626.58 1190.844 
+L 626.58 1209.1392 
+Q 626.58 1214.6832 621 1214.6832 
+L 489.87 1214.6832 
+Q 484.29 1214.6832 484.29 1209.1392 
+L 484.29 1190.844 
+Q 484.29 1185.3 489.87 1185.3 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-30">
+    <path d="M 336.42 1221.336 
+L 467.55 1221.336 
+Q 473.13 1221.336 473.13 1226.88 
+L 473.13 1245.1752 
+Q 473.13 1250.7192 467.55 1250.7192 
+L 336.42 1250.7192 
+Q 330.84 1250.7192 330.84 1245.1752 
+L 330.84 1226.88 
+Q 330.84 1221.336 336.42 1221.336 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-30">
+    <path d="M 489.87 1221.336 
+L 621 1221.336 
+Q 626.58 1221.336 626.58 1226.88 
+L 626.58 1245.1752 
+Q 626.58 1250.7192 621 1250.7192 
+L 489.87 1250.7192 
+Q 484.29 1250.7192 484.29 1245.1752 
+L 484.29 1226.88 
+Q 484.29 1221.336 489.87 1221.336 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-31">
+    <path d="M 643.32 1257.372 
+L 774.45 1257.372 
+Q 780.03 1257.372 780.03 1262.916 
+L 780.03 1281.2112 
+Q 780.03 1286.7552 774.45 1286.7552 
+L 643.32 1286.7552 
+Q 637.74 1286.7552 637.74 1281.2112 
+L 637.74 1262.916 
+Q 637.74 1257.372 643.32 1257.372 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-31">
+    <path d="M 1103.67 1257.372 
+L 1234.8 1257.372 
+Q 1240.38 1257.372 1240.38 1262.916 
+L 1240.38 1281.2112 
+Q 1240.38 1286.7552 1234.8 1286.7552 
+L 1103.67 1286.7552 
+Q 1098.09 1286.7552 1098.09 1281.2112 
+L 1098.09 1262.916 
+Q 1098.09 1257.372 1103.67 1257.372 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-32">
+    <path d="M 643.32 1293.408 
+L 774.45 1293.408 
+Q 780.03 1293.408 780.03 1298.952 
+L 780.03 1317.2472 
+Q 780.03 1322.7912 774.45 1322.7912 
+L 643.32 1322.7912 
+Q 637.74 1322.7912 637.74 1317.2472 
+L 637.74 1298.952 
+Q 637.74 1293.408 643.32 1293.408 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-32">
+    <path d="M 796.77 1293.408 
+L 927.9 1293.408 
+Q 933.48 1293.408 933.48 1298.952 
+L 933.48 1317.2472 
+Q 933.48 1322.7912 927.9 1322.7912 
+L 796.77 1322.7912 
+Q 791.19 1322.7912 791.19 1317.2472 
+L 791.19 1298.952 
+Q 791.19 1293.408 796.77 1293.408 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-33">
+    <path d="M 489.87 1329.444 
+L 621 1329.444 
+Q 626.58 1329.444 626.58 1334.988 
+L 626.58 1353.2832 
+Q 626.58 1358.8272 621 1358.8272 
+L 489.87 1358.8272 
+Q 484.29 1358.8272 484.29 1353.2832 
+L 484.29 1334.988 
+Q 484.29 1329.444 489.87 1329.444 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-33">
+    <path d="M 1103.67 1329.444 
+L 1234.8 1329.444 
+Q 1240.38 1329.444 1240.38 1334.988 
+L 1240.38 1353.2832 
+Q 1240.38 1358.8272 1234.8 1358.8272 
+L 1103.67 1358.8272 
+Q 1098.09 1358.8272 1098.09 1353.2832 
+L 1098.09 1334.988 
+Q 1098.09 1329.444 1103.67 1329.444 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-34">
+    <path d="M 796.77 1365.48 
+L 927.9 1365.48 
+Q 933.48 1365.48 933.48 1371.024 
+L 933.48 1389.3192 
+Q 933.48 1394.8632 927.9 1394.8632 
+L 796.77 1394.8632 
+Q 791.19 1394.8632 791.19 1389.3192 
+L 791.19 1371.024 
+Q 791.19 1365.48 796.77 1365.48 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-34">
+    <path d="M 1103.67 1365.48 
+L 1234.8 1365.48 
+Q 1240.38 1365.48 1240.38 1371.024 
+L 1240.38 1389.3192 
+Q 1240.38 1394.8632 1234.8 1394.8632 
+L 1103.67 1394.8632 
+Q 1098.09 1394.8632 1098.09 1389.3192 
+L 1098.09 1371.024 
+Q 1098.09 1365.48 1103.67 1365.48 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-35">
+    <path d="M 489.87 1401.516 
+L 621 1401.516 
+Q 626.58 1401.516 626.58 1407.06 
+L 626.58 1425.3552 
+Q 626.58 1430.8992 621 1430.8992 
+L 489.87 1430.8992 
+Q 484.29 1430.8992 484.29 1425.3552 
+L 484.29 1407.06 
+Q 484.29 1401.516 489.87 1401.516 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-35">
+    <path d="M 950.22 1401.516 
+L 1081.35 1401.516 
+Q 1086.93 1401.516 1086.93 1407.06 
+L 1086.93 1425.3552 
+Q 1086.93 1430.8992 1081.35 1430.8992 
+L 950.22 1430.8992 
+Q 944.64 1430.8992 944.64 1425.3552 
+L 944.64 1407.06 
+Q 944.64 1401.516 950.22 1401.516 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-36">
+    <path d="M 489.87 1437.552 
+L 621 1437.552 
+Q 626.58 1437.552 626.58 1443.096 
+L 626.58 1461.3912 
+Q 626.58 1466.9352 621 1466.9352 
+L 489.87 1466.9352 
+Q 484.29 1466.9352 484.29 1461.3912 
+L 484.29 1443.096 
+Q 484.29 1437.552 489.87 1437.552 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-36">
+    <path d="M 643.32 1437.552 
+L 774.45 1437.552 
+Q 780.03 1437.552 780.03 1443.096 
+L 780.03 1461.3912 
+Q 780.03 1466.9352 774.45 1466.9352 
+L 643.32 1466.9352 
+Q 637.74 1466.9352 637.74 1461.3912 
+L 637.74 1443.096 
+Q 637.74 1437.552 643.32 1437.552 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-37">
+    <path d="M 643.32 1473.588 
+L 774.45 1473.588 
+Q 780.03 1473.588 780.03 1479.132 
+L 780.03 1497.4272 
+Q 780.03 1502.9712 774.45 1502.9712 
+L 643.32 1502.9712 
+Q 637.74 1502.9712 637.74 1497.4272 
+L 637.74 1479.132 
+Q 637.74 1473.588 643.32 1473.588 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-37">
+    <path d="M 950.22 1473.588 
+L 1081.35 1473.588 
+Q 1086.93 1473.588 1086.93 1479.132 
+L 1086.93 1497.4272 
+Q 1086.93 1502.9712 1081.35 1502.9712 
+L 950.22 1502.9712 
+Q 944.64 1502.9712 944.64 1497.4272 
+L 944.64 1479.132 
+Q 944.64 1473.588 950.22 1473.588 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-38">
+    <path d="M 336.42 1509.624 
+L 467.55 1509.624 
+Q 473.13 1509.624 473.13 1515.168 
+L 473.13 1533.4632 
+Q 473.13 1539.0072 467.55 1539.0072 
+L 336.42 1539.0072 
+Q 330.84 1539.0072 330.84 1533.4632 
+L 330.84 1515.168 
+Q 330.84 1509.624 336.42 1509.624 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-38">
+    <path d="M 489.87 1509.624 
+L 621 1509.624 
+Q 626.58 1509.624 626.58 1515.168 
+L 626.58 1533.4632 
+Q 626.58 1539.0072 621 1539.0072 
+L 489.87 1539.0072 
+Q 484.29 1539.0072 484.29 1533.4632 
+L 484.29 1515.168 
+Q 484.29 1509.624 489.87 1509.624 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-second-39">
+    <path d="M 489.87 1545.66 
+L 621 1545.66 
+Q 626.58 1545.66 626.58 1551.204 
+L 626.58 1569.4992 
+Q 626.58 1575.0432 621 1575.0432 
+L 489.87 1575.0432 
+Q 484.29 1575.0432 484.29 1569.4992 
+L 484.29 1551.204 
+Q 484.29 1545.66 489.87 1545.66 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-39">
+    <path d="M 950.22 1545.66 
+L 1081.35 1545.66 
+Q 1086.93 1545.66 1086.93 1551.204 
+L 1086.93 1569.4992 
+Q 1086.93 1575.0432 1081.35 1575.0432 
+L 950.22 1575.0432 
+Q 944.64 1575.0432 944.64 1569.4992 
+L 944.64 1551.204 
+Q 944.64 1545.66 950.22 1545.66 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-40">
+    <path d="M 336.42 1581.696 
+L 467.55 1581.696 
+Q 473.13 1581.696 473.13 1587.24 
+L 473.13 1605.5352 
+Q 473.13 1611.0792 467.55 1611.0792 
+L 336.42 1611.0792 
+Q 330.84 1611.0792 330.84 1605.5352 
+L 330.84 1587.24 
+Q 330.84 1581.696 336.42 1581.696 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-40">
+    <path d="M 950.22 1581.696 
+L 1081.35 1581.696 
+Q 1086.93 1581.696 1086.93 1587.24 
+L 1086.93 1605.5352 
+Q 1086.93 1611.0792 1081.35 1611.0792 
+L 950.22 1611.0792 
+Q 944.64 1611.0792 944.64 1605.5352 
+L 944.64 1587.24 
+Q 944.64 1581.696 950.22 1581.696 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-41">
+    <path d="M 643.32 1617.732 
+L 774.45 1617.732 
+Q 780.03 1617.732 780.03 1623.276 
+L 780.03 1641.5712 
+Q 780.03 1647.1152 774.45 1647.1152 
+L 643.32 1647.1152 
+Q 637.74 1647.1152 637.74 1641.5712 
+L 637.74 1623.276 
+Q 637.74 1617.732 643.32 1617.732 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-41">
+    <path d="M 950.22 1617.732 
+L 1081.35 1617.732 
+Q 1086.93 1617.732 1086.93 1623.276 
+L 1086.93 1641.5712 
+Q 1086.93 1647.1152 1081.35 1647.1152 
+L 950.22 1647.1152 
+Q 944.64 1647.1152 944.64 1641.5712 
+L 944.64 1623.276 
+Q 944.64 1617.732 950.22 1617.732 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-42">
+    <path d="M 489.87 1653.768 
+L 621 1653.768 
+Q 626.58 1653.768 626.58 1659.312 
+L 626.58 1677.6072 
+Q 626.58 1683.1512 621 1683.1512 
+L 489.87 1683.1512 
+Q 484.29 1683.1512 484.29 1677.6072 
+L 484.29 1659.312 
+Q 484.29 1653.768 489.87 1653.768 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-42">
+    <path d="M 1103.67 1653.768 
+L 1234.8 1653.768 
+Q 1240.38 1653.768 1240.38 1659.312 
+L 1240.38 1677.6072 
+Q 1240.38 1683.1512 1234.8 1683.1512 
+L 1103.67 1683.1512 
+Q 1098.09 1683.1512 1098.09 1677.6072 
+L 1098.09 1659.312 
+Q 1098.09 1653.768 1103.67 1653.768 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-best-43">
+    <path d="M 336.42 1689.804 
+L 467.55 1689.804 
+Q 473.13 1689.804 473.13 1695.348 
+L 473.13 1713.6432 
+Q 473.13 1719.1872 467.55 1719.1872 
+L 336.42 1719.1872 
+Q 330.84 1719.1872 330.84 1713.6432 
+L 330.84 1695.348 
+Q 330.84 1689.804 336.42 1689.804 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #fef3c7; stroke: #f0d878; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-second-43">
+    <path d="M 489.87 1689.804 
+L 621 1689.804 
+Q 626.58 1689.804 626.58 1695.348 
+L 626.58 1713.6432 
+Q 626.58 1719.1872 621 1719.1872 
+L 489.87 1719.1872 
+Q 484.29 1719.1872 484.29 1713.6432 
+L 484.29 1695.348 
+Q 484.29 1689.804 489.87 1689.804 
+z
+" clip-path="url(#pc9338b86ba)" style="fill: #eef1f4"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 90.36 
+L 1245.96 90.36 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke: #1a1a1a"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 136.9296 
+L 1245.96 136.9296 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke: #6a737d; stroke-width: 0.5"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 1722.5136 
+L 1245.96 1722.5136 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke: #1a1a1a"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 43.47 749.5416 
+L 1245.96 749.5416 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #1a1a1a; stroke-width: 0.4"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 43.47 1254.0456 
+L 1245.96 1254.0456 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #1a1a1a; stroke-width: 0.4"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 43.47 1686.4776 
+L 1245.96 1686.4776 
+" clip-path="url(#pc9338b86ba)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #1a1a1a; stroke-width: 0.4"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 18px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #6a737d" x="43.47" y="40.835588" transform="rotate(-0 43.47 40.835588)">Table 1: </text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 18px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="104.85" y="40.835588" transform="rotate(-0 104.85 40.835588)">Benchmark comparison of LLaVA-OneVision-2.0.</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 14px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="68.022" y="62.067925" transform="rotate(-0 68.022 62.067925)">Best</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 14px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="128.844" y="62.067925" transform="rotate(-0 128.844 62.067925)">Second-best</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="46.26" y="118.094019" transform="rotate(-0 46.26 118.094019)">Category</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="118.335738" transform="rotate(-0 132.75 118.335738)">Benchmark</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="118.335738" transform="rotate(-0 401.985 118.335738)">LLaVA-OneVision-2</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="118.335738" transform="rotate(-0 555.435 118.335738)">Qwen3-VL-8B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="118.094019" transform="rotate(-0 708.885 118.094019)">Keye-VL-1.5-8B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="118.335738" transform="rotate(-0 862.335 118.335738)">InternVL-3.5-8B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="118.335738" transform="rotate(-0 1015.785 118.335738)">PLM-8B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="118.335738" transform="rotate(-0 1169.235 118.335738)">LLaVA-OneVision-1.5</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #4a5258" x="46.26" y="158.534788" transform="rotate(-0 46.26 158.534788)">VIDEO</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="159.638538" transform="rotate(-0 132.75 159.638538)">MV-Bench</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="159.638538" transform="rotate(-0 401.985 159.638538)">66.2</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="159.638538" transform="rotate(-0 555.435 159.638538)">69.0</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="159.638538" transform="rotate(-0 708.885 159.638538)">56.9</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="159.638538" transform="rotate(-0 862.335 159.638538)">72.1</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="159.638538" transform="rotate(-0 1015.785 159.638538)">77.1</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="159.638538" transform="rotate(-0 1169.235 159.638538)">51.2</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="195.674538" transform="rotate(-0 132.75 195.674538)">NextQA</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="195.674538" transform="rotate(-0 401.985 195.674538)">82.5</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="195.674538" transform="rotate(-0 555.435 195.674538)">83.4</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="195.674538" transform="rotate(-0 708.885 195.674538)">75.8</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="195.674538" transform="rotate(-0 862.335 195.674538)">82.0</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="195.674538" transform="rotate(-0 1015.785 195.674538)">84.1</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="195.674538" transform="rotate(-0 1169.235 195.674538)">73.7</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="231.710538" transform="rotate(-0 132.75 231.710538)">TempCompass-MC</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="231.710538" transform="rotate(-0 401.985 231.710538)">74.5</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="231.710538" transform="rotate(-0 555.435 231.710538)">74.3</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="231.710538" transform="rotate(-0 708.885 231.710538)">75.5</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="231.710538" transform="rotate(-0 862.335 231.710538)">70.4</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="231.710538" transform="rotate(-0 1015.785 231.710538)">72.7</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="231.710538" transform="rotate(-0 1169.235 231.710538)">57.5</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="267.746538" transform="rotate(-0 132.75 267.746538)">VideoMME</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="267.746538" transform="rotate(-0 401.985 267.746538)">71.9</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="267.746538" transform="rotate(-0 555.435 267.746538)">71.4</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="267.746538" transform="rotate(-0 708.885 267.746538)">73.0</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="267.746538" transform="rotate(-0 862.335 267.746538)">65.9</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="267.746538" transform="rotate(-0 1015.785 267.746538)">60.5</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="267.746538" transform="rotate(-0 1169.235 267.746538)">61.1</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="303.782538" transform="rotate(-0 132.75 303.782538)">VideoMME (w/ s...)</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="303.782538" transform="rotate(-0 401.985 303.782538)">76.3</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="303.782538" transform="rotate(-0 555.435 303.782538)">75.6</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="303.782538" transform="rotate(-0 708.885 303.782538)">76.2</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="303.782538" transform="rotate(-0 862.335 303.782538)">68.6</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="303.782538" transform="rotate(-0 1015.785 303.782538)">65.6</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="303.782538" transform="rotate(-0 1169.235 303.782538)">65.5</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="339.818538" transform="rotate(-0 132.75 339.818538)">VideoMME-v2-64</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="339.818538" transform="rotate(-0 401.985 339.818538)">19.5</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="339.818538" transform="rotate(-0 555.435 339.818538)">18.2</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="339.818538" transform="rotate(-0 708.885 339.818538)">14.1</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="339.818538" transform="rotate(-0 862.335 339.818538)">14.6</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="339.818538" transform="rotate(-0 1015.785 339.818538)">8.7</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="339.818538" transform="rotate(-0 1169.235 339.818538)">9.1</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="375.854538" transform="rotate(-0 132.75 375.854538)">MLVU-dev</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="375.854538" transform="rotate(-0 401.985 375.854538)">76.0</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="375.854538" transform="rotate(-0 555.435 375.854538)">78.1</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="375.854538" transform="rotate(-0 708.885 375.854538)">75.0</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="375.854538" transform="rotate(-0 862.335 375.854538)">71.0</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="375.854538" transform="rotate(-0 1015.785 375.854538)">66.4</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="375.854538" transform="rotate(-0 1169.235 375.854538)">62.1</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="411.890538" transform="rotate(-0 132.75 411.890538)">LVBench</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="411.890538" transform="rotate(-0 401.985 411.890538)">55.8</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="411.890538" transform="rotate(-0 555.435 411.890538)">58.0</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="411.890538" transform="rotate(-0 708.885 411.890538)">42.8</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="411.890538" transform="rotate(-0 862.335 411.890538)">46.7</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="411.890538" transform="rotate(-0 1015.785 411.890538)">44.5</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="411.890538" transform="rotate(-0 1169.235 411.890538)">40.1</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="447.805678" transform="rotate(-0 132.75 447.805678)">LongVideoBench</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="447.926538" transform="rotate(-0 401.985 447.926538)">66.2</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="447.926538" transform="rotate(-0 555.435 447.926538)">68.0</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="447.926538" transform="rotate(-0 708.885 447.926538)">66.0</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="447.926538" transform="rotate(-0 862.335 447.926538)">62.4</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="447.926538" transform="rotate(-0 1015.785 447.926538)">59.6</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="447.926538" transform="rotate(-0 1169.235 447.926538)">56.2</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="483.962538" transform="rotate(-0 132.75 483.962538)">MMVU-val</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="483.962538" transform="rotate(-0 401.985 483.962538)">56.2</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="483.962538" transform="rotate(-0 555.435 483.962538)">58.7</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="483.962538" transform="rotate(-0 708.885 483.962538)">68.3</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="483.962538" transform="rotate(-0 862.335 483.962538)">60.2</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="483.962538" transform="rotate(-0 1015.785 483.962538)">43.3</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="483.962538" transform="rotate(-0 1169.235 483.962538)">50.1</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="519.998538" transform="rotate(-0 132.75 519.998538)">VideoEval-Pro</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="519.998538" transform="rotate(-0 401.985 519.998538)">60.9</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="519.998538" transform="rotate(-0 555.435 519.998538)">59.2</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="519.998538" transform="rotate(-0 708.885 519.998538)">54.9</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="519.998538" transform="rotate(-0 862.335 519.998538)">50.1</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="519.998538" transform="rotate(-0 1015.785 519.998538)">47.2</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="519.998538" transform="rotate(-0 1169.235 519.998538)">44.8</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="556.034538" transform="rotate(-0 132.75 556.034538)">MMOU</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="556.034538" transform="rotate(-0 401.985 556.034538)">39.5</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="556.034538" transform="rotate(-0 555.435 556.034538)">40.6</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="556.034538" transform="rotate(-0 708.885 556.034538)">35.3</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="556.034538" transform="rotate(-0 862.335 556.034538)">36.1</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="556.034538" transform="rotate(-0 1015.785 556.034538)">26.2</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="556.034538" transform="rotate(-0 1169.235 556.034538)">30.7</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="592.070538" transform="rotate(-0 132.75 592.070538)">t/Charades</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="592.070538" transform="rotate(-0 401.985 592.070538)">53.5</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="592.070538" transform="rotate(-0 555.435 592.070538)">48.3</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="592.070538" transform="rotate(-0 708.885 592.070538)">45.4</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="592.070538" transform="rotate(-0 862.335 592.070538)">27.8</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="592.070538" transform="rotate(-0 1015.785 592.070538)">34.5</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="592.070538" transform="rotate(-0 1169.235 592.070538)">15.6</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="627.864819" transform="rotate(-0 132.75 627.864819)">t/ActivityNet</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="628.106538" transform="rotate(-0 401.985 628.106538)">53.8</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="628.106538" transform="rotate(-0 555.435 628.106538)">46.8</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="628.106538" transform="rotate(-0 708.885 628.106538)">41.3</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="628.106538" transform="rotate(-0 862.335 628.106538)">31.3</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="628.106538" transform="rotate(-0 1015.785 628.106538)">7.6</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="628.106538" transform="rotate(-0 1169.235 628.106538)">17.7</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="664.021678" transform="rotate(-0 132.75 664.021678)">t/QVHighlights</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="664.142538" transform="rotate(-0 401.985 664.142538)">66.4</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="664.142538" transform="rotate(-0 555.435 664.142538)">59.4</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="664.142538" transform="rotate(-0 708.885 664.142538)">55.5</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="664.142538" transform="rotate(-0 862.335 664.142538)">31.3</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="664.142538" transform="rotate(-0 1015.785 664.142538)">4.2</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="664.142538" transform="rotate(-0 1169.235 664.142538)">21.0</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="700.178538" transform="rotate(-0 132.75 700.178538)">OV-Rope</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="700.178538" transform="rotate(-0 401.985 700.178538)">61.8</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="700.178538" transform="rotate(-0 555.435 700.178538)">27.5</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="700.178538" transform="rotate(-0 708.885 700.178538)">39.3</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="700.178538" transform="rotate(-0 862.335 700.178538)">11.2</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="700.178538" transform="rotate(-0 1015.785 700.178538)">13.6</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="700.178538" transform="rotate(-0 1169.235 700.178538)">8.3</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="735.972819" transform="rotate(-0 132.75 735.972819)">Average</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="736.214538" transform="rotate(-0 401.985 736.214538)">61.3</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="736.214538" transform="rotate(-0 555.435 736.214538)">58.5</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="736.214538" transform="rotate(-0 708.885 736.214538)">56.0</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="736.214538" transform="rotate(-0 862.335 736.214538)">50.1</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="736.214538" transform="rotate(-0 1015.785 736.214538)">44.7</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="736.214538" transform="rotate(-0 1169.235 736.214538)">41.5</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #4a5258" x="46.26" y="771.146788" transform="rotate(-0 46.26 771.146788)">SPATIAL</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="772.250538" transform="rotate(-0 132.75 772.250538)">VSI-Bench</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="772.250538" transform="rotate(-0 401.985 772.250538)">70.9</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="772.250538" transform="rotate(-0 555.435 772.250538)">59.1</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="772.250538" transform="rotate(-0 708.885 772.250538)">36.4</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="772.250538" transform="rotate(-0 862.335 772.250538)">56.0</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="772.250538" transform="rotate(-0 1015.785 772.250538)">27.9</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="772.250538" transform="rotate(-0 1169.235 772.250538)">30.2</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="808.286538" transform="rotate(-0 132.75 808.286538)">ReVSI</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="808.286538" transform="rotate(-0 401.985 808.286538)">57.6</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="808.286538" transform="rotate(-0 555.435 808.286538)">48.9</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="808.286538" transform="rotate(-0 708.885 808.286538)">32.4</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="808.286538" transform="rotate(-0 862.335 808.286538)">47.9</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="808.286538" transform="rotate(-0 1015.785 808.286538)">30.7</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="808.286538" transform="rotate(-0 1169.235 808.286538)">33.5</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="844.322538" transform="rotate(-0 132.75 844.322538)">CRPE</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="844.322538" transform="rotate(-0 401.985 844.322538)">77.3</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="844.322538" transform="rotate(-0 555.435 844.322538)">77.7</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="844.322538" transform="rotate(-0 708.885 844.322538)">75.2</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="844.322538" transform="rotate(-0 862.335 844.322538)">75.0</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="844.322538" transform="rotate(-0 1015.785 844.322538)">77.0</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="844.322538" transform="rotate(-0 1169.235 844.322538)">74.8</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="880.358538" transform="rotate(-0 132.75 880.358538)">MetaVQA</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="880.358538" transform="rotate(-0 401.985 880.358538)">69.1</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="880.358538" transform="rotate(-0 555.435 880.358538)">68.7</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="880.358538" transform="rotate(-0 708.885 880.358538)">59.2</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="880.358538" transform="rotate(-0 862.335 880.358538)">65.7</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="880.358538" transform="rotate(-0 1015.785 880.358538)">45.4</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="880.358538" transform="rotate(-0 1169.235 880.358538)">67.1</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="916.394538" transform="rotate(-0 132.75 916.394538)">ERQA</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="916.394538" transform="rotate(-0 401.985 916.394538)">43.3</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="916.394538" transform="rotate(-0 555.435 916.394538)">42.3</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="916.394538" transform="rotate(-0 708.885 916.394538)">38.3</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="916.394538" transform="rotate(-0 862.335 916.394538)">41.8</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="916.394538" transform="rotate(-0 1015.785 916.394538)">44.3</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="916.394538" transform="rotate(-0 1169.235 916.394538)">41.5</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="952.430538" transform="rotate(-0 132.75 952.430538)">CV-Bench 2D</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="952.430538" transform="rotate(-0 401.985 952.430538)">82.6</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="952.430538" transform="rotate(-0 555.435 952.430538)">81.0</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="952.430538" transform="rotate(-0 708.885 952.430538)">78.2</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="952.430538" transform="rotate(-0 862.335 952.430538)">77.9</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="952.430538" transform="rotate(-0 1015.785 952.430538)">80.6</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="952.430538" transform="rotate(-0 1169.235 952.430538)">76.5</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="988.466538" transform="rotate(-0 132.75 988.466538)">CV-Bench 3D</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="988.466538" transform="rotate(-0 401.985 988.466538)">92.8</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="988.466538" transform="rotate(-0 555.435 988.466538)">92.3</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="988.466538" transform="rotate(-0 708.885 988.466538)">82.0</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="988.466538" transform="rotate(-0 862.335 988.466538)">86.3</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="988.466538" transform="rotate(-0 1015.785 988.466538)">82.4</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="988.466538" transform="rotate(-0 1169.235 988.466538)">82.9</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1024.502538" transform="rotate(-0 132.75 1024.502538)">CrossPoint</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1024.502538" transform="rotate(-0 401.985 1024.502538)">61.9</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1024.502538" transform="rotate(-0 555.435 1024.502538)">26.9</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1024.502538" transform="rotate(-0 708.885 1024.502538)">20.2</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1024.502538" transform="rotate(-0 862.335 1024.502538)">20.2</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1024.502538" transform="rotate(-0 1015.785 1024.502538)">15.7</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1024.502538" transform="rotate(-0 1169.235 1024.502538)">15.9</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1060.538538" transform="rotate(-0 132.75 1060.538538)">EmbSpatial</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1060.538538" transform="rotate(-0 401.985 1060.538538)">78.1</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1060.538538" transform="rotate(-0 555.435 1060.538538)">77.5</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1060.538538" transform="rotate(-0 708.885 1060.538538)">66.3</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1060.538538" transform="rotate(-0 862.335 1060.538538)">73.2</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1060.538538" transform="rotate(-0 1015.785 1060.538538)">73.5</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1060.538538" transform="rotate(-0 1169.235 1060.538538)">64.2</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1096.574538" transform="rotate(-0 132.75 1096.574538)">SAT</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1096.574538" transform="rotate(-0 401.985 1096.574538)">69.3</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1096.574538" transform="rotate(-0 555.435 1096.574538)">69.3</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1096.574538" transform="rotate(-0 708.885 1096.574538)">62.7</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1096.574538" transform="rotate(-0 862.335 1096.574538)">54.7</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1096.574538" transform="rotate(-0 1015.785 1096.574538)">36.7</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1096.574538" transform="rotate(-0 1169.235 1096.574538)">61.3</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1132.610538" transform="rotate(-0 132.75 1132.610538)">MMSI-Bench</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1132.610538" transform="rotate(-0 401.985 1132.610538)">29.6</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1132.610538" transform="rotate(-0 555.435 1132.610538)">31.0</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1132.610538" transform="rotate(-0 708.885 1132.610538)">26.7</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1132.610538" transform="rotate(-0 862.335 1132.610538)">28.1</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1132.610538" transform="rotate(-0 1015.785 1132.610538)">31.4</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1132.610538" transform="rotate(-0 1169.235 1132.610538)">28.3</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1168.646538" transform="rotate(-0 132.75 1168.646538)">BLINK</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1168.646538" transform="rotate(-0 401.985 1168.646538)">63.5</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1168.646538" transform="rotate(-0 555.435 1168.646538)">65.1</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1168.646538" transform="rotate(-0 708.885 1168.646538)">52.2</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1168.646538" transform="rotate(-0 862.335 1168.646538)">55.7</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1168.646538" transform="rotate(-0 1015.785 1168.646538)">56.0</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1168.646538" transform="rotate(-0 1169.235 1168.646538)">48.3</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1204.682538" transform="rotate(-0 132.75 1204.682538)">TraceSpatial-3D</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1204.682538" transform="rotate(-0 401.985 1204.682538)">31.0</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1204.682538" transform="rotate(-0 555.435 1204.682538)">8.0</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1204.682538" transform="rotate(-0 708.885 1204.682538)">3.0</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1204.682538" transform="rotate(-0 862.335 1204.682538)">4.0</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1204.682538" transform="rotate(-0 1015.785 1204.682538)">1.0</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1204.682538" transform="rotate(-0 1169.235 1204.682538)">1.0</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1240.476819" transform="rotate(-0 132.75 1240.476819)">Average</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1240.718538" transform="rotate(-0 401.985 1240.718538)">63.6</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1240.718538" transform="rotate(-0 555.435 1240.718538)">57.5</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1240.718538" transform="rotate(-0 708.885 1240.718538)">48.7</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1240.718538" transform="rotate(-0 862.335 1240.718538)">52.8</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1240.718538" transform="rotate(-0 1015.785 1240.718538)">46.4</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1240.718538" transform="rotate(-0 1169.235 1240.718538)">48.1</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #4a5258" x="46.26" y="1275.650788" transform="rotate(-0 46.26 1275.650788)">IMAGE</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1276.754538" transform="rotate(-0 132.75 1276.754538)">MMStar</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1276.754538" transform="rotate(-0 401.985 1276.754538)">64.8</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1276.754538" transform="rotate(-0 555.435 1276.754538)">62.9</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1276.754538" transform="rotate(-0 708.885 1276.754538)">73.6</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1276.754538" transform="rotate(-0 862.335 1276.754538)">66.6</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1276.754538" transform="rotate(-0 1015.785 1276.754538)">57.9</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1276.754538" transform="rotate(-0 1169.235 1276.754538)">67.9</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1312.790538" transform="rotate(-0 132.75 1312.790538)">MMBench</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #6a737d" x="225.018" y="1311.686788" transform="rotate(-0 225.018 1311.686788)">(en)</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1312.790538" transform="rotate(-0 401.985 1312.790538)">85.7</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1312.790538" transform="rotate(-0 555.435 1312.790538)">84.9</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1312.790538" transform="rotate(-0 708.885 1312.790538)">88.5</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1312.790538" transform="rotate(-0 862.335 1312.790538)">87.9</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1312.790538" transform="rotate(-0 1015.785 1312.790538)">80.2</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1312.790538" transform="rotate(-0 1169.235 1312.790538)">85.6</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1348.826538" transform="rotate(-0 132.75 1348.826538)">DocVQA</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1348.826538" transform="rotate(-0 401.985 1348.826538)">95.2</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1348.826538" transform="rotate(-0 555.435 1348.826538)">95.7</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1348.826538" transform="rotate(-0 708.885 1348.826538)">94.9</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1348.826538" transform="rotate(-0 862.335 1348.826538)">92.3</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1348.826538" transform="rotate(-0 1015.785 1348.826538)">94.6</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1348.826538" transform="rotate(-0 1169.235 1348.826538)">97.8</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1384.862538" transform="rotate(-0 132.75 1384.862538)">ChartQA</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1384.862538" transform="rotate(-0 401.985 1384.862538)">85.9</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1384.862538" transform="rotate(-0 555.435 1384.862538)">85.1</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1384.862538" transform="rotate(-0 708.885 1384.862538)">84.7</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1384.862538" transform="rotate(-0 862.335 1384.862538)">86.7</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1384.862538" transform="rotate(-0 1015.785 1384.862538)">85.5</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1384.862538" transform="rotate(-0 1169.235 1384.862538)">86.5</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1420.898537" transform="rotate(-0 132.75 1420.898537)">InfoVQA</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1420.898537" transform="rotate(-0 401.985 1420.898537)">74.4</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1420.898537" transform="rotate(-0 555.435 1420.898537)">83.4</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1420.898537" transform="rotate(-0 708.885 1420.898537)">76.9</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1420.898537" transform="rotate(-0 862.335 1420.898537)">79.1</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1420.898537" transform="rotate(-0 1015.785 1420.898537)">80.0</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1420.898537" transform="rotate(-0 1169.235 1420.898537)">79.1</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1456.934538" transform="rotate(-0 132.75 1456.934538)">OCRBench</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1456.934538" transform="rotate(-0 401.985 1456.934538)">78.2</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1456.934538" transform="rotate(-0 555.435 1456.934538)">84.7</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1456.934538" transform="rotate(-0 708.885 1456.934538)">84.8</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1456.934538" transform="rotate(-0 862.335 1456.934538)">84.0</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1456.934538" transform="rotate(-0 1015.785 1456.934538)">83.2</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1456.934538" transform="rotate(-0 1169.235 1456.934538)">82.6</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1492.970538" transform="rotate(-0 132.75 1492.970538)">AI2D</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1492.970538" transform="rotate(-0 401.985 1492.970538)">84.3</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1492.970538" transform="rotate(-0 555.435 1492.970538)">83.6</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1492.970538" transform="rotate(-0 708.885 1492.970538)">86.0</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1492.970538" transform="rotate(-0 862.335 1492.970538)">84.0</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1492.970538" transform="rotate(-0 1015.785 1492.970538)">92.7</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1492.970538" transform="rotate(-0 1169.235 1492.970538)">84.0</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1529.006537" transform="rotate(-0 132.75 1529.006537)">V*</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1529.006537" transform="rotate(-0 401.985 1529.006537)">85.9</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1529.006537" transform="rotate(-0 555.435 1529.006537)">85.3</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1529.006537" transform="rotate(-0 708.885 1529.006537)">78.0</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1529.006537" transform="rotate(-0 862.335 1529.006537)">81.7</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1529.006537" transform="rotate(-0 1015.785 1529.006537)">71.2</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1529.006537" transform="rotate(-0 1169.235 1529.006537)">77.5</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1565.042537" transform="rotate(-0 132.75 1565.042537)">CountBench</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1565.042537" transform="rotate(-0 401.985 1565.042537)">89.0</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1565.042537" transform="rotate(-0 555.435 1565.042537)">89.8</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1565.042537" transform="rotate(-0 708.885 1565.042537)">83.1</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1565.042537" transform="rotate(-0 862.335 1565.042537)">75.6</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1565.042537" transform="rotate(-0 1015.785 1565.042537)">91.8</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1565.042537" transform="rotate(-0 1169.235 1565.042537)">87.8</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1601.078538" transform="rotate(-0 132.75 1601.078538)">Pixmo</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #6a737d" x="188.838" y="1599.974788" transform="rotate(-0 188.838 1599.974788)">(Count)</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1601.078538" transform="rotate(-0 401.985 1601.078538)">64.0</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1601.078538" transform="rotate(-0 555.435 1601.078538)">62.4</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1601.078538" transform="rotate(-0 708.885 1601.078538)">55.6</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1601.078538" transform="rotate(-0 862.335 1601.078538)">61.8</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1601.078538" transform="rotate(-0 1015.785 1601.078538)">68.0</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1601.078538" transform="rotate(-0 1169.235 1601.078538)">63.1</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1637.114538" transform="rotate(-0 132.75 1637.114538)">RealWorldQA</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1637.114538" transform="rotate(-0 401.985 1637.114538)">69.7</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1637.114538" transform="rotate(-0 555.435 1637.114538)">69.4</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1637.114538" transform="rotate(-0 708.885 1637.114538)">69.8</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1637.114538" transform="rotate(-0 862.335 1637.114538)">63.1</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1637.114538" transform="rotate(-0 1015.785 1637.114538)">72.7</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1637.114538" transform="rotate(-0 1169.235 1637.114538)">68.1</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1672.908819" transform="rotate(-0 132.75 1672.908819)">Average</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1673.150537" transform="rotate(-0 401.985 1673.150537)">79.7</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1673.150537" transform="rotate(-0 555.435 1673.150537)">80.7</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1673.150537" transform="rotate(-0 708.885 1673.150537)">79.6</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1673.150537" transform="rotate(-0 862.335 1673.150537)">78.4</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1673.150537" transform="rotate(-0 1015.785 1673.150537)">79.8</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1673.150537" transform="rotate(-0 1169.235 1673.150537)">80.0</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #4a5258" x="46.26" y="1708.082787" transform="rotate(-0 46.26 1708.082787)">OVERALL</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #1a1a1a" x="132.75" y="1708.944819" transform="rotate(-0 132.75 1708.944819)">Average</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="401.985" y="1709.186537" transform="rotate(-0 401.985 1709.186537)">67.1</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="555.435" y="1709.186537" transform="rotate(-0 555.435 1709.186537)">64.3</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="708.885" y="1709.186537" transform="rotate(-0 708.885 1709.186537)">60.1</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="862.335" y="1709.186537" transform="rotate(-0 862.335 1709.186537)">58.8</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1015.785" y="1709.186537" transform="rotate(-0 1015.785 1709.186537)">54.9</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #1a1a1a" x="1169.235" y="1709.186537" transform="rotate(-0 1169.235 1709.186537)">54.3</text>
+   </g>
+  </g>
+ </g>
+ </svg>

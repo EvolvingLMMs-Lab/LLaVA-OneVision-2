@@ -255,7 +255,7 @@ If your packed training looks "off" (loss too low / too smooth / model overfits 
 
 ## Cross-References / 交叉引用
 
-- **Producer pipeline** (how the packed shards are built): `distributed-offline-packing` skill (or `distributed-offline-packing-glintlab` for internal paths).
+- **Producer pipeline** (how the packed shards are built): `distributed-offline-packing` skill.
 - **Consumer attention semantics** (how `cu_lengths` is interpreted by ViT and LLM): `cu-lengths-attention-flow` skill.
 - **Dataloader length-balancing** across ranks: `length-pool-sort-dataset` skill.
 
