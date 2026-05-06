@@ -12,65 +12,15 @@
 
 
 
-<div align="center">
-
-🤗 **[Models and Datasets](https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713)** |
-🖥️ **[Demo](https://huggingface.co/spaces/lmms-lab/LLaVA-OneVision-1.5)** |
-📄 **[Technical Report](https://arxiv.org/abs/2509.23661)** |
-📰 **[Zhihu](https://www.zhihu.com/question/1959577143697707446)** |
-📕 **[Xiaohongshu](http://xhslink.com/o/4nXL6EXDTqv)**
-
-</div>
-
----
+<p align="center">
+  🤗 <b>2.0 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a href="#citation">Technical Report</a></b>
+</p>
 
 <p align="center">
-  <!-- Mid-Training Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M">
-    <img alt="HF Mid-Training Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M&amp;query=downloads&amp;label=Mid%20Training%20DATA%20Downloads&amp;color=green&amp;logo=huggingface&amp">
-  </a>
-  <!-- Instruct Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data">
-    <img alt="HF Instruct Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data&amp;query=downloads&amp;label=Instruct%20DATA%20Downloads&amp;color=blue&amp;logo=huggingface&amp">
-  </a>
-  <!-- Model Downloads -->
-  <a href="https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct">
-    <img alt="HF Model Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/models/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct&amp;query=downloads&amp;label=OV-1.5-8B-Instruct%20Downloads&amp;color=yellow&amp;logo=huggingface&amp">
-  </a>
-  <!-- Training Cost -->
-  <img alt="Training Cost" src="https://img.shields.io/badge/Full%20Train%20Cost-~$16K-success">
-  <!-- Paper Citations -->
-  <a href="https://scholar.google.com/scholar_lookup?arxiv_id=2509.23661">
-    <img alt="Citations" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.semanticscholar.org%2Fgraph%2Fv1%2Fpaper%2FARXIV%3A2509.23661%3Ffields%3DcitationCount&amp;query=citationCount&amp;label=Citations&amp;color=orange&amp;logo=googlescholar&amp">
-  </a>
-  <!-- License -->
-  <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?logo=apache&amp">
-  </a>
-  <!-- PRs Welcome -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/pulls">
-    <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github&amp">
-  </a>
-  <!-- Commit Activity -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/commits">
-    <img alt="Commit Activity" src="https://img.shields.io/github/commit-activity/m/EvolvingLMMs-Lab/LLaVA-OneVision-1.5?logo=github&amp">
-  </a>
-  <!-- Contributors -->
-  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/graphs/contributors">
-    <img alt="Contributors" src="https://img.shields.io/github/contributors/EvolvingLMMs-Lab/LLaVA-OneVision-1.5?logo=github&amp">
-  </a>
-  <!-- Megatron-LM Optimization -->
-  <a href="https://github.com/NVIDIA/Megatron-LM">
-    <img src="https://img.shields.io/badge/Megatron--LM-mcore%20optimized-1560b9?logo=nvidia&amp" alt="Megatron-LM mcore optimized">
-  </a>
-  <!-- ModelScope Collection -->
-  <a href="https://www.modelscope.cn/collections/LLaVA-OneVision-15-ff6ede3d20a643" target="_blank">
-    <img alt="ModelScope Collection" src="https://img.shields.io/badge/ModelScope-Collection-orange?logo=modelscope">
-  </a>
+  🤗 <b>1.5 <a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Models</a></b> · <b><a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Datasets</a></b> · <b><a href="https://arxiv.org/abs/2509.23661">Technical Report</a></b>
 </p>
 
 ---
-
 
 ## NEWS
 - 2026-04-30: Released LLaVA-OneVision-2.0 — next-generation multimodal model, with new [LLaVA-OneVision-2.0-VideoCaption](#datasets) and [LLaVA-OneVision-2.0-Spatial](#datasets) datasets.
@@ -82,12 +32,13 @@
 ## Contents
 <!-- TOC -->
 - [Introduction](#introduction)
+- [Results](#evaluation-results)
 - [Method](#method)
 - [Models](#models)
 - [Datasets](#datasets)
-- [Results](#evaluation-results)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
+- [LLaVA-OneVision-1.5](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/tree/1.5)
 
 
 ## Introduction
@@ -119,24 +70,54 @@ Four datasets ship with the LLaVA-OneVision family — two new for 2.0, two carr
 
 And unlike most "open" releases, *everything* ships alongside them: encoder weights, training code, configs, and full training logs. Reproducible end to end.
 
+## Evaluation Results
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision2_performance_dark_anim.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision2_performance_light_anim.svg">
+    <img src="asset/llava_onevision2_performance_light_anim.svg" width="100%" alt="LLaVA-OneVision-2.0 Benchmark Comparison">
+  </picture>
+</p>
+
+<details>
+<summary>Click to view Figure 4: codec-aligned sampling vs. uniform frame sampling.</summary>
+
+<p align="center">
+  <img src="asset/method_codec_vs_frame.svg" width="100%" alt="Codec-aligned sampling compared with uniform frame sampling across video benchmarks">
+</p>
+
+</details>
+
 
 ## Method
 
 ### Codec-Style Patch Selection
 
-<p align="center">
-  <img src="asset/method_codec_selection.svg" alt="Codec-Style Patch Selection: same 54-token budget, 3× more temporal range than uniform sampling" width="100%">
+<p align="left">
+  <img src="asset/method_codec_selection.svg" alt="Codec-Style Patch Selection: same 54-token budget, 3× more temporal range than uniform sampling" width="88%">
 </p>
 
 Standard video pipelines uniformly sample a handful of frames and process **every** patch — most of it static background. We borrow from HEVC: keep **I-frames** dense, keep only **motion- and residual-rich patches** from **P-frames**. Same 54-token budget, **18 frames** instead of 6 — 3× the temporal range, no extra LLM context, no input-type adapters.
 
 ### One Encoder, Every Modality
 
-<p align="center">
-  <img src="asset/method_unified_encoder.svg" alt="One Encoder, Every Modality: image, video, and multi-image inputs all flow into the same OneVision-Encoder and emerge as a single token stream" width="100%">
+<p align="left">
+  <img src="asset/method_unified_encoder.svg" alt="Multi-modal vision input: image, uniform frames, or codec-aligned tokens all feed the same OneVision-Encoder with shared (t, h, w) positions" width="66%">
 </p>
 
-Most multimodal stacks ship a different tokenizer per input type — one path for images, another for video, a third for multi-image. We don't. **Image, video, and multi-image inputs are all patchified and fed into the same OneVision-Encoder**, then emitted as a single unified token stream to the LLM. No task-specific adapters, no per-modality branching, no hidden routing.
+Most multimodal stacks ship a different tokenizer per input type — one path for images, another for video, a third for multi-image. We don't. **Image, uniform frames, and codec-aligned tokens** all flow into the **same OneVision-Encoder** under a shared `(t, h, w)` position scheme. No task-specific tokenizers, no per-modality routing.
+
+### Four-Stage Training Curriculum
+
+We train LLaVA-OneVision-2.0 in four compact stages:
+
+1. **Bootstrap video ability** from LLaVA-OneVision-1.5 with short 30s video captions.
+2. **Instruction tune** with large multimodal instruction data and 30–180s video captions.
+3. **Extend to long videos** with 10–15 min captions and public video instruction data.
+4. **Refine codec, spatial, and tracking skills** with denser long-video sampling, point tracking, and 4M spatial samples.
+
+The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house video caption/spatial datasets; we do not synthesize any video instruction data.
 
 
 ## Models
@@ -154,16 +135,18 @@ Most multimodal stacks ship a different tokenizer per input type — one path fo
 
 | Description                          | Link                                                                                                   | Status    |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------ | --------- |
-| LLaVA-OneVision-2.0-VideoCaption     | —                                                                                                      | Available |
-| LLaVA-OneVision-2.0-Spatial          | —                                                                                                      | Available |
+| LLaVA-OneVision-2.0-VideoCaption     | [🤗HF / VideoCaption](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/mid_training_video) | Available |
+| LLaVA-OneVision-2.0-Spatial          | [🤗HF / Spatial](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/spatial)     | Available |
 | LLaVA-OneVision-1.5-Mid-Training-85M | [🤗HF / Mid-Training 85M](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M) | Available |
 | LLaVA-OneVision-1.5-Instruct         | [🤗HF / Instruct-Data](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data)       | Available |
 
-
-## Evaluation Results
-
-
-All evaluations were conducted using [lmms_eval](https://github.com/EvolvingLMMs-Lab/lmms-eval).
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision2_data_distribution_dark_anim.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision2_data_distribution_light_anim.svg">
+    <img src="asset/llava_onevision2_data_distribution_light_anim.svg" width="100%" alt="LLaVA-OneVision Data Distribution">
+  </picture>
+</p>
 
 
 ## Contributors
@@ -174,158 +157,158 @@ Thanks so much to all of our amazing contributors!
 	<tbody>
 		<tr>
             <td align="center">
-                <a href="https://github.com/fengshikun">
-                    <img src="https://avatars.githubusercontent.com/u/2499990?v=4" width="80;" alt="fengshikun"/>
-                    <br />
-                    <sub><b>fengshikun</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/GeoffreyChen777">
-                    <img src="https://avatars.githubusercontent.com/u/14183213?v=4" width="80;" alt="GeoffreyChen777"/>
-                    <br />
-                    <sub><b>GeoffreyChen777</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/fdcp">
-                    <img src="https://avatars.githubusercontent.com/u/15667917?v=4" width="80;" alt="fdcp"/>
-                    <br />
-                    <sub><b>fdcp</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Luodian">
-                    <img src="https://avatars.githubusercontent.com/u/15847405?v=4" width="80;" alt="Luodian"/>
-                    <br />
-                    <sub><b>Luodian</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/mathCrazyy">
-                    <img src="https://avatars.githubusercontent.com/u/20607153?v=4" width="80;" alt="mathCrazyy"/>
-                    <br />
-                    <sub><b>mathCrazyy</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/anxiangsir">
-                    <img src="https://avatars.githubusercontent.com/u/31175974?v=4" width="80;" alt="anxiangsir"/>
+                    <img src="https://avatars.githubusercontent.com/u/31175974?s=80&v=4" width="80" height="80" alt="anxiangsir"/>
                     <br />
                     <sub><b>anxiangsir</b></sub>
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/didizhu-judy">
-                    <img src="https://avatars.githubusercontent.com/u/34787894?v=4" width="80;" alt="didizhu-judy"/>
-                    <br />
-                    <sub><b>didizhu-judy</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/yiyexy">
-                    <img src="https://avatars.githubusercontent.com/u/35927125?v=4" width="80;" alt="yiyexy"/>
+                    <img src="https://avatars.githubusercontent.com/u/35927125?s=80&v=4" width="80" height="80" alt="yiyexy"/>
                     <br />
                     <sub><b>yiyexy</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
-                <a href="https://github.com/yshenaw">
-                    <img src="https://avatars.githubusercontent.com/u/45809710?v=4" width="80;" alt="yshenaw"/>
+                <a href="https://github.com/fdcp">
+                    <img src="https://avatars.githubusercontent.com/u/15667917?s=80&v=4" width="80" height="80" alt="fdcp"/>
                     <br />
-                    <sub><b>yshenaw</b></sub>
+                    <sub><b>fdcp</b></sub>
                 </a>
             </td>
-            <td align="center">
-                <a href="https://github.com/Yangsenqiao">
-                    <img src="https://avatars.githubusercontent.com/u/73487993?v=4" width="80;" alt="Yangsenqiao"/>
-                    <br />
-                    <sub><b>Yangsenqiao</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/kcz358">
-                    <img src="https://avatars.githubusercontent.com/u/92624596?v=4" width="80;" alt="kcz358"/>
-                    <br />
-                    <sub><b>kcz358</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/YunyaoYan">
-                    <img src="https://avatars.githubusercontent.com/u/109638667?v=4" width="80;" alt="YunyaoYan"/>
-                    <br />
-                    <sub><b>YunyaoYan</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/FeilongTangmonash">
-                    <img src="https://avatars.githubusercontent.com/u/152372878?v=4" width="80;" alt="FeilongTangmonash"/>
-                    <br />
-                    <sub><b>FeilongTangmonash</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/wkzhang636">
-                    <img src="https://avatars.githubusercontent.com/u/194186498?v=4" width="80;" alt="wkzhang636"/>
-                    <br />
-                    <sub><b>wkzhang636</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/chengzheng345">
-                    <img src="https://avatars.githubusercontent.com/u/209475443?v=4" width="80;" alt="chengzheng345"/>
-                    <br />
-                    <sub><b>chengzheng345</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Jinghao-Guo">
-                    <img src="https://avatars.githubusercontent.com/u/212396229?v=4" width="80;" alt="Jinghao-Guo"/>
-                    <br />
-                    <sub><b>Jinghao-Guo</b></sub>
-                </a>
-            </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/wideyard">
-                    <img src="https://avatars.githubusercontent.com/u/101321826?v=4" width="80;" alt="wideyard"/>
+                    <img src="https://avatars.githubusercontent.com/u/101321826?s=80&v=4" width="80" height="80" alt="wideyard"/>
                     <br />
                     <sub><b>wideyard</b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/Lornatang">
-                    <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
+                    <img src="https://avatars.githubusercontent.com/u/31124350?s=80&v=4" width="80" height="80" alt="Lornatang"/>
                     <br />
                     <sub><b>Lornatang</b></sub>
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/chengzheng345">
+                    <img src="https://avatars.githubusercontent.com/u/209475443?s=80&v=4" width="80" height="80" alt="chengzheng345"/>
+                    <br />
+                    <sub><b>chengzheng345</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Luodian">
+                    <img src="https://avatars.githubusercontent.com/u/15847405?s=80&v=4" width="80" height="80" alt="Luodian"/>
+                    <br />
+                    <sub><b>Luodian</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/kcz358">
+                    <img src="https://avatars.githubusercontent.com/u/92624596?s=80&v=4" width="80" height="80" alt="kcz358"/>
+                    <br />
+                    <sub><b>kcz358</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
                 <a href="https://github.com/killTheHostage">
-                    <img src="https://avatars.githubusercontent.com/u/16442720?v=4" width="80;" alt="killTheHostage"/>
+                    <img src="https://avatars.githubusercontent.com/u/16442720?s=80&v=4" width="80" height="80" alt="killTheHostage"/>
                     <br />
                     <sub><b>killTheHostage</b></sub>
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/mathCrazyy">
+                    <img src="https://avatars.githubusercontent.com/u/20607153?s=80&v=4" width="80" height="80" alt="mathCrazyy"/>
+                    <br />
+                    <sub><b>mathCrazyy</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/wkzhang636">
+                    <img src="https://avatars.githubusercontent.com/u/194186498?s=80&v=4" width="80" height="80" alt="wkzhang636"/>
+                    <br />
+                    <sub><b>wkzhang636</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/yunglechao">
-                    <img src="https://avatars.githubusercontent.com/u/7631185?v=4" width="80;" alt="yunglechao"/>
+                    <img src="https://avatars.githubusercontent.com/u/7631185?s=80&v=4" width="80" height="80" alt="yunglechao"/>
                     <br />
                     <sub><b>yunglechao</b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/RobitYadda">
-                    <img src="https://avatars.githubusercontent.com/u/6811311?v=4" width="80;" alt="RobitYadda"/>
+                    <img src="https://avatars.githubusercontent.com/u/6811311?s=80&v=4" width="80" height="80" alt="RobitYadda"/>
                     <br />
                     <sub><b>RobitYadda</b></sub>
                 </a>
             </td>
+            <td align="center">
+                <a href="https://github.com/fengshikun">
+                    <img src="https://avatars.githubusercontent.com/u/2499990?s=80&v=4" width="80" height="80" alt="fengshikun"/>
+                    <br />
+                    <sub><b>fengshikun</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/GeoffreyChen777">
+                    <img src="https://avatars.githubusercontent.com/u/14183213?s=80&v=4" width="80" height="80" alt="GeoffreyChen777"/>
+                    <br />
+                    <sub><b>GeoffreyChen777</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/didizhu-judy">
+                    <img src="https://avatars.githubusercontent.com/u/34787894?s=80&v=4" width="80" height="80" alt="didizhu-judy"/>
+                    <br />
+                    <sub><b>didizhu-judy</b></sub>
+                </a>
+            </td>
 		</tr>
-	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/yshenaw">
+                    <img src="https://avatars.githubusercontent.com/u/45809710?s=80&v=4" width="80" height="80" alt="yshenaw"/>
+                    <br />
+                    <sub><b>yshenaw</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Yangsenqiao">
+                    <img src="https://avatars.githubusercontent.com/u/73487993?s=80&v=4" width="80" height="80" alt="Yangsenqiao"/>
+                    <br />
+                    <sub><b>Yangsenqiao</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/YunyaoYan">
+                    <img src="https://avatars.githubusercontent.com/u/109638667?s=80&v=4" width="80" height="80" alt="YunyaoYan"/>
+                    <br />
+                    <sub><b>YunyaoYan</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/FeilongTangmonash">
+                    <img src="https://avatars.githubusercontent.com/u/152372878?s=80&v=4" width="80" height="80" alt="FeilongTangmonash"/>
+                    <br />
+                    <sub><b>FeilongTangmonash</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Jinghao-Guo">
+                    <img src="https://avatars.githubusercontent.com/u/212396229?s=80&v=4" width="80" height="80" alt="Jinghao-Guo"/>
+                    <br />
+                    <sub><b>Jinghao-Guo</b></sub>
+                </a>
+            </td>
+		</tr>
+	</tbody>
 </table>
 <!-- readme: collaborators,contributors,jiankangdeng/- -end -->
 
@@ -336,7 +319,7 @@ If you find *LLaVA-OneVision-1.5* useful in your research, please consider to ci
 ```
 @inproceedings{LLaVA-OneVision-2.0,
   title={LLaVA-OneVision-2.0},
-  author={TODO: fill author list from contributors},
+  author={llava-onevision contributors},
   booktitle={arXiv},
   year={2026}
 }

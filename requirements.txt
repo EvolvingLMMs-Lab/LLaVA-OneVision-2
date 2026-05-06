@@ -15,6 +15,6 @@ qwen_vl_utils
 sentencepiece==0.1.98
 tiktoken==0.5.2
 timm==1.0.3
-transformers==4.57.3
+transformers==5.7.0
 wandb==0.21.0
 wrapt==1.16.0

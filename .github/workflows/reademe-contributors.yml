@@ -5,6 +5,7 @@ on:
 name: Generate a list of contributors
 jobs:
   contrib-readme-en-job:
+    if: false
     runs-on: ubuntu-latest
     name: A job to automate contrib in readme
     steps:

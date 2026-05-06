@@ -1,0 +1,8 @@
+{
+    "adapter.layernorm.weight": "model.visual.merger.ln_q.weight",
+    "adapter.layernorm.bias": "model.visual.merger.ln_q.bias",
+    "adapter.linear_fc1.weight": "model.visual.merger.mlp.0.weight",
+    "adapter.linear_fc1.bias": "model.visual.merger.mlp.0.bias",
+    "adapter.linear_fc2.weight": "model.visual.merger.mlp.2.weight",
+    "adapter.linear_fc2.bias": "model.visual.merger.mlp.2.bias"
+}

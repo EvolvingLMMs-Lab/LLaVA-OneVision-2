@@ -23,7 +23,6 @@ _MERGE_FLAGS = [
     "--processor",
     "--out",
     "--spatial-merge-size",
-    "--patch-pos-encoding",
     "--target-dtype",
     "--device",
     "--validate-skip",

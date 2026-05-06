@@ -4,7 +4,5 @@
     "adapter.linear_fc1.weight": "visual.merger.mlp.0.weight",
     "adapter.linear_fc1.bias": "visual.merger.mlp.0.bias",
     "adapter.linear_fc2.weight": "visual.merger.mlp.2.weight",
-    "adapter.linear_fc2.bias": "visual.merger.mlp.2.bias",
-    "adapter.pos_emb_h.weight": "visual.merger.pos_emb_h.weight",
-    "adapter.pos_emb_w.weight": "visual.merger.pos_emb_w.weight"
+    "adapter.linear_fc2.bias": "visual.merger.mlp.2.bias"
 }

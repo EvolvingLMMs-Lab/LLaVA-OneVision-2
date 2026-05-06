@@ -31,22 +31,6 @@ class Adapter(MegatronModule):
         self.spatial_merge_size = spatial_merge_size
         self.hidden_size = input_size * (spatial_merge_size**2)
 
-        self.use_patch_position_encoding = getattr(config, "use_patch_position_encoding", False)
-        # Type of encoding: only supports "absolute"
-        self.patch_position_encoding_type = getattr(config, "patch_position_encoding_type", "absolute")
-
-        if self.use_patch_position_encoding:
-            max_pos = getattr(config, "max_position_embeddings", 8192)
-
-            if self.patch_position_encoding_type != "absolute":
-                raise ValueError(
-                    f"Unsupported patch_position_encoding_type: {self.patch_position_encoding_type}. "
-                    "Only 'absolute' is supported."
-                )
-
-            self.pos_emb_h = torch.nn.Embedding(max_pos, output_size)
-            self.pos_emb_w = torch.nn.Embedding(max_pos, output_size)
-
         self.layernorm = build_module(
             submodules.layernorm,
             config=config,
@@ -80,22 +64,10 @@ class Adapter(MegatronModule):
             skip_weight_param_allocation=False,
         )
 
-    def forward(self, x: torch.Tensor, patch_positions: torch.Tensor = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass."""
         x = self.layernorm(x).view(-1, self.hidden_size)
         x, _ = self.linear_fc1(x)
         x = self.activation_func(x)
         x, _ = self.linear_fc2(x)
-
-        if self.use_patch_position_encoding and patch_positions is not None:
-            # patch_positions is [num_patches, 3] (t, h, w)
-            # Need to reshape and process for spatial merge
-            pp = patch_positions.view(-1, self.spatial_merge_size**2, 3)
-            # Take the position of the first patch in the merged group
-            pp = pp[:, 0, :]
-            # Downsample positions according to spatial merge
-            pp = (pp // self.spatial_merge_size).long()
-
-            x = x + self.pos_emb_h(pp[:, 1]) + self.pos_emb_w(pp[:, 2])
-
         return x

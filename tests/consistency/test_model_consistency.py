@@ -28,7 +28,11 @@ def _autocast_context() -> Any:
     return nullcontext()
 
 
-def _generate_patch_positions(grid_thw: torch.Tensor, device: torch.device) -> torch.Tensor:
+def _generate_patch_positions(
+    grid_thw: torch.Tensor,
+    device: torch.device,
+    spatial_merge_size: int = 1,
+) -> torch.Tensor:
     patch_positions = []
     for i in range(grid_thw.shape[0]):
         t, h, w = grid_thw[i].tolist()
@@ -36,7 +40,15 @@ def _generate_patch_positions(grid_thw: torch.Tensor, device: torch.device) -> t
         h_idx = torch.arange(h, device=device, dtype=torch.float32)
         w_idx = torch.arange(w, device=device, dtype=torch.float32)
         mesh_t, mesh_h, mesh_w = torch.meshgrid(t_idx, h_idx, w_idx, indexing="ij")
-        patch_positions.append(torch.stack([mesh_t, mesh_h, mesh_w], dim=-1).reshape(-1, 3))
+        sample = torch.stack([mesh_t, mesh_h, mesh_w], dim=-1).reshape(-1, 3)
+        sms = spatial_merge_size
+        if sms > 1:
+            total = t * h * w
+            indices = torch.arange(total, device=device).view(t, h, w)
+            h_m, w_m = h // sms, w // sms
+            indices = indices.view(t, h_m, sms, w_m, sms).permute(0, 1, 3, 2, 4).contiguous().view(total)
+            sample = sample[indices]
+        patch_positions.append(sample)
     return torch.cat(patch_positions, dim=0)
 
 
@@ -316,7 +328,8 @@ def test_llm_output_consistency(hf_cond_gen_model, mcore_model, hf_processor, te
     pixel_values = processed["pixel_values"].to(dtype=torch.bfloat16)
     image_grid_thw = processed["image_grid_thw"]
     attention_mask = processed["attention_mask"].logical_not()
-    patch_positions = _generate_patch_positions(image_grid_thw, pixel_values.device)
+    sms = getattr(hf_cond_gen_model.config.vision_config, "spatial_merge_size", 1)
+    patch_positions = _generate_patch_positions(image_grid_thw, pixel_values.device, spatial_merge_size=sms)
 
     with torch.no_grad(), _autocast_context():
         hf_output = hf_cond_gen_model(
@@ -338,6 +351,7 @@ def test_llm_output_consistency(hf_cond_gen_model, mcore_model, hf_processor, te
             attention_mask=attention_mask,
             attn_mask_type=None,
             labels=None,
+            patch_positions=patch_positions,
         ).contiguous()
 
     assert hf_logits.shape == mcore_logits.shape, f"shape mismatch: hf={hf_logits.shape}, mcore={mcore_logits.shape}"
@@ -347,23 +361,31 @@ def test_llm_output_consistency(hf_cond_gen_model, mcore_model, hf_processor, te
 
 @pytest.mark.slow
 def test_hf_loading_consistency(hf_model_path, hf_vision_model, hf_config, test_image_path):
-    from transformers_impl.llavaonevision2.modeling_llava_onevision2 import LlavaOnevision2Model
+    from transformers_impl.llavaonevision2.modeling_llava_onevision2 import (
+        LlavaOnevision2Config,
+        LlavaOnevision2ForConditionalGeneration,
+    )
 
-    from_pretrained_full = LlavaOnevision2Model.from_pretrained(hf_model_path, low_cpu_mem_usage=True)
-    from_pretrained_vision = from_pretrained_full.visual.to(dtype=torch.bfloat16, device="cuda").eval()
+    from_pretrained_full = LlavaOnevision2ForConditionalGeneration.from_pretrained(
+        hf_model_path, low_cpu_mem_usage=True
+    )
+    from_pretrained_vision = from_pretrained_full.model.visual.to(dtype=torch.bfloat16, device="cuda").eval()
 
-    manual_model = LlavaOnevision2Model(hf_config)
+    full_config = LlavaOnevision2Config.from_pretrained(hf_model_path)
+    manual_full = LlavaOnevision2ForConditionalGeneration(full_config)
     safetensors_files = sorted(glob(f"{hf_model_path}/*.safetensors"))
     assert safetensors_files, "No safetensors files found for manual load"
 
     state_dict: dict[str, torch.Tensor] = {}
     for sf_file in safetensors_files:
         state_dict.update(load_file(sf_file))
-    missing, unexpected = manual_model.load_state_dict(state_dict, strict=False)
-    vision_unexpected = [k for k in unexpected if not k.startswith(("model.", "lm_head."))]
+    missing, unexpected = manual_full.load_state_dict(state_dict, strict=False)
+    vision_unexpected = [k for k in unexpected if k.startswith("model.visual.")]
     assert not vision_unexpected, f"Unexpected vision keys in manual HF load: {vision_unexpected}"
+    vision_missing = [k for k in missing if k.startswith("model.visual.")]
+    assert not vision_missing, f"Missing vision keys in manual HF load: {vision_missing}"
 
-    manual_vision = manual_model.visual.to(dtype=torch.bfloat16, device="cuda").eval()
+    manual_vision = manual_full.model.visual.to(dtype=torch.bfloat16, device="cuda").eval()
 
     fp_state = from_pretrained_vision.state_dict()
     manual_state = manual_vision.state_dict()
@@ -400,7 +422,7 @@ def test_hf_loading_consistency(hf_model_path, hf_vision_model, hf_config, test_
         similarity = cosine_similarity(a, b)
         assert similarity > 0.9999, f"forward_debug mismatch at {key}: cosine={similarity}"
 
-    del from_pretrained_full, from_pretrained_vision, manual_model, manual_vision
+    del from_pretrained_full, from_pretrained_vision, manual_full, manual_vision
     if missing:
-        assert all(k.startswith("language_model.") for k in missing), missing
+        assert all(k.startswith("model.language_model.") for k in missing), missing
     torch.cuda.empty_cache()

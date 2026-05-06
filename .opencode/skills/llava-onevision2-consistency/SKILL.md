@@ -146,7 +146,7 @@ Validates HF model loading methods are equivalent:
 
 | Variable | Default | Description |
 |---|---|---|
-| `HF_MODEL_PATH` | `/ov2/pretrain_models/llava_onevision2/llava_onevision2_4b/auto-model` | HF checkpoint (the only required input) |
+| `HF_MODEL_PATH` | `<path/to/hf_checkpoint>` | HF checkpoint (the only required input) |
 | `MCORE_CHECKPOINT_PATH` | (auto-generated) | Set to skip conversion |
 | `PREPROCESSOR_PATH` | `$HF_MODEL_PATH` | Image processor path |
 | `TEST_IMAGE_PATH` | `$REPO_ROOT/asset/performance.png` | Local test image |

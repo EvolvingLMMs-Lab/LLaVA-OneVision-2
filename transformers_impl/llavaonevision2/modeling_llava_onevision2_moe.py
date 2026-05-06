@@ -279,9 +279,6 @@ class LlavaOnevision2VisionPatchMerger(nn.Module):
         context_dim: int,
         spatial_merge_size: int = 3,
         layer_norm_eps: float = 1e-05,
-        use_patch_position_encoding: bool = False,
-        patch_position_encoding_type: str = "absolute",
-        max_position_embeddings: int = 8192,
     ) -> None:
         super().__init__()
         self.hidden_size = context_dim * (spatial_merge_size**2)
@@ -292,46 +289,10 @@ class LlavaOnevision2VisionPatchMerger(nn.Module):
             nn.Linear(self.hidden_size, dim),
         )
         self.spatial_merge_size = spatial_merge_size
-        self.use_patch_position_encoding = use_patch_position_encoding
-        self.patch_position_encoding_type = patch_position_encoding_type
 
-        if self.use_patch_position_encoding:
-            if self.patch_position_encoding_type != "absolute":
-                raise ValueError(
-                    f"Unknown patch_position_encoding_type: {self.patch_position_encoding_type}. "
-                    "Only 'absolute' is supported."
-                )
-            self.pos_emb_h = nn.Embedding(max_position_embeddings, dim)
-            self.pos_emb_w = nn.Embedding(max_position_embeddings, dim)
-
-    def forward(self, x: torch.Tensor, patch_positions: Optional[torch.Tensor] = None) -> torch.Tensor:
-        """
-        Merge patches from Qwen2VL-style input.
-
-        The input patches are already arranged in 2x2 block order by the image processor,
-        so we simply need to apply LayerNorm, reshape, and project through MLP.
-
-        Args:
-            x: Input tensor of shape [batch_size, seq_len, hidden_size] or [seq_len, hidden_size]
-               where seq_len = t * h * w (patches in 2x2 block order)
-
-        Returns:
-            Merged tensor of shape [batch_size, seq_len // spatial_merge_size^2, dim]
-            or [seq_len // spatial_merge_size^2, dim]
-        """
-        if patch_positions is not None and patch_positions.dim() == 3:
-            patch_positions = patch_positions.squeeze(0)
-
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.ln_q(x).view(-1, self.hidden_size)
         x = self.mlp(x)
-
-        if self.use_patch_position_encoding and patch_positions is not None:
-            pp = patch_positions.view(-1, self.spatial_merge_size**2, 3)
-            pp = pp[:, 0, :]
-            pp = (pp // self.spatial_merge_size).long()
-
-            x = x + self.pos_emb_h(pp[:, 1]) + self.pos_emb_w(pp[:, 2])
-
         return x
 
 
@@ -718,9 +679,6 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
             context_dim=config.hidden_size,
             spatial_merge_size=config.spatial_merge_size,
             layer_norm_eps=config.layer_norm_eps,
-            use_patch_position_encoding=getattr(config, "use_patch_position_encoding", False),
-            patch_position_encoding_type=getattr(config, "patch_position_encoding_type", "absolute"),
-            max_position_embeddings=getattr(config, "max_position_embeddings", 8192),
         )
 
         self.post_init()
@@ -948,7 +906,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
             )
 
         # Patch merger: input patches are already in 2x2 block order from Qwen2VL processor
-        merged_output = self.merger(sequence_output, patch_positions=patch_positions)
+        merged_output = self.merger(sequence_output)
 
         if not return_dict:
             return (merged_output,) + (encoder_outputs.hidden_states if output_hidden_states else None,)
@@ -959,6 +917,102 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
             hidden_states=encoder_outputs.hidden_states if output_hidden_states else None,
             attentions=encoder_outputs.attentions if output_attentions else None,
         )
+
+    @torch.no_grad()
+    def forward_debug(
+        self,
+        hidden_state: torch.Tensor,
+        grid_thw: Optional[torch.Tensor] = None,
+        patch_positions: Optional[torch.Tensor] = None,
+    ) -> dict:
+        """Stage-by-stage forward used by HF<->Megatron consistency tests.
+
+        Mirrors the production ``forward`` exactly EXCEPT that ``patch_positions``
+        passed in are assumed to be in row-major (t, h, w) order — matching the
+        Megatron-side ``onevision_encoder_model.forward_debug`` test contract,
+        which also receives row-major positions and applies a block-layout
+        reorder. Production ``forward`` skips that reorder because production
+        ``patch_positions`` come pre-arranged in block layout from the
+        Qwen2VL processor (`build_patch_positions`).
+
+        Layer-wise outputs match the schema produced by Megatron-side
+        ``onevision_encoder_model.forward_debug``.
+        """
+        output: dict[str, torch.Tensor] = {}
+
+        hidden_states = self.embeddings(hidden_state)
+        if hidden_states.dim() == 2:
+            hidden_states = hidden_states.unsqueeze(0)
+        output["after_patch_embed"] = hidden_states.clone()
+        batch_size, total_patches, _ = hidden_states.shape
+
+        if patch_positions is not None and patch_positions.dim() == 3:
+            patch_positions = patch_positions.squeeze(0)
+        freqs_visible = self.video_rope.forward_from_positions(patch_positions)
+
+        if grid_thw is not None:
+            sms = getattr(self.config, "spatial_merge_size", 2)
+            if sms > 1:
+                offset = 0
+                converted_chunks: list[torch.Tensor] = []
+                for sample_idx in range(grid_thw.shape[0]):
+                    t_val = int(grid_thw[sample_idx, 0].item())
+                    h_val = int(grid_thw[sample_idx, 1].item())
+                    w_val = int(grid_thw[sample_idx, 2].item())
+                    n_patches = t_val * h_val * w_val
+                    chunk = freqs_visible[offset : offset + n_patches]
+                    half = chunk.shape[-1]
+                    chunk = chunk.view(t_val, h_val, w_val, half)
+                    h_merged = h_val // sms
+                    w_merged = w_val // sms
+                    chunk = chunk.view(t_val, h_merged, sms, w_merged, sms, half)
+                    chunk = chunk.permute(0, 1, 3, 2, 4, 5).contiguous()
+                    chunk = chunk.view(n_patches, half)
+                    converted_chunks.append(chunk)
+                    offset += n_patches
+                freqs_visible = torch.cat(converted_chunks, dim=0)
+
+        freqs_visible = torch.cat([freqs_visible, freqs_visible], dim=-1)
+        if freqs_visible.dim() == 2:
+            freqs_visible = freqs_visible.unsqueeze(0)
+        output["rotary_pos_emb"] = freqs_visible.clone()
+
+        hidden_states = self.layernorm_pre(hidden_states)
+        output["after_pre_layernorm"] = hidden_states.clone()
+
+        cu_seqlens, max_seqlen = self._build_cu_seqlens(
+            grid_thw=grid_thw,
+            total_patches=total_patches,
+            fixed_t=getattr(self.config, "frame_windows_size", 4),
+            device=hidden_states.device,
+        )
+
+        layer_outputs: dict[str, torch.Tensor] = {}
+        layer_outputs["input_hidden_states"] = hidden_states.clone()
+        for i, layer in enumerate(self.encoder.layers):
+            layer_outputs[f"layer_{i}_input"] = hidden_states.clone()
+            layer_out = layer(
+                hidden_states,
+                attention_mask=None,
+                rotary_pos_emb=freqs_visible,
+                output_attentions=False,
+                cu_seqlens=cu_seqlens,
+                max_seqlen=max_seqlen,
+            )
+            hidden_states = layer_out[0]
+            layer_outputs[f"layer_{i}_output"] = hidden_states.clone()
+        layer_outputs["final_output"] = hidden_states.clone()
+        output["layer_outputs"] = layer_outputs
+
+        if self.layernorm_post is not None:
+            hidden_states = self.layernorm_post(hidden_states)
+        output["before_adapter"] = hidden_states.clone()
+
+        merger_input = hidden_states.squeeze(0) if hidden_states.dim() == 3 else hidden_states
+        merged_output = self.merger(merger_input)
+        output["after_merger"] = merged_output.clone()
+
+        return output
 
 
 @auto_docstring

@@ -98,7 +98,6 @@ def load_all_weights(
     adapter_path: str,
     llm_path: str,
     *,
-    use_patch_pos_enc: bool,
     target_dtype: torch.dtype | None = None,
 ) -> list[LoadReport]:
     reports: list[LoadReport] = []
@@ -108,7 +107,7 @@ def load_all_weights(
     reports.append(apply_weights(model, vit_sd.items(), "ViT", target_dtype=target_dtype))
 
     if adapter_path:
-        adapter_sd = remap_adapter(dict(iter_safetensors(adapter_path)), keep_pos_emb=use_patch_pos_enc)
+        adapter_sd = remap_adapter(dict(iter_safetensors(adapter_path)))
         reports.append(apply_weights(model, adapter_sd.items(), "Adapter", target_dtype=target_dtype))
 
     llm_src = _resolve_local_or_hub(llm_path)
@@ -123,8 +122,6 @@ def dry_run_report(
     vit_path: str,
     adapter_path: str,
     llm_path: str,
-    *,
-    use_patch_pos_enc: bool,
 ) -> tuple[list[LoadReport], list[str]]:
     reports: list[LoadReport] = []
     params = {n: tuple(p.shape) for n, p in model.named_parameters()}
@@ -150,13 +147,10 @@ def dry_run_report(
     _check(remap_vit(dict(iter_safetensors(vit_src))), "ViT")
 
     if adapter_path:
-        _check(remap_adapter(dict(iter_safetensors(adapter_path)), keep_pos_emb=use_patch_pos_enc), "Adapter")
+        _check(remap_adapter(dict(iter_safetensors(adapter_path))), "Adapter")
 
     llm_src = _resolve_local_or_hub(llm_path)
     _check(remap_llm(dict(iter_safetensors(llm_src))), "LLM")
 
-    expected_uncovered: set[str] = set()
-    if not use_patch_pos_enc:
-        expected_uncovered |= {n for n in params if n.startswith("model.visual.merger.pos_emb_")}
-    uncovered = assert_full_coverage(model, reports, expected_uncovered=expected_uncovered)
+    uncovered = assert_full_coverage(model, reports)
     return reports, uncovered

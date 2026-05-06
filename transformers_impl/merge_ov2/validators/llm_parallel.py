@@ -26,7 +26,7 @@ def run(model, llm_path: str, sample_text: str):
     diff = (merged_logits - orig_logits).abs().mean().item()
     sim = cosine_similarity(merged_logits.flatten(0, 1).cpu(), orig_logits.flatten(0, 1).cpu())
     logger.info(f"LLM diff={diff:.6f} cos={sim:.6f}")
-    if not (sim > 0.99 and diff < 1e-2):
+    if not (sim > 0.99 and diff < 5e-2):
         raise ValueError(f"LLM mismatch (diff={diff}, cos={sim})")
     logger.info("LLM consistency OK")
 

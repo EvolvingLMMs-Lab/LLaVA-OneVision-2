@@ -25,14 +25,12 @@ def remap_vit(sd: dict) -> dict:
     return out
 
 
-def remap_adapter(sd: dict, keep_pos_emb: bool) -> dict:
+def remap_adapter(sd: dict) -> dict:
     out = {}
     for k, v in sd.items():
         if k.endswith(".inv_freq"):
             continue
         new_k = k.replace("model.mm_projector", "model.visual.merger", 1) if k.startswith("model.mm_projector") else k
-        if not keep_pos_emb and new_k.startswith("model.visual.merger.pos_emb_"):
-            continue
         out[new_k] = v
     return out
 

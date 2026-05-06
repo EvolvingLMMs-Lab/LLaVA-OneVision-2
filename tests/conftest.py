@@ -223,10 +223,18 @@ def hf_config(hf_model_path: str):
 
 @pytest.fixture(scope="session")
 def hf_vision_model(hf_model_path: str):
-    from transformers_impl.llavaonevision2.modeling_llava_onevision2 import LlavaOnevision2Model
+    # Must load via the Conditional class: ``LlavaOnevision2Model.from_pretrained``
+    # has ``base_model_prefix = ""`` and silently matches 0/N weights against the
+    # ``model.*`` prefix in transformers >=5.x checkpoints (no exception, just
+    # random init).
+    from transformers_impl.llavaonevision2.modeling_llava_onevision2 import (
+        LlavaOnevision2ForConditionalGeneration,
+    )
 
-    full_model = LlavaOnevision2Model.from_pretrained(hf_model_path, low_cpu_mem_usage=True)
-    vision_model = full_model.visual.to(dtype=torch.bfloat16, device="cuda").eval()
+    full_model = LlavaOnevision2ForConditionalGeneration.from_pretrained(
+        hf_model_path, low_cpu_mem_usage=True
+    )
+    vision_model = full_model.model.visual.to(dtype=torch.bfloat16, device="cuda").eval()
     del full_model
     return vision_model
 

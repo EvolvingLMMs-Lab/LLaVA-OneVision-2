@@ -63,7 +63,6 @@ VIT_NUM_ATTENTION_HEADS = 16
 VIT_PATCH_SIZE = 14
 LLM_HIDDEN_SIZE = 64
 SPATIAL_MERGE_SIZE = 2
-ADAPTER_POS_EMB_MAX = 8192
 
 
 def build_vit_state_dict() -> dict[str, torch.Tensor]:
@@ -93,8 +92,6 @@ def build_adapter_state_dict() -> dict[str, torch.Tensor]:
         "model.mm_projector.mlp.0.bias": deterministic_tensor((proj_hidden_size,)),
         "model.mm_projector.mlp.2.weight": deterministic_tensor((LLM_HIDDEN_SIZE, proj_hidden_size)),
         "model.mm_projector.mlp.2.bias": deterministic_tensor((LLM_HIDDEN_SIZE,)),
-        "model.mm_projector.pos_emb_h.weight": deterministic_tensor((ADAPTER_POS_EMB_MAX, LLM_HIDDEN_SIZE)),
-        "model.mm_projector.pos_emb_w.weight": deterministic_tensor((ADAPTER_POS_EMB_MAX, LLM_HIDDEN_SIZE)),
     }
 
 

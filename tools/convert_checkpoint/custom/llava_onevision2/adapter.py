@@ -46,64 +46,6 @@ def _get_non_ep_model_source(state_dict):
     raise TypeError("Unsupported non-EP checkpoint structure")
 
 
-def _resolve_hf_source_key(source, source_key, target_key):
-    """Resolve source key with backward-compatible fallbacks for positional embeddings."""
-    if source_key in source:
-        return source_key
-
-    if "visual.merger.pos_emb_" in source_key and source_key.endswith(".weight"):
-        fallback_candidates = [
-            source_key.replace("pos_emb_h", "abs_pos_emb").replace("pos_emb_w", "abs_pos_emb"),
-            source_key.replace("pos_emb_h", "pos_emb").replace("pos_emb_w", "pos_emb"),
-        ]
-        for candidate in fallback_candidates:
-            if candidate in source:
-                print(f" ! fallback: {target_key} <- {candidate} (from {source_key})")
-                return candidate
-
-        auto_candidates = [
-            key
-            for key in source.keys()
-            if key.startswith("visual.merger") and "abs" in key and key.endswith(".weight")
-        ]
-        if len(auto_candidates) == 1:
-            print(f" ! auto-fallback: {target_key} <- {auto_candidates[0]} (from {source_key})")
-            return auto_candidates[0]
-
-        print(f" ! skip optional key: {target_key} (missing source key: {source_key})")
-        return None
-
-    raise KeyError(source_key)
-
-
-def _resolve_mcore_source_key(source, source_key, target_key):
-    """Resolve mcore source key with backward-compatible fallbacks for positional embeddings."""
-    if source_key in source:
-        return source_key
-
-    if source_key.startswith("adapter.pos_emb_") and source_key.endswith(".weight"):
-        fallback_candidates = [
-            source_key.replace("pos_emb_h", "abs_pos_emb").replace("pos_emb_w", "abs_pos_emb"),
-            source_key.replace("pos_emb_h", "pos_emb").replace("pos_emb_w", "pos_emb"),
-        ]
-        for candidate in fallback_candidates:
-            if candidate in source:
-                print(f" ! fallback: {target_key} <- {candidate} (from {source_key})")
-                return candidate
-
-        auto_candidates = [
-            key for key in source.keys() if key.startswith("adapter") and "abs" in key and key.endswith(".weight")
-        ]
-        if len(auto_candidates) == 1:
-            print(f" ! auto-fallback: {target_key} <- {auto_candidates[0]} (from {source_key})")
-            return auto_candidates[0]
-
-        print(f" ! skip optional key: {target_key} (missing source key: {source_key})")
-        return None
-
-    raise KeyError(source_key)
-
-
 if (args.load_platform, args.save_platform) == ("mcore", "huggingface"):
     """ megatron to huggingface """
     if args.megatron_path is not None:
@@ -117,10 +59,7 @@ if (args.load_platform, args.save_platform) == ("mcore", "huggingface"):
         state_dict = load_megatron_checkpoint(args.load_ckpt_path)
         source = _get_non_ep_model_source(state_dict)
     for k1, k2 in name_map.items():
-        resolved_source_key = _resolve_mcore_source_key(source, k1, k2)
-        if resolved_source_key is None:
-            continue
-        target[k2] = source[resolved_source_key]
+        target[k2] = source[k1]
     save_huggingface_checkpoint(target, args.save_ckpt_path)
 
 elif (args.load_platform, args.save_platform) == ("huggingface", "mcore"):
@@ -130,10 +69,7 @@ elif (args.load_platform, args.save_platform) == ("huggingface", "mcore"):
     source = load_huggingface_checkpoint(args.load_ckpt_path)
     target = {}
     for k1, k2 in name_map.items():
-        resolved_source_key = _resolve_hf_source_key(source, k2, k1)
-        if resolved_source_key is None:
-            continue
-        target[k1] = source[resolved_source_key]
+        target[k1] = source[k2]
         print(f" > {k1}")
     for k in ["adapter.linear_fc1._extra_state", "adapter.linear_fc2._extra_state"]:
         extra_state = io.BytesIO()

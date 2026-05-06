@@ -81,12 +81,6 @@ def _build_parser() -> argparse.ArgumentParser:
     m.add_argument("--processor", dest="processor_path", required=True)
     m.add_argument("--out", dest="output_path", required=True)
     m.add_argument("--spatial-merge-size", dest="spatial_merge_size", type=int, default=2, choices=[1, 2, 3])
-    m.add_argument(
-        "--patch-pos-encoding",
-        dest="use_patch_pos_enc",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
     m.add_argument("--target-dtype", dest="target_dtype", default="bf16", choices=["bf16", "fp16", "fp32"])
     m.add_argument("--device", type=int, default=0)
     _add_validation_flags(m)
@@ -127,7 +121,6 @@ def _cmd_merge(args: argparse.Namespace) -> int:
             args.llm_path,
             args.processor_path,
             spatial_merge_size=args.spatial_merge_size,
-            use_patch_pos_enc=args.use_patch_pos_enc,
             target_dtype=target_dtype,
             vit_path=args.vit_path,
         )
@@ -138,7 +131,6 @@ def _cmd_merge(args: argparse.Namespace) -> int:
             args.vit_path,
             args.adapter_path,
             args.llm_path,
-            use_patch_pos_enc=args.use_patch_pos_enc,
             target_dtype=target_dtype,
         )
 
@@ -216,7 +208,6 @@ def _cmd_dry_run(args: argparse.Namespace) -> int:
             args.llm_path,
             args.processor_path,
             spatial_merge_size=args.spatial_merge_size,
-            use_patch_pos_enc=True,
             vit_path=args.vit_path,
         )
 
@@ -226,7 +217,6 @@ def _cmd_dry_run(args: argparse.Namespace) -> int:
             args.vit_path,
             args.adapter_path,
             args.llm_path,
-            use_patch_pos_enc=True,
         )
 
     total_missing = sum(len(r.missing_in_model) for r in reports)

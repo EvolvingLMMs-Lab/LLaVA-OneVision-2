@@ -1,7 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 320" width="100%" height="100%">
+  <style>
+    .ov2-accent {
+      transform-box: fill-box;
+      transform-origin: left center;
+      animation: ov2-pulse-dark 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes ov2-pulse-dark {
+      0%   { fill: #6B7280; transform: scale(1); }
+      40%  { fill: #F3F4F6; transform: scale(1.05); }
+      100% { fill: #6B7280; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ov2-accent { animation: none; fill: #F3F4F6; }
+    }
+  </style>
   <text x="50%" y="78%" dominant-baseline="alphabetic" text-anchor="middle"
         font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
         font-size="240" letter-spacing="-0.045em">
-    <tspan font-weight="700" fill="#FAFAFA">LLaVA-OneVision</tspan><tspan font-weight="500" fill="#6B7280">&#8202;2.0</tspan>
+    <tspan font-weight="700" fill="#FAFAFA">LLaVA-OneVision</tspan><tspan class="ov2-accent" font-weight="500" fill="#6B7280">&#8202;2.0</tspan>
   </text>
 </svg>

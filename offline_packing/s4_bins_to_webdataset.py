@@ -97,15 +97,27 @@ def process_chunk(
     shard_pattern = os.path.join(output_dir, f"{shard_prefix}-{chunk_id:03d}-%03d.tar")
     processed = 0
 
+    skipped = 0
     with wds.ShardWriter(
         shard_pattern,
         maxcount=max_samples_per_shard,
         maxsize=max_shard_size,
     ) as sink:
         for bin_index, bin_data in bins_chunk:
-            sample = build_direct_sample(packer, bin_index, bin_data)
+            try:
+                sample = build_direct_sample(packer, bin_index, bin_data)
+            except (FileNotFoundError, OSError) as exc:
+                skipped += 1
+                print(
+                    f"# [chunk {chunk_id}] SKIP bin {bin_index}: {type(exc).__name__}: {exc}",
+                    flush=True,
+                )
+                continue
             sink.write(sample)
             processed += 1
+
+    if skipped:
+        print(f"# [chunk {chunk_id}] skipped {skipped} bins out of {len(bins_chunk)}", flush=True)
 
     tar_files = sorted(str(path) for path in Path(output_dir).glob(f"{shard_prefix}-{chunk_id:03d}-*.tar"))
     return processed, tar_files

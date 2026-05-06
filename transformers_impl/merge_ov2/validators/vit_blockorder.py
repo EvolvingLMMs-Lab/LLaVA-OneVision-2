@@ -3,7 +3,7 @@ import os
 import torch
 from PIL import Image
 
-from transformers import AutoProcessor, CLIPImageProcessor, logging
+from transformers import AutoModel, AutoProcessor, CLIPImageProcessor, logging
 
 from ..utils import build_patch_positions, cosine_similarity, load_image, rowmajor_to_block
 
@@ -12,19 +12,17 @@ logger = logging.get_logger(__name__)
 
 
 def _load_orig_vit(vit_path: str, device: torch.device):
-    from onevision_encoder import OneVisionEncoderModel
-
-    common = dict(trust_remote_code=True, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True)
-    try:
-        m = OneVisionEncoderModel.from_pretrained(vit_path, attn_implementation="flash_attention_2", **common)
-    except (ImportError, ValueError, RuntimeError) as e:
-        logger.warning(f"FA2 unavailable ({e}); falling back to sdpa")
-        m = OneVisionEncoderModel.from_pretrained(vit_path, attn_implementation="sdpa", **common)
+    m = AutoModel.from_pretrained(
+        vit_path,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+        low_cpu_mem_usage=True,
+        attn_implementation="flash_attention_2",
+    )
     return m.to(device).eval()
 
 
 def run(model, vit_path: str, qwen_processor_path: str, img_path: str, device: torch.device):
-    from onevision_encoder import OneVisionEncoderModel  # noqa: F401  (load_orig_vit needs it imported lazily)
     from qwen_vl_utils import process_vision_info
 
     sms = model.config.vision_config.spatial_merge_size
@@ -43,7 +41,7 @@ def run(model, vit_path: str, qwen_processor_path: str, img_path: str, device: t
     clip_px = clip_px.to(dtype=torch.bfloat16, device=device)
     grid_h, grid_w = h // patch_size, w // patch_size
 
-    qwen_proc = AutoProcessor.from_pretrained(qwen_processor_path, use_fast=True)
+    qwen_proc = AutoProcessor.from_pretrained(qwen_processor_path, use_fast=True, trust_remote_code=True)
     ip = qwen_proc.image_processor
     ip.do_resize = False
     ip.max_pixels = ip.min_pixels = h * w

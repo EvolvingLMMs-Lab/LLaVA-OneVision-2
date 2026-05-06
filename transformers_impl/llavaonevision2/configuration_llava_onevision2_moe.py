@@ -55,9 +55,6 @@ class LlavaOnevision2VisionConfig(PreTrainedConfig):
     tokens_per_second: int = 1
     temporal_patch_size: int = 1
     frame_windows_size: int = 4
-    use_patch_position_encoding: bool = False
-    patch_position_encoding_type: str = "absolute"
-    max_position_embeddings: int = 8192
 
 
 @strict

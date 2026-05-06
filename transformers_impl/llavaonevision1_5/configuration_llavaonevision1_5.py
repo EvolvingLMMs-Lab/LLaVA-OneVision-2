@@ -245,9 +245,9 @@ class LLaVAOneVision1_5_TextConfig(PretrainedConfig):
 class Llavaonevision1_5Config(PretrainedConfig):
     r"""
     Args:
-        text_config (`Union[PreTrainedConfig, dict]`, *optional*, defaults to `LLaVAOneVision1_5_TextConfig`):
+        text_config (`Union[PretrainedConfig, dict]`, *optional*, defaults to `LLaVAOneVision1_5_TextConfig`):
             The config object or dictionary of the text backbone.
-        vision_config (`Union[PreTrainedConfig, dict]`,  *optional*, defaults to `LLaVAOneVision1_5_VisionConfig`):
+        vision_config (`Union[PretrainedConfig, dict]`,  *optional*, defaults to `LLaVAOneVision1_5_VisionConfig`):
             The config object or dictionary of the vision backbone.
         image_token_id (`int`, *optional*, defaults to 151655):
             The image token index to encode the image prompt.

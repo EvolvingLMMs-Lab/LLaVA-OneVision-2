@@ -226,14 +226,7 @@ class LlavaOnevision2(MegatronModule):
                 image_embeddings = self.vision_model(
                     images, grid_thw=image_grid_thw, patch_positions=patch_positions
                 )  # [img_len, h_vision]
-                
-                patch_positions_cat = None
-                if patch_positions is not None:
-                    if isinstance(patch_positions, list):
-                        patch_positions_cat = torch.cat(patch_positions, dim=0)
-                    else:
-                        patch_positions_cat = patch_positions
-                image_embeddings = self.adapter(image_embeddings, patch_positions=patch_positions_cat)
+                image_embeddings = self.adapter(image_embeddings)
 
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
