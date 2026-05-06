@@ -75,13 +75,9 @@ def get_mobilellm_config(args):
         untie_embeddings_and_output_weights=not tie_word_embeddings,
         
         # Position embeddings:
-        # NOTE: The original MobileLLM-R1 HF config sets no_rope_layers=[1,1,...,1]
-        # (all 1s in a 15-element list), meaning all attention layers use NoPE
-        # (no positional encoding) per the Llama4/MobileLLM-R1 architecture.
-        # rope_theta=8000000 is present in config.json but not applied in HF transformers.
-        # This Megatron integration applies RoPE with that theta value, which is an
-        # intentional divergence to provide positional encoding for the multimodal
-        # adaptation. If you want strict NoPE fidelity, set position_embedding_type="none".
+        # HF Llama4TextAttention treats no_rope_layers[layer_idx] as the
+        # use_rope flag. MobileLLM-R1-140M sets it to 1 for all layers, so this
+        # Megatron integration should use RoPE with rope_theta=8000000.
         position_embedding_type="rope",
         rotary_base=rope_theta,
         rotary_percent=1.0,

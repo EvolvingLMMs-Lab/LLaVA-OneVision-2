@@ -63,3 +63,17 @@ checkpoints/
 stage_1_alignment_llava_ov_4b/
 tmp/
 Stage1/training_output.log
+
+# Local training/evaluation artifacts
+*.log
+*.out
+wandb/
+tensorboard/
+eval_outputs/
+data/hf_cache/
+data/hf_cache_midtraining_stream/
+data/midtraining_*_webdataset/
+stage_1_5_midtraining_*/
+stage_1_alignment_mobilellm_140m/
+stage_1_alignment_mobilellm_140m_fastvlm_faithful_smoke/
+stage_1_alignment_mobilellm_140m_fastvlm_faithful/

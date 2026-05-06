@@ -11,10 +11,10 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-$REPO_ROOT/aiak_megatron}"
 # Model parallelism configuration
 TP="${1:-1}"  # Tensor parallel
 PP="${2:-1}"  # Pipeline parallel
-SEQ_LEN="${3:-32768}"  # Sequence length (reduced for testing)
+SEQ_LEN="${3:-32768}"  # Sequence length
 MBS="${4:-1}"  # Micro batch size
-GBS="${5:-4}"  # Global batch size (for TP=1, PP=1, 8 GPUs -> DP=8)
-NSTEP="${6:-100}"  # Number of training iterations (1 step with 4 examples)
+GBS="${5:-2}"  # Global batch size (TP=1, PP=1, 2 GPUs -> DP=2, 1 sample/GPU)
+NSTEP="${6:-2500}"  # Total training iterations (resume from last checkpoint)
 
 # Data paths - UPDATE THESE FOR YOUR SETUP
 DATA_PATH="${DATA_PATH:-"$REPO_ROOT/data/LLaVA-558K-Webdataset"}"
@@ -73,16 +73,16 @@ echo "Current Node Rank: ${NODE_RANK}"
 echo "Node Size: ${NNODES}"
 
 # Output directories
-SAVE_CKPT_PATH=$(basename "$0" .sh)
-TENSORBOARD_PATH="${SAVE_CKPT_PATH}/tensorboard"
+SAVE_CKPT_PATH="${SAVE_CKPT_PATH:-$(basename "$0" .sh)}"
+TENSORBOARD_PATH="${TENSORBOARD_PATH:-${SAVE_CKPT_PATH}/tensorboard}"
 
 mkdir -p "$SAVE_CKPT_PATH"
 mkdir -p "$TENSORBOARD_PATH"
 mkdir -p "$SAVE_CKPT_PATH/dataloader"
 
-GPUS_PER_NODE=${GPUS_PER_NODE:-4}
+GPUS_PER_NODE=${GPUS_PER_NODE:-2}
 MASTER_PORT=${MASTER_PORT:-26000}
-SAVE_INTERVAL=${SAVE_INTERVAL:-1}
+SAVE_INTERVAL=${SAVE_INTERVAL:-100}
 
 if [[ $SINGLE_NODE -eq 1 ]]; then
     DISTRIBUTED_ARGS=(
@@ -138,7 +138,7 @@ TRAINING_ARGS=(
     --no-gradient-accumulation-fusion
     --seq-length "${SEQ_LEN}"
     --no-rope-fusion
-    --training-rice-vl-max-answer-length 32768
+    --training-rice-vl-max-answer-length "${SEQ_LEN}"
     --transformer-impl local
     --max-position-embeddings 32768  # MobileLLM supports 32k context
     --init-method-std 0.02

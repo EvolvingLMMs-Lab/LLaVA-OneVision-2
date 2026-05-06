@@ -28,10 +28,10 @@ class FastViTModel(MegatronModule):
         
         # Create a simple args object for MobileCLIPVisionTower
         class Args:
-            def __init__(self):
-                self.unfreeze_mm_vision_tower = False
+            def __init__(self, unfreeze_mm_vision_tower):
+                self.unfreeze_mm_vision_tower = unfreeze_mm_vision_tower
         
-        args = Args()
+        args = Args(getattr(config, 'unfreeze_mm_vision_tower', False))
         
         # FastViTHD model name with resolution
         # Format: mobileclip_l_{resolution}
@@ -64,7 +64,7 @@ class FastViTModel(MegatronModule):
             grid_thw: Grid dimensions (not used by FastViT, kept for API compatibility)
             
         Returns:
-            Vision features [batch, num_tokens, hidden_size]
+            Vision features [total_image_tokens, hidden_size]
             window_index: None (FastViT doesn't use windowing)
         """
         # MobileCLIPVisionTower expects single images or list of images
@@ -74,6 +74,10 @@ class FastViTModel(MegatronModule):
             image_features = self.vision_tower.forward_images(images)
         else:
             raise ValueError(f"Unexpected image tensor shape: {images.shape}")
+
+        if image_features.dim() == 3:
+            # [num_images, tokens_per_image, hidden] -> [all_image_tokens, hidden]
+            image_features = image_features.flatten(0, 1).contiguous()
         
         # Return features and None for window_index (compatibility with Qwen2-VL API)
         return image_features, None

@@ -113,8 +113,14 @@ def rice_vl_model_provider(
         setattr(vision_config, 'patch_size', image_cfg['patch_size'])  # 64
         setattr(vision_config, 'image_size', resolution)  # from vision_tower_name (1024)
         setattr(vision_config, 'num_attention_heads', image_cfg['embed_dim'] // 64)  # 48
+        train_vision_model = (
+            args.trainable_modules == ['all']
+            or "vision_model" in args.trainable_modules
+        )
+        setattr(vision_config, 'unfreeze_mm_vision_tower', train_vision_model)
         
         print_rank_0(f'[DEBUG PROVIDER] ✓ Using FastViT with vision_tower_name: {vision_tower_name}')
+        print_rank_0(f'[DEBUG PROVIDER] FastViT train vision tower: {train_vision_model}')
         print_rank_0(f'[DEBUG PROVIDER] FastViT config loaded from {json_config_path}')
         print_rank_0(f'[DEBUG PROVIDER] image_cfg: embed_dim={image_cfg["embed_dim"]}, patch_size={image_cfg["patch_size"]}, model={image_cfg["model_name"]}')
         print_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (FastViT) ==========')

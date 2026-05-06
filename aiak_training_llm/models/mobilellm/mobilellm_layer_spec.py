@@ -1,5 +1,8 @@
 """MobileLLM layer specification - Standard LLaMA architecture"""
 
+import torch
+import torch.nn as nn
+
 from megatron.core.transformer.enums import AttnMaskType
 from megatron.core.transformer.identity_op import IdentityOp
 from megatron.core.transformer.spec_utils import ModuleSpec
@@ -9,6 +12,17 @@ from megatron.core.transformer.transformer_config import TransformerConfig
 from megatron.core.transformer.mlp import MLP, MLPSubmodules
 
 from aiak_training_llm.models.dispatch import multiacc_modules
+
+
+class MobileLLML2QKNorm(nn.Module):
+    """Parameter-free L2 Q/K norm used by HF Llama4/MobileLLM."""
+
+    def __init__(self, hidden_size=None, config=None, eps=1e-5):
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, x):
+        return (x.float() * torch.rsqrt(x.float().pow(2).mean(dim=-1, keepdim=True) + self.eps)).to(x.dtype)
 
 
 def _is_te_min_version(version: str) -> bool:
@@ -38,9 +52,7 @@ def get_mobilellm_layer_with_te_spec(config: TransformerConfig) -> ModuleSpec:
     Returns:
         ModuleSpec for MobileLLM transformer layer
     """
-    # TENorm significantly harms convergence when used for QKLayerNorm if TE Version < 1.9;
-    # we instead use the Apex implementation.
-    qk_norm = multiacc_modules.TENorm if _is_te_min_version("1.9.0") else multiacc_modules.LocalNorm
+    qk_norm = MobileLLML2QKNorm
     
     # Standard dense MLP with SwiGLU
     mlp = ModuleSpec(

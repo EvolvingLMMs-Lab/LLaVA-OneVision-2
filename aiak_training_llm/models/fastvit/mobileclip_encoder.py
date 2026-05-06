@@ -60,10 +60,10 @@ class MobileCLIPVisionTower(nn.Module):
         # Features from penultimate layer (conv_exp output): (B, C, H, W)
         image_features = image_forward_outs["image_embeddings"]
 
-        # Global average pool over spatial dims: (B, C, H, W) -> (B, C)
-        # FastVLM uses 1 visual token per image (not per patch) for efficiency.
+        # Match FastVLM: keep the spatial FastViTHD grid as visual tokens.
+        # (B, C, H, W) -> (B, H * W, C)
         B, C, H, W = image_features.shape
-        image_features = image_features.mean(dim=[-2, -1])  # (B, C)
+        image_features = image_features.reshape(B, C, H * W).transpose(1, 2).contiguous()
         return image_features
 
     def forward(self, images):

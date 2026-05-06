@@ -184,7 +184,14 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             # Initialize FastViT image processor
             fastvit_image_size = getattr(args, 'fastvit_image_size', 1024)
             self.fastvit_processor = FastViTImageProcessor(image_size=fastvit_image_size)
-            _rank0_print(f"Initialized FastViT processor with image_size={fastvit_image_size}")
+            fastvit_patch_size = getattr(args, 'fastvit_patch_size', 64)
+            self.fastvit_tokens_per_side = fastvit_image_size // fastvit_patch_size
+            self.fastvit_num_image_tokens = self.fastvit_tokens_per_side ** 2
+            self.image_token_block = IMAGE_TOKEN * self.fastvit_num_image_tokens
+            _rank0_print(
+                f"Initialized FastViT processor with image_size={fastvit_image_size}, "
+                f"tokens_per_image={self.fastvit_num_image_tokens}"
+            )
         else:
             # For Qwen2-VL: Load full processor (tokenizer + image/video processor)
             self.processor = AutoProcessor.from_pretrained(
@@ -193,6 +200,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 local_files_only=False
             )
             _rank0_print(f"Loaded Qwen2-VL processor from {self.args.hf_tokenizer_path}")
+            self.image_token_block = IMAGE_TOKEN_WITH_TAGS
 
         _rank0_print(f"Processor config: {self.processor}")
 
@@ -347,15 +355,14 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             
             pixel = [pixel_values]
             
-            # FastViT: Set grid_thw to represent 1 tile (no dynamic grid)
-            # Format: tensor([[num_tiles, height, width]])
-            image_grid_thw = torch.tensor([[1, 1, 1]])
+            # FastViT: one square tile with a spatial token grid.
+            image_grid_thw = torch.tensor([[1, self.fastvit_tokens_per_side, self.fastvit_tokens_per_side]])
             
             # Create target tensor (same as Qwen2-VL path)
             target = input_ids.clone()
-            target[target == vision_start_id] = IGNORE_INDEX
-            target[target == img_pad_id] = IGNORE_INDEX
-            target[target == vision_end_id] = IGNORE_INDEX
+            for token_id in (vision_start_id, img_pad_id, vision_end_id):
+                if token_id is not None:
+                    target[target == token_id] = IGNORE_INDEX
             
             return input_ids, target, pixel, image_grid_thw, attn_mask
         
@@ -408,7 +415,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             }],
             tokenize=False
         ).replace(
-            "<image>", IMAGE_TOKEN_WITH_TAGS
+            "<image>", self.image_token_block
         )
         if text[-1] == '\n':
             text = text[:-1]
@@ -555,8 +562,8 @@ class Qwen2VLTaskEncoder(TaskEncoder):
 
         # assert self.args.training_phase == constants.TrainingPhase.PRETRAIN, "Only support PRETRAIN phase"
 
-        # text = IMAGE_TOKEN_WITH_TAGS + sample.caption + self.tokenizer.tokenizer.eos_token
-        text = IMAGE_TOKEN_WITH_TAGS + sample.caption + self.tokenizer.eos_token
+        # text = self.image_token_block + sample.caption + self.tokenizer.tokenizer.eos_token
+        text = self.image_token_block + sample.caption + self.tokenizer.eos_token
 
         input_ids, target, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
         num_tiles = [len(image_grid_thw)] if image_grid_thw is not None else [1]
@@ -594,7 +601,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 'content': sample.answers
             }],
             tokenize=False
-        ).replace("<image>", IMAGE_TOKEN_WITH_TAGS)        
+        ).replace("<image>", self.image_token_block)        
 
         if text[-1] == '\n':
             text = text[:-1]
@@ -710,10 +717,10 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             if self.args.add_question_in_pretrain:
                 text = (sample.context + sample.answers).replace(
                     "<image>",
-                    IMAGE_TOKEN_WITH_TAGS
+                    self.image_token_block
                 )
             else:
-                text = IMAGE_TOKEN_WITH_TAGS + sample.answers
+                text = self.image_token_block + sample.answers
             # text = text + self.tokenizer.tokenizer.eos_token
             text = text + self.tokenizer.eos_token
             input_ids, target, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
@@ -771,7 +778,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                     'content': sample.answers
                 }],
                 tokenize=False
-            ).replace("<image>", IMAGE_TOKEN_WITH_TAGS)
+            ).replace("<image>", self.image_token_block)
             if text[-1] == '\n':
                 text = text[:-1]
             input_ids, _, imgs, image_grid_thw, attn_mask = self._process(sample.image, text)
