@@ -81,7 +81,11 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 </p>
 
 <p align="center">
-  <img src="asset/method_codec_vs_frame.svg" width="100%" alt="Figure 4: codec-aligned sampling compared with uniform frame sampling across video benchmarks">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="asset/method_codec_vs_frame_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/method_codec_vs_frame_light.svg">
+    <img src="asset/method_codec_vs_frame_light.svg" width="100%" alt="Figure 4: codec-aligned sampling compared with uniform frame sampling across video benchmarks">
+  </picture>
 </p>
 
 
@@ -90,7 +94,11 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 ### Codec-Style Patch Selection
 
 <p align="left">
-  <img src="asset/method_codec_selection.svg" alt="Codec-Style Patch Selection: same 54-token budget, 3× more temporal range than uniform sampling" width="88%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="asset/method_codec_selection_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/method_codec_selection_light.svg">
+    <img src="asset/method_codec_selection_light.svg" alt="Codec-Style Patch Selection: same 54-token budget, 3× more temporal range than uniform sampling" width="88%">
+  </picture>
 </p>
 
 Standard video pipelines uniformly sample a handful of frames and process **every** patch — most of it static background. We borrow from HEVC: keep **I-frames** dense, keep only **motion- and residual-rich patches** from **P-frames**. Same 54-token budget, **18 frames** instead of 6 — 3× the temporal range, no extra LLM context, no input-type adapters.
@@ -98,7 +106,11 @@ Standard video pipelines uniformly sample a handful of frames and process **ever
 ### One Encoder, Every Modality
 
 <p align="left">
-  <img src="asset/method_unified_encoder.svg" alt="Multi-modal vision input: image, uniform frames, or codec-aligned tokens all feed the same OneVision-Encoder with shared (t, h, w) positions" width="66%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="asset/method_unified_encoder_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/method_unified_encoder_light.svg">
+    <img src="asset/method_unified_encoder_light.svg" alt="Multi-modal vision input: image, uniform frames, or codec-aligned tokens all feed the same OneVision-Encoder with shared (t, h, w) positions" width="66%">
+  </picture>
 </p>
 
 Most multimodal stacks ship a different tokenizer per input type — one path for images, another for video, a third for multi-image. We don't. **Image, uniform frames, and codec-aligned tokens** all flow into the **same OneVision-Encoder** under a shared `(t, h, w)` position scheme. No task-specific tokenizers, no per-modality routing.

@@ -1,0 +1,429 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 820" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif">
+  <defs>
+    <style><![CDATA[
+.title { font-size: 38px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 18px; font-weight: 500; fill: #64748b; letter-spacing: 0.04em; text-transform: uppercase; }
+      .panel-title { font-size: 24px; font-weight: 600; fill: #0f172a; }
+      .panel-sub { font-size: 16px; font-weight: 400; fill: #64748b; }
+      .stat-num { font-size: 36px; font-weight: 700; }
+      .stat-label { font-size: 13px; font-weight: 500; fill: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+      .pos-label { font-size: 16px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+      .pos-num { font-size: 15px; font-weight: 500; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+      .legend-text { font-size: 15px; font-weight: 500; fill: #334155; }
+      .divider { stroke: #e2e8f0; stroke-width: 1; }
+
+    /* Extracted Inline Colors */
+    .fill-ffffff { fill: #ffffff; }
+    .fill-2563eb { fill: #2563eb; }
+    .fill-0f172a { fill: #0f172a; }
+    .fill-f8fafc { fill: #f8fafc; }
+    .stroke-0f172a { stroke: #0f172a; }
+    .fill-334155 { fill: #334155; }
+    .stroke-94a3b8 { stroke: #94a3b8; }
+    .fill-94a3b8 { fill: #94a3b8; }
+    .fill-f59e0b { fill: #f59e0b; }
+    .stroke-cbd5e1 { stroke: #cbd5e1; }
+    .fill-9a3412 { fill: #9a3412; }
+    .fill-15803d { fill: #15803d; }
+    .fill-1d4ed8 { fill: #1d4ed8; }
+    .fill-0d9488 { fill: #0d9488; }
+  ]]></style>
+  </defs>
+  <rect width="1080" height="820" class="fill-ffffff" />
+
+  <text x="60" y="44" class="subtitle">Figure 2 · One Encoder, Every Modality</text>
+  <text x="60" y="80" class="title">OneVision-Encoder.</text>
+  <text x="60" y="124" class="title">Three input types. Same token grid.</text>
+  <text x="60" y="156" class="panel-sub">All three input types flow through the <tspan font-weight="700" class="fill-2563eb">same OneVision-Encoder</tspan> under shared <tspan font-weight="700" font-family="'SF Mono', 'Menlo', monospace" class="fill-0f172a">(t, h, w)</tspan> positions.</text>
+  <line x1="60" y1="174" x2="1020" y2="174" class="divider" />
+
+  <g>
+    <rect x="60" y="208" width="960" height="52" rx="6" stroke-width="1.5" class="fill-f8fafc stroke-0f172a" />
+    <text x="540.0" y="230" text-anchor="middle" class="panel-title">OneVision-Encoder · 24 Layers</text>
+    <text x="540.0" y="250" text-anchor="middle" class="panel-sub">Shared encoder · positions <tspan font-family="'SF Mono', 'Menlo', monospace" class="fill-334155">(t, h, w)</tspan></text>
+  </g>
+
+  <line x1="540.0" y1="262" x2="540.0" y2="270" stroke-width="1.5" stroke-dasharray="3 3" class="stroke-94a3b8" />
+  <polygon points="536,270 544,270 540,276" class="fill-94a3b8" />
+
+  <g>
+    <rect x="60" y="274" width="3" height="162" rx="1.5" class="fill-f59e0b" />
+    <text x="74" y="298" class="panel-title">Image</text>
+    <text x="74" y="320" class="panel-sub">1 frame · 9 patches · single time step</text>
+    <text x="1020" y="300" text-anchor="end" class="stat-num fill-f59e0b">9</text>
+    <text x="1020" y="318" text-anchor="end" class="stat-label">tokens</text>
+    <rect x="138" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="165" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="192" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="219" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="246" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="273" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="300" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="327" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="354" y="344" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="381" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="408" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="435" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="462" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="489" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="516" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="543" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="570" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="597" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="624" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="651" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="678" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="705" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="732" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="759" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="786" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="813" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="840" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="867" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="894" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="921" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="948" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <rect x="975" y="344" width="23" height="23" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <text x="74" y="389" class="pos-label fill-9a3412">t:</text>
+    <text x="149.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="176.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="203.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="230.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="257.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="284.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="311.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="338.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="365.5" y="389" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="74" y="405" class="pos-label fill-15803d">h:</text>
+    <text x="149.5" y="405" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="176.5" y="405" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="203.5" y="405" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="230.5" y="405" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="257.5" y="405" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="284.5" y="405" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="311.5" y="405" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="338.5" y="405" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="365.5" y="405" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="74" y="421" class="pos-label fill-1d4ed8">w:</text>
+    <text x="149.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="176.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="203.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="230.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="257.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="284.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="311.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="338.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="365.5" y="421" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+  </g>
+
+  <g>
+    <rect x="60" y="438" width="3" height="162" rx="1.5" class="fill-2563eb" />
+    <text x="74" y="462" class="panel-title">Uniform Frames</text>
+    <text x="74" y="484" class="panel-sub">8 frames sampled uniformly · 4 patches per frame</text>
+    <text x="1020" y="464" text-anchor="end" class="stat-num fill-2563eb">32</text>
+    <text x="1020" y="482" text-anchor="end" class="stat-label">tokens</text>
+    <rect x="138" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="165" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="192" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="219" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="246" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="273" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="300" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="327" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="354" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="381" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="408" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="435" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="462" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="489" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="516" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="543" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="570" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="597" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="624" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="651" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="678" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="705" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="732" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="759" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="786" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="813" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="840" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="867" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="894" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="921" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="948" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <rect x="975" y="508" width="23" height="23" rx="2" opacity="0.85" class="fill-2563eb" />
+    <text x="74" y="553" class="pos-label fill-9a3412">t:</text>
+    <text x="149.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="176.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="203.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="230.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="257.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">1</text>
+    <text x="284.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">1</text>
+    <text x="311.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">1</text>
+    <text x="338.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">1</text>
+    <text x="365.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">2</text>
+    <text x="392.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">2</text>
+    <text x="419.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">2</text>
+    <text x="446.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">2</text>
+    <text x="473.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">3</text>
+    <text x="500.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">3</text>
+    <text x="527.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">3</text>
+    <text x="554.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">3</text>
+    <text x="581.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">4</text>
+    <text x="608.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">4</text>
+    <text x="635.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">4</text>
+    <text x="662.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">4</text>
+    <text x="689.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">5</text>
+    <text x="716.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">5</text>
+    <text x="743.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">5</text>
+    <text x="770.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">5</text>
+    <text x="797.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">6</text>
+    <text x="824.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">6</text>
+    <text x="851.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">6</text>
+    <text x="878.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">6</text>
+    <text x="905.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">7</text>
+    <text x="932.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">7</text>
+    <text x="959.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">7</text>
+    <text x="986.5" y="553" text-anchor="middle" class="pos-num fill-9a3412">7</text>
+    <text x="74" y="569" class="pos-label fill-15803d">h:</text>
+    <text x="149.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="176.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="203.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="230.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="257.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="284.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="311.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="338.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="365.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="392.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="419.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="446.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="473.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="500.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="527.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="554.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="581.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="608.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="635.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="662.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="689.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="716.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="743.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="770.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="797.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="824.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="851.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="878.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="905.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="932.5" y="569" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="959.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="986.5" y="569" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="74" y="585" class="pos-label fill-1d4ed8">w:</text>
+    <text x="149.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="176.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="203.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="230.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="257.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="284.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="311.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="338.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="365.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="392.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="419.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="446.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="473.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="500.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="527.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="554.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="581.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="608.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="635.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="662.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="689.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="716.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="743.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="770.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="797.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="824.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="851.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="878.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="905.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="932.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="959.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="986.5" y="585" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+  </g>
+
+  <g>
+    <rect x="60" y="602" width="3" height="162" rx="1.5" class="fill-0d9488" />
+    <text x="74" y="626" class="panel-title">Codec-Aligned</text>
+    <text x="74" y="648" class="panel-sub">32 frames · I-frame patches + P-frame motion patches</text>
+    <text x="1020" y="628" text-anchor="end" class="stat-num fill-0d9488">32</text>
+    <text x="1020" y="646" text-anchor="end" class="stat-label">tokens</text>
+    <rect x="138" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="165" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="192" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="219" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="246" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="253.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="273" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="280.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="300" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="307.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="327" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="334.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="354" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="381" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="408" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="435" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="462" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="469.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="489" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="496.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="516" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="523.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="543" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="550.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="570" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="597" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="624" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="651" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="678" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="685.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="705" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="712.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="732" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="739.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="759" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="766.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="786" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="813" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="840" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="867" y="672" width="23" height="23" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <rect x="894" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="901.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="921" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="928.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="948" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="955.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <rect x="975" y="672" width="23" height="23" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="982.5" y="679.5" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <text x="74" y="717" class="pos-label fill-9a3412">t:</text>
+    <text x="149.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="176.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="203.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="230.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">0</text>
+    <text x="257.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">2</text>
+    <text x="284.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">4</text>
+    <text x="311.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">6</text>
+    <text x="338.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">8</text>
+    <text x="365.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">8</text>
+    <text x="392.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">8</text>
+    <text x="419.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">8</text>
+    <text x="446.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">8</text>
+    <text x="473.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">10</text>
+    <text x="500.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">12</text>
+    <text x="527.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">14</text>
+    <text x="554.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">16</text>
+    <text x="581.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">16</text>
+    <text x="608.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">16</text>
+    <text x="635.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">16</text>
+    <text x="662.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">16</text>
+    <text x="689.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">18</text>
+    <text x="716.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">20</text>
+    <text x="743.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">22</text>
+    <text x="770.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">24</text>
+    <text x="797.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">24</text>
+    <text x="824.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">24</text>
+    <text x="851.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">24</text>
+    <text x="878.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">24</text>
+    <text x="905.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">26</text>
+    <text x="932.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">28</text>
+    <text x="959.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">30</text>
+    <text x="986.5" y="717" text-anchor="middle" class="pos-num fill-9a3412">32</text>
+    <text x="74" y="733" class="pos-label fill-15803d">h:</text>
+    <text x="149.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="176.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="203.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="230.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="257.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="284.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="311.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="338.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="365.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="392.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="419.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="446.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="473.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="500.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="527.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="554.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="581.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="608.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="635.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="662.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="689.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="716.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="743.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="770.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="797.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="824.5" y="733" text-anchor="middle" class="pos-num fill-15803d">0</text>
+    <text x="851.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="878.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="905.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="932.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="959.5" y="733" text-anchor="middle" class="pos-num fill-15803d">1</text>
+    <text x="986.5" y="733" text-anchor="middle" class="pos-num fill-15803d">2</text>
+    <text x="74" y="749" class="pos-label fill-1d4ed8">w:</text>
+    <text x="149.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="176.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="203.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="230.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="257.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="284.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="311.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="338.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="365.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="392.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="419.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="446.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="473.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="500.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="527.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="554.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="581.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="608.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="635.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="662.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="689.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="716.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="743.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="770.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="797.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="824.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="851.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="878.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">1</text>
+    <text x="905.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="932.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+    <text x="959.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">2</text>
+    <text x="986.5" y="749" text-anchor="middle" class="pos-num fill-1d4ed8">0</text>
+  </g>
+
+  <line x1="60" y1="770" x2="1020" y2="770" class="divider" />
+  <g transform="translate(60, 796)">
+    <rect x="0" y="-13" width="16" height="16" rx="2" opacity="0.9" class="fill-f59e0b" />
+    <text x="24" y="0" class="legend-text">Image / I-frame patch</text>
+
+    <rect x="220" y="-13" width="16" height="16" rx="2" opacity="0.85" class="fill-2563eb" />
+    <text x="244" y="0" class="legend-text">Uniform frame patch</text>
+
+    <rect x="450" y="-13" width="16" height="16" rx="2" fill="none" stroke-width="1" stroke-dasharray="2 2" class="stroke-94a3b8" />
+    <rect x="454" y="-9" width="8" height="8" rx="1" opacity="0.9" class="fill-f59e0b" />
+    <text x="474" y="0" class="legend-text">P-frame motion patch</text>
+
+    <rect x="690" y="-13" width="16" height="16" rx="2" fill="none" stroke-width="0.8" stroke-dasharray="1.5 1.5" class="stroke-cbd5e1" />
+    <text x="714" y="0" class="legend-text">Empty slot</text>
+  </g>
+
+</svg>

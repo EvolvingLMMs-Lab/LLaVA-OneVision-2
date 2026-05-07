@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 526" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif">
+  <defs>
+    <style><![CDATA[
+.title { font-size: 28px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 14px; font-weight: 500; fill: #64748b; letter-spacing: 0.04em; text-transform: uppercase; }
+      .panel-title { font-size: 19px; font-weight: 600; fill: #0f172a; }
+      .panel-sub { font-size: 13px; font-weight: 400; fill: #64748b; }
+      .stat-num { font-size: 36px; font-weight: 700; fill: #0f172a; }
+      .stat-num-accent { font-size: 36px; font-weight: 700; fill: #2563eb; }
+      .stat-label { font-size: 11px; font-weight: 500; fill: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+      .frame-label { font-size: 10px; font-weight: 600; fill: #475569; }
+      .legend-text { font-size: 12px; font-weight: 500; fill: #334155; }
+      .formula { font-size: 12px; font-weight: 500; fill: #475569; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+      .divider { stroke: #e2e8f0; stroke-width: 1; }
+      .frame-border { fill: none; stroke: #cbd5e1; stroke-width: 1.5; }
+      .iframe-border { fill: none; stroke: #2563eb; stroke-width: 2; }
+      .pframe-border { fill: none; stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 3 2; }
+
+    /* Extracted Inline Colors */
+    .fill-ffffff { fill: #ffffff; }
+    .fill-2563eb { fill: #2563eb; }
+    .fill-f59e0b { fill: #f59e0b; }
+    .fill-3b82f6 { fill: #3b82f6; }
+    .stroke-94a3b8 { stroke: #94a3b8; }
+    .fill-94a3b8 { fill: #94a3b8; }
+    .fill-64748b { fill: #64748b; }
+  ]]></style>
+  </defs>
+
+  
+  <rect width="1080" height="526" class="fill-ffffff" />
+
+  
+  <text x="60" y="60" class="subtitle">Figure 1 · Codec-Style Patch Selection</text>
+  <text x="60" y="98" class="title">Same 54-token budget. 3× the temporal range.</text>
+  <text x="60" y="128" class="panel-sub">Standard pipelines spend their budget on a few dense frames. We keep <tspan font-weight="700" class="fill-2563eb">I-frames dense</tspan> and skim <tspan font-weight="700" class="fill-f59e0b">motion-rich patches</tspan> from P-frames instead.</text>
+
+  <line x1="60" y1="144" x2="1020" y2="144" class="divider" />
+
+  
+  <g transform="translate(60, 178)">
+    <text x="0" y="0" class="panel-title">Uniform Sampling</text>
+    <text x="0" y="22" class="panel-sub">Every frame, every patch — dense but shallow in time.</text>
+
+    <g transform="translate(0, 50)">
+            <g transform="translate(0,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₁</text></g>
+      <g transform="translate(76,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₂</text></g>
+      <g transform="translate(152,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₃</text></g>
+      <g transform="translate(228,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₄</text></g>
+      <g transform="translate(304,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₅</text></g>
+      <g transform="translate(380,0)"><rect width="64" height="64" class="frame-border" rx="2" /><g opacity="0.85" class="fill-3b82f6"><rect x="4" y="4" width="17" height="17" rx="1" /><rect x="23" y="4" width="17" height="17" rx="1" /><rect x="42" y="4" width="17" height="17" rx="1" /><rect x="4" y="23" width="17" height="17" rx="1" /><rect x="23" y="23" width="17" height="17" rx="1" /><rect x="42" y="23" width="17" height="17" rx="1" /><rect x="4" y="42" width="17" height="17" rx="1" /><rect x="23" y="42" width="17" height="17" rx="1" /><rect x="42" y="42" width="17" height="17" rx="1" /></g><text x="32" y="80" text-anchor="middle" class="frame-label">f₆</text></g>
+
+      
+      <g transform="translate(0, 92)">
+        <line x1="0" y1="0" x2="444" y2="0" stroke-width="1.5" class="stroke-94a3b8" />
+        <polygon points="444,0 438,-4 438,4" class="fill-94a3b8" />
+        <text x="222.0" y="20" text-anchor="middle" class="frame-label fill-64748b">time · 6 frames</text>
+      </g>
+
+      
+      <g transform="translate(0, 150)">
+        <text x="0" y="0" class="stat-num">54</text>
+        <text x="0" y="20" class="stat-label">tokens</text>
+        <text x="120" y="0" class="stat-num">6</text>
+        <text x="120" y="20" class="stat-label">frames</text>
+        <text x="220" y="0" class="stat-num">9</text>
+        <text x="220" y="20" class="stat-label">patches / frame</text>
+      </g>
+    </g>
+  </g>
+
+  
+  <line x1="540" y1="178" x2="540" y2="446" class="divider" />
+
+  
+  <g transform="translate(580, 178)">
+    <text x="0" y="0" class="panel-title">Codec-Aligned Selection</text>
+    <text x="0" y="22" class="panel-sub">I-frames dense; P-frames keep only motion-rich patches.</text>
+
+    <g transform="translate(0, 50)">
+            
+      <g transform="translate(0,0)"><rect width="22" height="64" class="iframe-border" rx="2" /><g opacity="0.9" class="fill-2563eb"><rect x="2" y="3" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="3" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="3" width="5.5" height="18" rx="0.5" /><rect x="2" y="23" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="23" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="23" width="5.5" height="18" rx="0.5" /><rect x="2" y="43" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="43" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="43" width="5.5" height="18" rx="0.5" /></g><text x="11" y="80" text-anchor="middle" class="frame-label fill-2563eb" font-weight="700">I</text></g>
+      <g transform="translate(25,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="15.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="34.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(50,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(75,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="14.5" y="21.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="2" y="40.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(100,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(125,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="8.25" y="46.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      
+      <g transform="translate(150,0)"><rect width="22" height="64" class="iframe-border" rx="2" /><g opacity="0.9" class="fill-2563eb"><rect x="2" y="3" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="3" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="3" width="5.5" height="18" rx="0.5" /><rect x="2" y="23" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="23" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="23" width="5.5" height="18" rx="0.5" /><rect x="2" y="43" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="43" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="43" width="5.5" height="18" rx="0.5" /></g><text x="11" y="80" text-anchor="middle" class="frame-label fill-2563eb" font-weight="700">I</text></g>
+      <g transform="translate(175,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="15.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="34.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(200,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(225,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="14.5" y="21.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="2" y="40.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(250,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(275,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="8.25" y="46.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      
+      <g transform="translate(300,0)"><rect width="22" height="64" class="iframe-border" rx="2" /><g opacity="0.9" class="fill-2563eb"><rect x="2" y="3" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="3" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="3" width="5.5" height="18" rx="0.5" /><rect x="2" y="23" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="23" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="23" width="5.5" height="18" rx="0.5" /><rect x="2" y="43" width="5.5" height="18" rx="0.5" /><rect x="8.25" y="43" width="5.5" height="18" rx="0.5" /><rect x="14.5" y="43" width="5.5" height="18" rx="0.5" /></g><text x="11" y="80" text-anchor="middle" class="frame-label fill-2563eb" font-weight="700">I</text></g>
+      <g transform="translate(325,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="15.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="34.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(350,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(375,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="14.5" y="21.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="2" y="40.5" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(400,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="8.25" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+      <g transform="translate(425,0)"><rect width="22" height="64" class="pframe-border" rx="2" /><rect x="2" y="28" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="14.5" y="9.25" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><rect x="8.25" y="46.75" width="5.5" height="5.5" opacity="0.9" class="fill-f59e0b" /><text x="11" y="80" text-anchor="middle" class="frame-label">P</text></g>
+
+      
+      <g transform="translate(0, 92)">
+        <line x1="0" y1="0" x2="447" y2="0" stroke-width="1.5" class="stroke-94a3b8" />
+        <polygon points="447,0 441,-4 441,4" class="fill-94a3b8" />
+        <text x="223.5" y="20" text-anchor="middle" class="frame-label fill-64748b">time · 18 frames (3× longer)</text>
+      </g>
+
+      
+      <g transform="translate(0, 150)">
+        <text x="0" y="0" class="stat-num">54</text>
+        <text x="0" y="20" class="stat-label">tokens</text>
+        <text x="120" y="0" class="stat-num-accent">18</text>
+        <text x="120" y="20" class="stat-label">frames</text>
+        <text x="220" y="0" class="stat-num-accent">3×</text>
+        <text x="220" y="20" class="stat-label">temporal range</text>
+      </g>
+    </g>
+  </g>
+
+  
+  <g transform="translate(60, 494)">
+    <rect x="0" y="-11" width="14" height="14" opacity="0.9" class="fill-2563eb" />
+    <text x="22" y="0" class="legend-text">I-frame patch (dense, all kept)</text>
+
+    <rect x="240" y="-11" width="14" height="14" opacity="0.9" class="fill-f59e0b" />
+    <text x="262" y="0" class="legend-text">P-frame patch (motion-rich)</text>
+
+    <rect x="540" y="-11" width="14" height="14" fill="none" stroke-width="1" stroke-dasharray="3 2" class="stroke-94a3b8" />
+    <text x="562" y="0" class="legend-text">P-frame (most patches dropped)</text>
+  </g>
+</svg>

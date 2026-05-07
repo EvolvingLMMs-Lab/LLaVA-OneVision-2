@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="580" viewBox="0 0 1100 580" role="img" aria-labelledby="title desc">
+<title id="title">Codec vs Frame Sampling</title>
+<desc id="desc">Table-style small multiples comparing codec-aligned sampling against uniform frame sampling across seven video benchmarks.</desc>
+<defs>
+<style><![CDATA[
+@keyframes cvf-fade{from{opacity:0}to{opacity:1}}
+@keyframes cvf-draw{from{stroke-dashoffset:900}to{stroke-dashoffset:0}}
+g[id^="cvf-panel-"]{animation:cvf-fade .4s ease-out both}
+.codec-line{stroke-dasharray:900;animation:cvf-draw 1.2s ease-out .35s both}
+.caption{font:600 15px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
+.caption-muted{fill:#6a737d}
+.panel-title{font:600 14px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
+.subhead{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
+.tick{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
+.score-codec{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
+.score-frame{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
+.axis{stroke:#1a1a1a;stroke-width:0.6}
+.grid{stroke:#eaecef;stroke-width:0.8}
+
+    /* Extracted Inline Colors */
+    .fill-ffffff { fill: #ffffff; }
+    .stroke-eaecef { stroke: #eaecef; }
+    .stroke-1a1a1a { stroke: #1a1a1a; }
+    .stroke-8c959f { stroke: #8c959f; }
+    .fill-fef3c7 { fill: #fef3c7; }
+    .fill-1a1a1a { fill: #1a1a1a; }
+    .fill-6a737d { fill: #6a737d; }
+  ]]></style>
+</defs>
+<rect width="1100" height="580" class="fill-ffffff" />
+
+<line x1="36" y1="323" x2="1036" y2="323" stroke-width="0.6" class="stroke-eaecef" /><line x1="266" y1="75" x2="266" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="536" y1="75" x2="536" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="806" y1="75" x2="806" y2="550" stroke-width="0.6" class="stroke-eaecef" /><text class="caption" x="30" y="30"><tspan class="caption-muted">Figure 4: </tspan>Codec-aligned sampling vs. uniform frame sampling.</text>
+<g transform="translate(730, 26)">
+
+<line x1="0" y1="0" x2="30" y2="0" stroke-width="1.8" class="stroke-1a1a1a" />
+<text class="tick" x="36" y="4">codec-aligned</text>
+
+<line x1="125" y1="0" x2="155" y2="0" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<text class="tick" x="161" y="4">uniform frame</text>
+<rect x="250" y="-6" width="16" height="12" opacity="0.6" class="fill-fef3c7" />
+<text class="tick" x="272" y="4">codec advantage</text>
+</g>
+<g id="cvf-panel-0" transform="translate(-12.00,-24.00)" style="animation-delay:0.00s">
+<text x="48" y="99" class="panel-title">TimeLens-QVHighlights</text>
+<text x="48" y="111" class="subhead">peak +26.6  ·  4f Δ +15.4  ·  64f Δ +1.8</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">10</text>
+
+<line x1="48" y1="234.0" x2="238" y2="234.0" class="grid" />
+<text x="42" y="237.0" text-anchor="end" class="tick">30</text>
+
+<line x1="48" y1="174.0" x2="238" y2="174.0" class="grid" />
+<text x="42" y="177.0" text-anchor="end" class="tick">50</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">70</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">4</text>
+<text x="143.0" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">64</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="143.0" y1="114" x2="143.0" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,287.1 95.5,254.1 143.0,249.3 190.5,164.4 238.0,138.9 238.0,133.5 190.5,146.4 143.0,169.5 95.5,202.8 48.0,240.9" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,287.1 95.5,254.1 143.0,249.3 190.5,164.4 238.0,138.9" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,240.9 95.5,202.8 143.0,169.5 190.5,146.4 238.0,133.5" fill="none" stroke-width="1.8" />
+<text x="244" y="133.5" class="score-codec">63.5</text>
+<text x="244" y="146.9" class="score-frame">61.7</text>
+</g>
+<g id="cvf-panel-1" transform="translate(258.00,-24.00)" style="animation-delay:0.08s">
+<text x="48" y="99" class="panel-title">TimeLens-Charades-STA</text>
+<text x="48" y="111" class="subhead">peak +25.0  ·  4f Δ +25.0  ·  64f Δ -3.4</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">15</text>
+
+<line x1="48" y1="204.0" x2="238" y2="204.0" class="grid" />
+<text x="42" y="207.0" text-anchor="end" class="tick">35</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">55</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">4</text>
+<text x="143.0" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">64</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="143.0" y1="114" x2="143.0" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,283.2 95.5,194.6 143.0,145.1 190.5,122.6 238.0,120.8 238.0,136.0 190.5,137.0 143.0,132.0 95.5,144.6 48.0,170.7" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,283.2 95.5,194.6 143.0,145.1 190.5,122.6 238.0,120.8" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,170.7 95.5,144.6 143.0,132.0 190.5,137.0 238.0,136.0" fill="none" stroke-width="1.8" />
+<text x="244" y="140.0" class="score-codec">50.1</text>
+<text x="244" y="124.8" class="score-frame">53.5</text>
+</g>
+<g id="cvf-panel-2" transform="translate(528.00,-24.00)" style="animation-delay:0.16s">
+<text x="48" y="99" class="panel-title">TimeLens-ActivityNet</text>
+<text x="48" y="111" class="subhead">peak +13.3  ·  4f Δ +11.1  ·  64f Δ +2.3</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">10</text>
+
+<line x1="48" y1="234.0" x2="238" y2="234.0" class="grid" />
+<text x="42" y="237.0" text-anchor="end" class="tick">25</text>
+
+<line x1="48" y1="174.0" x2="238" y2="174.0" class="grid" />
+<text x="42" y="177.0" text-anchor="end" class="tick">40</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">55</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">4</text>
+<text x="143.0" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">64</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="143.0" y1="114" x2="143.0" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,286.0 95.5,260.0 143.0,221.6 190.5,174.4 238.0,138.4 238.0,129.2 190.5,144.0 143.0,171.6 95.5,206.8 48.0,241.6" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,286.0 95.5,260.0 143.0,221.6 190.5,174.4 238.0,138.4" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,241.6 95.5,206.8 143.0,171.6 190.5,144.0 238.0,129.2" fill="none" stroke-width="1.8" />
+<text x="244" y="129.2" class="score-codec">51.2</text>
+<text x="244" y="146.4" class="score-frame">48.9</text>
+</g>
+<g id="cvf-panel-3" transform="translate(798.00,-24.00)" style="animation-delay:0.24s">
+<text x="48" y="99" class="panel-title">LVBench</text>
+<text x="48" y="111" class="subhead">peak +2.0  ·  16f Δ +2.0  ·  128f Δ +1.8</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">36</text>
+
+<line x1="48" y1="204.0" x2="238" y2="204.0" class="grid" />
+<text x="42" y="207.0" text-anchor="end" class="tick">44</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">52</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="174.7" y="316.0" text-anchor="middle" class="tick">64</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">128</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="174.7" y1="114" x2="174.7" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,261.4 111.3,231.0 174.7,186.0 238.0,162.4 238.0,142.1 174.7,169.1 111.3,216.4 48.0,238.9" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,261.4 111.3,231.0 174.7,186.0 238.0,162.4" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,238.9 111.3,216.4 174.7,169.1 238.0,142.1" fill="none" stroke-width="1.8" />
+<text x="244" y="146.1" class="score-codec">49.5</text>
+<text x="244" y="166.4" class="score-frame">47.7</text>
+</g>
+<g id="cvf-panel-4" transform="translate(-12.00,256.00)" style="animation-delay:0.32s">
+<text x="48" y="99" class="panel-title">VideoMME-Long-Sub</text>
+<text x="48" y="111" class="subhead">peak +7.2  ·  8f Δ +6.2  ·  128f Δ +4.4</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">50</text>
+
+<line x1="48" y1="204.0" x2="238" y2="204.0" class="grid" />
+<text x="42" y="207.0" text-anchor="end" class="tick">60</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">70</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">8</text>
+<text x="95.5" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="190.5" y="316.0" text-anchor="middle" class="tick">64</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">128</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="95.5" y1="114" x2="95.5" y2="294" /><line class="grid" x1="190.5" y1="114" x2="190.5" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,287.7 95.5,249.0 143.0,228.3 190.5,211.2 238.0,175.2 238.0,135.6 190.5,146.4 143.0,176.1 95.5,211.2 48.0,231.9" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,287.7 95.5,249.0 143.0,228.3 190.5,211.2 238.0,175.2" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,231.9 95.5,211.2 143.0,176.1 190.5,146.4 238.0,135.6" fill="none" stroke-width="1.8" />
+<text x="244" y="139.6" class="score-codec">67.6</text>
+<text x="244" y="179.2" class="score-frame">63.2</text>
+</g>
+<g id="cvf-panel-5" transform="translate(258.00,256.00)" style="animation-delay:0.40s">
+<text x="48" y="99" class="panel-title">VideoEval-Pro</text>
+<text x="48" y="111" class="subhead">peak +3.4  ·  8f Δ +3.1  ·  128f Δ +1.5</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">42</text>
+
+<line x1="48" y1="204.0" x2="238" y2="204.0" class="grid" />
+<text x="42" y="207.0" text-anchor="end" class="tick">50</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">58</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">8</text>
+<text x="95.5" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="190.5" y="316.0" text-anchor="middle" class="tick">64</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">128</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="95.5" y1="114" x2="95.5" y2="294" /><line class="grid" x1="190.5" y1="114" x2="190.5" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,281.6 95.5,262.5 143.0,219.8 190.5,178.1 238.0,159.0 238.0,142.1 190.5,162.4 143.0,188.2 95.5,224.2 48.0,246.7" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,281.6 95.5,262.5 143.0,219.8 190.5,178.1 238.0,159.0" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,246.7 95.5,224.2 143.0,188.2 190.5,162.4 238.0,142.1" fill="none" stroke-width="1.8" />
+<text x="244" y="146.1" class="score-codec">55.5</text>
+<text x="244" y="163.0" class="score-frame">54.0</text>
+</g>
+<g id="cvf-panel-6" transform="translate(528.00,256.00)" style="animation-delay:0.48s">
+<text x="48" y="99" class="panel-title">OV-Rope</text>
+<text x="48" y="111" class="subhead">peak +21.4  ·  16f Δ +2.8  ·  128f Δ +19.0</text>
+
+<line x1="48" y1="294.0" x2="238" y2="294.0" class="grid" />
+<text x="42" y="297.0" text-anchor="end" class="tick">35</text>
+
+<line x1="48" y1="234.0" x2="238" y2="234.0" class="grid" />
+<text x="42" y="237.0" text-anchor="end" class="tick">45</text>
+
+<line x1="48" y1="174.0" x2="238" y2="174.0" class="grid" />
+<text x="42" y="177.0" text-anchor="end" class="tick">55</text>
+
+<line x1="48" y1="114.0" x2="238" y2="114.0" class="grid" />
+<text x="42" y="117.0" text-anchor="end" class="tick">65</text>
+<text x="48.0" y="316.0" text-anchor="middle" class="tick">16</text>
+<text x="174.7" y="316.0" text-anchor="middle" class="tick">64</text>
+<text x="238.0" y="316.0" text-anchor="middle" class="tick">128</text>
+<line class="grid" x1="48.0" y1="114" x2="48.0" y2="294" /><line class="grid" x1="174.7" y1="114" x2="174.7" y2="294" /><line class="grid" x1="238.0" y1="114" x2="238.0" y2="294" /><polygon points="48.0,279.6 111.3,286.8 174.7,277.8 238.0,247.2 238.0,133.2 174.7,149.4 111.3,202.2 48.0,262.8" opacity="0.4" class="fill-fef3c7" />
+
+<line x1="48" y1="114" x2="48" y2="294" class="axis" />
+
+<line x1="48" y1="294" x2="238" y2="294" class="axis" />
+<polyline points="48.0,279.6 111.3,286.8 174.7,277.8 238.0,247.2" fill="none" stroke-width="1.3" stroke-dasharray="3 2" class="stroke-8c959f" />
+<polyline class="codec-line stroke-1a1a1a" points="48.0,262.8 111.3,202.2 174.7,149.4 238.0,133.2" fill="none" stroke-width="1.8" />
+<text x="244" y="137.2" class="score-codec">61.8</text>
+<text x="244" y="251.2" class="score-frame">42.8</text>
+</g>
+<g id="cvf-panel-7" transform="translate(798.00,256.00)" style="animation-delay:0.56s">
+<text x="48" y="99" class="panel-title">Overall Averages</text>
+<text x="48" y="140" class="subhead fill-1a1a1a">Average Peak Δ</text>
+<text x="210" y="140" class="score-codec fill-1a1a1a">+14.1</text>
+<text x="48" y="170" class="subhead fill-1a1a1a">Codec @ Max (Avg)</text>
+<text x="210" y="170" class="score-codec fill-1a1a1a">57.0</text>
+<text x="48" y="200" class="subhead fill-1a1a1a">Frame @ Max (Avg)</text>
+<text x="210" y="200" class="score-frame">53.0</text>
+<text x="48" y="250" class="subhead fill-6a737d">Codec sampling consistently</text>
+<text x="48" y="270" class="subhead fill-6a737d">extends temporal coverage and</text>
+<text x="48" y="290" class="subhead fill-6a737d">peak performance overall.</text>
+</g>
+</svg>

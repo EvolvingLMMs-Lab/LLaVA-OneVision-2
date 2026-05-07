@@ -1,51 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 526" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif">
   <defs>
     <style><![CDATA[
-.title { font-size: 28px; font-weight: 700; fill: #0f172a; }
-      .subtitle { font-size: 14px; font-weight: 500; fill: #64748b; letter-spacing: 0.04em; text-transform: uppercase; }
-      .panel-title { font-size: 19px; font-weight: 600; fill: #0f172a; }
-      .panel-sub { font-size: 13px; font-weight: 400; fill: #64748b; }
-      .stat-num { font-size: 36px; font-weight: 700; fill: #0f172a; }
-      .stat-num-accent { font-size: 36px; font-weight: 700; fill: #2563eb; }
-      .stat-label { font-size: 11px; font-weight: 500; fill: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
-      .frame-label { font-size: 10px; font-weight: 600; fill: #475569; }
-      .legend-text { font-size: 12px; font-weight: 500; fill: #334155; }
-      .formula { font-size: 12px; font-weight: 500; fill: #475569; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
-      .divider { stroke: #e2e8f0; stroke-width: 1; }
-      .frame-border { fill: none; stroke: #cbd5e1; stroke-width: 1.5; }
-      .iframe-border { fill: none; stroke: #2563eb; stroke-width: 2; }
-      .pframe-border { fill: none; stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 3 2; }
+.title { font-size: 28px; font-weight: 700; fill: #f0f6fc; }
+      .subtitle { font-size: 14px; font-weight: 500; fill: #8b949e; letter-spacing: 0.04em; text-transform: uppercase; }
+      .panel-title { font-size: 19px; font-weight: 600; fill: #f0f6fc; }
+      .panel-sub { font-size: 13px; font-weight: 400; fill: #8b949e; }
+      .stat-num { font-size: 36px; font-weight: 700; fill: #f0f6fc; }
+      .stat-num-accent { font-size: 36px; font-weight: 700; fill: #58a6ff; }
+      .stat-label { font-size: 11px; font-weight: 500; fill: #8b949e; letter-spacing: 0.05em; text-transform: uppercase; }
+      .frame-label { font-size: 10px; font-weight: 600; fill: #8b949e; }
+      .legend-text { font-size: 12px; font-weight: 500; fill: #b8c0c8; }
+      .formula { font-size: 12px; font-weight: 500; fill: #8b949e; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+      .divider { stroke: #30363d; stroke-width: 1; }
+      .frame-border { fill: none; stroke: #484f58; stroke-width: 1.5; }
+      .iframe-border { fill: none; stroke: #58a6ff; stroke-width: 2; }
+      .pframe-border { fill: none; stroke: #6e7681; stroke-width: 1; stroke-dasharray: 3 2; }
 
     /* Extracted Inline Colors */
-    .fill-ffffff { fill: #ffffff; }
-    .fill-2563eb { fill: #2563eb; }
+    .fill-ffffff { fill: #0d1117; }
+    .fill-2563eb { fill: #58a6ff; }
     .fill-f59e0b { fill: #f59e0b; }
     .fill-3b82f6 { fill: #3b82f6; }
-    .stroke-94a3b8 { stroke: #94a3b8; }
-    .fill-94a3b8 { fill: #94a3b8; }
-    .fill-64748b { fill: #64748b; }
-
-    @media (prefers-color-scheme: dark) {
-      .title { fill: #f0f6fc; }
-      .subtitle { fill: #8b949e; }
-      .panel-title { fill: #f0f6fc; }
-      .panel-sub { fill: #8b949e; }
-      .stat-num { fill: #f0f6fc; }
-      .stat-num-accent { fill: #58a6ff; }
-      .stat-label { fill: #8b949e; }
-      .frame-label { fill: #8b949e; }
-      .legend-text { fill: #b8c0c8; }
-      .formula { fill: #8b949e; }
-      .divider { stroke: #30363d; }
-      .frame-border { stroke: #484f58; }
-      .iframe-border { stroke: #58a6ff; }
-      .pframe-border { stroke: #6e7681; }
-      .fill-ffffff { fill: #0d1117; }
-      .fill-2563eb { fill: #58a6ff; }
-      .stroke-94a3b8 { stroke: #6e7681; }
-      .fill-94a3b8 { fill: #6e7681; }
-      .fill-64748b { fill: #8b949e; }
-    }
+    .stroke-94a3b8 { stroke: #6e7681; }
+    .fill-94a3b8 { fill: #6e7681; }
+    .fill-64748b { fill: #8b949e; }
   ]]></style>
   </defs>
 

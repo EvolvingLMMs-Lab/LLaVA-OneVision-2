@@ -1,55 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 820" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif">
   <defs>
     <style><![CDATA[
-.title { font-size: 38px; font-weight: 700; fill: #0f172a; }
-      .subtitle { font-size: 18px; font-weight: 500; fill: #64748b; letter-spacing: 0.04em; text-transform: uppercase; }
-      .panel-title { font-size: 24px; font-weight: 600; fill: #0f172a; }
-      .panel-sub { font-size: 16px; font-weight: 400; fill: #64748b; }
+.title { font-size: 38px; font-weight: 700; fill: #f0f6fc; }
+      .subtitle { font-size: 18px; font-weight: 500; fill: #8b949e; letter-spacing: 0.04em; text-transform: uppercase; }
+      .panel-title { font-size: 24px; font-weight: 600; fill: #f0f6fc; }
+      .panel-sub { font-size: 16px; font-weight: 400; fill: #8b949e; }
       .stat-num { font-size: 36px; font-weight: 700; }
-      .stat-label { font-size: 13px; font-weight: 500; fill: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+      .stat-label { font-size: 13px; font-weight: 500; fill: #8b949e; letter-spacing: 0.05em; text-transform: uppercase; }
       .pos-label { font-size: 16px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
       .pos-num { font-size: 15px; font-weight: 500; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
-      .legend-text { font-size: 15px; font-weight: 500; fill: #334155; }
-      .divider { stroke: #e2e8f0; stroke-width: 1; }
+      .legend-text { font-size: 15px; font-weight: 500; fill: #b8c0c8; }
+      .divider { stroke: #30363d; stroke-width: 1; }
 
     /* Extracted Inline Colors */
-    .fill-ffffff { fill: #ffffff; }
-    .fill-2563eb { fill: #2563eb; }
-    .fill-0f172a { fill: #0f172a; }
-    .fill-f8fafc { fill: #f8fafc; }
-    .stroke-0f172a { stroke: #0f172a; }
-    .fill-334155 { fill: #334155; }
-    .stroke-94a3b8 { stroke: #94a3b8; }
-    .fill-94a3b8 { fill: #94a3b8; }
+    .fill-ffffff { fill: #0d1117; }
+    .fill-2563eb { fill: #58a6ff; }
+    .fill-0f172a { fill: #f0f6fc; }
+    .fill-f8fafc { fill: #161b22; }
+    .stroke-0f172a { stroke: #f0f6fc; }
+    .fill-334155 { fill: #b8c0c8; }
+    .stroke-94a3b8 { stroke: #6e7681; }
+    .fill-94a3b8 { fill: #6e7681; }
     .fill-f59e0b { fill: #f59e0b; }
-    .stroke-cbd5e1 { stroke: #cbd5e1; }
-    .fill-9a3412 { fill: #9a3412; }
-    .fill-15803d { fill: #15803d; }
-    .fill-1d4ed8 { fill: #1d4ed8; }
-    .fill-0d9488 { fill: #0d9488; }
-
-    @media (prefers-color-scheme: dark) {
-      .title { fill: #f0f6fc; }
-      .subtitle { fill: #8b949e; }
-      .panel-title { fill: #f0f6fc; }
-      .panel-sub { fill: #8b949e; }
-      .stat-label { fill: #8b949e; }
-      .legend-text { fill: #b8c0c8; }
-      .divider { stroke: #30363d; }
-      .fill-ffffff { fill: #0d1117; }
-      .fill-2563eb { fill: #58a6ff; }
-      .fill-0f172a { fill: #f0f6fc; }
-      .fill-f8fafc { fill: #161b22; }
-      .stroke-0f172a { stroke: #f0f6fc; }
-      .fill-334155 { fill: #b8c0c8; }
-      .stroke-94a3b8 { stroke: #6e7681; }
-      .fill-94a3b8 { fill: #6e7681; }
-      .stroke-cbd5e1 { stroke: #484f58; }
-      .fill-9a3412 { fill: #f0a868; }
-      .fill-15803d { fill: #56d364; }
-      .fill-1d4ed8 { fill: #58a6ff; }
-      .fill-0d9488 { fill: #2dd4bf; }
-    }
+    .stroke-cbd5e1 { stroke: #484f58; }
+    .fill-9a3412 { fill: #f0a868; }
+    .fill-15803d { fill: #56d364; }
+    .fill-1d4ed8 { fill: #58a6ff; }
+    .fill-0d9488 { fill: #2dd4bf; }
   ]]></style>
   </defs>
   <rect width="1080" height="820" class="fill-ffffff" />

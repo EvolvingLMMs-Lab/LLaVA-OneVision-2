@@ -7,43 +7,24 @@
 @keyframes cvf-draw{from{stroke-dashoffset:900}to{stroke-dashoffset:0}}
 g[id^="cvf-panel-"]{animation:cvf-fade .4s ease-out both}
 .codec-line{stroke-dasharray:900;animation:cvf-draw 1.2s ease-out .35s both}
-.caption{font:600 15px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
-.caption-muted{fill:#6a737d}
-.panel-title{font:600 14px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
-.subhead{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
-.tick{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
-.score-codec{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#1a1a1a}
-.score-frame{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#6a737d}
-.axis{stroke:#1a1a1a;stroke-width:0.6}
-.grid{stroke:#eaecef;stroke-width:0.8}
+.caption{font:600 15px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#f0f6fc}
+.caption-muted{fill:#8b949e}
+.panel-title{font:600 14px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#f0f6fc}
+.subhead{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#8b949e}
+.tick{font:12px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#8b949e}
+.score-codec{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#f0f6fc}
+.score-frame{font:bold 13px "DejaVu Serif", "Nimbus Roman", "Times New Roman", "Times", serif;fill:#8b949e}
+.axis{stroke:#f0f6fc;stroke-width:0.6}
+.grid{stroke:#30363d;stroke-width:0.8}
 
     /* Extracted Inline Colors */
-    .fill-ffffff { fill: #ffffff; }
-    .stroke-eaecef { stroke: #eaecef; }
-    .stroke-1a1a1a { stroke: #1a1a1a; }
-    .stroke-8c959f { stroke: #8c959f; }
-    .fill-fef3c7 { fill: #fef3c7; }
-    .fill-1a1a1a { fill: #1a1a1a; }
-    .fill-6a737d { fill: #6a737d; }
-
-    @media (prefers-color-scheme: dark) {
-      .caption { fill: #f0f6fc; }
-      .caption-muted { fill: #8b949e; }
-      .panel-title { fill: #f0f6fc; }
-      .subhead { fill: #8b949e; }
-      .tick { fill: #8b949e; }
-      .score-codec { fill: #f0f6fc; }
-      .score-frame { fill: #8b949e; }
-      .axis { stroke: #f0f6fc; }
-      .grid { stroke: #30363d; }
-      .fill-ffffff { fill: #0d1117; }
-      .stroke-eaecef { stroke: #30363d; }
-      .stroke-1a1a1a { stroke: #f0f6fc; }
-      .stroke-8c959f { stroke: #6e7681; }
-      .fill-fef3c7 { fill: #3d2f08; }
-      .fill-1a1a1a { fill: #f0f6fc; }
-      .fill-6a737d { fill: #8b949e; }
-    }
+    .fill-ffffff { fill: #0d1117; }
+    .stroke-eaecef { stroke: #30363d; }
+    .stroke-1a1a1a { stroke: #f0f6fc; }
+    .stroke-8c959f { stroke: #6e7681; }
+    .fill-fef3c7 { fill: #3d2f08; }
+    .fill-1a1a1a { fill: #f0f6fc; }
+    .fill-6a737d { fill: #8b949e; }
   ]]></style>
 </defs>
 <rect width="1100" height="580" class="fill-ffffff" />
