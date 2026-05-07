@@ -138,12 +138,12 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
     ax.text(
         pad_x, 0.36, "Table 1: ",
         ha="left", va="top",
-        fontsize=18, fontweight="bold", color=theme.dim_fg,
+        fontsize=22, fontweight="bold", color=theme.dim_fg,
     )
     ax.text(
         pad_x + 1.1, 0.36, "Benchmark comparison of LLaVA-OneVision-2.0.",
         ha="left", va="top",
-        fontsize=18, fontweight="bold", color=theme.fg,
+        fontsize=22, fontweight="bold", color=theme.fg,
     )
 
     legend_y = 0.92
@@ -159,7 +159,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
     ax.text(
         legend_x + sw_w + 0.12, legend_y, "Best",
         ha="left", va="center",
-        fontsize=14, color=theme.fg,
+        fontsize=17, color=theme.fg,
     )
     legend_x2 = legend_x + sw_w + 0.12 + 0.65
     round_box(
@@ -172,7 +172,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
     ax.text(
         legend_x2 + sw_w + 0.12, legend_y, "Second-best",
         ha="left", va="center",
-        fontsize=14, color=theme.fg,
+        fontsize=17, color=theme.fg,
     )
 
     x_off = [pad_x]
@@ -225,7 +225,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
         t = ax.text(
             tx, top_rule_y + header_h / 2, label,
             ha=ha, va="center",
-            fontsize=17, fontweight="bold", color=theme.fg,
+            fontsize=20, fontweight="bold", color=theme.fg,
         )
         header_artists.append(t)
 
@@ -283,7 +283,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
                     a = ax.text(
                         x0 + 0.05, y0 + row_h / 2, category.upper(),
                         ha="left", va="center",
-                        fontsize=13, color=theme.cat_fg, fontweight="bold",
+                        fontsize=16, color=theme.cat_fg, fontweight="bold",
                     )
                     row_artists_per_row[ri].append(a)
             elif ci == 1:
@@ -292,7 +292,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
                     base_artist = ax.text(
                         x0 + 0.05, y0 + row_h / 2, base,
                         ha="left", va="center",
-                        fontsize=17, color=theme.fg,
+                        fontsize=20, color=theme.fg,
                     )
                     row_artists_per_row[ri].append(base_artist)
                     fig.canvas.draw()
@@ -302,14 +302,14 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
                     suffix_artist = ax.text(
                         suffix_x, y0 + row_h / 2, f"({suffix})",
                         ha="left", va="center",
-                        fontsize=13, color=theme.dim_fg,
+                        fontsize=16, color=theme.dim_fg,
                     )
                     row_artists_per_row[ri].append(suffix_artist)
                 else:
                     a = ax.text(
                         x0 + 0.05, y0 + row_h / 2, val,
                         ha="left", va="center",
-                        fontsize=17, color=theme.fg,
+                        fontsize=20, color=theme.fg,
                     )
                     row_artists_per_row[ri].append(a)
             else:
@@ -322,7 +322,7 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
                 a = ax.text(
                     (x0 + x1) / 2, y0 + row_h / 2, val,
                     ha="center", va="center",
-                    fontsize=17, fontweight=weight, color=theme.fg,
+                    fontsize=20, fontweight=weight, color=theme.fg,
                 )
                 row_artists_per_row[ri].append(a)
 
