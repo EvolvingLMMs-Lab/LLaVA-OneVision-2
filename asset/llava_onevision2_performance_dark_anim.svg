@@ -1807,10 +1807,7 @@ L 1245.96 1650.4416
 " clip-path="url(#p7955fdafce)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #f0f6fc; stroke-width: 0.4"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #8b949e" x="43.47" y="43.874963" transform="rotate(-0 43.47 43.874963)">Table 1: </text>
-   </g>
-   <g id="text_2">
-    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #f0f6fc" x="104.85" y="43.874963" transform="rotate(-0 104.85 43.874963)">Benchmark comparison of LLaVA-OneVision-2.0.</text>
+    <text xml:space="preserve" style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="43.47" y="43.874963"><tspan style="fill: #8b949e">Table 1: </tspan><tspan style="fill: #f0f6fc">Benchmark comparison of LLaVA-OneVision-2.0.</tspan></text>
    </g>
    <g id="text_3">
     <text style="font-size: 17px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #f0f6fc" x="68.022" y="62.895737" transform="rotate(-0 68.022 62.895737)">Best</text>
