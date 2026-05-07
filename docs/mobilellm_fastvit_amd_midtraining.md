@@ -72,6 +72,20 @@ export WANDB_PROJECT="llava-ov-1_5"
 If the AMD machine has a different Conda env, replace `PYTHON_BIN` and
 `TORCHRUN` accordingly.
 
+For the MBZUAI AMD cluster used here, the Stage 1.5 ImageNet job can also be
+submitted with the ROCm Slurm launcher:
+
+```bash
+cd ~/mobile_vlm/llava_ov1.5/LLaVA-OneVision-1.5
+
+# Optional: export WANDB_API_KEY before submitting if the env is not already logged in.
+sbatch examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_imagenet_en_amd.sbatch
+```
+
+This launcher mirrors the ROCm setup from `Stage1/alignment_rocm.sh`, uses
+`conda activate mobile_vlm`, requests 8 AMD GPUs, and reads local ImageNet data
+from `data/LLaVA-OneVision-Mid-Training-EN`.
+
 ## 4. Run Full English Branch Midtraining
 
 This prepares the full HF English branch into local Energon/WebDataset shards,
