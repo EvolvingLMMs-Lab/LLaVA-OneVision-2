@@ -242,7 +242,7 @@
   <g>
     <rect x="60" y="602" width="3" height="162" rx="1.5" fill="#0d9488"/>
     <text x="74" y="626" class="panel-title">Codec-Aligned</text>
-    <text x="74" y="648" class="panel-sub">24 frames · I-frame patches + P-frame motion patches</text>
+    <text x="74" y="648" class="panel-sub">32 frames · I-frame patches + P-frame motion patches</text>
     <text x="1020" y="628" text-anchor="end" class="stat-num" fill="#0d9488">32</text>
     <text x="1020" y="646" text-anchor="end" class="stat-label">tokens</text>
     <rect x="138" y="672" width="23" height="23" rx="2" fill="#f59e0b" opacity="0.9"/>
@@ -298,34 +298,34 @@
     <text x="176.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
     <text x="203.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
     <text x="230.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
-    <text x="257.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
-    <text x="284.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
-    <text x="311.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
-    <text x="338.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">0</text>
-    <text x="365.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="392.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="419.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="446.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="473.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="500.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="527.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="554.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">1</text>
-    <text x="581.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="608.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="635.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="662.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="689.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="716.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="743.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="770.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
-    <text x="797.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="824.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="851.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="878.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="905.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="932.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="959.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
-    <text x="986.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">3</text>
+    <text x="257.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">2</text>
+    <text x="284.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">4</text>
+    <text x="311.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">6</text>
+    <text x="338.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">8</text>
+    <text x="365.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">8</text>
+    <text x="392.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">8</text>
+    <text x="419.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">8</text>
+    <text x="446.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">8</text>
+    <text x="473.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">10</text>
+    <text x="500.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">12</text>
+    <text x="527.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">14</text>
+    <text x="554.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">16</text>
+    <text x="581.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">16</text>
+    <text x="608.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">16</text>
+    <text x="635.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">16</text>
+    <text x="662.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">16</text>
+    <text x="689.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">18</text>
+    <text x="716.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">20</text>
+    <text x="743.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">22</text>
+    <text x="770.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">24</text>
+    <text x="797.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">24</text>
+    <text x="824.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">24</text>
+    <text x="851.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">24</text>
+    <text x="878.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">24</text>
+    <text x="905.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">26</text>
+    <text x="932.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">28</text>
+    <text x="959.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">30</text>
+    <text x="986.5" y="717" text-anchor="middle" class="pos-num" fill="#9a3412">32</text>
     <text x="74" y="733" class="pos-label" fill="#15803d">h:</text>
     <text x="149.5" y="733" text-anchor="middle" class="pos-num" fill="#15803d">0</text>
     <text x="176.5" y="733" text-anchor="middle" class="pos-num" fill="#15803d">0</text>

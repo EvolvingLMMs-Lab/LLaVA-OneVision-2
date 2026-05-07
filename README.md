@@ -80,14 +80,9 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
   </picture>
 </p>
 
-<details>
-<summary>Click to view Figure 4: codec-aligned sampling vs. uniform frame sampling.</summary>
-
 <p align="center">
-  <img src="asset/method_codec_vs_frame.svg" width="100%" alt="Codec-aligned sampling compared with uniform frame sampling across video benchmarks">
+  <img src="asset/method_codec_vs_frame.svg" width="100%" alt="Figure 4: codec-aligned sampling compared with uniform frame sampling across video benchmarks">
 </p>
-
-</details>
 
 
 ## Method
