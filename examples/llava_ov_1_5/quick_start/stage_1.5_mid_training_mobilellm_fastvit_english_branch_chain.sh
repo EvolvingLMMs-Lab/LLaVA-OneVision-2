@@ -5,9 +5,9 @@
 #   bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_english_branch_chain.sh imagenet
 #   bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_english_branch_chain.sh imagenet datacomp1b
 #
-# Defaults prepare the full English branch from HF into local Energon/WebDataset
-# shards, then run 1000 iterations. Set MAX_SAMPLES to a positive number only
-# for smoke tests.
+# Defaults prepare the full English branch into local Energon/WebDataset shards,
+# then run 1000 iterations. Set LOCAL_HF_DATA_ROOT to read an already-downloaded
+# HF-style dataset directory instead of streaming from Hugging Face.
 
 set -euo pipefail
 
@@ -34,6 +34,8 @@ CHECKPOINT_PATH="$START_CKPT"
 DATA_ROOT="${DATA_ROOT:-$REPO_ROOT/data/midtraining_full_${LANG_LOWER}}"
 CACHE_DIR="${CACHE_DIR:-$REPO_ROOT/data/hf_cache_midtraining_stream}"
 mkdir -p "$DATA_ROOT" "$CACHE_DIR"
+LOCAL_HF_DATA_ROOT="${LOCAL_HF_DATA_ROOT:-}"
+VERIFY_LOCAL_HF_DATA="${VERIFY_LOCAL_HF_DATA:-1}"
 
 TP="${TP:-1}"
 PP="${PP:-1}"
@@ -82,8 +84,7 @@ prepare_branch() {
     fi
 
     local data_glob="${DATA_FILES_GLOB:-$branch/$LANG_CODE/*/*.parquet}"
-    echo "[$branch] preparing HF files: $data_glob"
-    "$PYTHON_BIN" tools/prepare_hf_caption_parquet_to_energon_wds.py \
+    local prepare_args=(
         --repo-id "$HF_REPO_ID" \
         --data-files "$data_glob" \
         --output-dir "$data_path" \
@@ -94,6 +95,23 @@ prepare_branch() {
         --cache-dir "$CACHE_DIR" \
         --index-workers "$INDEX_WORKERS" \
         --min-free-gb "$MIN_FREE_GB"
+    )
+
+    if [[ -n "$LOCAL_HF_DATA_ROOT" ]]; then
+        echo "[$branch] verifying local HF files: $LOCAL_HF_DATA_ROOT / $data_glob"
+        if [[ "$VERIFY_LOCAL_HF_DATA" == "1" ]]; then
+            "$PYTHON_BIN" tools/check_hf_local_parquet_complete.py \
+                --repo-id "$HF_REPO_ID" \
+                --data-files "$data_glob" \
+                --local-data-root "$LOCAL_HF_DATA_ROOT"
+        fi
+        echo "[$branch] preparing local HF files: $LOCAL_HF_DATA_ROOT / $data_glob"
+        prepare_args+=(--local-data-root "$LOCAL_HF_DATA_ROOT")
+    else
+        echo "[$branch] preparing HF files: $data_glob"
+    fi
+
+    "$PYTHON_BIN" tools/prepare_hf_caption_parquet_to_energon_wds.py "${prepare_args[@]}"
 }
 
 run_branch() {

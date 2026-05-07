@@ -80,6 +80,7 @@ then runs 1000 Stage 1.5 iterations. `MAX_SAMPLES=0` means no artificial cap.
 ImageNet EN:
 
 ```bash
+LOCAL_HF_DATA_ROOT="$PWD/data/LLaVA-OneVision-Mid-Training-EN" \
 MAX_SAMPLES=0 \
 NSTEP=1000 \
 GBS=4 \
@@ -90,6 +91,7 @@ bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_
 Multiple English branches, chained one after another:
 
 ```bash
+LOCAL_HF_DATA_ROOT="$PWD/data/LLaVA-OneVision-Mid-Training-EN" \
 MAX_SAMPLES=0 \
 NSTEP=1000 \
 GBS=4 \
@@ -99,12 +101,21 @@ bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_
 
 The second branch automatically loads from the checkpoint produced by the first.
 
+To verify local ImageNet files before training:
+
+```bash
+python tools/check_hf_local_parquet_complete.py \
+  --local-data-root data/LLaVA-OneVision-Mid-Training-EN \
+  --data-files 'imagenet/EN/*/*.parquet'
+```
+
 ## 5. Useful Options
 
 ```bash
 START_CKPT=/path/to/checkpoint_dir
 DATA_ROOT=/large/disk/midtraining_full_en
 CACHE_DIR=/large/disk/hf_cache_midtraining_stream
+LOCAL_HF_DATA_ROOT=/large/disk/LLaVA-OneVision-Mid-Training-EN
 KEEP_PREPARED_DATA=1
 PREPARE_ONLY=1
 MIDTRAIN_TRAINABLE_MODULES="language_model adapter vision_model"

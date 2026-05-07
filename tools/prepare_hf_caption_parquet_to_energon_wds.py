@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Stream HF image-caption parquet data into the Energon WebDataset format.
+"""Prepare HF image-caption parquet data into the Energon WebDataset format.
 
 This is intentionally small-slice friendly.  Use it for one Mid-Training-85M
 folder at a time, e.g. ImageNet-EN part00, instead of cloning/downloading the
-whole Hugging Face dataset.
+whole Hugging Face dataset.  It can either stream from Hugging Face or read an
+already-downloaded local HF-style directory.
 """
 
 from __future__ import annotations
@@ -102,17 +103,38 @@ def _write_metadata(output_dir: Path, tar_names: list[str], workers: int) -> Non
     )
 
 
+def _resolve_local_files(local_data_root: Path, patterns: list[str]) -> list[str]:
+    files: list[Path] = []
+    for pattern in patterns:
+        matches = sorted(p for p in local_data_root.glob(pattern) if p.is_file())
+        if not matches:
+            raise RuntimeError(f"No local files matched {local_data_root / pattern}")
+        files.extend(matches)
+    return [str(p) for p in files]
+
+
 def _iter_hf_samples(args: argparse.Namespace) -> Iterable[dict[str, Any]]:
     from datasets import load_dataset
 
-    data_files = {"train": args.data_files}
-    dataset = load_dataset(
-        args.repo_id,
-        data_files=data_files,
-        split="train",
-        streaming=True,
-        cache_dir=args.cache_dir,
-    )
+    if args.local_data_root is not None:
+        data_files = {"train": _resolve_local_files(args.local_data_root, args.data_files)}
+        dataset = load_dataset(
+            "parquet",
+            data_files=data_files,
+            split="train",
+            streaming=True,
+            cache_dir=args.cache_dir,
+        )
+    else:
+        data_files = {"train": args.data_files}
+        dataset = load_dataset(
+            args.repo_id,
+            data_files=data_files,
+            split="train",
+            streaming=True,
+            cache_dir=args.cache_dir,
+        )
+
     if args.shuffle_buffer_size > 0:
         dataset = dataset.shuffle(
             seed=args.seed,
@@ -183,6 +205,12 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         default=["imagenet/EN/part00/*.parquet"],
         help="Remote parquet files/globs inside the HF dataset repo.",
+    )
+    parser.add_argument(
+        "--local-data-root",
+        type=Path,
+        default=None,
+        help="Optional local root that mirrors the HF repo layout, e.g. data/LLaVA-OneVision-Mid-Training-EN.",
     )
     parser.add_argument(
         "--output-dir",
