@@ -31,7 +31,7 @@
   </defs>
   <rect width="1080" height="820" class="fill-ffffff" />
 
-  <text x="60" y="44" class="subtitle">Figure 2 · One Encoder, Every Modality</text>
+  <text x="60" y="44" class="subtitle">One Encoder, Every Modality</text>
   <text x="60" y="80" class="title">OneVision-Encoder.</text>
   <text x="60" y="124" class="title">Three input types. Same token grid.</text>
   <text x="60" y="156" class="panel-sub">All three input types flow through the <tspan font-weight="700" class="fill-2563eb">same OneVision-Encoder</tspan> under shared <tspan font-weight="700" font-family="'SF Mono', 'Menlo', monospace" class="fill-0f172a">(t, h, w)</tspan> positions.</text>

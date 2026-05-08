@@ -51,6 +51,10 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager, Process, cpu_count
 from typing import Any, Optional
 
+# Pillow is only required when --jpeg-quality is enabled; import lazily inside the
+# conversion helper so the module remains importable in environments without PIL.
+_JPEG_RECODE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff", ".tif"}
+
 from tqdm import tqdm
 
 
@@ -105,6 +109,30 @@ def _resolve_image_path(path: str, base_dir: str, rel_img_path: Optional[str], i
     return os.path.normpath(os.path.join(base_dir, path))
 
 
+def _copy_or_recode_image(src_path: str, dst_path: str, jpeg_quality: int) -> str:
+    """Copy ``src_path`` to ``dst_path``; when ``jpeg_quality >= 0`` and the source
+    is a recodable raster image, re-encode as JPEG and return the actual dst path
+    (extension forced to ``.jpg``). Otherwise behaves like ``shutil.copy2``.
+    """
+    if jpeg_quality < 0:
+        shutil.copy2(src_path, dst_path)
+        return dst_path
+
+    src_ext = os.path.splitext(src_path)[1].lower()
+    if src_ext not in _JPEG_RECODE_EXTS:
+        shutil.copy2(src_path, dst_path)
+        return dst_path
+
+    from PIL import Image  # noqa: PLC0415 — lazy import; only needed when flag is on
+
+    new_dst = os.path.splitext(dst_path)[0] + ".jpg"
+    with Image.open(src_path) as im:
+        if im.mode != "RGB":
+            im = im.convert("RGB")
+        im.save(new_dst, format="JPEG", quality=int(jpeg_quality), optimize=False)
+    return new_dst
+
+
 def _process_single_item(args: tuple) -> Optional[str]:
     """
     Process a single data item: copy images, patch_position.npy files, and create JSON file.
@@ -116,7 +144,7 @@ def _process_single_item(args: tuple) -> Optional[str]:
     Returns:
         Output filename (without extension) or None if skipped
     """
-    (item, base_dir, output_dir, rel_img_path, image_root, no_img_indices, name_counter, name_lock) = args
+    (item, base_dir, output_dir, rel_img_path, image_root, no_img_indices, name_counter, name_lock, jpeg_quality) = args
 
     # Extract image paths from item
     original_image_paths: list[str] = []
@@ -172,13 +200,15 @@ def _process_single_item(args: tuple) -> Optional[str]:
     for idx, src_path in enumerate(resolved_paths):
         old_name = os.path.basename(src_path)
         new_name = _unique_filename(old_name, name_counter, name_lock)
-        new_image_basenames.append(new_name)
 
         dst_path = os.path.join(output_dir, new_name)
         try:
-            shutil.copy2(src_path, dst_path)
+            actual_dst = _copy_or_recode_image(src_path, dst_path, jpeg_quality)
+            if actual_dst != dst_path:
+                new_name = os.path.basename(actual_dst)
         except Exception as e:
             logger.error(f"Failed to copy image: {src_path} -> {dst_path} | {e}")
+        new_image_basenames.append(new_name)
 
         # Copy corresponding .npy file
         # First, check if explicit path was provided in the input JSON
@@ -253,6 +283,7 @@ def _worker_process(
     no_img_indices: list[int],
     name_counter,
     name_lock,
+    jpeg_quality: int,
 ) -> None:
     """
     Worker process that processes chunks of data items.
@@ -279,7 +310,7 @@ def _worker_process(
 
         # Build argument list for thread pool
         arg_list = [
-            (item, base_dir, output_dir, rel_img_path, image_root, no_img_indices, name_counter, name_lock)
+            (item, base_dir, output_dir, rel_img_path, image_root, no_img_indices, name_counter, name_lock, jpeg_quality)
             for item in chunk
         ]
 
@@ -303,6 +334,7 @@ def split_json_to_samples(
     chunk_size: int = 1000,
     num_threads: int = 8,
     shuffle: bool = True,
+    jpeg_quality: int = -1,
 ) -> set[str]:
     """
     Split a JSON array or JSONL file into individual sample files.
@@ -398,6 +430,7 @@ def split_json_to_samples(
                     no_img_indices,
                     name_counter,
                     name_lock,
+                    jpeg_quality,
                 ),
             )
             for _ in range(num_processes)
@@ -451,6 +484,13 @@ Examples:
     parser.add_argument("-m", "--num-threads", type=int, default=8, help="Number of threads per process (default: 8)")
     parser.add_argument("--no-shuffle", action="store_true", help="Do not shuffle data before processing")
     parser.add_argument(
+        "--jpeg-quality",
+        type=int,
+        default=-1,
+        help="If >=0, re-encode raster images as JPEG with the given quality (e.g. 80). "
+             "Output extension is forced to .jpg. Default -1 (disabled, byte-copy).",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -472,6 +512,7 @@ Examples:
         chunk_size=args.chunk_size,
         num_threads=args.num_threads,
         shuffle=not args.no_shuffle,
+        jpeg_quality=args.jpeg_quality,
     )
 
     # Print summary

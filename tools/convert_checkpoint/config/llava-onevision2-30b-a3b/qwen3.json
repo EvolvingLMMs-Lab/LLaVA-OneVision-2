@@ -60,8 +60,8 @@
     },
     "name_map": {
         "huggingface": {
-            "word_embeddings": "model.embed_tokens",
-            "transformer": "model",
+            "word_embeddings": "model.language_model.embed_tokens",
+            "transformer": "model.language_model",
             "layer_prefix": "layers",
             "input_layernorm": "input_layernorm",
             "attention.query_key_value": [
@@ -82,7 +82,7 @@
                 "up_proj"
             ],
             "mlp.dense_4h_to_h": "down_proj",
-            "final_layernorm": "model.norm",
+            "final_layernorm": "model.language_model.norm",
             "word_embeddings_for_head": "lm_head"
         },
         "mcore": {

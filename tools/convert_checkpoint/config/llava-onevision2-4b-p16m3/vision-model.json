@@ -31,7 +31,7 @@
     },
     "name_map": {
         "huggingface": {
-            "transformer": "visual",
+            "transformer": "model.visual",
             "layer_prefix": "encoder.layers",
             "input_layernorm": "layer_norm1",
             "attention.query_key_value": "self_attn.qkv",
