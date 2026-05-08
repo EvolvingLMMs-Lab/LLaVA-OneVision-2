@@ -77,6 +77,24 @@ export WANDB_ENTITY="${WANDB_ENTITY:-rana-zayed-mbzuai}"
 export WANDB_PROJECT="${WANDB_PROJECT:-llava-ov-1_5}"
 export WANDB_NAME_PREFIX="${WANDB_NAME_PREFIX:-stage1_5_mobilellm_fastvit_amd}"
 
+REQUESTED_GPUS_PER_NODE="$GPUS_PER_NODE"
+ACTUAL_VISIBLE_GPUS="$("$PYTHON_BIN" - <<'PY'
+import torch
+print(torch.cuda.device_count())
+PY
+)"
+
+if ! [[ "$ACTUAL_VISIBLE_GPUS" =~ ^[0-9]+$ ]] || [[ "$ACTUAL_VISIBLE_GPUS" -lt 1 ]]; then
+    echo "[Error] PyTorch/ROCm sees no usable GPUs. ACTUAL_VISIBLE_GPUS=$ACTUAL_VISIBLE_GPUS"
+    exit 1
+fi
+
+if [[ "$ACTUAL_VISIBLE_GPUS" -lt "$GPUS_PER_NODE" ]]; then
+    echo "[WARN] Requested GPUS_PER_NODE=$GPUS_PER_NODE, but PyTorch/ROCm sees only $ACTUAL_VISIBLE_GPUS GPU(s)."
+    echo "[WARN] Capping GPUS_PER_NODE to $ACTUAL_VISIBLE_GPUS to avoid HIP invalid device ordinal."
+    export GPUS_PER_NODE="$ACTUAL_VISIBLE_GPUS"
+fi
+
 if [[ "$WANDB_ENABLE" == "1" && -z "${WANDB_API_KEY:-}" && ! -f "$HOME/.netrc" ]]; then
     echo "[WARN] W&B is enabled, but WANDB_API_KEY is not set and ~/.netrc was not found."
     echo "[WARN] Run 'wandb login' or submit with WANDB_API_KEY set if online W&B logging fails."
@@ -89,6 +107,9 @@ echo "CONDA_PREFIX=${CONDA_PREFIX:-}"
 echo "PYTHON_BIN=$PYTHON_BIN"
 echo "TORCHRUN=$TORCHRUN"
 echo "HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES"
+echo "REQUESTED_GPUS_PER_NODE=$REQUESTED_GPUS_PER_NODE"
+echo "ACTUAL_VISIBLE_GPUS=$ACTUAL_VISIBLE_GPUS"
+echo "EFFECTIVE_GPUS_PER_NODE=$GPUS_PER_NODE"
 echo "SLURM_JOB_ID=${SLURM_JOB_ID:-}"
 echo "SLURM_NODELIST=${SLURM_NODELIST:-}"
 echo "START_CKPT=$START_CKPT"
