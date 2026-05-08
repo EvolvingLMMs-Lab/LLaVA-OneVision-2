@@ -29,6 +29,44 @@ TORCHRUN="${TORCHRUN:-/home/ashaker/miniconda3/envs/llava-ov-4b-clean/bin/torchr
 export PYTHON_BIN TORCHRUN
 
 START_CKPT="${START_CKPT:-$REPO_ROOT/stage_1_alignment_mobilellm_140m_fastvlm_faithful}"
+HF_STAGE1_REPO_ID="${HF_STAGE1_REPO_ID:-ranazayed19/mobilellm-fastvit-stage1-2500}"
+HF_STAGE1_LOCAL_DIR="${HF_STAGE1_LOCAL_DIR:-$START_CKPT}"
+export HF_STAGE1_REPO_ID HF_STAGE1_LOCAL_DIR
+
+ensure_start_checkpoint() {
+    if [[ -f "$START_CKPT/latest_checkpointed_iteration.txt" ]]; then
+        echo "[ckpt] Stage 1 alignment checkpoint: $START_CKPT"
+        return
+    fi
+
+    if [[ -z "$HF_STAGE1_REPO_ID" ]]; then
+        echo "[Error] Missing START_CKPT/latest_checkpointed_iteration.txt: $START_CKPT"
+        echo "[Error] Set START_CKPT to a local checkpoint or HF_STAGE1_REPO_ID to a Hugging Face model repo."
+        exit 1
+    fi
+
+    echo "[ckpt] Local Stage 1 checkpoint missing: $START_CKPT"
+    echo "[ckpt] Downloading Stage 1 checkpoint from Hugging Face: $HF_STAGE1_REPO_ID"
+    echo "[ckpt] Destination: $HF_STAGE1_LOCAL_DIR"
+    "$PYTHON_BIN" - <<'PY'
+import os
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id=os.environ["HF_STAGE1_REPO_ID"],
+    repo_type="model",
+    local_dir=os.environ["HF_STAGE1_LOCAL_DIR"],
+)
+PY
+    START_CKPT="$HF_STAGE1_LOCAL_DIR"
+
+    if [[ ! -f "$START_CKPT/latest_checkpointed_iteration.txt" ]]; then
+        echo "[Error] Hugging Face checkpoint download finished, but tracker is still missing: $START_CKPT/latest_checkpointed_iteration.txt"
+        exit 1
+    fi
+}
+
+ensure_start_checkpoint
 CHECKPOINT_PATH="$START_CKPT"
 
 DATA_ROOT="${DATA_ROOT:-$REPO_ROOT/data/midtraining_full_${LANG_LOWER}}"
@@ -64,12 +102,9 @@ export LOG_INTERVAL="${LOG_INTERVAL:-10}"
 export VERBOSE_MODEL_DEBUG="${VERBOSE_MODEL_DEBUG:-0}"
 
 export WANDB_ENABLE="${WANDB_ENABLE:-1}"
+export WANDB_MODE="${WANDB_MODE:-online}"
+export WANDB_ENTITY="${WANDB_ENTITY:-rana-zayed-mbzuai}"
 export WANDB_PROJECT="${WANDB_PROJECT:-llava-ov-1_5}"
-
-if [[ ! -f "$START_CKPT/latest_checkpointed_iteration.txt" ]]; then
-    echo "Missing START_CKPT/latest_checkpointed_iteration.txt: $START_CKPT"
-    exit 1
-fi
 
 sanitize_name() {
     echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_]/_/g'
@@ -132,6 +167,8 @@ run_branch() {
     echo "Save checkpoint : $save_path"
     echo "Steps           : $NSTEP"
     echo "Global batch    : $GBS"
+    echo "Log interval    : $LOG_INTERVAL"
+    echo "W&B             : ${WANDB_MODE:-online}/${WANDB_PROJECT}/${WANDB_NAME_PREFIX:-stage1_5_mobilellm_fastvit}_${branch_safe}_${LANG_LOWER}_full_${NSTEP}steps_${GPUS_PER_NODE}gpu"
     echo "Max samples prep: $MAX_SAMPLES (0 means full branch)"
     echo "===================================================================="
 
@@ -158,6 +195,7 @@ run_branch() {
     fi
 
     CHECKPOINT_PATH="$save_path"
+    echo "[$branch] completed. Latest checkpoint root for next branch: $CHECKPOINT_PATH"
 
     if [[ "$KEEP_PREPARED_DATA" == "0" ]]; then
         echo "[$branch] removing prepared data: $data_path"
@@ -172,3 +210,5 @@ for branch in "$@"; do
 done
 
 echo "All requested English branches completed."
+echo "Final checkpoint root: $CHECKPOINT_PATH"
+echo "$CHECKPOINT_PATH" > "$REPO_ROOT/stage_1_5_latest_checkpoint_path.txt"

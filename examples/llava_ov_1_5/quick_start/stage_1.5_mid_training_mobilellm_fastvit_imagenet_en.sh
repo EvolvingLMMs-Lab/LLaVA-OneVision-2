@@ -32,6 +32,7 @@ SAVE_INTERVAL="${SAVE_INTERVAL:-250}"
 NUM_WORKERS="${NUM_WORKERS:-8}"
 MIDTRAIN_TRAINABLE_MODULES="${MIDTRAIN_TRAINABLE_MODULES:-language_model adapter vision_model}"
 LOG_INTERVAL="${LOG_INTERVAL:-10}"
+export WANDB_MODE="${WANDB_MODE:-online}"
 
 if [ ! -f "$DATA_PATH/.nv-meta/dataset.yaml" ]; then
     echo "Missing prepared midtraining dataset: $DATA_PATH"
@@ -196,7 +197,13 @@ echo "Data: $DATA_PATH"
 echo "Load Stage 1: $CHECKPOINT_PATH"
 echo "Save Stage 1.5: $SAVE_CKPT_PATH"
 echo "Trainable modules: ${TRAINABLE_MODULES_ARRAY[*]}"
-echo "GPUs: $GPUS_PER_NODE | SEQ_LEN: $SEQ_LEN | MBS: $MBS | GBS: $GBS | ITERS: $NSTEP | LOG_INTERVAL: $LOG_INTERVAL"
+echo "GPUs: $GPUS_PER_NODE | SEQ_LEN: $SEQ_LEN | MBS: $MBS | GBS: $GBS | ITERS: $NSTEP"
+echo "Log interval: $LOG_INTERVAL | Save interval: $SAVE_INTERVAL"
+if [[ "${WANDB_ENABLE:-0}" == "1" || -n "${WANDB_API_KEY:-}" ]]; then
+    echo "W&B: mode=$WANDB_MODE entity=${WANDB_ENTITY:-default} project=${WANDB_PROJECT:-llava-ov-mobilellm} name=${WANDB_NAME:-stage1_5-mobilellm-fastvit-imagenet-en}"
+else
+    echo "W&B: disabled"
+fi
 echo "========================================="
 
 if [[ "${PRINT_DATA_SAMPLE:-1}" == "1" ]]; then
@@ -214,3 +221,14 @@ PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:${PYTHONPATH:-}" \
     "${MODEL_PARALLEL_ARGS[@]}" \
     "${LOGGING_ARGS[@]}" \
     2>&1 | tee "$logfile"
+
+{
+    echo "========================================="
+    echo "Stage 1.5 training completed"
+    echo "Checkpoint root: $SAVE_CKPT_PATH"
+    if [[ -f "$SAVE_CKPT_PATH/latest_checkpointed_iteration.txt" ]]; then
+        echo "Latest checkpoint iteration: $(cat "$SAVE_CKPT_PATH/latest_checkpointed_iteration.txt")"
+    fi
+    echo "Training log: $logfile"
+    echo "========================================="
+} | tee -a "$logfile"

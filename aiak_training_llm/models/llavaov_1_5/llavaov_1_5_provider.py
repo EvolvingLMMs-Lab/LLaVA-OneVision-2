@@ -1,5 +1,6 @@
 """LLaVA-OneVision-1.5 model provider - supports Qwen and MobileLLM backbones"""
 
+import os
 from copy import deepcopy
 from dataclasses import asdict
 
@@ -17,6 +18,16 @@ from megatron.core import mpu
 from megatron.core.transformer.spec_utils import import_module
 
 from .llavaov_1_5_model import LlavaOnevision1_5
+
+
+def _verbose_model_debug() -> bool:
+    return os.getenv("VERBOSE_MODEL_DEBUG", "0").lower() in {"1", "true", "yes", "on"}
+
+
+def _debug_rank_0(*args, **kwargs) -> None:
+    if _verbose_model_debug():
+        print_rank_0(*args, **kwargs)
+
 
 # model provider registration
 @register_model_provider(model_family=[VisionLanguageModelFamilies.LLAVA_OV_1_5])
@@ -41,54 +52,53 @@ def rice_vl_model_provider(
     args = get_args()
 
     print_rank_0(f'building {args.model_name} model ...')
-    print_rank_0(f'[DEBUG PROVIDER] Model name: {args.model_name}')
-    print_rank_0(f'[DEBUG PROVIDER] Args num_layers: {args.num_layers}')
-    print_rank_0(f'[DEBUG PROVIDER] Args hidden_size: {args.hidden_size}')
-    print_rank_0(f'[DEBUG PROVIDER] Args vocab_size: {args.vocab_size_in_config_file}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Model name: {args.model_name}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Args num_layers: {args.num_layers}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Args hidden_size: {args.hidden_size}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Args vocab_size: {args.vocab_size_in_config_file}')
 
     config = build_transformer_config(args) #base transformer config with all hyperparams
-    print_rank_0(f'[DEBUG PROVIDER] TransformerConfig built with num_layers: {config.num_layers}, hidden_size: {config.hidden_size}')
+    _debug_rank_0(f'[DEBUG PROVIDER] TransformerConfig built with num_layers: {config.num_layers}, hidden_size: {config.hidden_size}')
 
     language_config = deepcopy(config) # For Qwen2.5 language model
     vision_config = deepcopy(config) # For vision encoder (SigLIP)
     adapter_config = deepcopy(config) ## For adapter (projection)
-    print_rank_0(f'[DEBUG PROVIDER] Initial language_config: layers={language_config.num_layers}, hidden={language_config.hidden_size}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Initial language_config: layers={language_config.num_layers}, hidden={language_config.hidden_size}')
 
         #     Vision Encoder → Adapter → Language Model
         #    (SigLIP)    (Projection)   (Qwen2.5)
 
     from aiak_training_llm.models import get_model_family
     model_family = get_model_family(args.model_name)
-    print_rank_0(f'[DEBUG PROVIDER] Model family: {model_family}')
+    _debug_rank_0(f'[DEBUG PROVIDER] Model family: {model_family}')
     
     # Detect if using MobileLLM backbone
     use_mobilellm = "mobilellm" in args.model_name.lower()
-    print_rank_0(f'[DEBUG PROVIDER] use_mobilellm flag: {use_mobilellm}')
+    _debug_rank_0(f'[DEBUG PROVIDER] use_mobilellm flag: {use_mobilellm}')
     
     if use_mobilellm:
-        print_rank_0(f'[DEBUG PROVIDER] ✓ Using MobileLLM-R1-140M as language backbone')
-        print_rank_0(f'[DEBUG PROVIDER] Language config BEFORE override: layers={language_config.num_layers}, '
+        _debug_rank_0(f'[DEBUG PROVIDER] ✓ Using MobileLLM-R1-140M as language backbone')
+        _debug_rank_0(f'[DEBUG PROVIDER] Language config BEFORE override: layers={language_config.num_layers}, '
                      f'hidden={language_config.hidden_size}, heads={language_config.num_attention_heads}')
         # MobileLLM params are already in language_config from args!
         # No need to load separately - they were applied in _validate_extra_model_args
-        print_rank_0(f'[DEBUG PROVIDER] Language config AFTER (should be same): layers={language_config.num_layers}, '
+        _debug_rank_0(f'[DEBUG PROVIDER] Language config AFTER (should be same): layers={language_config.num_layers}, '
                      f'hidden={language_config.hidden_size}, heads={language_config.num_attention_heads}, '
                      f'query_groups={language_config.num_query_groups}')
     else:
-        print_rank_0(f'[DEBUG PROVIDER] Using Qwen2.5 as language backbone')
+        _debug_rank_0(f'[DEBUG PROVIDER] Using Qwen2.5 as language backbone')
     
-    print_rank_0(f'[DEBUG PROVIDER] ========== LANGUAGE CONFIG ==========')
-    print_rank_0(f'{language_config}')
-    print_rank_0(f'[DEBUG PROVIDER] ======================================')
+    _debug_rank_0(f'[DEBUG PROVIDER] ========== LANGUAGE CONFIG ==========')
+    _debug_rank_0(f'{language_config}')
+    _debug_rank_0(f'[DEBUG PROVIDER] ======================================')
     
     # get vision specific config : no. of layers, hidden size, Patch size, Image resolution
-    print_rank_0(f'[DEBUG PROVIDER] Loading vision config...')
+    _debug_rank_0(f'[DEBUG PROVIDER] Loading vision config...')
     
     # Check if using FastViT - it has its own config system
     if getattr(args, 'use_fastvit', False):
         # FastViT loads config from mobileclip_l.json - set TransformerConfig to match
         import json
-        import os
         
         vision_tower_name = getattr(args, 'vision_tower_name', 'mobileclip_l_1024')
         setattr(vision_config, 'vision_tower_name', vision_tower_name)
@@ -119,29 +129,29 @@ def rice_vl_model_provider(
         )
         setattr(vision_config, 'unfreeze_mm_vision_tower', train_vision_model)
         
-        print_rank_0(f'[DEBUG PROVIDER] ✓ Using FastViT with vision_tower_name: {vision_tower_name}')
-        print_rank_0(f'[DEBUG PROVIDER] FastViT train vision tower: {train_vision_model}')
-        print_rank_0(f'[DEBUG PROVIDER] FastViT config loaded from {json_config_path}')
-        print_rank_0(f'[DEBUG PROVIDER] image_cfg: embed_dim={image_cfg["embed_dim"]}, patch_size={image_cfg["patch_size"]}, model={image_cfg["model_name"]}')
-        print_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (FastViT) ==========')
-        print_rank_0(f'{vision_config}')
-        print_rank_0(f'[DEBUG PROVIDER] ================================================')
+        _debug_rank_0(f'[DEBUG PROVIDER] ✓ Using FastViT with vision_tower_name: {vision_tower_name}')
+        _debug_rank_0(f'[DEBUG PROVIDER] FastViT train vision tower: {train_vision_model}')
+        _debug_rank_0(f'[DEBUG PROVIDER] FastViT config loaded from {json_config_path}')
+        _debug_rank_0(f'[DEBUG PROVIDER] image_cfg: embed_dim={image_cfg["embed_dim"]}, patch_size={image_cfg["patch_size"]}, model={image_cfg["model_name"]}')
+        _debug_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (FastViT) ==========')
+        _debug_rank_0(f'{vision_config}')
+        _debug_rank_0(f'[DEBUG PROVIDER] ================================================')
     else:
         # For SigLIP/Rice models, use generic vision config
         for k, v in asdict(get_vision_config(model_family, args.model_name)).items():
             setattr(vision_config, k, v)
-        print_rank_0(f'[DEBUG PROVIDER] Vision config (SigLIP/Rice): layers={vision_config.num_layers}, hidden={vision_config.hidden_size}')
-        print_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (SigLIP/Rice) ==========')
-        print_rank_0(f'{vision_config}')
-        print_rank_0(f'[DEBUG PROVIDER] ====================================================')
+        _debug_rank_0(f'[DEBUG PROVIDER] Vision config (SigLIP/Rice): layers={vision_config.num_layers}, hidden={vision_config.hidden_size}')
+        _debug_rank_0(f'[DEBUG PROVIDER] ========== VISION CONFIG (SigLIP/Rice) ==========')
+        _debug_rank_0(f'{vision_config}')
+        _debug_rank_0(f'[DEBUG PROVIDER] ====================================================')
     
     # get adapter specific config : Projection dimension, Activation function
-    print_rank_0(f'[DEBUG PROVIDER] Loading adapter config...')
+    _debug_rank_0(f'[DEBUG PROVIDER] Loading adapter config...')
     for k, v in asdict(get_adapeter_config(model_family)).items():
         setattr(adapter_config, k, v)
-    print_rank_0(f'[DEBUG PROVIDER] ========== ADAPTER CONFIG ==========')
-    print_rank_0(f'{adapter_config}')
-    print_rank_0(f'[DEBUG PROVIDER] ======================================')
+    _debug_rank_0(f'[DEBUG PROVIDER] ========== ADAPTER CONFIG ==========')
+    _debug_rank_0(f'{adapter_config}')
+    _debug_rank_0(f'[DEBUG PROVIDER] ======================================')
 
     # set special token ids for language model using the shared runtime tokenizer
     image_token_id = 151655
@@ -164,7 +174,7 @@ def rice_vl_model_provider(
         if video_token_id is None:
             video_token_id = 151656
 
-        print_rank_0(
+        _debug_rank_0(
             f"[DEBUG PROVIDER] Resolved vision token ids from tokenizer: "
             f"image_token_id={image_token_id}, video_token_id={video_token_id}"
         )
@@ -212,21 +222,21 @@ def rice_vl_model_provider(
 
     if args.spec is not None:
         language_layer_spec = import_module(args.spec)
-        print_rank_0(f'[DEBUG PROVIDER] Using custom spec: {args.spec}')
+        _debug_rank_0(f'[DEBUG PROVIDER] Using custom spec: {args.spec}')
     else:
-        print_rank_0(f'[DEBUG PROVIDER] Building layer specs...')
+        _debug_rank_0(f'[DEBUG PROVIDER] Building layer specs...')
         adapter_layer_spec = get_adapeter_layer_with_spec()
         vision_layer_spec = get_vision_layer_with_spec()
         
         # Choose language layer spec based on backbone
         if use_mobilellm:
-            print_rank_0(f'[DEBUG PROVIDER] ✓ Using MobileLLM layer specification')
-            print_rank_0(f'[DEBUG PROVIDER] MobileLLM layer config: layers={language_config.num_layers}, '
+            _debug_rank_0(f'[DEBUG PROVIDER] ✓ Using MobileLLM layer specification')
+            _debug_rank_0(f'[DEBUG PROVIDER] MobileLLM layer config: layers={language_config.num_layers}, '
                          f'hidden={language_config.hidden_size}, heads={language_config.num_attention_heads}')
             language_layer_spec = get_mobilellm_layer_with_te_spec(language_config)
-            print_rank_0(f'[DEBUG PROVIDER] MobileLLM layer spec created successfully')
+            _debug_rank_0(f'[DEBUG PROVIDER] MobileLLM layer spec created successfully')
         else:
-            print_rank_0(f'[DEBUG PROVIDER] Using Qwen layer specification')
+            _debug_rank_0(f'[DEBUG PROVIDER] Using Qwen layer specification')
             language_layer_spec = get_qwen_layer_with_te_spec(language_config)
 
 #     # Vision layer spec (Transformer block)
@@ -246,8 +256,8 @@ def rice_vl_model_provider(
 # - Optional activation
 
 #create the model 
-    print_rank_0(f'[DEBUG PROVIDER] Creating LlavaOnevision1_5 model...')
-    print_rank_0(f'[DEBUG PROVIDER] Final language_config: layers={language_config.num_layers}, '
+    _debug_rank_0(f'[DEBUG PROVIDER] Creating LlavaOnevision1_5 model...')
+    _debug_rank_0(f'[DEBUG PROVIDER] Final language_config: layers={language_config.num_layers}, '
                  f'hidden={language_config.hidden_size}, vocab={args.padded_vocab_size}, '
                  f'rotary_base={args.rotary_base}')
     model = LlavaOnevision1_5(
@@ -273,7 +283,7 @@ def rice_vl_model_provider(
         # When using FastViT, adapter dimensions change, so allow missing adapter weights
         allow_missing_adapter_checkpoint=getattr(args, 'use_fastvit', False),
     )
-    print_rank_0(f'[DEBUG PROVIDER] ✓ LlavaOnevision1_5 model created successfully!')
+    _debug_rank_0(f'[DEBUG PROVIDER] ✓ LlavaOnevision1_5 model created successfully!')
     # Vision encoder: SigLIP with 27 layers
     # Adapter: Projection network
     # Language model: Qwen2.5 with 32 layers

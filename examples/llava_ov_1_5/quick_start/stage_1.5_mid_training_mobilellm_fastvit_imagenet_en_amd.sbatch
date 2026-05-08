@@ -43,6 +43,8 @@ export PYTHON_BIN="${PYTHON_BIN:-$(command -v python)}"
 export TORCHRUN="${TORCHRUN:-$(command -v torchrun)}"
 
 export START_CKPT="${START_CKPT:-$REPO_ROOT/stage_1_alignment_mobilellm_140m_fastvlm_faithful}"
+export HF_STAGE1_REPO_ID="${HF_STAGE1_REPO_ID:-ranazayed19/mobilellm-fastvit-stage1-2500}"
+export HF_STAGE1_LOCAL_DIR="${HF_STAGE1_LOCAL_DIR:-$START_CKPT}"
 export LOCAL_HF_DATA_ROOT="${LOCAL_HF_DATA_ROOT:-$REPO_ROOT/data/LLaVA-OneVision-Mid-Training-EN}"
 export DATA_ROOT="${DATA_ROOT:-$REPO_ROOT/data/midtraining_full_en}"
 export CACHE_DIR="${CACHE_DIR:-$REPO_ROOT/data/hf_cache_midtraining_stream}"
@@ -70,8 +72,15 @@ export VERBOSE_MODEL_DEBUG="${VERBOSE_MODEL_DEBUG:-0}"
 export VERIFY_LOCAL_HF_DATA="${VERIFY_LOCAL_HF_DATA:-0}"
 
 export WANDB_ENABLE="${WANDB_ENABLE:-1}"
+export WANDB_MODE="${WANDB_MODE:-online}"
+export WANDB_ENTITY="${WANDB_ENTITY:-rana-zayed-mbzuai}"
 export WANDB_PROJECT="${WANDB_PROJECT:-llava-ov-1_5}"
 export WANDB_NAME_PREFIX="${WANDB_NAME_PREFIX:-stage1_5_mobilellm_fastvit_amd}"
+
+if [[ "$WANDB_ENABLE" == "1" && -z "${WANDB_API_KEY:-}" && ! -f "$HOME/.netrc" ]]; then
+    echo "[WARN] W&B is enabled, but WANDB_API_KEY is not set and ~/.netrc was not found."
+    echo "[WARN] Run 'wandb login' or submit with WANDB_API_KEY set if online W&B logging fails."
+fi
 
 echo "=== ENV CHECK ==="
 echo "REPO_ROOT=$REPO_ROOT"
@@ -82,6 +91,19 @@ echo "TORCHRUN=$TORCHRUN"
 echo "HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES"
 echo "SLURM_JOB_ID=${SLURM_JOB_ID:-}"
 echo "SLURM_NODELIST=${SLURM_NODELIST:-}"
+echo "START_CKPT=$START_CKPT"
+echo "HF_STAGE1_REPO_ID=$HF_STAGE1_REPO_ID"
+echo "LOCAL_HF_DATA_ROOT=$LOCAL_HF_DATA_ROOT"
+echo "WANDB_ENABLE=$WANDB_ENABLE"
+echo "WANDB_MODE=$WANDB_MODE"
+echo "WANDB_ENTITY=$WANDB_ENTITY"
+echo "WANDB_PROJECT=$WANDB_PROJECT"
+echo "WANDB_NAME_PREFIX=$WANDB_NAME_PREFIX"
+if [[ -n "${WANDB_API_KEY:-}" ]]; then
+    echo "WANDB_API_KEY=set"
+else
+    echo "WANDB_API_KEY=not_set"
+fi
 "$PYTHON_BIN" - <<'PY'
 import sys
 print("sys.executable=", sys.executable)
@@ -101,8 +123,7 @@ PY
 echo "=== END ENV CHECK ==="
 
 if [[ ! -f "$START_CKPT/latest_checkpointed_iteration.txt" ]]; then
-    echo "[Error] Missing Stage 1 checkpoint tracker: $START_CKPT/latest_checkpointed_iteration.txt"
-    exit 1
+    echo "[ckpt] Stage 1 checkpoint not found locally yet. The branch runner will download it from Hugging Face if needed."
 fi
 
 if [[ ! -d "$LOCAL_HF_DATA_ROOT/imagenet" ]]; then
