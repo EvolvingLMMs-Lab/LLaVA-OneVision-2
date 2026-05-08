@@ -31,6 +31,7 @@ MASTER_PORT="${MASTER_PORT:-26015}"
 SAVE_INTERVAL="${SAVE_INTERVAL:-250}"
 NUM_WORKERS="${NUM_WORKERS:-8}"
 MIDTRAIN_TRAINABLE_MODULES="${MIDTRAIN_TRAINABLE_MODULES:-language_model adapter vision_model}"
+LOG_INTERVAL="${LOG_INTERVAL:-10}"
 
 if [ ! -f "$DATA_PATH/.nv-meta/dataset.yaml" ]; then
     echo "Missing prepared midtraining dataset: $DATA_PATH"
@@ -169,7 +170,7 @@ MODEL_PARALLEL_ARGS=(
 )
 
 LOGGING_ARGS=(
-    --log-interval 1
+    --log-interval "$LOG_INTERVAL"
     --tensorboard-dir "$TENSORBOARD_PATH"
     --log-timers-to-tensorboard
 )
@@ -195,7 +196,7 @@ echo "Data: $DATA_PATH"
 echo "Load Stage 1: $CHECKPOINT_PATH"
 echo "Save Stage 1.5: $SAVE_CKPT_PATH"
 echo "Trainable modules: ${TRAINABLE_MODULES_ARRAY[*]}"
-echo "GPUs: $GPUS_PER_NODE | SEQ_LEN: $SEQ_LEN | MBS: $MBS | GBS: $GBS | ITERS: $NSTEP"
+echo "GPUs: $GPUS_PER_NODE | SEQ_LEN: $SEQ_LEN | MBS: $MBS | GBS: $GBS | ITERS: $NSTEP | LOG_INTERVAL: $LOG_INTERVAL"
 echo "========================================="
 
 if [[ "${PRINT_DATA_SAMPLE:-1}" == "1" ]]; then
