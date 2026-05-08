@@ -32,7 +32,7 @@ export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
 export NCCL_COLLNET_ENABLE="${NCCL_COLLNET_ENABLE:-0}"
 export NCCL_P2P_ENABLE="${NCCL_P2P_ENABLE:-1}"
 
-REPO_ROOT="${REPO_ROOT:-/vast/users/salman.khan/mobile_vlm/llava_ov1.5/LLaVA-OneVision-1.5}"
+export REPO_ROOT="${REPO_ROOT:-/vast/users/salman.khan/mobile_vlm/llava_ov1.5/LLaVA-OneVision-1.5}"
 cd "$REPO_ROOT" || { echo "[Error] Repo root not found: $REPO_ROOT"; exit 1; }
 
 export AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-$REPO_ROOT}"
@@ -47,7 +47,12 @@ export LOCAL_HF_DATA_ROOT="${LOCAL_HF_DATA_ROOT:-$REPO_ROOT/data/LLaVA-OneVision
 export DATA_ROOT="${DATA_ROOT:-$REPO_ROOT/data/midtraining_full_en}"
 export CACHE_DIR="${CACHE_DIR:-$REPO_ROOT/data/hf_cache_midtraining_stream}"
 
-export GPUS_PER_NODE="${GPUS_PER_NODE:-8}"
+if [[ -n "${HIP_VISIBLE_DEVICES:-}" ]]; then
+    DETECTED_GPUS="$(awk -F, '{print NF}' <<< "$HIP_VISIBLE_DEVICES")"
+else
+    DETECTED_GPUS="${SLURM_GPUS_ON_NODE:-1}"
+fi
+export GPUS_PER_NODE="${GPUS_PER_NODE:-$DETECTED_GPUS}"
 export TP="${TP:-1}"
 export PP="${PP:-1}"
 export SEQ_LEN="${SEQ_LEN:-4096}"
