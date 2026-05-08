@@ -327,6 +327,36 @@ def forward_step(data_iterator, model):
             patch_positions=patch_positions,
         )
 
+    # HOTFIX (text-only-sample backward): when a packed sample contains no
+    # images/video AND the LLM is frozen (stage-1: --trainable-modules adapter
+    # vision_model), the vision_model+adapter are never invoked, so output_tensor
+    # has no grad_fn and custom_backward (schedules.py:161) crashes — desyncing
+    # NCCL collectives. Fix: tie a zero-magnitude contribution from the first
+    # trainable param so backward succeeds with zero gradients and DP all-reduce
+    # stays aligned. Looks like a no-op — DO NOT REMOVE.
+    if torch.is_tensor(output_tensor) and not output_tensor.requires_grad:
+        dummy_param = None
+        for _p in model.parameters():
+            if _p.requires_grad:
+                dummy_param = _p
+                break
+        if dummy_param is not None:
+            _rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else 0
+            _host = os.uname()[1]
+            print(
+                f"[hotfix-zero-grad] rank={_rank} host={_host} "
+                f"output_tensor.requires_grad=False -> tying dummy zero loss to "
+                f"trainable param shape={tuple(dummy_param.shape)} dtype={dummy_param.dtype}",
+                flush=True,
+            )
+            output_tensor = output_tensor + (dummy_param.sum() * 0.0).to(output_tensor.dtype)
+        else:
+            print(
+                "[hotfix-zero-grad] WARNING: output_tensor has no grad_fn AND no "
+                "trainable parameters found in model — backward will fail.",
+                flush=True,
+            )
+
     return output_tensor, partial(loss_func, loss_mask)
 
 
