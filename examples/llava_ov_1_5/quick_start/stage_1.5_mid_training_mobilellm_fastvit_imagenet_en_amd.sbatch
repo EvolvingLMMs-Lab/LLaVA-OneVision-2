@@ -66,6 +66,7 @@ export MAX_SAMPLES="${MAX_SAMPLES:-0}"
 export LOG_INTERVAL="${LOG_INTERVAL:-10}"
 export PRINT_DATA_SAMPLE="${PRINT_DATA_SAMPLE:-0}"
 export VERBOSE_MODEL_DEBUG="${VERBOSE_MODEL_DEBUG:-0}"
+export VERBOSE_DATALOADER_DEBUG="${VERBOSE_DATALOADER_DEBUG:-0}"
 
 # The local ImageNet files were already verified on the login node. Keep this
 # disabled by default so compute nodes do not need Hugging Face API access.

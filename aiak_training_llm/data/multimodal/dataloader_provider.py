@@ -94,11 +94,11 @@ class EnergonDataloader:
                 self._collator.label_pad_token_id
             )
             features['attn_mask'] = F.pad(features['attn_mask'], (0, paded_length), "constant", True)
-        # return a batch 
-        print("Dataloader batch - tokens shape:", features['tokens'].shape)
-        print("Dataloader batch - labels shape:", features['labels'].shape)
-        print("Dataloader batch - attn_mask shape:", features['attn_mask'].shape)
-        print("Dataloader batch - image_grid_thw shape:", features['image_grid_thw'].shape)
+        if os.getenv("VERBOSE_DATALOADER_DEBUG", "0").lower() in {"1", "true", "yes", "on"}:
+            print("Dataloader batch - tokens shape:", features['tokens'].shape)
+            print("Dataloader batch - labels shape:", features['labels'].shape)
+            print("Dataloader batch - attn_mask shape:", features['attn_mask'].shape)
+            print("Dataloader batch - image_grid_thw shape:", features['image_grid_thw'].shape)
         return features
 
     def __iter__(self):
