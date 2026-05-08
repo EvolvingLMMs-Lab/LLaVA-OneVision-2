@@ -29,7 +29,7 @@ g[id^="cvf-panel-"]{animation:cvf-fade .4s ease-out both}
 </defs>
 <rect width="1100" height="580" class="fill-ffffff" />
 
-<line x1="36" y1="323" x2="1036" y2="323" stroke-width="0.6" class="stroke-eaecef" /><line x1="266" y1="75" x2="266" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="536" y1="75" x2="536" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="806" y1="75" x2="806" y2="550" stroke-width="0.6" class="stroke-eaecef" /><text class="caption" x="30" y="30"><tspan class="caption-muted">Figure 4: </tspan>Codec-aligned sampling vs. uniform frame sampling.</text>
+<line x1="36" y1="323" x2="1036" y2="323" stroke-width="0.6" class="stroke-eaecef" /><line x1="266" y1="75" x2="266" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="536" y1="75" x2="536" y2="550" stroke-width="0.6" class="stroke-eaecef" /><line x1="806" y1="75" x2="806" y2="550" stroke-width="0.6" class="stroke-eaecef" /><text class="caption" x="30" y="30">Codec-aligned sampling vs. uniform frame sampling.</text>
 <g transform="translate(730, 26)">
 
 <line x1="0" y1="0" x2="30" y2="0" stroke-width="1.8" class="stroke-1a1a1a" />

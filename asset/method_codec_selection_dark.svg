@@ -31,7 +31,7 @@
   <rect width="1080" height="526" class="fill-ffffff" />
 
   
-  <text x="60" y="60" class="subtitle">Figure 1 · Codec-Style Patch Selection</text>
+  <text x="60" y="60" class="subtitle">Codec-Style Patch Selection</text>
   <text x="60" y="98" class="title">Same 54-token budget. 3× the temporal range.</text>
   <text x="60" y="128" class="panel-sub">Standard pipelines spend their budget on a few dense frames. We keep <tspan font-weight="700" class="fill-2563eb">I-frames dense</tspan> and skim <tspan font-weight="700" class="fill-f59e0b">motion-rich patches</tspan> from P-frames instead.</text>
 

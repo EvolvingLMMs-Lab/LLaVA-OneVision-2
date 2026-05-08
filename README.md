@@ -84,7 +84,7 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="asset/method_codec_vs_frame_dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="asset/method_codec_vs_frame_light.svg">
-    <img src="asset/method_codec_vs_frame_light.svg" width="100%" alt="Figure 4: codec-aligned sampling compared with uniform frame sampling across video benchmarks">
+    <img src="asset/method_codec_vs_frame_light.svg" width="100%" alt="Codec-aligned sampling compared with uniform frame sampling across video benchmarks">
   </picture>
 </p>
 
