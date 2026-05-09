@@ -1,11 +1,12 @@
 import argparse
+import os
 import sys
 
 import torch
 
 from transformers import logging
 
-from .loader import load_all_weights
+from .loader import _resolve_local_or_hub, load_all_weights
 from .save import save_merged
 from .utils import log_stage
 from .variants import get_variant
@@ -43,6 +44,25 @@ def _resolve_strategies(args: argparse.Namespace) -> None:
     # the production processor that ships with the saved checkpoint.
     if getattr(args, "qwen_processor_path", None) is None and getattr(args, "processor_path", None):
         args.qwen_processor_path = args.processor_path
+
+
+# Path attrs that may be HF Hub repo IDs; resolved at CLI entry so downstream
+# code stays Hub-agnostic. Add new path attrs here when adding new subcommands.
+_HUB_RESOLVABLE_PATH_ATTRS: tuple[str, ...] = (
+    "vit_path",
+    "llm_path",
+    "processor_path",
+    "qwen_processor_path",
+    "ckpt_path",
+    "adapter_path",
+)
+
+
+def _resolve_paths(args: argparse.Namespace) -> None:
+    for attr in _HUB_RESOLVABLE_PATH_ATTRS:
+        val = getattr(args, attr, None)
+        if val and not os.path.exists(val):
+            setattr(args, attr, _resolve_local_or_hub(val))
 
 
 def _reject_unsafe_combos(args: argparse.Namespace) -> None:
@@ -109,6 +129,7 @@ _DTYPE = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}
 
 def _cmd_merge(args: argparse.Namespace) -> int:
     _resolve_strategies(args)
+    _resolve_paths(args)
     _reject_unsafe_combos(args)
     _enforce_validation_required(args, need_e2e=True)
 
@@ -161,6 +182,7 @@ def _cmd_merge(args: argparse.Namespace) -> int:
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     _resolve_strategies(args)
+    _resolve_paths(args)
     _reject_unsafe_combos(args)
     _enforce_validation_required(args, need_e2e=True)
 
@@ -202,6 +224,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 def _cmd_dry_run(args: argparse.Namespace) -> int:
     from .loader import dry_run_report
 
+    _resolve_paths(args)
     variant = get_variant(args.variant)
     with log_stage("build_empty"):
         model, _processor, _tokenizer = variant.build_empty(

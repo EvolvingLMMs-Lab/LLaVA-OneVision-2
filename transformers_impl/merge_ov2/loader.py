@@ -32,10 +32,29 @@ class LoadReport:
         )
 
 
+# Skip legacy weight formats and binary pickles to keep cache lean. We still
+# pull config.json, modeling_*.py, preprocessor_config.json and tokenizer files
+# because dense.py / moe.py read the ViT config and validators reload via
+# AutoModel(trust_remote_code=True) / AutoTokenizer / CLIPImageProcessor — all
+# of which need the full repo layout, not just *.safetensors.
+_HUB_IGNORE_PATTERNS: tuple[str, ...] = (
+    "*.bin",
+    "*.h5",
+    "*.msgpack",
+    "*.onnx",
+    "*.gguf",
+    "*.pt",
+    "*.pth",
+    "*.pkl",
+    "*.tflite",
+    "*.ot",
+)
+
+
 def _resolve_local_or_hub(path: str) -> str:
     if os.path.exists(path):
         return path
-    return snapshot_download(path, allow_patterns="*.safetensors")
+    return snapshot_download(path, ignore_patterns=list(_HUB_IGNORE_PATTERNS))
 
 
 def apply_weights(
