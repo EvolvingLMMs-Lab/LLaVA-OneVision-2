@@ -57,12 +57,18 @@ _HUB_RESOLVABLE_PATH_ATTRS: tuple[str, ...] = (
     "adapter_path",
 )
 
+# Subset of the above whose Hub source is consumed only by AutoProcessor /
+# AutoTokenizer / CLIPImageProcessor.from_pretrained — no model weights needed.
+# Routed to _resolve_local_or_hub(kind="processor") to skip multi-GB safetensors.
+_HUB_PROCESSOR_PATH_ATTRS: frozenset[str] = frozenset({"processor_path", "qwen_processor_path"})
+
 
 def _resolve_paths(args: argparse.Namespace) -> None:
     for attr in _HUB_RESOLVABLE_PATH_ATTRS:
         val = getattr(args, attr, None)
         if val and not os.path.exists(val):
-            setattr(args, attr, _resolve_local_or_hub(val))
+            kind = "processor" if attr in _HUB_PROCESSOR_PATH_ATTRS else "model"
+            setattr(args, attr, _resolve_local_or_hub(val, kind=kind))
 
 
 def _reject_unsafe_combos(args: argparse.Namespace) -> None:

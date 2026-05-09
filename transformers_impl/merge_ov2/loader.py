@@ -32,12 +32,12 @@ class LoadReport:
         )
 
 
-# Skip legacy weight formats and binary pickles to keep cache lean. We still
-# pull config.json, modeling_*.py, preprocessor_config.json and tokenizer files
-# because dense.py / moe.py read the ViT config and validators reload via
-# AutoModel(trust_remote_code=True) / AutoTokenizer / CLIPImageProcessor — all
-# of which need the full repo layout, not just *.safetensors.
-_HUB_IGNORE_PATTERNS: tuple[str, ...] = (
+# Model paths (vit/llm/adapter/ckpt): pull the full repo minus legacy weight
+# formats. We still need config.json, modeling_*.py, preprocessor_config.json,
+# tokenizer files and *.safetensors because dense.py / moe.py read the ViT
+# config and validators reload via AutoModel(trust_remote_code=True) /
+# AutoTokenizer / CLIPImageProcessor — all of which need the full repo layout.
+_HUB_MODEL_IGNORE_PATTERNS: tuple[str, ...] = (
     "*.bin",
     "*.h5",
     "*.msgpack",
@@ -50,11 +50,37 @@ _HUB_IGNORE_PATTERNS: tuple[str, ...] = (
     "*.ot",
 )
 
+# Processor paths (processor/qwen_processor): the consumers are
+# AutoProcessor / AutoTokenizer / CLIPImageProcessor.from_pretrained — they
+# only need tokenizer + processor + image_processor configs (KB-scale). Many
+# repos used as a processor source (e.g. lmms-lab/LLaVA-OneVision-1.5-*) are
+# full N-billion-param model repos with ~16GB of safetensors we never read.
+# Whitelist exactly the file shapes the *_from_pretrained loaders need.
+_HUB_PROCESSOR_ALLOW_PATTERNS: tuple[str, ...] = (
+    "*.json",
+    "*.txt",
+    "*.model",
+    "*.jinja",
+    "tokenizer*",
+    "processor_config*",
+    "preprocessor_config*",
+    "tokenization_*.py",
+    "processing_*.py",
+    "image_processing_*.py",
+    "video_processing_*.py",
+    "feature_extraction_*.py",
+)
 
-def _resolve_local_or_hub(path: str) -> str:
+
+def _resolve_local_or_hub(path: str, *, kind: str = "model") -> str:
     if os.path.exists(path):
         return path
-    return snapshot_download(path, ignore_patterns=list(_HUB_IGNORE_PATTERNS))
+    if kind == "processor":
+        return snapshot_download(path, allow_patterns=list(_HUB_PROCESSOR_ALLOW_PATTERNS))
+    if kind != "model":
+        msg = f"unknown kind {kind!r}; expected 'model' or 'processor'"
+        raise ValueError(msg)
+    return snapshot_download(path, ignore_patterns=list(_HUB_MODEL_IGNORE_PATTERNS))
 
 
 def apply_weights(
