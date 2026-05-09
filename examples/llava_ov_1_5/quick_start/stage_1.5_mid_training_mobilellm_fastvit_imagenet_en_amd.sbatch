@@ -67,6 +67,7 @@ export LOG_INTERVAL="${LOG_INTERVAL:-10}"
 export PRINT_DATA_SAMPLE="${PRINT_DATA_SAMPLE:-0}"
 export VERBOSE_MODEL_DEBUG="${VERBOSE_MODEL_DEBUG:-0}"
 export VERBOSE_DATALOADER_DEBUG="${VERBOSE_DATALOADER_DEBUG:-0}"
+export MIDTRAIN_BRANCHES="${MIDTRAIN_BRANCHES:-imagenet}"
 
 # The local ImageNet files were already verified on the login node. Keep this
 # disabled by default so compute nodes do not need Hugging Face API access.
@@ -116,6 +117,7 @@ echo "SLURM_NODELIST=${SLURM_NODELIST:-}"
 echo "START_CKPT=$START_CKPT"
 echo "HF_STAGE1_REPO_ID=$HF_STAGE1_REPO_ID"
 echo "LOCAL_HF_DATA_ROOT=$LOCAL_HF_DATA_ROOT"
+echo "MIDTRAIN_BRANCHES=$MIDTRAIN_BRANCHES"
 echo "WANDB_ENABLE=$WANDB_ENABLE"
 echo "WANDB_MODE=$WANDB_MODE"
 echo "WANDB_ENTITY=$WANDB_ENTITY"
@@ -148,11 +150,13 @@ if [[ ! -f "$START_CKPT/latest_checkpointed_iteration.txt" ]]; then
     echo "[ckpt] Stage 1 checkpoint not found locally yet. The branch runner will download it from Hugging Face if needed."
 fi
 
-if [[ ! -d "$LOCAL_HF_DATA_ROOT/imagenet" ]]; then
-    echo "[Error] Missing local ImageNet data under: $LOCAL_HF_DATA_ROOT/imagenet"
-    exit 1
-fi
+for branch in $MIDTRAIN_BRANCHES; do
+    if [[ ! -d "$LOCAL_HF_DATA_ROOT/$branch" ]]; then
+        echo "[Error] Missing local $branch data under: $LOCAL_HF_DATA_ROOT/$branch"
+        exit 1
+    fi
+done
 
 df -h "$REPO_ROOT" "$LOCAL_HF_DATA_ROOT" || true
 
-bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_english_branch_chain.sh imagenet
+bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_mobilellm_fastvit_english_branch_chain.sh $MIDTRAIN_BRANCHES
