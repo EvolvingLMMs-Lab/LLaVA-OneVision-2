@@ -1,0 +1,16 @@
+{
+  "task": "reasonvos",
+  "video": "0c13e1e7",
+  "qid": "0",
+  "expression": "the animal moving forward",
+  "J": 0.9307446610842091,
+  "F": 0.9466432826885574,
+  "JF": 0.9386939718863831,
+  "HOTA": 0.954125296056046,
+  "n_objects_gt": 1,
+  "is_multi": false,
+  "rank_in_class": 11,
+  "num_frames": 36,
+  "video_fps": 6.0,
+  "prediction": "<tracks coords=\"0.00 0 231 493;1.00 0 273 500;2.00 0 295 500;3.00 0 408 593;4.00 0 482 600;5.00 0 445 593\">\nthe animal moving forward\n</tracks>"
+}

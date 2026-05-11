@@ -1,0 +1,16 @@
+{
+  "task": "ref-davis17",
+  "video": "drift-chicane",
+  "qid": "2",
+  "expression": "a sport car",
+  "J": 0.9274593138843726,
+  "F": 0.995213444881064,
+  "JF": 0.9613363793827183,
+  "HOTA": 0.9634825483349353,
+  "n_objects_gt": 1,
+  "is_multi": false,
+  "rank_in_class": 28,
+  "num_frames": 52,
+  "video_fps": 6.0,
+  "prediction": "<tracks coords=\"0.00 0 230 454;1.00 0 366 481;2.00 0 466 496;3.00 0 512 500;4.00 0 532 504;5.00 0 530 507;6.00 0 508 510;7.00 0 475 510;8.00 0 462 510\">\na sport car\n</tracks>"
+}

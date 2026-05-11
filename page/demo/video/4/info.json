@@ -1,0 +1,16 @@
+{
+  "task": "ref-yt-vos",
+  "video": "33c8dcbe09",
+  "qid": "7",
+  "expression": "a blue and white colored surfboard in the right hand of dark blue swim suit",
+  "J": 0.9530871518460811,
+  "F": 0.999676959561761,
+  "JF": 0.976382055703921,
+  "HOTA": 0.9587751364783389,
+  "n_objects_gt": 1,
+  "is_multi": false,
+  "rank_in_class": 12,
+  "num_frames": 36,
+  "video_fps": 6.0,
+  "prediction": "<tracks coords=\"0.00 0 778 543;1.00 0 830 562;2.00 0 848 585;3.00 0 880 600;4.00 0 958 593\">\na blue and white colored surfboard in the right hand of dark blue swim suit\n</tracks>"
+}

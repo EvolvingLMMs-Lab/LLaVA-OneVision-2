@@ -1,0 +1,16 @@
+{
+  "task": "reasonvos",
+  "video": "246_TRITURnylYA",
+  "qid": "4",
+  "expression": "The person whose appearance deviates the most from the norm in the video.",
+  "J": 0.9144565776629926,
+  "F": 0.9434515337367427,
+  "JF": 0.9289540556998677,
+  "HOTA": 0.9407618227471161,
+  "n_objects_gt": 1,
+  "is_multi": false,
+  "rank_in_class": 15,
+  "num_frames": 15,
+  "video_fps": 6.0,
+  "prediction": "<tracks coords=\"0.00 0 668 465;1.00 0 668 465;2.00 0 668 465\">\nthe person whose appearance deviates the most from the norm in the video\n</tracks>"
+}

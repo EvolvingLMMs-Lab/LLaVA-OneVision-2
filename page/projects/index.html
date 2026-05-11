@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="LLaVA-OneVision Research Family Projects Directory." />
+    <meta name="theme-color" content="#2563eb" />
+    <title>LLaVA-OneVision Projects</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../assets/styles.css" />
+  </head>
+  <body>
+    <nav class="site-navbar">
+      <a href="../index.html" class="nav-item" aria-label="Back to LLaVA-OneVision-2">&larr; Back to LLaVA-OneVision-2</a>
+      <div class="theme-switcher">
+        <button data-theme="blue" class="theme-dot active" style="--dot-color:#2563eb" aria-label="Blue theme"></button>
+        <button data-theme="dark" class="theme-dot" style="--dot-color:#0f172a" aria-label="Dark theme"></button>
+        <button data-theme="forest" class="theme-dot" style="--dot-color:#166534" aria-label="Forest theme"></button>
+        <button data-theme="warm" class="theme-dot" style="--dot-color:#d97706" aria-label="Warm theme"></button>
+        <button data-theme="mono" class="theme-dot" style="--dot-color:#171717" aria-label="Mono theme"></button>
+      </div>
+      <button class="nav-item" type="button" id="lang-toggle">中文</button>
+    </nav>
+
+    <main>
+      <header class="projects-header">
+        <h1 class="projects-title">
+          <span class="i18n" data-lang="en">LLaVA-OneVision Family</span><span class="i18n" data-lang="zh">LLaVA-OneVision 项目家族</span>
+        </h1>
+        <p class="projects-subtitle">
+          <span class="i18n" data-lang="en">A research suite of fully-open multimodal models — from foundational vision encoders to the latest video-language frontier.</span><span class="i18n" data-lang="zh">完全开放的多模态研究矩阵——从底层视觉编码器到最新一代视频语言模型。</span>
+        </p>
+      </header>
+
+      <div class="projects-columns">
+        <section class="projects-column projects-column-release" aria-label="Release Timeline">
+          <h2 class="projects-column-title">
+            <span class="i18n" data-lang="en">Releases</span><span class="i18n" data-lang="zh">发布</span>
+          </h2>
+          <div class="projects-timeline">
+            <div class="timeline-rail"></div>
+
+            <article class="timeline-entry">
+              <div class="timeline-dot timeline-dot-latest"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">MAY 2026</div>
+                <a href="../index.html" class="timeline-link">
+                  <h3 class="timeline-title">LLaVA-OneVision-2</h3>
+                  <p class="timeline-tagline">
+                    <span class="i18n" data-lang="en">Video MLLM with codec-aligned dense input</span><span class="i18n" data-lang="zh">基于 codec 的视频多模态大模型</span>
+                  </p>
+                  <p class="timeline-description">
+                    <span class="i18n" data-lang="en">An 8B-class video MLLM trained with a four-stage progressive pipeline that scales comprehension from 30-second clips to 15-minute footage. Replaces uniform frame sampling with codec-aligned dense input to preserve native temporal signal, and ships every dataset, training recipe, and checkpoint as a fully reproducible release.</span><span class="i18n" data-lang="zh">8B 级视频多模态大模型，通过四阶段渐进式训练把视频理解能力从 30 秒短片扩展到 15 分钟长视频；用基于 codec 的密集输入取代均匀抽帧，保留原生时序信号；数据、配方与权重全流程开源、完全可复现。</span>
+                  </p>
+                  <div class="timeline-meta">
+                    <span class="timeline-pill timeline-pill-latest">Latest</span>
+                    <span class="timeline-visit">Visit &rarr;</span>
+                  </div>
+                </a>
+              </div>
+            </article>
+
+            <article class="timeline-entry">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">JAN 2026</div>
+                <a href="https://www.lmms-lab.com/onevision-encoder/index.html" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                  <h3 class="timeline-title">OneVision-Encoder</h3>
+                  <p class="timeline-tagline">
+                    <span class="i18n" data-lang="en">Codec-aligned vision encoder for video and image</span><span class="i18n" data-lang="zh">面向视频与图像的 codec 对齐视觉编码器</span>
+                  </p>
+                  <p class="timeline-description">
+                    <span class="i18n" data-lang="en">A vision backbone built around codec-style patch selection: only the 3-25% of patches carrying real motion or semantic change are kept, unified under shared 3D RoPE and trained with cluster discrimination over 2M concepts. Outperforms Qwen3-ViT and SigLIP2 across 16 benchmarks while using a fraction of the visual tokens.</span><span class="i18n" data-lang="zh">基于 codec 风格 patch 选择构建的视觉骨干：只保留 3%–25% 真正承载运动或语义变化的 patch，使用统一的 3D RoPE 与 200 万概念的聚类判别训练；在 16 个图像/视频基准上以更少的视觉 token 全面超越 Qwen3-ViT 与 SigLIP2。</span>
+                  </p>
+                  <div class="timeline-meta">
+                    <span class="timeline-pill">Released</span>
+                    <span class="timeline-visit">Visit &rarr;</span>
+                  </div>
+                </a>
+              </div>
+            </article>
+
+            <article class="timeline-entry">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">NOV 2025</div>
+                <a href="https://anxiangsir.github.io/pages/llava_onevision1_5/#rl" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                  <h3 class="timeline-title">LLaVA-OneVision-1.5-RL</h3>
+                  <p class="timeline-tagline">
+                    <span class="i18n" data-lang="en">Reasoning-focused RL post-training</span><span class="i18n" data-lang="zh">面向推理的强化学习后训练</span>
+                  </p>
+                  <p class="timeline-description">
+                    <span class="i18n" data-lang="en">A reinforcement-learning post-training stage on top of LLaVA-OneVision-1.5, using 67K discrepancy-curated examples (high Pass@N, low Pass@1) and a rule-based reward system spanning STEM, grounding, counting, OCR, code, and diagrams. A two-stage curriculum first stabilizes answer-only RL, then unlocks chain-of-thought reasoning.</span><span class="i18n" data-lang="zh">在 LLaVA-OneVision-1.5 之上的强化学习后训练阶段：使用 6.7 万条按 Pass@N 与 Pass@1 差距筛选的样本，配合覆盖 STEM、定位、计数、OCR、代码与图表的规则化奖励系统；两阶段课程先用仅答案 RL 稳定输出，再用链式思维 RL 释放更深的推理能力。</span>
+                  </p>
+                  <div class="timeline-meta">
+                    <span class="timeline-pill">Released</span>
+                    <span class="timeline-visit">Visit &rarr;</span>
+                  </div>
+                </a>
+              </div>
+            </article>
+
+            <article class="timeline-entry">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">OCT 2025</div>
+                <a href="https://anxiangsir.github.io/pages/llava_onevision1_5/" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                  <h3 class="timeline-title">LLaVA-OneVision-1.5</h3>
+                  <p class="timeline-tagline">
+                    <span class="i18n" data-lang="en">Fully-open vision-language flagship</span><span class="i18n" data-lang="zh">完全开放的视觉语言旗舰模型</span>
+                  </p>
+                  <p class="timeline-description">
+                    <span class="i18n" data-lang="en">An 8B vision-language model trained on a fully-open recipe: an 85M concept-balanced pretraining corpus and a 22M instruction set, paired with the in-house RICE-ViT encoder and offline parallel data packing (~11x compression). Stage-1.5 finishes in ~3.7 days on 128 A800 GPUs and matches or beats Qwen2.5-VL on a broad benchmark suite.</span><span class="i18n" data-lang="zh">8B 视觉语言模型，基于完全开放的训练配方：8500 万条概念均衡的预训练语料 + 2200 万条指令数据，搭配自研 RICE-ViT 视觉编码器与离线并行数据打包（约 11× 压缩）；Stage-1.5 在 128 块 A800 上约 3.7 天完成，在多项公开基准上达到或超过 Qwen2.5-VL。</span>
+                  </p>
+                  <div class="timeline-meta">
+                    <span class="timeline-pill">Released</span>
+                    <span class="timeline-visit">Visit &rarr;</span>
+                  </div>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="projects-column projects-column-blog" aria-label="Blog">
+          <h2 class="projects-column-title">
+            <span class="i18n" data-lang="en">Blog</span><span class="i18n" data-lang="zh">博客</span>
+          </h2>
+          <div class="projects-timeline projects-timeline-empty" aria-live="polite">
+            <div class="timeline-rail"></div>
+
+            <article class="timeline-entry timeline-entry-empty">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">COMING SOON</div>
+                <h3 class="timeline-title timeline-title-muted">
+                  <span class="i18n" data-lang="en">Posts coming soon</span><span class="i18n" data-lang="zh">博客即将上线</span>
+                </h3>
+                <p class="timeline-description">
+                  <span class="i18n" data-lang="en">Deep-dives, training notes, and engineering write-ups from the LLaVA-OneVision team will live here.</span><span class="i18n" data-lang="zh">来自 LLaVA-OneVision 团队的技术深度文章、训练笔记与工程实践，将陆续发布于此。</span>
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer style="text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 0.9rem; margin-top: auto;">
+      <p>&copy; 2024 LLaVA-OneVision Team. Fully-open multimodal training.</p>
+    </footer>
+
+    <script>
+      const dots = document.querySelectorAll('.theme-dot');
+      const root = document.documentElement;
+      
+      const savedTheme = localStorage.getItem('llava-onevision-2-theme');
+      if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+        dots.forEach(d => {
+          if (d.getAttribute('data-theme') === savedTheme) {
+            d.classList.add('active');
+          } else {
+            d.classList.remove('active');
+          }
+        });
+      }
+
+      dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          const theme = dot.getAttribute('data-theme');
+          document.body.setAttribute('data-theme', theme);
+          localStorage.setItem('llava-onevision-2-theme', theme);
+          dots.forEach(d => d.classList.remove('active'));
+          dot.classList.add('active');
+        });
+      });
+
+      // Language toggle (mirrors main site)
+      const langToggle = document.getElementById('lang-toggle');
+      let currentLang = localStorage.getItem('llava-onevision-2-lang') || 'en';
+      function applyLang(lang) {
+        currentLang = lang;
+        document.body.classList.toggle('lang-zh', lang === 'zh');
+        if (langToggle) langToggle.textContent = lang === 'zh' ? 'EN' : '中文';
+        localStorage.setItem('llava-onevision-2-lang', lang);
+      }
+      applyLang(currentLang);
+      if (langToggle) {
+        langToggle.addEventListener('click', () => {
+          applyLang(currentLang === 'zh' ? 'en' : 'zh');
+        });
+      }
+    </script>
+  </body>
+</html>

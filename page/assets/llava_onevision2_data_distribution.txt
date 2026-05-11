@@ -1,0 +1,57 @@
+数据分布（文字版，可直接复制到 PPT）
+======================================
+
+【格式 1：项目符号列表 - 粘贴到文本框】
+----------------------------------------
+
+Mid-Training-85M（85M samples）
+  • Obelics — 45.6%
+  • COYO-700M — 18.3%
+  • Zero250M — 11.2%
+  • DataComp-1B — 8.8%
+  • LAION-CN — 7.8%
+  • MINT — 5.0%
+  • ImageNet-21K — 1.9%
+  • SA-1B — 1.4%
+
+Instruct（22M samples）
+  • Text — 28.0%
+  • General VQA — 24.7%
+  • Domain-specific — 16.2%
+  • OCR — 11.1%
+  • Chart & Table — 7.3%
+  • Caption — 4.8%
+  • Science — 4.1%
+  • Code/Mathematics — 3.3%
+  • Grounding & Counting — 0.6%
+
+VideoCaption（7.96M clips · 104.1B tokens）
+  • 30–60s — 32.4%
+  • 10–15 min — 28.8%
+  • 30s — 26.4%
+  • 60–180s — 12.4%
+
+Spatial（2.78M samples）
+  • OSD Reasoning — 28.2%
+  • CA-1M Visual Choice — 19.4%
+  • CA-1M Templates — 18.2%
+  • Crosspoint — 13.6%
+  • RoboRefer (Sim) — 8.8%
+  • Pointing & VG — 6.0%
+  • RefCOCO Family — 5.4%
+  • ERQA — 0.4%
+
+
+【格式 2：制表符分隔 - 粘贴到 PPT 自动成表格】
+------------------------------------------------
+
+Mid-Training-85M	85M samples	Instruct	22M samples	VideoCaption	104.1B tokens	Spatial	2.78M samples
+Obelics	45.6%	Text	28.0%	30–60s	32.4%	OSD Reasoning	28.2%
+COYO-700M	18.3%	General VQA	24.7%	10–15 min	28.8%	CA-1M Visual Choice	19.4%
+Zero250M	11.2%	Domain-specific	16.2%	30s	26.4%	CA-1M Templates	18.2%
+DataComp-1B	8.8%	OCR	11.1%	60–180s	12.4%	Crosspoint	13.6%
+LAION-CN	7.8%	Chart & Table	7.3%			RoboRefer (Sim)	8.8%
+MINT	5.0%	Caption	4.8%			Pointing & VG	6.0%
+ImageNet-21K	1.9%	Science	4.1%			RefCOCO Family	5.4%
+SA-1B	1.4%	Code/Mathematics	3.3%			ERQA	0.4%
+		Grounding & Counting	0.6%					
