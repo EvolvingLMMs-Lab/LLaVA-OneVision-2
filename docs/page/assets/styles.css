@@ -140,6 +140,45 @@
       .site-navbar .nav-item.active { color: var(--text-heading); border-bottom-color: var(--text-heading); }
       .site-navbar .nav-item svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
+      /* Back-to-projects pill button — pronounced primary action in navbar */
+      .site-navbar .nav-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 16px 7px 14px;
+        margin-right: auto;
+        background: var(--accent);
+        color: #fff;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        border-radius: 999px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 12px -4px color-mix(in srgb, var(--accent) 55%, transparent);
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      }
+      .site-navbar .nav-back:hover {
+        background: var(--accent-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1), 0 10px 22px -6px color-mix(in srgb, var(--accent) 70%, transparent);
+        color: #fff;
+      }
+      .site-navbar .nav-back:active { transform: translateY(0); }
+      .site-navbar .nav-back:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .site-navbar .nav-back-arrow {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        transition: transform .22s ease;
+      }
+      .site-navbar .nav-back:hover .nav-back-arrow {
+        transform: translateX(-3px);
+      }
+
       .header { text-align: center; padding: 22px 0 28px; }
       .eyebrow {
         display: inline-flex;
@@ -1962,6 +2001,8 @@
         /* Navbar — tighter, fits 360px */
         .site-navbar { padding: 8px 14px; gap: 8px; }
         .site-navbar .nav-item { padding: 6px 8px; font-size: 0.86rem; }
+        .site-navbar .nav-back { padding: 6px 12px 6px 10px; font-size: 0.84rem; gap: 6px; }
+        .site-navbar .nav-back-arrow { width: 14px; height: 14px; }
 
         /* Header / hero text */
         .header { padding: 14px 0 18px; }
