@@ -13,11 +13,11 @@
 
 
 <p align="center">
-  🤗 <b>2.0 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a href="#citation">Technical Report</a></b>
+  🤗 <b>2.0 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a href="#citation">Technical Report</a></b> · <b><a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b>
 </p>
 
 <p align="center">
-  🤗 <b>1.5 <a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Models</a></b> · <b><a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Datasets</a></b> · <b><a href="https://arxiv.org/abs/2509.23661">Technical Report</a></b>
+  🤗 <b>1.5 <a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Models</a></b> · <b><a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Datasets</a></b> · <b><a href="https://arxiv.org/abs/2509.23661">Technical Report</a></b> · <b><a href="https://docs.nvidia.com/nemo/automodel/nightly/model-coverage/vlm/lmms-lab/llava-onevision.html">NeMo</a></b>
 </p>
 
 ---
