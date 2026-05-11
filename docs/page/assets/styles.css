@@ -244,7 +244,46 @@
           background: linear-gradient(to right, transparent, var(--border), transparent);
         }
       }
-      .authors { font-size: 1.08rem; font-weight: 700; color: var(--text-heading); margin-bottom: 16px; }
+      .authors {
+        font-family: "Source Serif 4", "Source Sans 3", serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-heading);
+        margin-bottom: 18px;
+        letter-spacing: -0.01em;
+        background: linear-gradient(135deg, var(--text-heading) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .affiliations {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        font-family: "Source Sans 3", sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--text-heading);
+        margin-bottom: 10px;
+      }
+      .affiliations > span {
+        position: relative;
+      }
+      .affiliations > span:not(:last-child)::after {
+        content: "";
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        margin-left: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        vertical-align: middle;
+        opacity: 0.7;
+      }
       .link-row {
         display: flex; flex-wrap: wrap; gap: 12px;
         align-items: center; justify-content: center;
@@ -1928,7 +1967,17 @@
         .header { padding: 14px 0 18px; }
         .lede { font-size: 1.02rem; padding: 0 4px; }
         .meta-row { gap: 6px; font-size: 0.9rem; }
-        .authors { font-size: 0.95rem; }
+        .authors { font-size: 1.15rem; }
+        .affiliations {
+          font-size: 0.72rem;
+          letter-spacing: 0.12em;
+          gap: 10px;
+        }
+        .affiliations > span:not(:last-child)::after {
+          margin-left: 10px;
+          width: 4px;
+          height: 4px;
+        }
 
         /* Link row — vertical stack on mobile, full-width pills */
         .link-row {
