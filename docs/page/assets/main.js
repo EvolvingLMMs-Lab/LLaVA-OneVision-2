@@ -7,11 +7,14 @@
         document.documentElement.dataset.theme = savedTheme;
       }
       document.addEventListener("DOMContentLoaded", function() {
-        var dots = document.querySelectorAll('.theme-dot');
+        var switcher = document.querySelector('.theme-switcher');
+        var dots = document.querySelectorAll('.theme-seg');
         function highlight(theme) {
+          if (switcher) switcher.setAttribute('data-active', theme === 'dark' ? 'dark' : 'blue');
           dots.forEach(function (d) {
-            if (d.dataset.theme === theme) d.classList.add('active');
-            else d.classList.remove('active');
+            var isActive = d.dataset.theme === theme;
+            d.classList.toggle('active', isActive);
+            d.setAttribute('aria-pressed', isActive ? 'true' : 'false');
           });
         }
         function applyTheme(theme) {
@@ -22,7 +25,6 @@
         if (savedTheme) {
           highlight(savedTheme);
         } else {
-          // System-driven mode: highlight the dot that matches current OS scheme.
           var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
           highlight(prefersDark ? 'dark' : 'blue');
         }

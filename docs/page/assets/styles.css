@@ -82,22 +82,82 @@
       a:hover { text-decoration: underline; }
 
       .theme-switcher {
-        display: flex; gap: 8px;
-        margin-right: auto;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 3px;
+        background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
       }
+      .theme-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: calc(50% - 3px);
+        height: calc(100% - 6px);
+        background: var(--bg);
+        border-radius: 999px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.12);
+        transition: transform .28s cubic-bezier(.4, .0, .2, 1);
+        pointer-events: none;
+      }
+      .theme-switcher[data-active="dark"] .theme-thumb {
+        transform: translateX(100%);
+      }
+      .theme-seg {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 24px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: color .2s ease;
+      }
+      .theme-seg svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+      }
+      .theme-seg:hover { color: var(--text-heading); }
+      .theme-seg.active { color: var(--accent); }
+
+      /* Smooth global theme transition — avoids harsh flicker on switch */
+      html, body, .demo-card, .spatial-card, .demo-tabs, .bench-table, .site-navbar {
+        transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+      }
+
+      /* Multi-color theme picker (used on /projects/) — refined dot palette */
       .theme-dot {
-        width: 14px; height: 14px;
+        position: relative;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         background-color: var(--dot-color);
-        border: 2px solid transparent;
+        border: 0;
         cursor: pointer;
         padding: 0;
-        transition: transform .2s, border-color .2s;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        transition: transform .2s ease, box-shadow .2s ease;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--dot-color) 40%, transparent),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.18);
       }
-      .theme-dot:hover { transform: scale(1.1); }
+      .theme-dot:hover {
+        transform: scale(1.12);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-color) 60%, transparent),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      }
       .theme-dot.active {
-        box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--dot-color);
+        box-shadow: 0 0 0 2px var(--bg),
+                    0 0 0 4px var(--dot-color),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.18);
       }
 
       .page {
