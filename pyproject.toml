@@ -44,6 +44,12 @@ skip-magic-trailing-comma = false
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
+[tool.mdformat]
+# Keep manually curated README tables, badges, and HTML blocks stable.
+wrap = "keep"
+number = false
+end_of_line = "lf"
+
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='**/*.md'"
 doctest_optionflags="NUMBER NORMALIZE_WHITESPACE ELLIPSIS"
