@@ -1,10 +1,40 @@
 <!-- # Offline sample-packing for multimodal datasets -->
 <h1 align="center">Offline sample-packing for multimodal datasets</h1>
 
+## Current recommended implementation
+
+The current maintained pipeline is the top-level `offline_packing/auto_pipe.sh` wrapper, not the older dataset-specific notebooks in this example folder.
+
+Use this path for new runs:
+
+```bash
+bash offline_packing/auto_pipe.sh \
+  -i /path/to/input.jsonl \
+  -r /path/to/image_root \
+  -m /path/to/Qwen2.5-VL-3B-Instruct \
+  -o /path/to/output_base \
+  -L 64000
+```
+
+Current canonical stages:
+
+1. `s1_split_json_to_samples.py` — split JSON/JSONL into per-sample JSON/media files.
+2. `s2_compute_token_lengths.py` — compute token lengths with the Qwen-VL processor.
+3. `s3_bin_packing.py` — pack samples into token-capacity bins.
+4. `s4_bins_to_webdataset.py` — convert bins directly to WebDataset shards and `.nv-meta`.
+
+A minimal runnable example is provided in:
+
+```text
+offline_packing/examples_offline_packing/current_pipeline_smoke_test/
+```
+
+The `bmr_packing/` folder below is retained as the only legacy, dataset-specific example because it documents the older multi-turn/mixed SFT formatting path. The previous `captions-packing/` example was removed to avoid duplicating the current canonical pipeline; use `auto_pipe.sh` for caption-style packing as well.
+
 ## Essential Knowledge About Sample-Packing
 - What is sample-packing？
   > Multiple samples are concatenated into a single long sequence to form a “packed-sample,” reducing padding (an implementation of padding-free) and improving GPU utilization.   
-  > ![sample_packing](./images/packing.jpeg "sample packing 图例")
+  > ![sample_packing](./images/packing.jpeg "sample packing diagram")
 - Why sample-packing is necessary?
   > Avoiding FLOPs spent on padding tokens: When samples of very different lengths are batched together, padding forces unnecessary FLOPs on meaningless positions.       
   > Avoiding inter-GPU waiting: Within a micro-step, large discrepancies in padded lengths across devices create load imbalance, forcing faster GPUs to wait for slower ones.     
@@ -12,10 +42,10 @@
   > Avoiding training crashes (OOM) caused by padding-to-longest: Padding to the longest sample makes memory jump quadratically with that sample’s length; one outlier can blow up the batch and trigger OOM.
 
   > GPU power variation during training with non-packed samples
-  > ![GPU power for nopacked samples](./images/train_nopacked.png "GPU power for nopacked samples 图例")
+  > ![GPU power for nopacked samples](./images/train_nopacked.png "GPU power for non-packed samples")
   > 
   > GPU power variation during training with packed samples
-  > ![GPU power for packed samples](./images/train_packed.png "GPU power for packed samples 图例")
+  > ![GPU power for packed samples](./images/train_packed.png "GPU power for packed samples")
 - A functional breakdown of a complete sample-packing workflow
   > 1) How to import samples/packed-samples into the training pipeline through the data-loading and preprocessing libraries.     
   > 2) How samples in the original dataset are consolidated into packed-samples.
@@ -122,7 +152,7 @@ Here, three types of formats are involved：
       ```json
         {
           "images": ["img000.jpg", "img001.jpg", "img002.jpg"],
-          "prompt": ["描述", "what about...", ""],
+          "prompt": ["Describe the image.", "what about...", ""],
           "captions": ["str0", "str1", "str2"]
         }
       ```
@@ -137,7 +167,7 @@ Here, three types of formats are involved：
       ```json
         {
           "images":   [["img000.jpg"], [], ["img002.jpg"]],
-          "prompt":   [["描述这幅图"], ["what about this fig"], ["How are you?", "I am fine too."]],
+          "prompt":   [["Describe this image."], ["what about this fig"], ["How are you?", "I am fine too."]],
           "captions": [["stri"], ["str2"], ["I am fine and you?", "Have a nice day"]]
         }
       ```   
@@ -247,88 +277,35 @@ All data processing follows this sequence:
 - Step-3: Export the post-packing-format batches into WebDataset tar shards.
 - Step-4: Set environment variables for training on the offline-packed shards.
 
-#### CAPTIONS Dataset Example 
+#### CAPTIONS Dataset Example
 
-##### Required files(`./captions-packing`):
-All dataset-related settings below come with working defaults, but they are only placeholders—replace them with your actual paths, splits and column names before production use.
-- s1_config_emova_captions_300k-8k.yaml - step1 config
-- s1_get_tokenlens_v2.py - complete step-1 pipeline (compute token lengths)
-- sandbox_packing_captions.ipynb - interactive bin-packing algorithm
-- s2_prepare_rawsamples-emova_captions_pretrain_300k-8k.py - convert pre-packing format to post-packing format (step-2 data transform only)
-- s3_test-emova_captions_300k-8k.sh - step-3 pipeline (tar-shard packaging)
-
-##### CAPTIONS Workflow
-Change to the actual path.
-- Step-1: `python s1_get_tokenlens_v2.py --config ./configs/s1_config_emova_captions_300k-8k.yaml`
-- Step-2: `sandbox_packing_captions.ipynb`
-    - section `Step2-1`: bin-packing processing (You can set different bin-packing strategies and their parameters based on your understanding of the element distribution in the hash_buckets.).
-    - section `hash_buckets‘s element distribution`: Visualize the element distribution in hash_buckets to help design bin-packing strategies.
-    - section `Step2-2`: Convert pre-packing format to post-packing format.
-- Step-3: `bash s3_test-emova_captions_300k-8k.sh`
-- Step-4: `export OFFLINE_PACKED_DATA='1'`(Settings in the training script remain unchanged).
-
-
-
-<!-- <details>
-<summary><b>s1_config_emova_captions_300k-8k.yaml</b> – step1 config</summary>
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `task_type` | task type | pretrain |
-| `max_len` | maximum packed-sample length | 8192 |
-| `{min_pixels, max_pixels, max_aspect_ratio}` | image preprocessing parameters (match model config) | {3136, 4014080, 200} |
-
-</details>
-
-<details>
-<summary><b>s1_get_tokenlens_v2.py</b> – complete step-1 pipeline (compute token lengths)</summary>
-
-| Var | Meaning |
-|-----|---------|
-| `CAP_TEMPLATE` | `template for ` | 
-
-</details>
-
-<details>
-<summary><code>data_config.yaml</code> 关键片段</summary>
-
-```yaml  # 行号默认开启，hljs 高亮
-# ========= 装箱部分 =========
-seq_len: 8192          # 单箱最大 token 数
-pack_frac: 0.95        # 填充率 ≥0.9 即可
-
-# 以下两项控制样本加权
-sample_weight:
-  captions: 1.0        # 普通 caption 权重
-  qa: 2.0             # QA 对权重翻倍
-```
-</details> -->
+Caption-style packing is now covered by the current `offline_packing/auto_pipe.sh` pipeline and the smoke test above. The old dataset-specific `captions-packing/` folder was removed because it duplicated the maintained pipeline and contained environment-specific paths.
 
 
 #### VQA Dataset Example 
-An example for automatically processing the LLaVA-One-Vision-1.5-Mid-Training-85 dataset is provided in directory `.../LLaVA-OneVision-1.5/examples/llava_onevision1_5/sample_packing`.
+VQA-style packing should also use the current `offline_packing/auto_pipe.sh` pipeline. Convert the source dataset to the LLaVA-OneVision JSON/JSONL message format first, then run the current pipeline smoke-test pattern with your own input path, image root, processor, and output directory.
 
 > 🚧 Example (A multi-step pipeline for processing custom datasets) coming soon
 
-#### Multi-Turn Conversations + Mixed Dataset Example (testing in progress)
+#### Multi-Turn Conversations + Mixed Dataset Example (legacy reference)
 ##### Required files(`bmr_packing`):
 All dataset-related settings below come with working defaults, but they are only placeholders—replace them with your actual paths, splits and column names before production use.
 - s1_bmr_sft_data_proc_indcoding.py - (Optional) Process the dataset into the required format (splitting it into {json, img} file pairs or a standalone json file).
 - s1_config_BMR_sft_780k.yaml - step1 config
 - s1_get_tokenlens_v4-sft.py - complete step-1 pipeline (compute token lengths)
-- sandbox_packing_captions.ipynb - interactive bin-packing algorithm
+- s2_bmr_sft_packing.ipynb - interactive bin-packing algorithm
 - s2_prepare_rawsamples-bmr_sft_780k-8k-fast.py - convert pre-packing format to post-packing format (step-2 data transform only)
 - s3_test_bmr_sft_780k-8k.sh - step-3 pipeline (tar-shard packaging)
 
 ##### Multi-Turn Conversations + Mixed Workflow
 - Step-1: 
     - `python s1_bmr_sft_data_proc_indcoding.py 2>&1 tee ./logs/output.log`
-    - `python s1_get_tokenlens_v4-sft.py --config ./configs/s1_config_MR_sft_780k.yaml`
+    - `python s1_get_tokenlens_v4-sft.py --config ./configs/s1_config_BMR_sft_780k.yaml`
 - Step-2: `s2_bmr_sft_packing.ipynb`
     - section `Step2-1`: bin-packing processing (You can set different bin-packing strategies and their parameters based on your understanding of the element distribution in the hash_buckets.).
     - section `hash_buckets‘s element distribution`: Visualize the element distribution in hash_buckets to help design bin-packing strategies.
     - section `Step2-2`: Convert pre-packing format to post-packing format.
-- Step-3: `bash s3_test_mr_sft_780k-8k.sh`
+- Step-3: `bash s3_test_bmr_sft_780k-8k.sh`
 - Step-4: `export OFFLINE_PACKED_DATA='1' & export OFFLINE_PACKING_BMR='1'`(Settings in the training script remain unchanged).
 
 
@@ -348,10 +325,6 @@ We welcome every form of contribution—no matter how small.
 - Share data: contribute the packing strategy (tracker.print_summary's output) you tuned for your-own/public datasets.
 - Submit PRs: fix typos, add tests, or prototype the next feature on the Roadmap.
 - Spread the word: blog, tweet, or cite us if the code helps your project.
-
-
-
-
 
 
 
