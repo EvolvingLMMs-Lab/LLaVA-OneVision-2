@@ -1,5 +1,5 @@
-# ### 所有代码放到一起，只运行这一块就可以
-# Step1: 
+# Legacy one-file conversion script.
+# Step1:
 # python -u s2_prepare_rawsamples-emova.py 2>&1 | tee s2_proc.log
 # python -u s2_prepare_rawsamples-llava_vqa.py 2>&1 | tee s2_proc_llava.log
 # python -u s2_prepare_rawsamples-vqa_1000k.py 2>&1 | tee ./logs/s2_proc_vqa_1000k.log
@@ -8,46 +8,46 @@
 # python -u s2_prepare_rawsamples-vqa_5500k-16k-fast.py 2>&1 | tee ./logs/s2_proc_vqa_5500k-16k-fast.log
 # python -u s2_prepare_rawsamples-vqa_pretrain_5M-8k-fast.py 2>&1 | tee ./logs/s2_proc_vqa_pretrain_5M-8k-fast.log
 
-# python -u s2_prepare_rawsamples-mr_sft_780k-8k-fast.py 2>&1 | tee ./logs/s2_prepare_rawsamples-mr_sft_780k-8k-fast.log
+# python -u s2_prepare_rawsamples-bmr_sft_780k-8k-fast.py 2>&1 | tee ./logs/s2_prepare_rawsamples-bmr_sft_780k-8k-fast.log
 
 import bisect
-import os
-import re
 import json
-import sys
+import os
+import random
+import re
 import shutil
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
-# ### 参数配置
-# target_directory = "/workspace/test/packing"   # 最终数据存放的位置
+
+# Configuration.
+# target_directory = "/workspace/test/packing"   # Final output location.
 
 current_file = Path(__file__).resolve()
 target_directory = current_file.parent
-newDir = "raw_packing_data_mr_sft_780k-8k-fast"                   # 转 webdataset 之前数据的存放位置 (jpg, json)
-SRC_DIR_IMGS = "/data_1/llava_next_raw_full/split_json_files"   # 原始 img  数据的存放位置
-SRC_DIR_JSONS = "/data_1/llava_next_raw_full/split_json_files"   # 原始 json 数据的存放位置
+newDir = "raw_packing_data_mr_sft_780k-8k-fast"  # Output directory before WebDataset conversion.
+SRC_DIR_IMGS = "/data_1/llava_next_raw_full/split_json_files"  # Source image directory.
+SRC_DIR_JSONS = "/data_1/llava_next_raw_full/split_json_files"  # Source JSON directory.
 SRC_DST_EXTENSIONS = ("jpg", "json")
 f_toklens_originalsample = os.path.join(target_directory, "token_info_MR_sft_780k_8k.txt")
 PACKED_LENGTH = 8192
-dst_dir = os.path.join(target_directory,newDir)
-MAX_WORKERS = 96  # 线程池大小（根据CPU核心数和IO性能调整）
+dst_dir = os.path.join(target_directory, newDir)
+MAX_WORKERS = 96  # Thread pool size; tune according to CPU cores and I/O performance.
 
 
 """
-task_type 的设置：
-    sft：VQA 格式的 pretrain
-    pretrain：caption 格式的 pretrain
-    bmr：混合数据集多轮对话格式的 sft
+task_type settings:
+    sft: VQA-style pretraining format.
+    pretrain: caption-style pretraining format.
+    bmr: mixed multi-turn SFT format.
 """
 task_type = "bmr"
 
 
-
-f_TEST=False     # test 示例输出（仅做测试用：生成少量数据）
-n_packed_samples=400  # 测试用，输出几条打包后的数据
+f_TEST = False  # Test output mode; only generate a small number of samples.
+n_packed_samples = 400  # Number of packed samples to generate in test mode.
 
 # PROMPTS = # Creating a list of the provided English prompts
 PROMPTS = [
@@ -82,215 +82,223 @@ PROMPTS = [
     "What's the general subject?",
     "What's the core idea conveyed?",
     "What's the basic representation?",
-    "What's the main point of this figure?"
+    "What's the main point of this figure?",
 ]
 
-import random
 
 def find_long_file_pairs(directory, length_threshold=62):
     """
-    找出长文件（img,json）对中的图像文件，返回带有图像扩展名的完整文件名
-    
-    参数:
-        directory: 要检查的目录路径
-        length_threshold: 文件名长度阈值，默认62
-        
-    返回:
-        符合条件的图像文件名（带扩展名）列表
+    Find image files in long-name image/JSON pairs.
+
+    Args:
+        directory: Directory to inspect.
+        length_threshold: Filename length threshold. Defaults to 62.
+
+    Returns:
+        Image filenames with extensions that satisfy the criteria.
     """
     import os
     from collections import defaultdict
-    # 存储所有文件的文件名部分及其对应的完整文件名
+
+    # Store filename stems and their corresponding complete filenames.
     file_parts = defaultdict(list)
-    image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp')
-    
+    image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp")
+
     try:
-        # 遍历目录中的所有文件，按文件名部分分组
+        # Group files by filename stem.
         for filename in os.listdir(directory):
             name_part, ext = os.path.splitext(filename)
             ext = ext.lower()
-            # 只关注图片和json文件
-            if ext in ('.json',) + image_extensions:
+            # Only inspect image and JSON files.
+            if ext in (".json",) + image_extensions:
                 file_parts[name_part].append(filename)
-                
-        # 找出符合条件的图像文件
+
+        # Find qualifying image files.
         long_image_files = []
         for name_part, filenames in file_parts.items():
-            # 检查文件名长度和文件对完整性
-            if (len(name_part) > length_threshold and 
-                any(f.endswith('.json') for f in filenames) and 
-                any(f.lower().endswith(image_extensions) for f in filenames)):
-                
-                # 只添加图像文件
+            # Check filename length and file-pair completeness.
+            if (
+                len(name_part) > length_threshold
+                and any(f.endswith(".json") for f in filenames)
+                and any(f.lower().endswith(image_extensions) for f in filenames)
+            ):
+                # Only append image files.
                 for filename in filenames:
                     if filename.lower().endswith(image_extensions):
                         long_image_files.append(filename)
-                
+
         return long_image_files
-        
+
     except FileNotFoundError:
-        # print(f"错误：目录 '{directory}' 不存在")
+        # print(f"Error: directory '{directory}' does not exist")
         return []
     except PermissionError:
-        # print(f"错误：没有访问目录 '{directory}' 的权限")
+        # print(f"Error: no permission to access directory '{directory}'")
         return []
-    except Exception as e:
-        # print(f"处理目录时发生错误：{str(e)}")
+    except Exception:
+        # print(f"Error while processing directory: {str(e)}")
         return []
 
 
 # res_long_img_names = find_long_file_pairs(SRC_DIR_JSONS)
 
+
 def filter_filenames(filenames, prefix, exclude_suffix):
     """
-    筛选出以指定前缀开头且不以指定后缀结尾的文件名
-    
-    参数:
-        filenames: 文件名列表
-        prefix: 文件名需要包含的前缀（如"james-tissot"）
-        exclude_suffix: 需要排除的文件后缀（如"json"）
-        
-    返回:
-        符合条件的文件名列表
+    Filter filenames that start with the given prefix and do not end with the excluded suffix.
+
+    Args:
+        filenames: List of filenames.
+        prefix: Required filename prefix, for example "james-tissot".
+        exclude_suffix: File suffix to exclude, for example "json".
+
+    Returns:
+        Filtered filenames.
     """
-    # 转义前缀中的特殊字符，确保正则匹配正确
+    # Escape special characters in the prefix so the regex matches correctly.
     escaped_prefix = re.escape(prefix)
-    # 构建正则表达式模式
-    pattern = rf'^{escaped_prefix}(?!.*\.{exclude_suffix}$).*$'
-    
-    # 编译正则表达式
+    # Build regex pattern.
+    pattern = rf"^{escaped_prefix}(?!.*\.{exclude_suffix}$).*$"
+
+    # Compile regex.
     regex = re.compile(pattern)
-    
-    # 筛选符合条件的文件名
+
+    # Return matching filenames.
     return [filename for filename in filenames if regex.match(filename)]
+
 
 def get_random_prompts(prompts, n):
     if n > len(prompts):
-        # 允许重复
-        return random.choices(prompts, k=n)0
+        # Allow duplicates.
+        return random.choices(prompts, k=n)
     else:
-        # 不允许重复
+        # Do not allow duplicates.
         return random.sample(prompts, n)
 
-# 全局变量 - 用元组存储（不可变，效率更高）
-BASE_NAMES = []  # 初始化为空元组，后续会被替换 (所有在原始数据集中的 sample 名称， 已经按照 tokens 长度排序)
 
-def search_for_fit(numbers: List[int], capacity: int) -> int:
+# Global base-name list. It is replaced later with token-length-sorted source sample names.
+BASE_NAMES = []
+
+
+def search_for_fit(numbers: list[int], capacity: int) -> int:
     """Finds the index of largest number that fits into the knapsack with the given capacity."""
     index = bisect.bisect(numbers, capacity)
     return -1 if index == 0 else (index - 1)
 
-def greedy_knapsack(numbers: List[int], capacity: int) -> Tuple[List[List[int]], List[List[int]]]:
+
+def greedy_knapsack(numbers: list[int], capacity: int) -> tuple[list[list[int]], list[list[int]]]:
     r"""Implement efficient greedy algorithm with binary search for the knapsack problem.
-    参数
+    Args
     ----
     numbers : List[int]
-        物品大小列表，可以为任意顺序（这里是升序输入进来的）
+        Item sizes. The current call path passes them in ascending order.
     capacity : int
-        背包容量
+        Knapsack capacity.
 
-    返回
+    Returns
     ----
     Tuple[List[List[int]], List[List[int]]]
-        第一个列表：每个背包里的物品大小
-        第二个列表：每个背包里物品对应的原始下标
-    
+        First list: item sizes in each knapsack.
+        Second list: original item indices in each knapsack.
+
     """
-    # 保存原始索引，与输入的numbers一一对应
+    # Preserve original indices for each input number.
     indexed_numbers = [(val, idx) for idx, val in enumerate(numbers)]
-    # 由于输入已排序，直接使用即可（保持与原逻辑一致的处理方式）
+    # The input is already sorted in this flow, so keep the original behavior.
     knapsacks = []
     index_knapsacks = []
-    iii = int(0)
+    iii = 0
     while indexed_numbers:
         current_knapsack = []
         current_indices = []
         remaining_capacity = capacity
 
         while True:
-            # 提取当前数值列表用于查找（保持升序）
+            # Extract current values for lookup while preserving ascending order.
             current_values = [val for val, idx in indexed_numbers]
             index = search_for_fit(current_values, remaining_capacity)
             if index == -1:
-                break  # 没有可放入当前背包的物品了
+                break  # No item can fit into the current knapsack.
 
-            # 取出找到的物品及其原始索引
+            # Remove the selected item and its original index.
             val, idx = indexed_numbers.pop(index)
             remaining_capacity -= val
             current_knapsack.append(val)
             current_indices.append(idx)
 
-        if iii%1000==0:
-            print(f"---------第{iii}个pack----------")
+        if iii % 1000 == 0:
+            print(f"---------pack {iii}----------")
             print(f"{current_knapsack}--->{sum(current_knapsack)}")
             print(current_indices)
-            print(f"\n")
-        iii+=1
+            print("\n")
+        iii += 1
         knapsacks.append(tuple(current_knapsack))
         index_knapsacks.append(tuple(current_indices))
 
-    return tuple(knapsacks), tuple(index_knapsacks)   # 使用了 tuple
+    return tuple(knapsacks), tuple(index_knapsacks)
+
 
 def extract_content(json_file):
     try:
-        # 打开并加载JSON文件
-        with open(json_file, 'r', encoding='utf-8') as f:
+        # Open and load JSON content.
+        with open(json_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        if task_type=="sft":
+        if task_type == "sft":
             try:
                 user_content = next(msg["content"] for msg in data["messages"] if msg["role"] == "assistant")
                 return user_content
-            except Exception as e:
+            except Exception:
                 pass
-        # 提取content内容
-        # 假设captions数组至少有一个元素
-        elif task_type=="pretrain":
-            if data.get('captions') and len(data['captions']) > 0:
-                return data['captions'][0].get('content', "")
+        # Extract content. Assumes the captions array contains at least one element.
+        elif task_type == "pretrain":
+            if data.get("captions") and len(data["captions"]) > 0:
+                return data["captions"][0].get("content", "")
             else:
-                assert 0, "未找到有效的caption内容"
-                # return "未找到有效的caption内容"
-            
+                assert 0, "No valid caption content found"
+                # return "No valid caption content found"
+
     except FileNotFoundError:
-        return f"错误：文件 {json_file} 不存在"
+        return f"Error: file {json_file} does not exist"
     except json.JSONDecodeError:
-        return f"错误：文件 {json_file} 不是有效的JSON格式"
+        return f"Error: file {json_file} is not valid JSON"
     except Exception as e:
-        return f"提取过程中发生错误：{str(e)}"
+        return f"Error during extraction: {str(e)}"
+
 
 def extract_prompt(json_file):
     try:
-        # 打开并加载JSON文件
-        with open(json_file, 'r', encoding='utf-8') as f:
+        # Open and load JSON content.
+        with open(json_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-        
-        # 提取助手回复
+
+        # Extract the user prompt.
         assistant_content = next(msg["content"] for msg in data["messages"] if msg["role"] == "user")
         return assistant_content
-        
-        # # 提取图片路径（可选）
-        # image_path = data["images"][0] if data["images"] else None
-            
-    except FileNotFoundError:
-        return f"错误：文件 {json_file} 不存在"
-    except json.JSONDecodeError:
-        return f"错误：文件 {json_file} 不是有效的JSON格式"
-    except Exception as e:
-        return f"提取过程中发生错误：{str(e)}"    
 
-def extract_img_prompt_content(json_file: str) -> Tuple[List[str], List[str], List[str]]:
+        # # Extract image path if needed.
+        # image_path = data["images"][0] if data["images"] else None
+
+    except FileNotFoundError:
+        return f"Error: file {json_file} does not exist"
+    except json.JSONDecodeError:
+        return f"Error: file {json_file} is not valid JSON"
+    except Exception as e:
+        return f"Error during extraction: {str(e)}"
+
+
+def extract_img_prompt_content(json_file: str) -> tuple[list[str], list[str], list[str]]:
     try:
-        # 打开并加载 JSON 文件
-        with open(json_file, 'r', encoding='utf-8') as f:
+        # Open and load JSON content.
+        with open(json_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-        
+
         # 1)images
         imgs = data.get("images", [])
         if not imgs:
             images = []
         else:
-            images = [os.path.join(SRC_DIR_IMGS,imgs[0])]
+            images = [os.path.join(SRC_DIR_IMGS, imgs[0])]
 
         messages = data.get("messages", [])
 
@@ -307,18 +315,19 @@ def extract_img_prompt_content(json_file: str) -> Tuple[List[str], List[str], Li
         ]
 
         return images, user_contents, assistant_contents
-        
+
     except FileNotFoundError:
-        return f"错误：文件 {json_file} 不存在"
+        return f"Error: file {json_file} does not exist"
     except json.JSONDecodeError:
-        return f"错误：文件 {json_file} 不是有效的JSON格式"
+        return f"Error: file {json_file} is not valid JSON"
     except Exception as e:
-        return f"提取过程中发生错误：{str(e)}"
+        return f"Error during extraction: {str(e)}"
+
 
 def prepare_dirs(target_dir, new_dir):
     os.chdir(target_dir)
     print(f"--------change to directory {target_dir}--------")
-    # 创建新目录
+    # Create the output directory.
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
         print(f"Directory '{new_dir}' created.")
@@ -328,274 +337,275 @@ def prepare_dirs(target_dir, new_dir):
 
 def dataset_tokinfo_generator(f_name):
     """
-    数据集token信息生成器，逐行读取并解析文件内容
-    
-    参数:
-        f_name (str): 包含token信息的文件路径
-        
-    生成:
-        tuple: (base_name, token_len) - 解析后的基础文件名和token长度
+    Generate dataset token information by reading and parsing a file line by line.
+
+    Args:
+        f_name (str): Path to the token-info file.
+
+    Yields:
+        tuple: (base_name, token_len) parsed from each valid line.
     """
     try:
-        with open(f_name, 'r', encoding='utf-8') as f:
+        with open(f_name, "r", encoding="utf-8") as f:
             for line in f:
-                # 跳过空行
+                # Skip empty lines.
                 stripped_line = line.strip()
                 if not stripped_line:
                     continue
-                    
-                # 按冒号分割并验证格式
-                parts = stripped_line.split(':')
+
+                # Split by colon and validate format.
+                parts = stripped_line.split(":")
                 if len(parts) == 2:
                     base_name = parts[0].strip()
                     token_len_str = parts[1].strip()
-                    
+
                     try:
                         token_len = int(token_len_str)
                         yield (base_name, token_len)
                     except ValueError:
                         print(
-                            f"警告: 无法将 '{token_len_str}' 转换为整数，已跳过该行",
-                            file=sys.stderr
+                            f"Warning: could not convert '{token_len_str}' to integer; skipped this line",
+                            file=sys.stderr,
                         )
                         continue
-                        
+
     except FileNotFoundError:
-        print(f"错误: 文件 '{f_name}' 不存在", file=sys.stderr)
+        print(f"Error: file '{f_name}' does not exist", file=sys.stderr)
         return
     except Exception as e:
-        print(f"处理文件时发生错误: {str(e)}", file=sys.stderr)
+        print(f"Error while processing file: {str(e)}", file=sys.stderr)
         return
 
 
 class TokenInfoReader:
     """
-    Token信息读取器
-    
-    支持分批读取、全量读取和断点续读功能，适用于处理包含token信息的文本文件。
-    文件格式要求: 每行一条记录，格式为 "base_name: token_len"
+    Token-info reader.
+
+    Supports batched reads, full reads, and resumable reads for token-info text files.
+    Required line format: "base_name: token_len".
     """
-    
+
     def __init__(self, f_name):
         """
-        初始化读取器
-        
-        参数:
-            f_name (str): 包含token信息的文件路径
+        Initialize the reader.
+
+        Args:
+            f_name (str): Path to the token-info file.
         """
         self.f_name = f_name
         self.generator = dataset_tokinfo_generator(f_name)
-        self._current_position = 0  # 记录已读取的记录数量
+        self._current_position = 0  # Number of records already read.
 
     def read(self, count=None):
         """
-        读取记录
-        
-        参数:
-            count (int, optional): 要读取的记录数量，默认为None（读取全部剩余记录）
-            
-        返回:
-            tuple: (base_names列表, token_lens列表, 实际读取数量)
+        Read records.
+
+        Args:
+            count (int, optional): Number of records to read. None means read all remaining records.
+
+        Returns:
+            tuple: (base_names, token_lens, actual_read_count).
         """
         base_names = []
         token_lens = []
         read_count = 0
-        
-        # 循环读取直到达到指定数量或文件结束
+
+        # Read until the target count is reached or the file ends.
         while True:
-            # 检查是否已达到指定读取数量
+            # Check whether the requested count has been reached.
             if count is not None and read_count >= count:
                 break
-                
+
             try:
-                # 从生成器获取下一条记录
+                # Fetch the next record from the generator.
                 base_name, token_len = next(self.generator)
                 base_names.append(base_name)
                 token_lens.append(token_len)
                 read_count += 1
                 self._current_position += 1
-                
+
             except StopIteration:
-                # 已读取到文件末尾
+                # End of file reached.
                 break
-        
+
         return base_names, token_lens, read_count
-    
+
     def get_current_position(self):
         """
-        获取当前读取位置
-        
-        返回:
-            int: 已读取的记录总数
+        Get the current read position.
+
+        Returns:
+            int: Total number of records already read.
         """
         return self._current_position
 
 
 def process_knapsack(s1, idx_knapsack, dst_dir):
     """
-    处理单个 packing 数据
-    
-    参数:
-        s1: 当前处理组的索引
-        idx_knapsack: 背包中包含的索引列表
-        dst_dir: 目标目录路径
+    Process one packed group.
+
+    Args:
+        s1: Current group index.
+        idx_knapsack: Indices included in the knapsack.
+        dst_dir: Target directory path.
     """
     # global BASE_NAMES
-    
-    packed_imgs, packed_caps = [], []   # 单个 packed-sample 的构成
-    
-    # 获取基础文件名
+
+    packed_imgs, packed_caps = [], []  # Contents of one packed sample.
+
+    # Fetch base names.
     # packed_b_names = (BASE_NAMES[idx] for idx in idx_knapsack)
     packed_b_names = (idx["name"] for idx in idx_knapsack)
-    
-    # 构建源文件信息
+
+    # Build source file information.
     if task_type == "pretrain":
         packed_info = (
-            (os.path.join(SRC_DIR_IMGS, f"{b_name}.{SRC_DST_EXTENSIONS[0]}"),
-             extract_content(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")))
+            (
+                os.path.join(SRC_DIR_IMGS, f"{b_name}.{SRC_DST_EXTENSIONS[0]}"),
+                extract_content(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")),
+            )
             for b_name in packed_b_names
         )
     elif task_type == "sft":
         packed_info = (
-            (os.path.join(SRC_DIR_IMGS, f"{b_name}.{SRC_DST_EXTENSIONS[0]}"),
-             extract_content(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")),
-             extract_prompt(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")))
+            (
+                os.path.join(SRC_DIR_IMGS, f"{b_name}.{SRC_DST_EXTENSIONS[0]}"),
+                extract_content(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")),
+                extract_prompt(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}")),
+            )
             for b_name in packed_b_names
-        ) 
+        )
     elif task_type == "bmr":
         packed_info = (
             extract_img_prompt_content(os.path.join(SRC_DIR_JSONS, f"{b_name}.{SRC_DST_EXTENSIONS[1]}"))
             for b_name in packed_b_names
-        ) 
-        
-    # 目标JSON文件路径
+        )
+
+    # Target JSON file path.
     json_dst = os.path.join(dst_dir, f"ps_{s1:08d}.{SRC_DST_EXTENSIONS[1]}")
-    
-    # 处理每张图片和对应的描述
-    if task_type=="pretrain":
+
+    # Process each image and corresponding caption/answer.
+    if task_type == "pretrain":
         for s2, (img_src, cap_src) in enumerate(packed_info):
-            # 目标图片路径
+            # Target image path.
             img_name_dst = f"ps_{s1:08d}.img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"
-            # img_name_dst = f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"    # 看后面具体需求决定使用哪一个
+            # img_name_dst = f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"    # Choose this form if downstream requires it.
             img_dst = os.path.join(dst_dir, img_name_dst)
-            
-            # 收集信息
+
+            # Collect metadata.
             # packed_imgs.append(img_name_dst)
             packed_imgs.append(f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}")
             packed_caps.append(cap_src)
-            
-            # 复制图片
+
+            # Copy image.
             shutil.copyfile(img_src, img_dst)
-        # 此处也可以调用大模型来生成 提问(对于 纯 captioning 数据)
+        # A model can optionally be called here to generate prompts for pure captioning data.
         selected_prompts = get_random_prompts(PROMPTS, len(packed_imgs))
-    elif task_type=="sft":
+    elif task_type == "sft":
         selected_prompts = []
         for s2, (img_src, cap_src, prompt_src) in enumerate(packed_info):
-            # 目标图片路径
+            # Target image path.
             img_name_dst = f"ps_{s1:08d}.img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"
-            # img_name_dst = f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"    # 看后面具体需求决定使用哪一个
+            # img_name_dst = f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}"    # Choose this form if downstream requires it.
             img_dst = os.path.join(dst_dir, img_name_dst)
-            
-            # 收集信息
+
+            # Collect metadata.
             # packed_imgs.append(img_name_dst)
             packed_imgs.append(f"img{s2:03d}.{SRC_DST_EXTENSIONS[0]}")
             packed_caps.append(cap_src)
-            
-            # 复制图片
+
+            # Copy image.
             shutil.copyfile(img_src, img_dst)
 
             # prompts
             selected_prompts.append(prompt_src)
         pass
-    elif task_type=="bmr":
+    elif task_type == "bmr":
         selected_prompts = []
         for s2, (img_src, prompt_src, cap_src) in enumerate(packed_info):
             if not img_src:
                 packed_imgs.append([])
             else:
-                # 目标图片路径
+                # Target image path.
                 name, ext = os.path.splitext(img_src[0])
                 img_name_dst = f"ps_{s1:08d}.img{s2:03d}{ext}"
                 img_dst = os.path.join(dst_dir, img_name_dst)
-                
-                # 复制图片
+
+                # Copy image.
                 shutil.copyfile(img_src[0], img_dst)
-    
-                # 收集 image 信息
+
+                # Collect image metadata.
                 packed_imgs.append([f"img{s2:03d}{ext}"])
                 # cnt_imgs += 1
-                
-            # 收集其它信息
+
+            # Collect other metadata.
             packed_caps.append(cap_src)
-            selected_prompts.append(prompt_src)        
+            selected_prompts.append(prompt_src)
         pass
-        
-    # 生成JSON文件
-    json_data = {
-        "images": packed_imgs,
-        "captions": packed_caps,
-        "prompts": selected_prompts
-    }
+
+    # Generate JSON file.
+    json_data = {"images": packed_imgs, "captions": packed_caps, "prompts": selected_prompts}
     # print(packed_imgs)
-    
+
     try:
-        with open(json_dst, 'w', encoding='utf-8') as f:
+        with open(json_dst, "w", encoding="utf-8") as f:
             json.dump(json_data, f, indent=4, ensure_ascii=False)
             # json.dump(json_data, f)
     except Exception as e:
-        print(f"线程 {threading.current_thread().name} 生成JSON文件 {json_dst} 失败: {str(e)}")
+        print(f"Thread {threading.current_thread().name} failed to generate JSON file {json_dst}: {str(e)}")
     return s1
 
 
 if __name__ == "__main__":
-    ## 1. 创建工作目录
-    print("Step1-----------------已创建工作环境-----------------Start")
+    # 1. Create working directory.
+    print("Step1-----------------Create working environment-----------------Start")
     prepare_dirs(target_directory, newDir)
-    print("Step1-----------------已创建工作环境-----------------Stop\n\n")
-    
-    ## 2. 获取原始数据集信息（没有处理之前）
-    # 可以用于构建多个 pool，分块 packing（read的参数决定 packing cache size）
-    print("Step2-----------------读取原ds的 tokenlen 信息-----------------Start")
+    print("Step1-----------------Create working environment-----------------Stop\n\n")
+
+    # 2. Read source dataset token-length information before packing.
+    # This can be used to build multiple pools for chunked packing; read() controls the packing cache size.
+    print("Step2-----------------Read source dataset token-length info-----------------Start")
     info_reader = TokenInfoReader(f_toklens_originalsample)
     base_names, token_lens, n_count = info_reader.read()
-    
+
     # global BASE_NAMES
-    BASE_NAMES=tuple(base_names)
-    print(f"已读取{n_count}条数据")
+    BASE_NAMES = tuple(base_names)
+    print(f"Read {n_count} records")
     # print(BASE_NAMES)
-    print("Step2-----------------读取原ds的 tokenlen 信息-----------------Stop\n\n")
-    
-    # 3. packing分组
-    #调用 packing-group 进行分组
-    print("Step3-----------------packing 分组-----------------Start")
+    print("Step2-----------------Read source dataset token-length info-----------------Stop\n\n")
+
+    # 3. Load packing groups.
+    # Packing groups are produced by the notebook or current bin packer.
+    print("Step3-----------------Load packing groups-----------------Start")
     # knapsacks, idx_knapsacks= greedy_knapsack(token_lens, PACKED_LENGTH)
     # print(idx_knapsacks[10])
     # print(knapsacks[10])
     import pickle
+
     def load_bin_boxes(file_path: str):
         """
-        加载单步装箱结果
+        Load single-step bin-packing results.
         """
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             bin_boxes = pickle.load(f)
-        print(f"已加载装箱结果: {file_path}")
+        print(f"Loaded bin-packing results: {file_path}")
         return bin_boxes
 
     # bin_boxs = load_bin_boxes("./s2_ckpt/bins_boxs_8k.pkl")
     bin_boxs = load_bin_boxes("./s2_ckpt/bins_boxs_mr_sft_8k.pkl")
-    
+
     # total_knapsacks = len(idx_knapsacks)
     total_knapsacks = len(bin_boxs)
-    
-    print(f"原始数据----{n_count}----条，packing后变为----{total_knapsacks}----条")
-    print("Step3-----------------packing 分组-----------------Stop\n\n")
 
-    print("Step4----------------- 开始构建新数据集 -----------------Start")
-    print(f"开始处理 {total_knapsacks} 组数据，使用 {MAX_WORKERS} 个线程")
+    print(f"Source records: {n_count}; packed groups: {total_knapsacks}")
+    print("Step3-----------------Load packing groups-----------------Stop\n\n")
 
-    #4. 使用线程池处理所有pack
+    print("Step4-----------------Build packed dataset-----------------Start")
+    print(f"Processing {total_knapsacks} groups with {MAX_WORKERS} threads")
+
+    # 4. Process all packs with a thread pool.
     with ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix="PackThread") as executor:
-        # 提交所有任务
+        # Submit all tasks.
         if f_TEST:
             futures = {
                 executor.submit(process_knapsack, s1, idx_knapsack, dst_dir): s1
@@ -607,19 +617,15 @@ if __name__ == "__main__":
                 for s1, idx_knapsack in enumerate(bin_boxs)
             }
 
-        # tqdm 自动跟踪完成数
+        # tqdm tracks completed tasks automatically.
         from tqdm import tqdm
-        tty = open(os.devnull, 'w') if os.name == 'nt' else open('/dev/tty', 'w')
-        for future in tqdm(as_completed(futures),
-                           total=len(futures),
-                           desc="Packing progress",
-                           unit="pack",
-                           file=tty
-                          ):
+
+        tty = open(os.devnull, "w") if os.name == "nt" else open("/dev/tty", "w")
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Packing progress", unit="pack", file=tty):
             try:
                 future.result()
             except Exception as e:
                 s1 = futures[future]
-                print(f"\n处理第 {s1} 组数据时发生错误: {e}")
+                print(f"\nError while processing group {s1}: {e}")
 
-    print("Step4-----------------Sccessful！！！！---- 构建新数据集成功 -----------------Stop")
+    print("Step4-----------------Successful----Packed dataset created-----------------Stop")
