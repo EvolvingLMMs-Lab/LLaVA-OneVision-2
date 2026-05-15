@@ -1,64 +1,8 @@
 (function () {
   var SVG_NS = 'http://www.w3.org/2000/svg';
+  var DATA_URL = 'assets/codec-vs-frame-data.json';
 
-  var DATASETS = [
-    {
-      key: 'qvhighlights',
-      name: 'QVHighlights',
-      yMin: 10, yMax: 70, yStep: 10,
-      frames: [4, 8, 16, 32, 64],
-      frame: [12.3, 23.3, 24.9, 53.2, 61.7],
-      codec: [27.7, 40.4, 51.5, 59.2, 63.5]
-    },
-    {
-      key: 'charades',
-      name: 'Charades-STA',
-      yMin: 15, yMax: 55, yStep: 10,
-      frames: [4, 8, 16, 32, 64],
-      frame: [17.4, 37.1, 48.1, 53.1, 53.5],
-      codec: [42.4, 48.2, 51.0, 49.9, 50.1]
-    },
-    {
-      key: 'activitynet',
-      name: 'ActivityNet',
-      yMin: 10, yMax: 55, yStep: 10,
-      frames: [4, 8, 16, 32, 64],
-      frame: [12.0, 18.5, 28.1, 39.9, 48.9],
-      codec: [23.1, 31.8, 40.6, 47.5, 51.2]
-    },
-    {
-      key: 'lvbench',
-      name: 'LVBench',
-      yMin: 36, yMax: 52, yStep: 4,
-      frames: [16, 32, 64, 128],
-      frame: [38.9, 41.6, 45.6, 47.7],
-      codec: [40.9, 42.9, 47.1, 49.5]
-    },
-    {
-      key: 'videomme-long-sub',
-      name: 'VideoMME-long (w/ sub)',
-      yMin: 50, yMax: 70, yStep: 4,
-      frames: [8, 16, 32, 64, 128],
-      frame: [50.7, 55.0, 57.3, 59.2, 63.2],
-      codec: [56.9, 59.2, 63.1, 66.4, 67.6]
-    },
-    {
-      key: 'videoeval-pro',
-      name: 'VideoEval-Pro',
-      yMin: 42, yMax: 58, yStep: 4,
-      frames: [8, 16, 32, 64, 128],
-      frame: [43.1, 44.8, 48.6, 52.3, 54.0],
-      codec: [46.2, 48.2, 51.4, 53.7, 55.5]
-    },
-    {
-      key: 'jumpscore',
-      name: 'JumpScore',
-      yMin: 30, yMax: 80, yStep: 10,
-      frames: [4, 8, 16, 32, 64, 128],
-      frame: [32.5, 35.2, 36.7, 37.6, 39.9, 45.4],
-      codec: [39.4, 40.2, 46.9, 58.3, 71.3, 74.9]
-    }
-  ];
+  var DATASETS = [];
 
   var COLOR_CODEC = '#2563eb';
   var COLOR_FRAME = '#94a3b8';
@@ -701,11 +645,26 @@
       resizeTimer = setTimeout(onResize, 180);
     });
   }
+  function loadData() {
+    return fetch(DATA_URL, { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Failed to load ' + DATA_URL + ': ' + res.status);
+        return res.json();
+      })
+      .then(function (payload) {
+        DATASETS = payload.datasets || [];
+        window.CodecVsFrame.data = DATASETS;
+        init();
+      })
+      .catch(function (err) {
+        console.warn('[codec-vs-frame]', err);
+      });
+  }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', loadData);
   } else {
-    init();
+    loadData();
   }
 
-  window.CodecVsFrame = { render: render, data: DATASETS };
+  window.CodecVsFrame = { render: render, data: DATASETS, loadData: loadData };
 })();
