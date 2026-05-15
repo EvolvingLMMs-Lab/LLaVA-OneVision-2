@@ -355,7 +355,7 @@ If you find *LLaVA-OneVision-1.5* useful in your research, please consider to ci
 
 ## Acknowledgement
 
-We extend our sincere gratitude to **AIAK team of the** [**Baige AI computing platform**](https://cloud.baidu.com/product/aihc.html) **from Baidu AI Cloud** for providing the exceptional training framework. The outstanding capabilities of AIAK-Training-LLM and AIAK-Megatron have significantly accelerated our training process with remarkable efficiency. These cutting-edge frameworks have been instrumental in achieving our research goals. `To get full AIAK support, you can contact Baidu Cloud.`
+We extend our sincere gratitude to the [**LoongForge**](https://github.com/baidu-baige/LoongForge) team from Baidu AI Cloud for providing the exceptional AIAK-based training framework. The outstanding capabilities of AIAK-Training-LLM and AIAK-Megatron have significantly accelerated our training process with remarkable efficiency. We are especially grateful for their citation of LLaVA-OneVision-2 and deeply appreciate their recognition and support.
 
 We acknowledge the support of [Synvo AI](https://synvo.ai/) for contributing to the partial data annotation in this work, and also thank the maintainers and contributors of the following open-source projects, whose work greatly inspired and supported our research:
 
