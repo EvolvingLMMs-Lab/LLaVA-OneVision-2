@@ -20,6 +20,7 @@ GID_ROW_PREFIX = "tbl-row-"
 GID_BEST_PREFIX = "tbl-best-"
 GID_SECOND_PREFIX = "tbl-second-"
 GID_OURS_COL = "tbl-ours-col"
+REFERENCE_ROW_COUNT = 47
 
 
 @dataclass
@@ -36,6 +37,7 @@ class Theme:
     ours_tint: str
     zebra_bg: str
     cat_fg: str
+    pulse: str
 
 
 LIGHT = Theme(
@@ -44,13 +46,14 @@ LIGHT = Theme(
     fg="#1a1a1a",
     rule="#1a1a1a",
     dim_fg="#6a737d",
-    best_bg="#fef3c7",
-    best_edge="#f0d878",
-    second_bg="#eef1f4",
+    best_bg="#d4e8d0",
+    best_edge="#8dc18d",
+    second_bg="#f2f6f1",
     second_edge="none",
-    ours_tint="#f6f8fa",
-    zebra_bg="#f3f5f7",
+    ours_tint="#f8faf7",
+    zebra_bg="#f6f8f5",
     cat_fg="#4a5258",
+    pulse="#7fb57f",
 )
 
 
@@ -60,13 +63,14 @@ DARK = Theme(
     fg="#f0f6fc",
     rule="#f0f6fc",
     dim_fg="#8b949e",
-    best_bg="#3d2f08",
-    best_edge="#7a5f1a",
-    second_bg="#21262d",
+    best_bg="#25482f",
+    best_edge="#166534",
+    second_bg="#1b2a22",
     second_edge="none",
-    ours_tint="#161b22",
-    zebra_bg="#181d24",
+    ours_tint="#111c16",
+    zebra_bg="#142018",
     cat_fg="#b8c0c8",
+    pulse="#86efac",
 )
 
 
@@ -117,10 +121,11 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
         row_best.append((best, second))
 
     col_w = [1.55, 3.5] + [2.75] * len(model_cols)
-    row_h = 0.65
-    header_h = 0.84
+    # Preserve the origin/main README SVG footprint while rendering the updated row set.
+    row_h = 0.65 * REFERENCE_ROW_COUNT / n_rows
+    header_h = 0.92
     pad_x = 0.65
-    pad_top = 1.50
+    pad_top = 2.05
     pad_bot = 0.90
 
     inner_w = sum(col_w)
@@ -135,18 +140,21 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
     ax.invert_yaxis()
     ax.axis("off")
 
-    ax.text(
+    title_label = ax.text(
         pad_x, 0.36, "Table 1: ",
         ha="left", va="top",
         fontsize=22, fontweight="bold", color=theme.dim_fg,
     )
+    fig.canvas.draw()
+    title_bbox = title_label.get_window_extent(renderer=fig.canvas.get_renderer())
+    title_bbox_data = title_bbox.transformed(ax.transData.inverted())
     ax.text(
-        pad_x + 1.1, 0.36, "Benchmark comparison of LLaVA-OneVision-2.0.",
+        title_bbox_data.x1 + 0.16, 0.36, "Benchmark comparison of LLaVA-OneVision-2.0.",
         ha="left", va="top",
         fontsize=22, fontweight="bold", color=theme.fg,
     )
 
-    legend_y = 0.92
+    legend_y = 1.18
     legend_x = pad_x
     sw_w, sw_h = 0.32, 0.30
     round_box(
@@ -222,10 +230,11 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
         else:
             tx, ha = (x0 + x1) / 2, "center"
         label = name
+        header_fontsize = 18 if ci <= 1 else 16
         t = ax.text(
             tx, top_rule_y + header_h / 2, label,
             ha=ha, va="center",
-            fontsize=20, fontweight="bold", color=theme.fg,
+            fontsize=header_fontsize, fontweight="bold", color=theme.fg,
         )
         header_artists.append(t)
 
@@ -348,7 +357,8 @@ def render(csv_path: Path, out_path: Path, theme: Theme, animate: bool = False) 
 
     if animate:
         inject_animation_css(out_path, n_rows, best_box_ids, second_box_ids,
-                             ours_present=ours_ci is not None)
+                             ours_present=ours_ci is not None,
+                             pulse_color=theme.pulse)
 
     print(f"Saved: {out_path}")
 
@@ -360,6 +370,7 @@ def sanitize_svg_for_github(svg_path: Path) -> None:
     2. Strip ``<metadata>...</metadata>`` block (RDF/Dublin Core, ~3 KB of dead weight).
     3. Move ``<defs>`` (containing the clipPath) from end of file to right after the
        opening ``<svg>`` tag, eliminating forward references that strict renderers reject.
+    4. Trim generated trailing spaces so regenerated assets pass ``git diff --check``.
     """
     svg = svg_path.read_text()
 
@@ -380,19 +391,20 @@ def sanitize_svg_for_github(svg_path: Path) -> None:
             count=1,
         )
 
+    svg = "\n".join(line.rstrip() for line in svg.splitlines()) + "\n"
     svg_path.write_text(svg)
 
 
 def inject_animation_css(svg_path: Path, n_rows: int,
                          best_ids: list[str], second_ids: list[str],
-                         ours_present: bool) -> None:
+                         ours_present: bool, pulse_color: str) -> None:
     svg = svg_path.read_text()
 
     css_parts = [
         "@keyframes tbl-fade-down { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }",
         "@keyframes tbl-fade-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }",
         "@keyframes tbl-pop { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }",
-        "@keyframes tbl-pulse { 0%, 100% { filter: none; } 50% { filter: drop-shadow(0 0 4px #f5c518); } }",
+        f"@keyframes tbl-pulse {{ 0%, 100% {{ filter: none; }} 50% {{ filter: drop-shadow(0 0 4px {pulse_color}); }} }}",
         "@keyframes tbl-col-fade { from { opacity: 0; } to { opacity: 1; } }",
         f"g[id='{GID_HEADER}'] {{ animation: tbl-fade-down 0.45s ease-out 0.1s both; transform-box: fill-box; transform-origin: center; }}",
     ]
@@ -431,9 +443,10 @@ def inject_animation_css(svg_path: Path, n_rows: int,
 
 def main() -> None:
     here = Path(__file__).resolve().parent
+    repo_root = here.parent.parent
     p = argparse.ArgumentParser()
-    p.add_argument("--csv", type=Path, default=here / "results.csv")
-    p.add_argument("--out-dir", type=Path, default=here.parent.parent / "asset")
+    p.add_argument("--csv", type=Path, default=repo_root / "docs" / "page" / "assets" / "results.csv")
+    p.add_argument("--out-dir", type=Path, default=repo_root / "asset")
     args = p.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
