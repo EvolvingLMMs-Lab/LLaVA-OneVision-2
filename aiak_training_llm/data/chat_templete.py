@@ -13,10 +13,11 @@ https://huggingface.co/docs/transformers/main/en/chat_templating#templates-for-c
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Type, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 
 from aiak_training_llm.utils.constants import DataRoles
-from .mm_plugin import MMPlugin, Qwen2VLPlugin
+
+from .mm_plugin import Gemma4VLPlugin, MMPlugin, Qwen2VLPlugin
 
 
 if TYPE_CHECKING:
@@ -458,4 +459,16 @@ _register_chat_template(
     name="deepseek3",
     format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+_register_chat_template(
+    name="gemma4",
+    format_user=StringFormatter(
+        slots=["<|turn>user\n{{content}}<turn|>\n<|turn>model\n"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
+    format_system=StringFormatter(slots=["<|turn>system\n{{content}}<turn|>\n"]),
+    format_separator=EmptyFormatter(slots=[""]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=Gemma4VLPlugin(image_token="<|image|>", video_token=None),
 )

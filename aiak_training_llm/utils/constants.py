@@ -94,3 +94,4 @@ class VisionLanguageModelFamilies(_BaseFamilies):
     QWEN2_5_VL = "qwen2_5_vl"
     LLAVA_ONEVISION1_5 = "llava_onevision1_5"
     LLAVA_ONEVISION2 = "llava_onevision2"
+    GEMMA4_VL = "gemma4_vl"

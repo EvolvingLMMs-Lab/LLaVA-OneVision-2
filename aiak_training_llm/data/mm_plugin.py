@@ -4,6 +4,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Type, TypedDict, Union
 
 import numpy as np
+import torch
 from PIL import Image
 from PIL.Image import Image as ImageObject
 from typing_extensions import override
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     import torch
 
     from transformers.image_processing_utils import BaseImageProcessor
+    from transformers.processing_utils import ProcessorMixin
 
     class EncodedImage(TypedDict):
         """Encoded image type."""
@@ -292,3 +294,178 @@ class Qwen2VLPlugin(MMPlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
         return self._get_mm_inputs(images, videos, processor)
+
+
+class Gemma4VLPlugin(MMPlugin):
+    """Gemma4-VL passthrough plugin: process_messages returns (messages, mm_inputs)
+    where mm_inputs follows the existing OV2 flattened-patch contract.
+
+    Cross-module contract (downstream consumers depend on these invariants):
+    - ``pixel_values`` shape ``[total_imgs_in_batch, P, D]`` — FLATTENED, NOT ``[B, ...]``.
+      Indexing by batch index will silently return wrong tensor.
+    - ``image_grid_thw`` is synthesized from HF ``image_position_ids`` as
+      ``[num_images, 3]`` rows of ``[1, H_p, W_p]``.
+    - Text-only batches OMIT multimodal keys entirely (no zero-shape sentinel).
+      All downstream consumers MUST guard with ``in mm_inputs``.
+    """
+
+    @staticmethod
+    def _flatten_gemma4_image_outputs(
+        image_outputs: dict[str, "torch.Tensor"],
+    ) -> dict[str, Union["torch.Tensor", list["torch.Tensor"]]]:
+        pixel_values = image_outputs["pixel_values"]
+        image_position_ids = image_outputs["image_position_ids"]
+        num_soft_tokens_per_image = image_outputs["num_soft_tokens_per_image"]
+
+        valid_mask = (image_position_ids != -1).all(dim=-1)
+        flat_pixel_values = pixel_values[valid_mask]
+
+        image_grid_rows: list[list[int]] = []
+        patch_positions: list[torch.Tensor] = []
+        for image_idx in range(image_position_ids.shape[0]):
+            valid_positions = image_position_ids[image_idx][valid_mask[image_idx]].to(dtype=torch.int64)
+            if valid_positions.numel() == 0:
+                raise ValueError(f"Gemma4 image {image_idx} has no valid patch positions.")
+
+            width = int(valid_positions[:, 0].max().item()) + 1
+            height = int(valid_positions[:, 1].max().item()) + 1
+            patch_count = int(valid_positions.shape[0])
+            if patch_count != height * width:
+                raise ValueError(
+                    "Gemma4 image patch positions are not a dense single-frame grid: "
+                    f"image_idx={image_idx}, patch_count={patch_count}, height={height}, width={width}."
+                )
+
+            image_grid_rows.append([1, height, width])
+            patch_positions.append(
+                torch.stack(
+                    (
+                        torch.zeros(patch_count, dtype=torch.int64, device=valid_positions.device),
+                        valid_positions[:, 1],
+                        valid_positions[:, 0],
+                    ),
+                    dim=-1,
+                )
+            )
+
+        image_grid_thw = torch.tensor(
+            image_grid_rows,
+            dtype=torch.int32,
+            device=image_position_ids.device,
+        )
+
+        return {
+            "pixel_values": flat_pixel_values,
+            "image_grid_thw": image_grid_thw,
+            "patch_positions": patch_positions,
+            "image_position_ids": image_position_ids,
+            "num_soft_tokens_per_image": num_soft_tokens_per_image,
+        }
+
+    def _build_gemma4_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> tuple[Optional[list["ImageObject"]], dict[str, Union["torch.Tensor", list["torch.Tensor"]]]]:
+        regularized_images = self._regularize_images(images) if len(images) != 0 else None
+        if regularized_images is None:
+            return None, {}
+
+        image_outputs = processor.image_processor(regularized_images, return_tensors="pt")
+        return regularized_images, self._flatten_gemma4_image_outputs(dict(image_outputs))
+
+    def _expand_image_placeholders(
+        self,
+        messages: Sequence[dict[str, str]],
+        num_soft_tokens_per_image: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> list[dict[str, str]]:
+        messages = deepcopy(messages)
+        actual_num_images = len(num_soft_tokens_per_image)
+
+        image_placeholder_count = sum(message["content"].count(Placeholder.IMAGE) for message in messages)
+        if actual_num_images > 0 and image_placeholder_count != actual_num_images:
+            for message in messages:
+                message["content"] = message["content"].replace(Placeholder.IMAGE, "")
+
+            first_user_msg = None
+            for message in messages:
+                if message.get("role") == "user":
+                    first_user_msg = message
+                    break
+
+            if first_user_msg is None:
+                raise ValueError("Cannot rebuild Gemma4 image placeholders: no user message found.")
+
+            image_placeholders = "\n".join([Placeholder.IMAGE] * actual_num_images)
+            user_content = first_user_msg["content"].lstrip("\n")
+            first_user_msg["content"] = f"{image_placeholders}\n{user_content}"
+
+        image_idx = 0
+        for message in messages:
+            content = message["content"]
+            while Placeholder.IMAGE in content:
+                if image_idx >= actual_num_images:
+                    raise ValueError(
+                        f"The number of {Placeholder.IMAGE} tokens is greater than available images."
+                    )
+
+                n_soft_tokens = int(num_soft_tokens_per_image[image_idx])
+                replacement = (
+                    f"{processor.boi_token}{self.image_token * n_soft_tokens}{processor.eoi_token}"
+                )
+                content = content.replace(Placeholder.IMAGE, replacement, 1)
+                image_idx += 1
+
+            if Placeholder.VIDEO in content:
+                raise ValueError("Gemma4-VL video placeholders are not supported in this OV2 path yet.")
+
+            message["content"] = content
+
+        if image_idx != actual_num_images:
+            raise ValueError(
+                f"The number of images ({actual_num_images}) does not match expanded placeholders ({image_idx})."
+            )
+
+        return messages
+
+    @override
+    def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
+        return super()._preprocess_image(image, **kwargs)
+
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> tuple[list[dict[str, str]], dict[str, "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        _regularized_images, mm_inputs = self._build_gemma4_mm_inputs(images, processor)
+
+        if "num_soft_tokens_per_image" in mm_inputs:
+            messages = self._expand_image_placeholders(
+                messages,
+                mm_inputs["num_soft_tokens_per_image"],
+                processor,
+            )
+        else:
+            messages = list(messages)
+
+        return messages, dict(mm_inputs)
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        del imglens, vidlens, seqlens
+        _regularized_images, mm_inputs = self._build_gemma4_mm_inputs(images, processor)
+        return dict(mm_inputs)

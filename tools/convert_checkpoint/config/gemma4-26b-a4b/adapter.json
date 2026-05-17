@@ -1,0 +1,3 @@
+{
+    "adapter.embedding_projection.weight": "model.embed_vision.embedding_projection.weight"
+}
