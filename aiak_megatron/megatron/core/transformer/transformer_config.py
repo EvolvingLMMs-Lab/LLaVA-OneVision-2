@@ -3,7 +3,7 @@
 """tranformer config"""
 
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Tuple, Union
 
 import torch
@@ -529,6 +529,51 @@ class TransformerConfig(ModelParallelConfig):
     """moe_router_dtype (Optional[str]): Data type for routing and expert output weighted averaging.
     Using fp32 or fp64 can improve stability especially when the number of experts is large (e.g. finegrained-moe).
     None means no changes for dtype."""
+
+    final_logit_softcapping: Optional[float] = None
+    """If set, apply ``cap * tanh(logits / cap)`` to the language-model output logits.
+    Used by Gemma4 (cap=30.0). None disables the softcap."""
+
+    use_layer_scalar: bool = False
+    """If True, each transformer layer learns a scalar gate (init 1.0) applied to the
+    layer output before the residual add. Used by Gemma4."""
+
+    partial_rotary_factor: float = 1.0
+    """Fraction of the head dim that receives RoPE rotation. Gemma4 uses 0.25.
+    A value of 1.0 (default) keeps full RoPE and is a no-op for existing models."""
+
+    sliding_window: Optional[int] = None
+    """Window size used by sliding-window attention layers. None means no sliding mask."""
+
+    rotary_base_sliding: Optional[int] = None
+    """Optional separate RoPE base for sliding-window attention layers.
+    If None, sliding layers share ``rotary_base`` with global layers."""
+
+    layer_pattern: list = field(default_factory=list)
+    """Per-layer attention type as a list of strings ('sliding' / 'global'),
+    length == num_layers. Empty list (default) means all layers use the same
+    config-level head_dim / num_query_groups (no hybrid behavior)."""
+
+    per_layer_kv_channels: dict = field(default_factory=dict)
+    """Optional per-layer-type override of ``kv_channels`` (a.k.a. head_dim).
+    Keyed by layer-type string ('sliding' / 'global'). Empty dict (default)
+    means use ``kv_channels`` for every layer."""
+
+    per_layer_num_query_groups: dict = field(default_factory=dict)
+    """Optional per-layer-type override of ``num_query_groups``.
+    Empty dict (default) means use ``num_query_groups`` for every layer."""
+
+    attention_k_eq_v: bool = False
+    """If True, Gemma4 global layers use K=V tying according to ``kv_tied_layers``.
+    Existing models keep the default False behavior."""
+
+    kv_tied_layers: list = field(default_factory=list)
+    """Layer indices for which K and V projections share the same weight tensor
+    (used by Gemma4 global layers). Empty list (default) means no tying."""
+
+    scale_emb_by_sqrt_hidden: bool = False
+    """If True, multiply token embeddings by ``sqrt(hidden_size)`` before the
+    transformer (Gemma family convention)."""
 
     def __post_init__(self):
         """Python dataclass method that is used to modify attributes after initialization.

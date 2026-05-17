@@ -126,6 +126,33 @@ def _add_extra_model_args(parser: argparse.ArgumentParser):
                        "this option, the head dimensions will be aligned by padding, so that fa can be used."
                        "Deprecated: use --attention-backend=flash")
 
+    # Gemma4 architecture fields. These are normally populated from the
+    # registered model config in _validate_extra_model_args; defining them here
+    # keeps fixed-architecture validation and TransformerConfig construction in
+    # sync with the Gemma4VLConfig dataclass.
+    group.add_argument('--final-logit-softcapping', type=float, default=None,
+                       help='Gemma4 final logits softcap. Usually set by --model-name.')
+    group.add_argument('--use-layer-scalar', action='store_true', default=False,
+                       help='Enable Gemma4 per-layer scalar buffers. Usually set by --model-name.')
+    group.add_argument('--sliding-window', type=int, default=None,
+                       help='Gemma4 sliding attention window. Usually set by --model-name.')
+    group.add_argument('--rotary-base-sliding', type=int, default=None,
+                       help='Gemma4 sliding-layer RoPE base. Usually set by --model-name.')
+    group.add_argument('--partial-rotary-factor', type=float, default=1.0,
+                       help='Gemma4 proportional RoPE factor. Usually set by --model-name.')
+    group.add_argument('--layer-pattern', default=[],
+                       help='Gemma4 per-layer attention pattern. Usually set by --model-name.')
+    group.add_argument('--per-layer-kv-channels', default={},
+                       help='Gemma4 per-layer-type head dim overrides. Usually set by --model-name.')
+    group.add_argument('--per-layer-num-query-groups', default={},
+                       help='Gemma4 per-layer-type KV head overrides. Usually set by --model-name.')
+    group.add_argument('--attention-k-eq-v', action='store_true', default=False,
+                       help='Enable Gemma4 K=V tying. Usually set by --model-name.')
+    group.add_argument('--kv-tied-layers', default=[],
+                       help='Gemma4 K=V tied layer indices. Usually set by --model-name.')
+    group.add_argument('--scale-emb-by-sqrt-hidden', action='store_true', default=False,
+                       help='Enable Gemma-style embedding scaling. Usually set by --model-name.')
+
     return parser
 
 
