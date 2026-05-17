@@ -1,0 +1,6 @@
+{
+    "vision_model.patch_embedder.input_proj.weight": "model.vision_tower.patch_embedder.input_proj.weight",
+    "vision_model.patch_embedder.position_embedding_table": "model.vision_tower.patch_embedder.position_embedding_table",
+    "vision_model.std_bias": "model.vision_tower.std_bias",
+    "vision_model.std_scale": "model.vision_tower.std_scale"
+}
