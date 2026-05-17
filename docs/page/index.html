@@ -2852,1024 +2852,664 @@ print(processor.batch_decode(out, skip_special_tokens=True)[0])
           </p>
 
           <div class="demo-gallery">
-            <div class="demo-tabs" role="tablist">
-              <button type="button" class="demo-tab active" data-demo-tab="temporal" role="tab" aria-selected="true">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15 14"/></svg>
-                <span class="i18n" data-lang="en">Temporal Grounding</span><span class="i18n" data-lang="zh">时序定位</span>
-              </button>
-              <button type="button" class="demo-tab" data-demo-tab="video" role="tab" aria-selected="false">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                <span class="i18n" data-lang="en">Video Tracking</span><span class="i18n" data-lang="zh">视频跟踪</span>
-              </button>
-              <button type="button" class="demo-tab" data-demo-tab="spatial" role="tab" aria-selected="false">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.5 8 12 8 12s8-6.5 8-12a8 8 0 0 0-8-8z"/></svg>
-                <span class="i18n" data-lang="en">Spatial Grounding</span><span class="i18n" data-lang="zh">空间定位</span>
-              </button>
-              <button type="button" class="demo-tab" data-demo-tab="manipulation" role="tab" aria-selected="false">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M6 7 C 10 9, 12 14, 18 17"/></svg>
-                <span class="i18n" data-lang="en">Video Manipulation</span><span class="i18n" data-lang="zh">视频操作</span>
-              </button>
-            </div>
-
-            <!-- Temporal Grounding pane -->
-            <div class="demo-pane active" id="demo-pane-temporal" role="tabpanel">
-              <p class="demo-pane-intro">
-                <span class="i18n" data-lang="en">
-                  Given a free-form natural-language query and a video, LLaVA-OneVision-2 localises the
-                  corresponding time interval. The model&rsquo;s predicted segment is shown alongside
-                  the ground-truth segment. Ten cases curated from TimeLens-Bench (Charades-STA,
-                  ActivityNet-Captions, QVHighlights), filtered to mIoU&nbsp;&ge;&nbsp;0.95 averaged
-                  over 5 runs.
-                </span>
-                <span class="i18n" data-lang="zh">
-                  给定自由形式的自然语言查询和一段视频，LLaVA-OneVision-2 定位对应的时间区间。
-                  模型预测的片段与真值片段并排显示。10 个案例选自 TimeLens-Bench (Charades-STA,
-                  ActivityNet-Captions, QVHighlights), 5 次推理平均 mIoU&nbsp;&ge;&nbsp;0.95。
-                </span>
-              </p>
-
+            <div class="demo-sections">
+            <div class="demo-section">
+              <div class="demo-section-header">
+                <span class="demo-section-bar"></span>
+                <span class="demo-section-cap">Temporal Grounding</span>
+                <span class="demo-section-count">8 examples</span>
+                <span class="demo-section-source">TimeLens-Bench · mean IoU ≥ 0.95 over 5 runs</span>
+              </div>
               <div class="demo-carousel" data-demo-carousel>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
                 <div class="demo-carousel-viewport">
                   <div class="demo-carousel-track">
-                    <article class="demo-slide" data-slide="0">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;01</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A man takes a bag from the bottom cabinet.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/1/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Charades-STA</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;11 15&quot;</span><span class="a"> gt=</span><span class="s">&quot;11 15&quot;</span><span class="a"> iou=</span><span class="s">&quot;1.00&quot;</span><span class="t">&gt;</span>
-<span class="x">a man takes a bag from the bottom cabinet</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/1/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/1/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+              <article class="demo-slide" data-slide="0">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">He jumps a ramp and dives into a pile of leaves.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
                       </div>
-                    </article>
-                    <article class="demo-slide" data-slide="1">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;02</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A boy puts his hand on top of his head in the bathroom and takes a selfie with a camera.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/2/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Charades-STA</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;15 18&quot;</span><span class="a"> gt=</span><span class="s">&quot;15 18&quot;</span><span class="a"> iou=</span><span class="s">&quot;1.00&quot;</span><span class="t">&gt;</span>
-<span class="x">a boy puts his hand on top of his head in the bathroom and takes a selfie with a camera</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/2/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/2/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/4/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
                       </div>
-                    </article>
-                    <article class="demo-slide" data-slide="2">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;03</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A person puts on a red plaid shirt.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/3/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Charades-STA</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;23 32&quot;</span><span class="a"> gt=</span><span class="s">&quot;23 32&quot;</span><span class="a"> iou=</span><span class="s">&quot;1.00&quot;</span><span class="t">&gt;</span>
-<span class="x">a person puts on a red plaid shirt</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/3/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/3/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="3">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;04</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">He jumps a ramp and dives into a pile of leaves.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/4/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">ActivityNet-Captions</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;38 41&quot;</span><span class="a"> gt=</span><span class="s">&quot;38 41&quot;</span><span class="a"> iou=</span><span class="s">&quot;1.00&quot;</span><span class="t">&gt;</span>
-<span class="x">he jumps a ramp and dives into a pile of leaves</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/4/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/4/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="4">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;05</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A man wearing white clothes is practicing Tai Chi by the sea.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/5/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">ActivityNet-Captions</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;189 208&quot;</span><span class="a"> gt=</span><span class="s">&quot;189 208&quot;</span><span class="a"> iou=</span><span class="s">&quot;0.98&quot;</span><span class="t">&gt;</span>
-<span class="x">a man wearing white clothes is practicing Tai Chi by the sea</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/5/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/5/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="5">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;06</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A boy is wearing boxing gloves practicing boxing.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/6/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">ActivityNet-Captions</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;62 87&quot;</span><span class="a"> gt=</span><span class="s">&quot;61 87&quot;</span><span class="a"> iou=</span><span class="s">&quot;0.98&quot;</span><span class="t">&gt;</span>
-<span class="x">a boy is wearing boxing gloves practicing boxing</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/6/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/6/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="6">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;07</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A person washes and drains a mop in a bucket.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/7/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">ActivityNet-Captions</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;22 34&quot;</span><span class="a"> gt=</span><span class="s">&quot;22 34&quot;</span><span class="a"> iou=</span><span class="s">&quot;0.98&quot;</span><span class="t">&gt;</span>
-<span class="x">a person washes and drains a mop in a bucket</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/7/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/7/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="7">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;08</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">Two men are facing the camera and talking.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/8/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">QVHighlights</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;81 133&quot;</span><span class="a"> gt=</span><span class="s">&quot;81 134&quot;</span><span class="a"> iou=</span><span class="s">&quot;1.00&quot;</span><span class="t">&gt;</span>
-<span class="x">two men are facing the camera and talking</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/8/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/8/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="8">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;09</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">A lady taking about her beauty products.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/9/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">QVHighlights</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;57 81&quot;</span><span class="a"> gt=</span><span class="s">&quot;57 81&quot;</span><span class="a"> iou=</span><span class="s">&quot;0.98&quot;</span><span class="t">&gt;</span>
-<span class="x">a lady taking about her beauty products</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/9/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/9/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="9">
-                      <div class="demo-chat">
-                        <div class="demo-chat-turn demo-chat-turn-user">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                            <span class="demo-chat-author-label">demo&nbsp;10</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-user">
-                            <p class="demo-chat-prompt">The hairstylist is giving a haircut to a little boy, while the boy is playing on a tablet.</p>
-                            <div class="demo-chat-rgb">
-                              <video muted loop playsinline preload="metadata" data-role="rgb">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/10/full.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">QVHighlights</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="demo-chat-turn demo-chat-turn-model">
-                          <div class="demo-chat-author">
-                            <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                            <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                          </div>
-                          <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;temporal </span><span class="a">pred=</span><span class="s">&quot;1 32&quot;</span><span class="a"> gt=</span><span class="s">&quot;3 34&quot;</span><span class="a"> iou=</span><span class="s">&quot;0.98&quot;</span><span class="t">&gt;</span>
-<span class="x">the hairstylist is giving a haircut to a little boy, while the boy is playing on a tablet</span>
-<span class="t">&lt;/temporal&gt;</span></pre>
-                            <div class="demo-chat-videos">
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/10/prediction.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">PREDICTION</span>
-                              </div>
-                              <div class="demo-chat-vid">
-                                <video muted loop playsinline preload="metadata">
-                                  <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/10/ground_truth.webm" type="video/webm">
-                                </video>
-                                <span class="demo-chat-vlabel">GROUND TRUTH</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/4/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 38–41 s · ActivityNet Captions · IoU 1.00</p>
+                    </div>
                   </div>
                 </div>
-                <div class="demo-carousel-nav">
-                  <div class="demo-carousel-dots">
-                    <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to example 1"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to example 2"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to example 3"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to example 4"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="4" aria-label="Go to example 5"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="5" aria-label="Go to example 6"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="6" aria-label="Go to example 7"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="7" aria-label="Go to example 8"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="8" aria-label="Go to example 9"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="9" aria-label="Go to example 10"></button>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A boy is wearing boxing gloves practicing boxing.</p>
                   </div>
-                  <span class="demo-carousel-counter"><strong>1</strong> / 10</span>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/6/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/6/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 62–87 s · ActivityNet Captions · IoU 0.98</p>
+                    </div>
+                  </div>
                 </div>
+              </article>
+              <article class="demo-slide" data-slide="1">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Two men are facing the camera and talking.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/8/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/8/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 81–133 s · QVHighlights · IoU 1.00</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A man takes a bag from the bottom cabinet.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/1/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/1/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 11–15 s · Charades-STA · IoU 1.00</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="2">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A boy puts his hand on top of his head in the bathroom and takes a selfie.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/2/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/2/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 15–18 s · Charades-STA · IoU 1.00</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A person puts on a red plaid shirt.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/3/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/3/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 23–32 s · Charades-STA · IoU 1.00</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="3">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A man wearing white clothes is practicing Tai Chi by the sea.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/5/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/5/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 189–208 s · ActivityNet Captions · IoU 0.98</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">A person washes and drains a mop in a bucket.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/7/full.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/temporal_grounding/7/prediction.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Predicted interval 22–34 s · ActivityNet Captions · IoU 0.98</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+                  </div>
+                </div>
+              <div class="demo-carousel-nav">
+                <div class="demo-carousel-dots">
+                  <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to page 1"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to page 2"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to page 3"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to page 4"></button>
+                </div>
+              </div>
               </div>
             </div>
-            <!-- Video Tracking pane -->
-            <div class="demo-pane" id="demo-pane-video" role="tabpanel">
-              <p class="demo-pane-intro">
-                <span class="i18n" data-lang="en">
-                  Given a free-form language expression, LLaVA-OneVision-2 tracks the referred object across the entire video
-                  and emits a per-frame mask plus point trajectory. Click any video to play all three views in sync.
-                </span>
-                <span class="i18n" data-lang="zh">
-                  给定自由形式的语言表达，LLaVA-OneVision-2 在整段视频中跟踪所指对象，并输出逐帧掩码与点轨迹。
-                  点击任意视频可同步播放原始 / 点 / 掩码三视图。
-                </span>
-              </p>
-
-                            <div class="demo-carousel" data-demo-carousel>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-                <div class="demo-carousel-viewport">
-                  <div class="demo-carousel-track">
-                  <article class="demo-slide" data-slide="0">
-                    <div class="demo-chat">
-                      <div class="demo-chat-turn demo-chat-turn-user">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                          <span class="demo-chat-author-label">demo&nbsp;01</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-user">
-                          <p class="demo-chat-prompt">Track the animal moving forward</p>
-                          <div class="demo-chat-rgb">
-                            <video muted loop playsinline preload="metadata" data-role="rgb">
-                              <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/1/original.webm" type="video/webm">
-                            </video>
-                            <span class="demo-chat-vlabel">RGB</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="demo-chat-turn demo-chat-turn-model">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                          <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;tracks </span><span class="a">coords=</span><span class="s">&quot;0.00 0 231 493;1.00 0 273 500;2.00 0 295 500;3.00 0 408 593;4.00 0 482 600;5.00 0 445 593&quot;</span><span class="t">&gt;</span>
-<span class="x">the animal moving forward</span>
-<span class="t">&lt;/tracks&gt;</span></pre>
-                          <div class="demo-chat-videos">
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="points">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/1/points.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Points</span>
-                            </div>
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="mask">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/1/mask.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Mask</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="1">
-                    <div class="demo-chat">
-                      <div class="demo-chat-turn demo-chat-turn-user">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                          <span class="demo-chat-author-label">demo&nbsp;02</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-user">
-                          <p class="demo-chat-prompt">Track the person whose appearance deviates the most from the norm in the video.</p>
-                          <div class="demo-chat-rgb">
-                            <video muted loop playsinline preload="metadata" data-role="rgb">
-                              <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/2/original.webm" type="video/webm">
-                            </video>
-                            <span class="demo-chat-vlabel">RGB</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="demo-chat-turn demo-chat-turn-model">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                          <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;tracks </span><span class="a">coords=</span><span class="s">&quot;0.00 0 668 465;1.00 0 668 465;2.00 0 668 465&quot;</span><span class="t">&gt;</span>
-<span class="x">the person whose appearance deviates the most from the norm in the video</span>
-<span class="t">&lt;/tracks&gt;</span></pre>
-                          <div class="demo-chat-videos">
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="points">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/2/points.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Points</span>
-                            </div>
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="mask">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/2/mask.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Mask</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="2">
-                    <div class="demo-chat">
-                      <div class="demo-chat-turn demo-chat-turn-user">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                          <span class="demo-chat-author-label">demo&nbsp;03</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-user">
-                          <p class="demo-chat-prompt">Track a sport car</p>
-                          <div class="demo-chat-rgb">
-                            <video muted loop playsinline preload="metadata" data-role="rgb">
-                              <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/3/original.webm" type="video/webm">
-                            </video>
-                            <span class="demo-chat-vlabel">RGB</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="demo-chat-turn demo-chat-turn-model">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                          <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;tracks </span><span class="a">coords=</span><span class="s">&quot;0.00 0 230 454;1.00 0 366 481;2.00 0 466 496;3.00 0 512 500;4.00 0 532 504;5.00 0 530 507;6.00 0 508 510;7.00 0 475 510;8.00 0 462 510&quot;</span><span class="t">&gt;</span>
-<span class="x">a sport car</span>
-<span class="t">&lt;/tracks&gt;</span></pre>
-                          <div class="demo-chat-videos">
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="points">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/3/points.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Points</span>
-                            </div>
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="mask">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/3/mask.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Mask</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="3">
-                    <div class="demo-chat">
-                      <div class="demo-chat-turn demo-chat-turn-user">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-user">You</div>
-                          <span class="demo-chat-author-label">demo&nbsp;04</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-user">
-                          <p class="demo-chat-prompt">Track a blue and white colored surfboard in the right hand of dark blue swim suit</p>
-                          <div class="demo-chat-rgb">
-                            <video muted loop playsinline preload="metadata" data-role="rgb">
-                              <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/4/original.webm" type="video/webm">
-                            </video>
-                            <span class="demo-chat-vlabel">RGB</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="demo-chat-turn demo-chat-turn-model">
-                        <div class="demo-chat-author">
-                          <div class="demo-chat-avatar demo-chat-avatar-model"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0-3 2-6 6-6 3 0 5 1 8 0l4-3-1 6c0 4-3 7-7 7-3 0-5-1-7-3l-3 4 0-5z"/><circle cx="15" cy="10" r=".7" fill="currentColor"/></svg></div>
-                          <span class="demo-chat-author-label">LLaVA-OneVision-2</span>
-                        </div>
-                        <div class="demo-chat-bubble demo-chat-bubble-model">
-<pre class="demo-chat-code"><span class="t">&lt;tracks </span><span class="a">coords=</span><span class="s">&quot;0.00 0 778 543;1.00 0 830 562;2.00 0 848 585;3.00 0 880 600;4.00 0 958 593&quot;</span><span class="t">&gt;</span>
-<span class="x">a blue and white colored surfboard in the right hand of dark blue swim suit</span>
-<span class="t">&lt;/tracks&gt;</span></pre>
-                          <div class="demo-chat-videos">
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="points">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/4/points.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Points</span>
-                            </div>
-                            <div class="demo-chat-vid">
-                              <video muted loop playsinline preload="metadata" data-role="mask">
-                                <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/4/mask.webm" type="video/webm">
-                              </video>
-                              <span class="demo-chat-vlabel">Mask</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                  </div>
-                </div>
-                <div class="demo-carousel-nav">
-                  <div class="demo-carousel-dots">
-                    <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to example 1"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to example 2"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to example 3"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to example 4"></button>
-                  </div>
-                  <span class="demo-carousel-counter"><strong>1</strong> / 4</span>
-                </div>
+            <div class="demo-section">
+              <div class="demo-section-header">
+                <span class="demo-section-bar"></span>
+                <span class="demo-section-cap">Video Tracking</span>
+                <span class="demo-section-count">4 examples</span>
+                <span class="demo-section-source">Referring video object segmentation (R-VOS)</span>
               </div>
-</div>
-
-            <!-- Spatial Grounding pane -->
-            <div class="demo-pane" id="demo-pane-spatial" role="tabpanel">
-              <p class="demo-pane-intro">
-                <span class="i18n" data-lang="en">
-                  LLaVA-OneVision-2 grounds compositional spatial language into <strong>2D pixel-coordinate points</strong>
-                  for referring expressions, and into <strong>3D pick-and-place trajectories</strong>
-                  for embodied manipulation queries.
-                </span>
-                <span class="i18n" data-lang="zh">
-                  LLaVA-OneVision-2 将复合空间语言分别映射到 <strong>2D 像素坐标点</strong>（指称表达）以及
-                  <strong>3D 抓取-放置轨迹</strong>（具身操作查询）。
-                </span>
-              </p>
-
-              <div class="demo-subtabs" role="tablist">
-                <button type="button" class="demo-subtab active" data-spatial-tab="2d" role="tab" aria-selected="true">
-                  <span class="i18n" data-lang="en">2D Pointing</span><span class="i18n" data-lang="zh">2D 指点</span>
-                </button>
-                <button type="button" class="demo-subtab" data-spatial-tab="3d" role="tab" aria-selected="false">
-                  <span class="i18n" data-lang="en">3D Trajectory</span><span class="i18n" data-lang="zh">3D 轨迹</span>
-                </button>
-              </div>
-
-              <!-- 2D Pointing -->
-              <div class="demo-subpane active" id="demo-subpane-2d" role="tabpanel">
-                                <div class="demo-carousel" data-demo-carousel>
-                  <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous example">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
-                  <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next example">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                  <div class="demo-carousel-viewport">
-                    <div class="demo-carousel-track">
-                  <article class="demo-slide" data-slide="0">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point to the top piece of paper on the white table.</p>
-                      <span class="demo-slide-tag">demo&nbsp;01</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_023_pointing_final.png" alt="point demo 01" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="1">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the white object that is the second closest to the wooden shelf.</p>
-                      <span class="demo-slide-tag">demo&nbsp;02</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_029_pointing_final.png" alt="point demo 02" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="2">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point to the left pillow on the sofa.</p>
-                      <span class="demo-slide-tag">demo&nbsp;03</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_034_pointing_final.png" alt="point demo 03" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="3">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the free space between the cat tree and litter box.</p>
-                      <span class="demo-slide-tag">demo&nbsp;04</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_037_pointing_final.png" alt="point demo 04" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="4">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the free space on the table between the speaker to the right of the monitor and the mouse.</p>
-                      <span class="demo-slide-tag">demo&nbsp;05</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_039_pointing_final.png" alt="point demo 05" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="5">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the object on the windowsill farthest from the viewer.</p>
-                      <span class="demo-slide-tag">demo&nbsp;06</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_040_pointing_final.png" alt="point demo 06" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="6">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the free space between the black water bottle, the pot lid, and the scissors.</p>
-                      <span class="demo-slide-tag">demo&nbsp;07</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_042_pointing_final.png" alt="point demo 07" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="7">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">POINT</span>
-                      <p class="demo-slide-prompt">Please point out the free space between the black water bottle and the pot lid.</p>
-                      <span class="demo-slide-tag">demo&nbsp;08</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_048_pointing_final.png" alt="point demo 08" loading="lazy">
-                    </div>
-                  </article>
-                    </div>
-                  </div>
-                  <div class="demo-carousel-nav">
-                    <div class="demo-carousel-dots">
-                    <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to example 1"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to example 2"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to example 3"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to example 4"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="4" aria-label="Go to example 5"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="5" aria-label="Go to example 6"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="6" aria-label="Go to example 7"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="7" aria-label="Go to example 8"></button>
-                    </div>
-                    <span class="demo-carousel-counter"><strong>1</strong> / 8</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3D Trajectory -->
-              <div class="demo-subpane" id="demo-subpane-3d" role="tabpanel">
-                                <div class="demo-carousel" data-demo-carousel>
-                  <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous example">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
-                  <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next example">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                  <div class="demo-carousel-viewport">
-                    <div class="demo-carousel-track">
-                  <article class="demo-slide" data-slide="0">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">TRAJECTORY</span>
-                      <p class="demo-slide-prompt">Pick up the gray toy on the left, and move it to a spot on the same line so that the spacing between it and the second toy matches the spacing between the second and third toys.</p>
-                      <span class="demo-slide-tag">demo&nbsp;01</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_009_traj_final.png" alt="trajectory demo 01" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="1">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">TRAJECTORY</span>
-                      <p class="demo-slide-prompt">Pick up the red object which is on the rightmost table, and move it to the spot which is on the center cabinet and in front of the black object.</p>
-                      <span class="demo-slide-tag">demo&nbsp;02</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_046_traj_final.png" alt="trajectory demo 02" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="2">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">TRAJECTORY</span>
-                      <p class="demo-slide-prompt">Pick up the second black remote controller from the front on the table, and move it to the spot which is on the bed and on the left of the closest pillow.</p>
-                      <span class="demo-slide-tag">demo&nbsp;03</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_052_traj_final.png" alt="trajectory demo 03" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="3">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">TRAJECTORY</span>
-                      <p class="demo-slide-prompt">Pick up the brown small bottle on the table, and move it to the left of the white mouse.</p>
-                      <span class="demo-slide-tag">demo&nbsp;04</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_087_traj_final.png" alt="trajectory demo 04" loading="lazy">
-                    </div>
-                  </article>
-                  <article class="demo-slide" data-slide="4">
-                    <div class="demo-slide-prompt-row">
-                      <span class="demo-slide-prompt-label">TRAJECTORY</span>
-                      <p class="demo-slide-prompt">Pick up the calculator on the right table, and move it to left of the phone on the left table.</p>
-                      <span class="demo-slide-tag">demo&nbsp;05</span>
-                    </div>
-                    <div class="demo-slide-image">
-                      <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_092_traj_final.png" alt="trajectory demo 05" loading="lazy">
-                    </div>
-                  </article>
-                    </div>
-                  </div>
-                  <div class="demo-carousel-nav">
-                    <div class="demo-carousel-dots">
-                    <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to example 1"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to example 2"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to example 3"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to example 4"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="4" aria-label="Go to example 5"></button>
-                    </div>
-                    <span class="demo-carousel-counter"><strong>1</strong> / 5</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Video Manipulation pane -->
-            <div class="demo-pane" id="demo-pane-manipulation" role="tabpanel">
-              <p class="demo-pane-intro">
-                <span class="i18n" data-lang="en">
-                  Given a natural-language manipulation instruction and the current RGB observation,
-                  LLaVA-OneVision-2 emits a sequence of <strong>(x, y, z)</strong> waypoints; a downstream
-                  IK module consumes them to drive the end-effector. The execution video shows the
-                  resulting rollout; the snapshots below show the model&rsquo;s predicted trajectory at
-                  each query timestep&mdash;the trajectory shortens as the gripper approaches the
-                  target and refreshes when the scene state changes.
-                </span>
-                <span class="i18n" data-lang="zh">
-                  给定自然语言操作指令和当前 RGB 观测，LLaVA-OneVision-2 输出图像空间中的
-                  <strong>(x, y, z)</strong> 路径点序列；下游 IK 模块据此驱动末端执行器。
-                  执行视频展示了实际完成的动作；下方快照展示了模型在每次重询时刻预测的轨迹——
-                  夹爪靠近目标时轨迹自动收缩，场景状态变化（如烤箱门打开）时轨迹自动刷新。
-                </span>
-              </p>
-
               <div class="demo-carousel" data-demo-carousel>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next example">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
                 <div class="demo-carousel-viewport">
                   <div class="demo-carousel-track">
-                    <article class="demo-slide" data-slide="0">
-                      <div class="demo-slide-prompt-row">
-                        <span class="demo-slide-prompt-label">MANIPULATION</span>
-                        <p class="demo-slide-prompt">Put the apple on the green plate placed on the table.</p>
-                        <span class="demo-slide-tag">demo&nbsp;01</span>
+              <article class="demo-slide" data-slide="0">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Track the animal moving forward.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
                       </div>
-                      <div class="demo-slide-video-hero">
-                        <video muted loop playsinline controls preload="metadata">
-                          <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/original.webm" type="video/webm">
-                        </video>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/1/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
                       </div>
-                      <div class="demo-slide-trajectories">
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/traj_0s.png" alt="trajectory at t=0s" loading="lazy">
-                          <figcaption>t = 0 s · 9 wpts</figcaption>
-                        </figure>
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/traj_10s.png" alt="trajectory at t=10s" loading="lazy">
-                          <figcaption>t = 10 s · 7 wpts</figcaption>
-                        </figure>
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/traj_11s.png" alt="trajectory at t=11s" loading="lazy">
-                          <figcaption>t = 11 s · 6 wpts</figcaption>
-                        </figure>
-                      </div>
-                    </article>
-                    <article class="demo-slide" data-slide="1">
-                      <div class="demo-slide-prompt-row">
-                        <span class="demo-slide-prompt-label">MANIPULATION</span>
-                        <p class="demo-slide-prompt">Put the bread into the oven.</p>
-                        <span class="demo-slide-tag">demo&nbsp;02</span>
-                      </div>
-                      <div class="demo-slide-video-hero">
-                        <video muted loop playsinline controls preload="metadata">
-                          <source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/original.webm" type="video/webm">
-                        </video>
-                      </div>
-                      <div class="demo-slide-trajectories">
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/traj_0s.png" alt="trajectory at t=0s" loading="lazy">
-                          <figcaption>t = 0 s · 5 wpts</figcaption>
-                        </figure>
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/traj_7s.png" alt="trajectory at t=7s" loading="lazy">
-                          <figcaption>t = 7 s · 3 wpts</figcaption>
-                        </figure>
-                        <figure>
-                          <img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/traj_13s.png" alt="trajectory at t=13s" loading="lazy">
-                          <figcaption>t = 13 s · 5 wpts</figcaption>
-                        </figure>
-                      </div>
-                    </article>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/1/mask.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Per-frame predicted mask</p>
+                    </div>
                   </div>
                 </div>
-                <div class="demo-carousel-nav">
-                  <div class="demo-carousel-dots">
-                    <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to example 1"></button>
-                    <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to example 2"></button>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Track the person whose appearance deviates the most from the norm.</p>
                   </div>
-                  <span class="demo-carousel-counter"><strong>1</strong> / 2</span>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/2/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/2/mask.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Per-frame predicted mask</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="1">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Track a sport car.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/3/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/3/mask.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Per-frame predicted mask</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Track a blue and white colored surfboard in the right hand of dark blue swim suit.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">I</span>
+                        <span class="demo-grid-media-head-label">Input video</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/4/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video/4/mask.webm" type="video/webm"></video></div>
+                      <p class="demo-grid-a-caption">Per-frame predicted mask</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+                  </div>
+                </div>
+              <div class="demo-carousel-nav">
+                <div class="demo-carousel-dots">
+                  <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to page 1"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to page 2"></button>
                 </div>
               </div>
+              </div>
             </div>
+            <div class="demo-section">
+              <div class="demo-section-header">
+                <span class="demo-section-bar"></span>
+                <span class="demo-section-cap">Video Manipulation</span>
+                <span class="demo-section-count">2 examples</span>
+                <span class="demo-section-source">Real-world robot manipulation · online re-querying</span>
+              </div>
+              <div class="demo-carousel" data-demo-carousel>
 
+                <div class="demo-carousel-viewport">
+                  <div class="demo-carousel-track">
+              <article class="demo-slide" data-slide="0">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Put the apple on the green plate placed on the table.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">R</span>
+                        <span class="demo-grid-media-head-label">Execution rollout</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/1/traj_0s.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">9 predicted (x, y, z) waypoints at t = 0 s</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Put the bread into the oven.</p>
+                  </div>
+                  <div class="demo-grid-medias">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-i">R</span>
+                        <span class="demo-grid-media-head-label">Execution rollout</span>
+                      </div>
+                      <div class="demo-grid-a-media"><video muted loop playsinline preload="metadata" autoplay><source src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/original.webm" type="video/webm"></video></div>
+                    </div>
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/video_manipulation/2/traj_0s.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">5 predicted (x, y, z) waypoints at t = 0 s</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+                  </div>
+                </div>
+              <div class="demo-carousel-nav">
+                <div class="demo-carousel-dots">
+                  <span class="demo-carousel-status">all 2 examples</span>
+                </div>
+              </div>
+              </div>
+            </div>
+            <div class="demo-section">
+              <div class="demo-section-header">
+                <span class="demo-section-bar"></span>
+                <span class="demo-section-cap">Spatial Grounding</span>
+                <span class="demo-section-count">12 examples</span>
+                <span class="demo-section-source">Compositional spatial language on a single image</span>
+              </div>
+              <div class="demo-carousel" data-demo-carousel>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-prev" data-demo-prev aria-label="Previous page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button type="button" class="demo-carousel-arrow demo-carousel-arrow-next" data-demo-next aria-label="Next page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+                <div class="demo-carousel-viewport">
+                  <div class="demo-carousel-track">
+              <article class="demo-slide" data-slide="0">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point to the top piece of paper on the white table.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_023_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-3d">3D Trajectory</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Pick up the brown small bottle on the table, and move it to the left of the white mouse.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_087_traj_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">3D pick-and-place trajectory</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="1">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the white object that is the second closest to the wooden shelf.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_029_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-3d">3D Trajectory</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Pick up the gray toy on the left, and move it so spacing matches the other toys.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_009_traj_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">3D pick-and-place trajectory</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="2">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point to the left pillow on the sofa.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_034_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-3d">3D Trajectory</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Pick up the red object on the rightmost table, and move it onto the center cabinet.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_046_traj_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">3D pick-and-place trajectory</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="3">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the free space between the cat tree and litter box.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_037_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-3d">3D Trajectory</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Pick up the calculator on the right table, and move it to left of the phone on the left table.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/3d/trace_092_traj_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">3D pick-and-place trajectory</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="4">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the free space on the table between the speaker to the right of the monitor and the mouse.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_039_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the object on the windowsill farthest from the viewer.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_040_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="demo-slide" data-slide="5">
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the free space between the black water bottle, the pot lid, and the scissors.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_042_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-grid-cell">
+                  <div class="demo-grid-subtype-stripe spatial-2d">2D Pointing</div>
+                  <div class="demo-grid-row" style="padding-bottom: .75rem;">
+                    <div class="demo-grid-tag demo-grid-tag-q">Q</div>
+                    <p class="demo-grid-q-body">Please point out the free space between the black water bottle and the pot lid.</p>
+                  </div>
+                  <div class="demo-grid-medias single">
+                    <div class="demo-grid-media-block">
+                      <div class="demo-grid-media-head">
+                        <span class="demo-grid-tag demo-grid-tag-a">A</span>
+                        <span class="demo-grid-media-head-label">Answer</span>
+                      </div>
+                      <div class="demo-grid-a-media"><img src="https://cdn.jsdelivr.net/gh/anxiangsir/ov2_asset@main/demo/spatial/2d/ref_048_pointing_final.png" alt="" loading="lazy"></div>
+                      <p class="demo-grid-a-caption">2D pixel-coordinate point</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+                  </div>
+                </div>
+              <div class="demo-carousel-nav">
+                <div class="demo-carousel-dots">
+                  <button type="button" class="demo-carousel-dot active" data-go="0" aria-label="Go to page 1"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="1" aria-label="Go to page 2"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="2" aria-label="Go to page 3"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="3" aria-label="Go to page 4"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="4" aria-label="Go to page 5"></button>
+                  <button type="button" class="demo-carousel-dot" data-go="5" aria-label="Go to page 6"></button>
+                </div>
+              </div>
+              </div>
+            </div>
+            </div>
           </div>
         </section>
 
