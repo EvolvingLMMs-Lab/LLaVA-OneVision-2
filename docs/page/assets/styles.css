@@ -4502,6 +4502,68 @@
 }
 
 @media (max-width: 700px) {
+  .demo-section-header {
+    gap: .55rem;
+    padding-bottom: .85rem;
+  }
+  .demo-section-cap {
+    font-size: 1.15rem;
+  }
+  .demo-section-source {
+    width: 100%;
+    margin-left: 0;
+    padding-left: calc(4px + .85rem);
+  }
+  .demo-section .demo-carousel-arrow {
+    width: 32px;
+    height: 32px;
+  }
+  .demo-section .demo-carousel-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+  .demo-section .demo-carousel-arrow-prev {
+    left: .5rem;
+  }
+  .demo-section .demo-carousel-arrow-next {
+    right: .5rem;
+  }
+  .demo-section .demo-carousel-nav {
+    margin-top: .9rem;
+  }
+  .demo-section .demo-carousel-dots {
+    gap: .4rem;
+    padding: .5rem .75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+  }
   .demo-grid { grid-template-columns: 1fr; }
   .demo-grid-cell.wide { grid-column: auto; }
+  .demo-grid-cell {
+    padding: .9rem .85rem .75rem;
+  }
+  .demo-grid-subtype-stripe {
+    margin: -.9rem -.85rem .7rem;
+    padding: .36rem .85rem;
+  }
+  .demo-grid-row {
+    gap: .5rem;
+  }
+  .demo-grid-q-body {
+    font-size: .86rem;
+  }
+  .demo-grid-medias {
+    grid-template-columns: 1fr;
+  }
+  .demo-grid-medias.single {
+    display: block;
+  }
+  .demo-grid-medias.single .demo-grid-media-block {
+    width: 100%;
+    min-width: 0;
+  }
+  .demo-grid-a-caption {
+    font-size: .58rem;
+  }
 }
