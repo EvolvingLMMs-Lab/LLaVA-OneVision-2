@@ -17,6 +17,6 @@
   <text x="50%" y="78%" dominant-baseline="alphabetic" text-anchor="middle"
         font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
         font-size="240" letter-spacing="-0.045em">
-    <tspan font-weight="700" fill="#0A0A0A">LLaVA-OneVision</tspan><tspan class="ov2-accent" font-weight="500" fill="#9CA3AF">&#8202;2.0</tspan>
+    <tspan font-weight="700" fill="#0A0A0A">LLaVA-OneVision</tspan><tspan class="ov2-accent" font-weight="500" fill="#9CA3AF">&#8202;2</tspan>
   </text>
 </svg>

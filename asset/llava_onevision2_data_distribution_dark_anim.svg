@@ -666,7 +666,7 @@ z
     <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #f0f6fc" x="84.02496" y="284.532272" transform="rotate(-0 84.02496 284.532272)">VideoCaption</text>
    </g>
    <g id="text_6">
-    <text style="font-size: 9px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #8b949e" x="84.02496" y="306.240877" transform="rotate(-0 84.02496 306.240877)">7.96M clips · 104.1B tokens</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #8b949e" x="84.02496" y="306.240877" transform="rotate(-0 84.02496 306.240877)">8M clips · 104B tokens</text>
    </g>
    <g id="legend-2-0-lb">
     <text style="font-size: 10px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #f0f6fc" x="193.17312" y="264.509135" transform="rotate(-0 193.17312 264.509135)">30–60s</text>
@@ -814,7 +814,7 @@ z
     <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #f0f6fc" x="444.680802" y="284.532272" transform="rotate(-0 444.680802 284.532272)">Spatial</text>
    </g>
    <g id="text_8">
-    <text style="font-size: 9px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #8b949e" x="444.680802" y="306.240877" transform="rotate(-0 444.680802 306.240877)">2.78M samples</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle; fill: #8b949e" x="444.680802" y="306.240877" transform="rotate(-0 444.680802 306.240877)">4M samples</text>
    </g>
    <g id="legend-3-0-lb">
     <text style="font-size: 10px; font-family: 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start; fill: #f0f6fc" x="553.828962" y="245.120975" transform="rotate(-0 553.828962 245.120975)">CA-1M</text>

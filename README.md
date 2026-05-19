@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_black.svg">
     <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_white.svg">
-    <img alt="LLaVA-OneVision-2.0" src="asset/llava_onevision_2_white.svg" width="820" style="max-width: 100%;">
+    <img alt="LLaVA-OneVision-2" src="asset/llava_onevision_2_white.svg" width="820" style="max-width: 100%;">
   </picture>
 </p>
 
@@ -13,7 +13,7 @@
 
 
 <p align="center">
-  🤗 <b>2.0 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a href="#citation">Technical Report</a></b> · <b><a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b> · <b><a href="https://discord.gg/PmdGHMFNP">Discord</a></b>
+  🤗 <b>2 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a href="#citation">Technical Report</a></b> · <b><a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b> · <b><a href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 ---
 
 ## NEWS
-- 2026-04-30: Released LLaVA-OneVision-2.0 — next-generation multimodal model, with new [LLaVA-OneVision-2.0-VideoCaption](#datasets) and [LLaVA-OneVision-2.0-Spatial](#datasets) datasets.
+- 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
 - 2025-12-11: Released RL recipe for LLaVA-OneVision-1.5, with [Project](https://mvp-ai-lab.github.io/LLaVA-OneVision-1.5-RL/), [Code](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5-RL), [Data](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-RL-Data), and [Model](https://huggingface.co/mvp-lab/LLaVA-OneVision-1.5-8B-RL).
 - 2025-09-30: Released the LLaVA-OneVision-1.5 [Technical Report](https://arxiv.org/abs/2509.23661).
@@ -43,7 +43,7 @@
 
 ## Introduction
 
-**LLaVA-OneVision-2.0** is the next-generation release of the LLaVA-OneVision family — a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
+**LLaVA-OneVision-2** is the next-generation release of the LLaVA-OneVision family — a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
 
 ### 🎬 Codec-Aligned Vision Encoders
 
@@ -51,7 +51,7 @@ Forget uniform patchification. **OneVision-Encoder** and **OneVision-Encoder-Lan
 
 ### 🧊 One Model, Every Modality
 
-Most open multimodal models still live in a 2D, single-image world. **LLaVA-OneVision-2.0-8B-Instruct** breaks out of it — one model, native resolution, no task-specific adapters, no hidden tricks.
+Most open multimodal models still live in a 2D, single-image world. **LLaVA-OneVision-2-8B-Instruct** breaks out of it — one model, native resolution, no task-specific adapters, no hidden tricks.
 
 - **Long video** — multi-frame reasoning with efficient codec-aligned inference
 - **3D-aware spatial reasoning** — depth, layout, object relations
@@ -61,10 +61,10 @@ New open-source SOTA across a broad suite of multimodal benchmarks.
 
 ### 🚀 Fully Open, Reproducible from Day One
 
-Four datasets ship with the LLaVA-OneVision family — two new for 2.0, two carried forward from 1.5:
+Four datasets ship with the LLaVA-OneVision family — two new for 2, two carried forward from 1.5:
 
-- **LLaVA-OneVision-2.0-VideoCaption** — extremely dense video captions
-- **LLaVA-OneVision-2.0-Spatial** — 3D-aware spatial reasoning
+- **LLaVA-OneVision-2-VideoCaption** — extremely dense video captions
+- **LLaVA-OneVision-2-Spatial** — 3D-aware spatial reasoning
 - **LLaVA-OneVision-1.5-Mid-Training-85M** — 85M concept-balanced mid-training corpus
 - **LLaVA-OneVision-1.5-Instruct** — full instruction-tuning mixture
 
@@ -76,7 +76,7 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision2_performance_dark_anim.svg">
     <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision2_performance_light_anim.svg">
-    <img src="asset/llava_onevision2_performance_light_anim.svg" width="100%" alt="LLaVA-OneVision-2.0 Benchmark Comparison">
+    <img src="asset/llava_onevision2_performance_light_anim.svg" width="100%" alt="LLaVA-OneVision-2 Benchmark Comparison">
   </picture>
 </p>
 
@@ -117,7 +117,7 @@ Most multimodal stacks ship a different tokenizer per input type — one path fo
 
 ### Four-Stage Training Curriculum
 
-We train LLaVA-OneVision-2.0 in four compact stages:
+We train LLaVA-OneVision-2 in four compact stages:
 
 1. **Bootstrap video ability** from LLaVA-OneVision-1.5 with short 30s video captions.
 2. **Instruction tune** with large multimodal instruction data and 30–180s video captions.
@@ -131,8 +131,8 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 
 | Model                           | HF Link                                                                                                                                                                                                                                                       | Training Log                                                                                                                                                                                                                                                                              |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LLaVA-OneVision-2.0-8B-Instruct | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                           | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
-| LLaVA-OneVision-2.0-4B-Instruct | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                           | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
+| LLaVA-OneVision-2-8B-Instruct | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                           | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
+| LLaVA-OneVision-2-4B-Instruct | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                           | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
 | LLaVA-OneVision-1.5-4B-Instruct | [![HF / 4B-Instruct](https://img.shields.io/badge/%F0%9F%A4%97_HF-4B--Instruct-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                                                                 | [![TensorBoard](https://img.shields.io/badge/%F0%9F%93%88_TensorBoard-4B--Instruct-FF6F00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard)                                                                             |
 | LLaVA-OneVision-1.5-8B-Instruct | [![HF / 8B-Instruct](https://img.shields.io/badge/%F0%9F%A4%97_HF-8B--Instruct-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                                                                 | [![TensorBoard](https://img.shields.io/badge/%F0%9F%93%88_TensorBoard-8B--Instruct-FF6F00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard)                                                                             |
 | OneVision-Encoder               | [![HF / OneVision-Encoder](https://img.shields.io/badge/%F0%9F%A4%97_HF-OneVision--Encoder-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab-encoder/onevision-encoder-large)                                                     | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
@@ -142,8 +142,8 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 
 | Description                          | Link                                                                                                                                                                                                                                                                            | Status                                                                                                          |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| LLaVA-OneVision-2.0-VideoCaption     | [![HF / VideoCaption](https://img.shields.io/badge/%F0%9F%A4%97_HF-VideoCaption-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/mid_training_video)                                                      | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
-| LLaVA-OneVision-2.0-Spatial          | [![HF / Spatial](https://img.shields.io/badge/%F0%9F%A4%97_HF-Spatial-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/spatial)                                                                           | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
+| LLaVA-OneVision-2-VideoCaption     | [![HF / VideoCaption](https://img.shields.io/badge/%F0%9F%A4%97_HF-VideoCaption-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/mid_training_video)                                                      | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
+| LLaVA-OneVision-2-Spatial          | [![HF / Spatial](https://img.shields.io/badge/%F0%9F%A4%97_HF-Spatial-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data/tree/main/spatial)                                                                           | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
 | LLaVA-OneVision-1.5-Mid-Training-85M | [![HF / Mid-Training 85M](https://img.shields.io/badge/%F0%9F%A4%97_HF-Mid--Training_85M-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M)                                                            | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
 | LLaVA-OneVision-1.5-Instruct         | [![HF / Instruct-Data](https://img.shields.io/badge/%F0%9F%A4%97_HF-Instruct--Data-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data)                                                                     | ![Available](https://img.shields.io/badge/Available-22C55E?style=for-the-badge)                                  |
 
@@ -321,11 +321,11 @@ Thanks so much to all of our amazing contributors!
 
 ## Citation
 
-If you find *LLaVA-OneVision-2.0* useful in your research, please consider to cite the following related papers:
+If you find *LLaVA-OneVision-2* useful in your research, please consider to cite the following related papers:
 
 ```
-@inproceedings{LLaVA-OneVision-2.0,
-  title={LLaVA-OneVision-2.0},
+@inproceedings{LLaVA-OneVision-2,
+  title={LLaVA-OneVision-2},
   author={llava-onevision contributors},
   booktitle={arXiv},
   year={2026}
