@@ -147,7 +147,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               <span class="i18n" data-lang="en">Technical Report</span><span class="i18n" data-lang="zh">技术报告</span>
             </a>
-            <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision2-8B-Instruct" target="_blank" rel="noopener noreferrer">
+            <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct" target="_blank" rel="noopener noreferrer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               <span class="i18n" data-lang="en">Models</span><span class="i18n" data-lang="zh">模型</span>
             </a>
@@ -2804,7 +2804,7 @@
                 <span class="i18n" data-lang="en">Model Checkpoints</span><span class="i18n" data-lang="zh">模型权重</span>
               </h3>
               <div class="resource-items">
-                <a class="resource-item" href="https://huggingface.co/collections/mvp-lab/llava-onevision-2" target="_blank" rel="noopener noreferrer"><div class="resource-top">LLaVA-OneVision-2-8B<span class="resource-badge">HF</span></div><div class="resource-meta"><span class="i18n" data-lang="en">Pretrained checkpoints on HuggingFace.</span><span class="i18n" data-lang="zh">HuggingFace 上的预训练权重。</span></div></a>
+                <a class="resource-item" href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct" target="_blank" rel="noopener noreferrer"><div class="resource-top">LLaVA-OneVision-2-8B-Instruct<span class="resource-badge">HF</span></div><div class="resource-meta"><span class="i18n" data-lang="en">Pretrained checkpoints on HuggingFace.</span><span class="i18n" data-lang="zh">HuggingFace 上的预训练权重。</span></div></a>
               </div>
             </div>
             <div class="resource-group wide">
@@ -2812,7 +2812,7 @@
                 <span class="i18n" data-lang="en">Training Datasets</span><span class="i18n" data-lang="zh">训练数据集</span>
               </h3>
               <div class="resource-items">
-                 <a class="resource-item" href="https://huggingface.co/collections/mvp-lab/llava-onevision-2" target="_blank" rel="noopener noreferrer"><div class="resource-top">LLaVA-OneVision-2-Data<span class="resource-badge">Dataset</span></div><div class="resource-meta"><span class="i18n" data-lang="en">Pretraining + instruction data.</span><span class="i18n" data-lang="zh">预训练 + 指令数据。</span></div></a>
+                 <a class="resource-item" href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data" target="_blank" rel="noopener noreferrer"><div class="resource-top">LLaVA-OneVision-2-Data<span class="resource-badge">Dataset</span></div><div class="resource-meta"><span class="i18n" data-lang="en">Pretraining + instruction data.</span><span class="i18n" data-lang="zh">预训练 + 指令数据。</span></div></a>
               </div>
             </div>
           </div>
@@ -2833,7 +2833,7 @@
 <pre><code id="code-quickstart" class="language-python">import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq
 
-model_id = "lmms-lab/LLaVA-OneVision-2-8B"  # TBD
+model_id = "lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct"
 processor = AutoProcessor.from_pretrained(model_id)
 model = AutoModelForVision2Seq.from_pretrained(
     model_id, torch_dtype=torch.bfloat16, device_map="auto"
