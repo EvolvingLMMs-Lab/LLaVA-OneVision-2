@@ -10,7 +10,10 @@
   <strong>Fully Open Framework for Democratized Multimodal Training</strong>
 </p>
 
-
+<p align="center">
+👉 <b><a
+href="docs/page/assets/wechat.png">WeChat Group</a></b> 👈
+</p>
 
 <p align="center">
 🤗 <b>2 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a
