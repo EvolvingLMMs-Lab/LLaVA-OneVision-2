@@ -7,15 +7,16 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TP="${TP:-1}"
 PP="${PP:-1}"
 # Model variant selects both the Megatron model_arch and the convert script.
-# Supported: "4b" (default), "4b_p16m3", "4b_p14m3"
+# Supported: "4b" (default), "4b_p16m3", "4b_p14m3", "4b_p14m2"
 MODEL_VARIANT="${MODEL_VARIANT:-4b}"
 # Megatron --model-name passed to conftest._build_megatron_cli_args.
 # Default mapping: 4b → llava-onevision2-4b, 4b_p16m3 → llava-onevision2-4b-p16m3,
-#                  4b_p14m3 → llava-onevision2-4b-p14m3
+#                  4b_p14m3 → llava-onevision2-4b-p14m3, 4b_p14m2 → llava-onevision2-4b-p14m2
 case "$MODEL_VARIANT" in
     4b)        DEFAULT_MODEL_NAME="llava-onevision2-4b" ;;
     4b_p16m3)  DEFAULT_MODEL_NAME="llava-onevision2-4b-p16m3" ;;
     4b_p14m3)  DEFAULT_MODEL_NAME="llava-onevision2-4b-p14m3" ;;
+    4b_p14m2)  DEFAULT_MODEL_NAME="llava-onevision2-4b-p14m2" ;;
     *)         DEFAULT_MODEL_NAME="llava-onevision2-${MODEL_VARIANT}" ;;
 esac
 MODEL_NAME="${MODEL_NAME:-$DEFAULT_MODEL_NAME}"

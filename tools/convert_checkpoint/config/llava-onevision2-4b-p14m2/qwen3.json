@@ -1,0 +1,110 @@
+{
+    "args": {
+        "common": {
+            "num_layers": 36,
+            "hidden_size": 2560,
+            "ffn_hidden_size": 9728,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 8,
+            "max_position_embeddings": 40960,
+            "vocab_size": 151936
+        },
+        "huggingface": {
+            "architectures": [
+                "Qwen3ForCausalLM"
+              ],
+              "attention_bias": false,
+              "attention_dropout": 0.0,
+              "bos_token_id": 151643,
+              "eos_token_id": 151645,
+              "head_dim": 128,
+              "hidden_act": "silu",
+              "hidden_size": 2560,
+              "initializer_range": 0.02,
+              "intermediate_size": 9728,
+              "max_position_embeddings": 40960,
+              "max_window_layers": 36,
+              "model_type": "qwen3",
+              "num_attention_heads": 32,
+              "num_hidden_layers": 36,
+              "num_key_value_heads": 8,
+              "rms_norm_eps": 1e-06,
+              "rope_scaling": null,
+              "rope_theta": 1000000,
+              "sliding_window": null,
+              "tie_word_embeddings": false,
+              "torch_dtype": "bfloat16",
+              "transformers_version": "4.51.0",
+              "use_cache": true,
+              "use_sliding_window": false,
+              "vocab_size": 151936
+        },
+        "mcore": {
+            "untie_embeddings_and_output_weights": true,
+            "num_layers_per_virtual_pipeline_stage": null,
+            "virtual_pipeline_model_parallel_size": null,
+            "use_rotary_position_embeddings": true,
+            "add_embedding_padding": true,
+            "make_vocab_size_divisible_by": 128,
+            "transpose_mlp_dense": true,
+            "transpose_query_key_value": true
+        }
+    },
+    "name_map": {
+        "huggingface": {
+            "word_embeddings": "model.language_model.embed_tokens",
+            "transformer": "model.language_model",
+            "layer_prefix": "layers",
+            "input_layernorm": "input_layernorm",
+            "attention.query_key_value": [
+                "self_attn.q_proj",
+                "self_attn.k_proj",
+                "self_attn.v_proj"
+            ],
+            "attention.qkv_map": {
+                "attention.q_a_layernorm": "self_attn.q_norm",
+                "attention.kv_a_layernorm": "self_attn.k_norm"
+            },
+            "attention.dense": "self_attn.o_proj",
+            "post_attention_layernorm": "post_attention_layernorm",
+            "mlp.dense_h_to_4h": [
+                "mlp.gate_proj",
+                "mlp.up_proj"
+            ],
+            "mlp.dense_4h_to_h": "mlp.down_proj",
+            "final_layernorm": "model.language_model.norm",
+            "word_embeddings_for_head": "lm_head"
+        },
+        "mcore": {
+            "word_embeddings": "language_model.embedding.word_embeddings",
+            "word_position_embeddings": "model.embedding.position_embeddings",
+            "transformer": "model",
+            "layer_prefix": "language_model.decoder.layers",
+            "input_layernorm": "self_attention.linear_qkv.layer_norm",
+            "attention.query_key_value": "self_attention.linear_qkv",
+            "attention.qkv_map": {
+                "attention.q_a_layernorm": {"name": "self_attention.q_layernorm", "is_layernorm": false},
+                "attention.kv_a_layernorm": {"name": "self_attention.k_layernorm", "is_layernorm": false}
+            },
+            "attention.dense": "self_attention.linear_proj",
+            "post_attention_layernorm": "mlp.linear_fc1.layer_norm",
+            "mlp.dense_h_to_4h": "mlp.linear_fc1",
+            "mlp.dense_4h_to_h": "mlp.linear_fc2",
+            "final_layernorm": "language_model.decoder.final_layernorm",
+            "word_embeddings_for_head": "language_model.output_layer",
+            "transformer_tpl": "model%d"
+        }
+    },
+    "tensor_parallel_dim": {
+        "word_embeddings.weight": 0,
+        "attention.query_key_value.weight": 0,
+        "attention.query_key_value.bias": 0,
+        "attention.dense.weight": 1,
+        "mlp.dense_h_to_4h.weight": 0,
+        "mlp.dense_h_to_4h.bias": 0,
+        "mlp.dense_4h_to_h.weight": 1,
+        "word_embeddings_for_head.weight": 0
+    },
+    "torch_dtype": "bfloat16",
+    "transformers_version": "4.40.1"
+}

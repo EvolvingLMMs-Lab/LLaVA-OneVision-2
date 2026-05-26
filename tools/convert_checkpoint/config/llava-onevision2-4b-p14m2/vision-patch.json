@@ -1,0 +1,5 @@
+{
+    "vision_model.patch_embed.proj.weight": "model.visual.embeddings.patch_embedding.weight",
+    "vision_model.pre_layernorm.weight": "model.visual.layernorm_pre.weight",
+    "vision_model.pre_layernorm.bias": "model.visual.layernorm_pre.bias"
+}
