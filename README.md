@@ -166,6 +166,14 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 
 ## Quick Start (4B, single node)
 
+> **🚨 Strongly recommended: don't read the rest of this section.** Just hand the prompt below to any code agent (Claude Code, opencode, Cursor, Codex, etc.) from a working directory on your 8×GPU node, and it will reproduce the full SFT run end-to-end — clone, download the 340 GB bundle, load the docker image, and launch detached training — without you reading a single step.
+
+```text
+Follow these instructions to start training: https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2#quick-start-4b-single-node
+```
+
+> Prefer to do it by hand? Keep reading.
+
 > **Audience:** code agent or human reproducing LLaVA-OneVision-2-4B SFT on a **single 8×GPU node**.
 > **Target script:** [`examples/llava_onevision2/quick_start_4b/quick_start.sh`](examples/llava_onevision2/quick_start_4b/quick_start.sh)
 > **Bundle:** [`lmms-lab-encoder/ov2_quickstart`](https://huggingface.co/datasets/lmms-lab-encoder/ov2_quickstart) on Hugging Face — contains the prebuilt docker image, the Megatron `tp1pp1` checkpoint, the HF tokenizer/config, and the packed Energon dataset (~340 GB total, mostly the packed dataset).
