@@ -80,6 +80,10 @@ usage() {
     echo "  -M, --max-samples       Max samples per bin (default: 200)"
     echo "  -w, --max-workers       Max workers for step 2 tokenization (default: 32)"
     echo "      --direct-workers    Workers for step 4 conversion (default: 32)"
+    echo "      --s1-num-processes  Cap step 1 worker processes (default: 0 = cpu_count())"
+    echo "      --s2-num-processes  Override step 2 process pool size (default: 0 = auto)"
+    echo "      --s2-min-workers    Step 2 min worker threads per process (default: 4)"
+    echo "      --chunk-size        Items per step 1/2 chunk (default: 500)"
     echo "      --shard-prefix      WebDataset shard prefix (default: pretrain)"
     echo "      --sample-class      Sample class name (default: PackedCaptioningSample)"
     echo "      --max-samples-per-shard  Max samples per shard (default: 10000)"
@@ -110,6 +114,10 @@ MAX_SAMPLES_PER_SHARD=10000
 MAX_SHARD_SIZE=3000000000
 RESUME_DIRECT=false
 OVERRIDE_MAX_PIXELS=""
+S1_NUM_PROCESSES=0
+S2_NUM_PROCESSES=0
+S2_MIN_WORKERS=4
+OVERRIDE_CHUNK_SIZE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -135,6 +143,10 @@ while [[ $# -gt 0 ]]; do
         --max-shard-size)     MAX_SHARD_SIZE="$2"; shift 2 ;;
         --no-npy)             NO_NPY_MODE=true; shift ;;
         --resume-direct)      RESUME_DIRECT=true; shift ;;
+        --s1-num-processes)   S1_NUM_PROCESSES="$2"; shift 2 ;;
+        --s2-num-processes)   S2_NUM_PROCESSES="$2"; shift 2 ;;
+        --s2-min-workers)     S2_MIN_WORKERS="$2"; shift 2 ;;
+        --chunk-size)         OVERRIDE_CHUNK_SIZE="$2"; shift 2 ;;
         -f|--force)           FORCE_RUN=true; shift ;;
         -s|--status)          SHOW_STATUS=true; shift ;;
         -h|--help)            usage ;;
@@ -162,7 +174,7 @@ fi
 # ============================================================================
 MAX_SAMPLES_PER_BIN=${OVERRIDE_MAX_SAMPLES:-200}
 PACKING_ALGORITHM="bfd"
-CHUNK_SIZE=500
+CHUNK_SIZE=${OVERRIDE_CHUNK_SIZE:-500}
 MAX_WORKERS=${OVERRIDE_MAX_WORKERS:-32}
 TIMEOUT=180
 TASK_TYPE="sft"
@@ -337,6 +349,7 @@ else
         -o "${S1_OUTPUT}" \
         --chunk-size "${CHUNK_SIZE}" \
         -m 4 \
+        --num-processes "${S1_NUM_PROCESSES}" \
         --overwrite
 
     mark_step_done 1
@@ -361,8 +374,9 @@ else
         --max-len "${MAX_TOKEN_LEN}"
         --task-type "${TASK_TYPE}"
         --chunk-size "${CHUNK_SIZE}"
-        --min-workers 4
+        --min-workers "${S2_MIN_WORKERS}"
         --max-workers "${MAX_WORKERS}"
+        --num-processes "${S2_NUM_PROCESSES}"
         --timeout "${TIMEOUT}")
 
     if [[ -n "${OVERRIDE_MAX_PIXELS}" ]]; then

@@ -338,6 +338,13 @@ Examples:
         help="Maximum worker threads per process (default: 96)",
     )
     parser.add_argument(
+        "--num-processes",
+        type=int,
+        default=0,
+        help="Number of worker processes (default: 0 = auto via calculate_optimal_concurrency). "
+        "When >0, overrides auto-detection. Total IO concurrency = num_processes * threads_per_process.",
+    )
+    parser.add_argument(
         "--stage1-chunk",
         type=int,
         default=10,
@@ -421,6 +428,7 @@ def build_config_from_args(args: argparse.Namespace) -> dict[str, Any]:
             "chunk_size": args.chunk_size,
             "min_workers": args.min_workers,
             "max_workers": args.max_workers,
+            "num_processes": args.num_processes,
             "stage1_merge_chunk": args.stage1_chunk,
             "time_out": args.timeout,
         },
@@ -669,6 +677,7 @@ class TokenLengthProcessor:
         self.chunk_size = config["processing"]["chunk_size"]
         self.min_workers = config["processing"]["min_workers"]
         self.max_workers = config["processing"]["max_workers"]
+        self.num_processes = config["processing"].get("num_processes", 0)
 
         self.use_shm = config["logging"]["use_shm"]
         self.temp_dir = "/dev/shm" if self.use_shm else None
@@ -1429,6 +1438,17 @@ def main() -> None:
         n_processes, recommended_threads = calculate_optimal_concurrency(
             total_original, processor_config.chunk_size
         )
+
+        if processor_config.num_processes > 0:
+            n_processes_user = min(processor_config.num_processes, total_chunks)
+            logger.info(
+                f"Overriding n_processes: auto={n_processes} -> user={n_processes_user} "
+                f"(--num-processes {processor_config.num_processes})"
+            )
+            n_processes = n_processes_user
+            threads_cap = processor_config.max_workers
+        else:
+            threads_cap = min(processor_config.max_workers, recommended_threads)
         
         # Update process args with recommended thread count
         process_args = [
@@ -1443,7 +1463,7 @@ def main() -> None:
                 processor_config.task_type,
                 processor_config.del_one_token,
                 processor_config.min_workers,
-                min(processor_config.max_workers, recommended_threads),  # Cap at recommended
+                threads_cap,
                 processor_config.temp_dir,
                 processor_config.timeout,  # Timeout per sample
                 processor_config.no_npy,  # Disable NPY mode flag
@@ -1458,7 +1478,7 @@ def main() -> None:
         logger.info(
             f"Starting pool with {n_processes} processes, "
             f"maxtasksperchild={maxtasksperchild}, "
-            f"max_threads={min(processor_config.max_workers, recommended_threads)}"
+            f"max_threads={threads_cap}"
         )
         
         resource_monitor = get_resource_monitor()

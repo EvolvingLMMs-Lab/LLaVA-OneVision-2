@@ -333,6 +333,7 @@ def split_json_to_samples(
     overwrite: bool = False,
     chunk_size: int = 1000,
     num_threads: int = 8,
+    num_processes_override: Optional[int] = None,
     shuffle: bool = True,
     jpeg_quality: int = -1,
 ) -> set[str]:
@@ -347,6 +348,8 @@ def split_json_to_samples(
         overwrite: Whether to overwrite existing output directory
         chunk_size: Number of items per process chunk
         num_threads: Number of threads per process
+        num_processes_override: If set (>0), cap process count to this value
+            instead of cpu_count(); useful to reduce NFS pressure
         shuffle: Whether to shuffle data before processing
 
     Returns:
@@ -399,7 +402,10 @@ def split_json_to_samples(
     num_chunks = (total + chunk_size - 1) // chunk_size
     chunks = [data[i * chunk_size : (i + 1) * chunk_size] for i in range(num_chunks)]
 
-    num_processes = min(num_chunks, cpu_count())
+    if num_processes_override is not None and num_processes_override > 0:
+        num_processes = min(num_chunks, num_processes_override)
+    else:
+        num_processes = min(num_chunks, cpu_count())
     logger.info(
         f"Total: {total} items, {num_chunks} chunks, "
         f"{num_processes} processes, {num_threads} threads each; "
@@ -491,6 +497,16 @@ Examples:
              "Output extension is forced to .jpg. Default -1 (disabled, byte-copy).",
     )
     parser.add_argument(
+        "--num-processes",
+        type=int,
+        default=0,
+        help=(
+            "Cap number of worker processes (default 0 = use cpu_count(), "
+            "the historical behavior). Set to a small integer (e.g. 16) to "
+            "reduce NFS pressure when running across many nodes."
+        ),
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -511,6 +527,7 @@ Examples:
         overwrite=args.overwrite,
         chunk_size=args.chunk_size,
         num_threads=args.num_threads,
+        num_processes_override=args.num_processes if args.num_processes > 0 else None,
         shuffle=not args.no_shuffle,
         jpeg_quality=args.jpeg_quality,
     )
