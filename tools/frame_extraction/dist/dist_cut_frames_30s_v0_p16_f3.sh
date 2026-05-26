@@ -1,24 +1,40 @@
 #!/usr/bin/env bash
 # Distributed cut_frames launcher: 30s_v0 SFT, patch_size=16, factor_multiplier=3, max_pixels=512*512.
-# Static mapping: part00..part19 -> hosts in /tmp/wpcplc10_hosts (line order).
-# Stagger 5s per node to avoid NFS thundering herd.
-# State persisted to _dispatch_state/ for monitor/stop/scheduler to consume.
+# Static mapping: part00..partNN -> hosts in ${HOSTS_FILE} (line order).
+# Stagger ${STAGGER_SECONDS}s per node to avoid NFS thundering herd.
+# State persisted to ${STATE_DIR} for monitor/stop/scheduler to consume.
+#
+# Required env vars:
+#   HOSTS_FILE             - file with one IP/hostname per line (count must match input parts)
+# Optional env vars (with defaults):
+#   JSONL_ROOT, OUTPUT_FRAMES_ROOT, OUTPUT_JSONL_ROOT, STATE_DIR
+#   SCRIPT (default: ../core/run_cut_frames.py)
+#   PYTHON (default: python3)
+#   TMP_FFMPEG_DIR (default: /tmp/ov2_ffmpeg_frames)
+#   STRIP_PREFIX (default: empty)
+#   EXPECTED_HOSTS (default: 20)
 set -euo pipefail
 
-JSONL_ROOT="/ov2/dataset_jsonl/2000w_frames_v2/30s/parts_p16_f3"
-OUTPUT_FRAMES_ROOT="/ov2/dataset_sft_video_frames/30s_v0_max_30_max_512x512_p16_f3"
-OUTPUT_JSONL_ROOT="/ov2/dataset_jsonl/2000w_frames_v2/30s"
-STATE_DIR="${OUTPUT_JSONL_ROOT}/_dispatch_state"
-SCRIPT="/ov2/xiangan/LLaVA-OneVision-2/tools/frame_extraction/core/run_cut_frames.py"
-PYTHON="/ov2/miniconda3/envs/ov2_dataset/bin/python3.12"
-HOSTS_FILE="/tmp/wpcplc10_hosts"
-JOB_TAG="cut_frames_30s_v0_p16_f3"
-MIN_FREE_GB=200
-STAGGER_SECONDS=5
+HERE="$(cd "$(dirname "$0")" && pwd)"
+
+JSONL_ROOT="${JSONL_ROOT:-./parts_p16_f3}"
+OUTPUT_FRAMES_ROOT="${OUTPUT_FRAMES_ROOT:?set OUTPUT_FRAMES_ROOT to the destination frames dir}"
+OUTPUT_JSONL_ROOT="${OUTPUT_JSONL_ROOT:-${JSONL_ROOT%/*}}"
+STATE_DIR="${STATE_DIR:-${OUTPUT_JSONL_ROOT}/_dispatch_state}"
+SCRIPT="${SCRIPT:-${HERE}/../core/run_cut_frames.py}"
+PYTHON="${PYTHON:-python3}"
+HOSTS_FILE="${HOSTS_FILE:?set HOSTS_FILE to a file with one IP per line}"
+TMP_FFMPEG_DIR="${TMP_FFMPEG_DIR:-/tmp/ov2_ffmpeg_frames}"
+STRIP_PREFIX="${STRIP_PREFIX:-}"
+JOB_TAG="${JOB_TAG:-cut_frames_30s_v0_p16_f3}"
+MIN_FREE_GB="${MIN_FREE_GB:-200}"
+STAGGER_SECONDS="${STAGGER_SECONDS:-5}"
+EXPECTED_HOSTS="${EXPECTED_HOSTS:-20}"
 
 mapfile -t HOSTS < "${HOSTS_FILE}"
-if [[ "${#HOSTS[@]}" -ne 20 ]]; then
-  echo "[FATAL] Expected 20 hosts in ${HOSTS_FILE}, got ${#HOSTS[@]}" >&2
+if [[ "${#HOSTS[@]}" -ne "${EXPECTED_HOSTS}" ]]; then
+  echo "[FATAL] Expected ${EXPECTED_HOSTS} hosts in ${HOSTS_FILE}, got ${#HOSTS[@]}" >&2
+  echo "        Override with EXPECTED_HOSTS=N if your input partition count differs." >&2
   exit 1
 fi
 
@@ -27,7 +43,6 @@ mkdir -p "${STATE_DIR}"
 : > "${STATE_DIR}/parts.failed"
 touch "${STATE_DIR}/parts.done"
 
-# Persist config so other tools can read it.
 cat > "${STATE_DIR}/config.env" <<EOF
 JSONL_ROOT="${JSONL_ROOT}"
 OUTPUT_FRAMES_ROOT="${OUTPUT_FRAMES_ROOT}"
@@ -36,10 +51,12 @@ STATE_DIR="${STATE_DIR}"
 SCRIPT="${SCRIPT}"
 PYTHON="${PYTHON}"
 HOSTS_FILE="${HOSTS_FILE}"
+TMP_FFMPEG_DIR="${TMP_FFMPEG_DIR}"
+STRIP_PREFIX="${STRIP_PREFIX}"
 JOB_TAG="${JOB_TAG}"
+EXPECTED_HOSTS="${EXPECTED_HOSTS}"
 EOF
 
-# Generate the actual python command for a part. Used by both launcher and scheduler.
 cat > "${STATE_DIR}/run_part.sh" <<'INNER'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -48,7 +65,11 @@ part="$1"
 input_jsonl="${JSONL_ROOT}/30s_v0_slim_${part}.jsonl"
 output_jsonl="${OUTPUT_JSONL_ROOT}/30s_v0_slim_done_${part}.jsonl"
 log="/tmp/${JOB_TAG}_${part}.log"
-mkdir -p "${OUTPUT_JSONL_ROOT}" "${OUTPUT_FRAMES_ROOT}" /ov2/tmp_ffmpeg_frames
+mkdir -p "${OUTPUT_JSONL_ROOT}" "${OUTPUT_FRAMES_ROOT}" "${TMP_FFMPEG_DIR}"
+strip_args=()
+if [[ -n "${STRIP_PREFIX:-}" ]]; then
+  strip_args=(--strip-prefix "${STRIP_PREFIX}")
+fi
 exec setsid "${PYTHON}" "${SCRIPT}" \
   --input-jsonl       "${input_jsonl}" \
   --output-jsonl      "${output_jsonl}" \
@@ -59,12 +80,12 @@ exec setsid "${PYTHON}" "${SCRIPT}" \
   --patch-size        16 \
   --factor-multiplier 3 \
   --num-workers       32 \
-  --strip-prefix      /ov2/dataset_mid_source_split/ \
+  "${strip_args[@]}" \
   > "${log}" 2>&1 < /dev/null &
 INNER
 chmod +x "${STATE_DIR}/run_part.sh"
 
-echo "[INFO] Preflight checks on all 20 nodes..."
+echo "[INFO] Preflight checks on all ${#HOSTS[@]} nodes..."
 preflight_failed=0
 for i in "${!HOSTS[@]}"; do
   ip="${HOSTS[$i]}"
@@ -76,9 +97,9 @@ for i in "${!HOSTS[@]}"; do
     [[ -r '${input_jsonl}' ]] || { echo MISSING_INPUT; exit 0; }
     [[ \$(wc -l < '${input_jsonl}') -gt 0 ]] || { echo EMPTY_INPUT; exit 0; }
     command -v ffmpeg >/dev/null || { echo NO_FFMPEG; exit 0; }
-    [[ -x '${PYTHON}' ]] || { echo NO_PYTHON; exit 0; }
+    command -v '${PYTHON}' >/dev/null || { echo NO_PYTHON; exit 0; }
     '${PYTHON}' -c 'import cv2' 2>/dev/null || { echo NO_CV2; exit 0; }
-    [[ -w /ov2/tmp_ffmpeg_frames ]] || mkdir -p /ov2/tmp_ffmpeg_frames || { echo NO_TMPDIR; exit 0; }
+    [[ -w '${TMP_FFMPEG_DIR}' ]] || mkdir -p '${TMP_FFMPEG_DIR}' || { echo NO_TMPDIR; exit 0; }
     pgrep -f '[r]un_cut_frames.py.*${part}\.jsonl' >/dev/null && { echo ALREADY_RUNNING; exit 0; }
     free_gb=\$(df -BG --output=avail '${OUTPUT_FRAMES_ROOT%/*}' 2>/dev/null | tail -1 | tr -dc '0-9')
     [[ \${free_gb:-0} -ge ${MIN_FREE_GB} ]] || { echo \"LOW_DISK_\${free_gb}G\"; exit 0; }
@@ -125,7 +146,7 @@ for i in "${!HOSTS[@]}"; do
 done
 
 echo ""
-echo "[DONE] All 20 jobs launched. State dir: ${STATE_DIR}"
-echo "  Monitor:   bash $(dirname "$0")/dist_cut_frames_30s_v0_p16_f3_monitor.sh"
-echo "  Scheduler: setsid bash $(dirname "$0")/dist_cut_frames_30s_v0_p16_f3_scheduler.sh > /tmp/${JOB_TAG}_scheduler.log 2>&1 < /dev/null & disown"
-echo "  Stop:      bash $(dirname "$0")/dist_cut_frames_30s_v0_p16_f3_stop.sh"
+echo "[DONE] All ${#HOSTS[@]} jobs launched. State dir: ${STATE_DIR}"
+echo "  Monitor:   STATE_DIR=${STATE_DIR} bash ${HERE}/dist_cut_frames_30s_v0_p16_f3_monitor.sh"
+echo "  Scheduler: STATE_DIR=${STATE_DIR} setsid bash ${HERE}/dist_cut_frames_30s_v0_p16_f3_scheduler.sh > /tmp/${JOB_TAG}_scheduler.log 2>&1 < /dev/null & disown"
+echo "  Stop:      STATE_DIR=${STATE_DIR} bash ${HERE}/dist_cut_frames_30s_v0_p16_f3_stop.sh"

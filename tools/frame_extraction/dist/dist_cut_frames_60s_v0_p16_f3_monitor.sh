@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
+# Live monitor for the 60s_v0 p16_f3 distributed cut_frames dispatch.
+#
+# Required env vars:
+#   STATE_DIR  - dispatch state dir produced by the launcher (must contain config.env)
 set -euo pipefail
 
-STATE_DIR="/ov2/dataset_jsonl/2000w_frames_v2/60s/_dispatch_state"
+STATE_DIR="${STATE_DIR:?set STATE_DIR to the dispatch state dir from the launcher}"
 source "${STATE_DIR}/config.env"
-REFRESH=10
+REFRESH="${REFRESH:-10}"
+EXPECTED_HOSTS="${EXPECTED_HOSTS:-20}"
 
 trap 'tput cnorm; echo; exit 0' INT TERM
 tput civis
@@ -43,7 +48,7 @@ while true; do
   total_total=0
   total_rate_milli=0
   alive=0
-  for i in $(seq 0 19); do
+  for i in $(seq 0 $((EXPECTED_HOSTS - 1))); do
     part=$(printf "part%02d" "$i")
     state="${row_state[$part]:-?}"
     retry="${row_retry[$part]:-0}"
@@ -107,9 +112,9 @@ while true; do
       total_eta_str="done"
     fi
   fi
-  printf "TOTAL: %d/%d (%d%%)  RATE: %s vid/s  ETA: %s  ALIVE: %d/20  FAILED: %d\n" \
+  printf "TOTAL: %d/%d (%d%%)  RATE: %s vid/s  ETA: %s  ALIVE: %d/%d  FAILED: %d\n" \
     "$total_done" "$total_total" "$pct_total" "$total_rate_str" "$total_eta_str" \
-    "$alive" "$(wc -l < "${STATE_DIR}/parts.failed" 2>/dev/null || echo 0)"
+    "$alive" "${EXPECTED_HOSTS}" "$(wc -l < "${STATE_DIR}/parts.failed" 2>/dev/null || echo 0)"
 
   sleep "${REFRESH}"
 done

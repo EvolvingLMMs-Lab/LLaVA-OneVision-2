@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
+# Scheduler: poll dispatched parts, mark DONE/FAILED, restart DEAD ones up to MAX_RETRIES.
+#
+# Required env vars:
+#   STATE_DIR  - dispatch state dir produced by the launcher (must contain config.env)
 set -euo pipefail
 
-STATE_DIR="/ov2/dataset_jsonl/2000w_frames_v2/60s/_dispatch_state"
+STATE_DIR="${STATE_DIR:?set STATE_DIR to the dispatch state dir from the launcher}"
 source "${STATE_DIR}/config.env"
 
-POLL_INTERVAL=60
-MAX_RETRIES=3
-RESTART_GRACE=10
+POLL_INTERVAL="${POLL_INTERVAL:-60}"
+MAX_RETRIES="${MAX_RETRIES:-3}"
+RESTART_GRACE="${RESTART_GRACE:-10}"
 
 echo "[scheduler] Started pid=$$ at $(date)"
 echo "[scheduler] Polling every ${POLL_INTERVAL}s, max ${MAX_RETRIES} retries per part"

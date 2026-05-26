@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+# Stop: SIGTERM then SIGKILL all per-part workers across nodes; first kill local scheduler.
+#
+# Required env vars:
+#   STATE_DIR  - dispatch state dir produced by the launcher (must contain config.env)
 set -euo pipefail
 
-STATE_DIR="/ov2/dataset_jsonl/2000w_frames_v2/60s/_dispatch_state"
+STATE_DIR="${STATE_DIR:?set STATE_DIR to the dispatch state dir from the launcher}"
 source "${STATE_DIR}/config.env"
 
-GRACE=30
+GRACE="${GRACE:-30}"
 
 if pgrep -f "[d]ist_cut_frames_60s_v0_p16_f3_scheduler.sh" >/dev/null; then
   echo "[INFO] Killing local scheduler first (so it can't respawn workers)..."
