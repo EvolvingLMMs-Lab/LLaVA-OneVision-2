@@ -305,7 +305,7 @@ huggingface-cli download --repo-type dataset --resume-download \
 
 You'll need the standalone components from HF:
 
-- ViT: [`lmms-lab-encoder/onevision-encoder-large-lang`](https://huggingface.co/lmms-lab-encoder/onevision-encoder-large-lang) (or `-tf57` for the `p14m2` variant used here)
+- ViT: [`lmms-lab-encoder/onevision-encoder-large-lang-tf57`](https://huggingface.co/lmms-lab-encoder/onevision-encoder-large-lang-tf57) (the `p14m2` variant used here)
 - LLM: [`Qwen/Qwen3-4B-Instruct-2507`](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507)
 - Processor: [`lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct`](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct) (tokenizer + processor configs)
 
@@ -315,8 +315,8 @@ Inside the container (set up in step 3), run **HF merge → Megatron conversion*
 # Stage 1: merge ViT + LLM + processor → unified HF checkpoint
 PYTHONPATH=transformers_impl:. python -m merge_ov2 merge \
     --variant dense \
-    --vit /path/to/onevision-encoder-large-lang-tf57 \
-    --llm /path/to/Qwen3-4B-Instruct-2507 \
+    --vit lmms-lab-encoder/onevision-encoder-large-lang-tf57 \
+    --llm Qwen/Qwen3-4B-Instruct-2507 \
     --processor lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct \
     --out ./ov2_quickstart/ov_encoder_p14m22_qwen3_hf \
     --target-dtype bf16 \
