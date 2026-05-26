@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Distributed cut_frames launcher: 30s_v0 SFT, patch_size=14, factor_multiplier=3, max_pixels=462*462, max_frames=16.
+# Static mapping: part00..partNN -> hosts in ${HOSTS_FILE} (line order).
+# Stagger ${STAGGER_SECONDS}s per node to avoid NFS thundering herd.
+# State persisted to ${STATE_DIR} for scheduler/stop to consume.
+#
+# Required env vars:
+#   HOSTS_FILE             - file with one IP/hostname per line (count must match input parts)
+#   SSHPASS                - SSH password for sshpass (do not commit)
+# Optional env vars (with defaults):
+#   JSONL_ROOT             - input JSONL dir         (default: ./parts_p14_m3)
+#   OUTPUT_FRAMES_ROOT     - where frames are written
+#   OUTPUT_JSONL_ROOT      - where per-part "done" JSONL files are written
+#   STATE_DIR              - dispatch state dir
+#   SCRIPT                 - path to run_cut_frames.py (default: ../core/run_cut_frames.py)
+#   PYTHON                 - python interpreter (default: python3)
+#   TMP_FFMPEG_DIR         - per-node scratch dir for ffmpeg (default: /tmp/ov2_ffmpeg_frames)
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+
+JSONL_ROOT="${JSONL_ROOT:-./parts_p14_m3}"
+OUTPUT_FRAMES_ROOT="${OUTPUT_FRAMES_ROOT:?set OUTPUT_FRAMES_ROOT to the destination frames dir}"
+OUTPUT_JSONL_ROOT="${OUTPUT_JSONL_ROOT:-${JSONL_ROOT}}"
+STATE_DIR="${STATE_DIR:-${OUTPUT_JSONL_ROOT}/_dispatch_state_p14_m3}"
+SCRIPT="${SCRIPT:-${HERE}/../core/run_cut_frames.py}"
+PYTHON="${PYTHON:-python3}"
+HOSTS_FILE="${HOSTS_FILE:?set HOSTS_FILE to a file with one IP per line}"
+TMP_FFMPEG_DIR="${TMP_FFMPEG_DIR:-/tmp/ov2_ffmpeg_frames}"
+STRIP_PREFIX="${STRIP_PREFIX:-}"
+JOB_TAG="${JOB_TAG:-cut_frames_30s_v0_p14_m3}"
+MIN_FREE_GB="${MIN_FREE_GB:-200}"
+STAGGER_SECONDS="${STAGGER_SECONDS:-5}"
+EXPECTED_HOSTS="${EXPECTED_HOSTS:-4}"
+
+mapfile -t HOSTS < "${HOSTS_FILE}"
+if [[ "${#HOSTS[@]}" -ne "${EXPECTED_HOSTS}" ]]; then
+  echo "[FATAL] Expected ${EXPECTED_HOSTS} hosts in ${HOSTS_FILE}, got ${#HOSTS[@]}" >&2
+  echo "        Override with EXPECTED_HOSTS=N if your input partition count differs." >&2
+  exit 1
+fi
+
+mkdir -p "${STATE_DIR}" "${OUTPUT_FRAMES_ROOT}" "${OUTPUT_JSONL_ROOT}"
+: > "${STATE_DIR}/parts.assigned"
+: > "${STATE_DIR}/parts.failed"
+touch "${STATE_DIR}/parts.done"
+
+# Persist config so other tools (scheduler/stop) can read it.
+cat > "${STATE_DIR}/config.env" <<EOF
+JSONL_ROOT="${JSONL_ROOT}"
+OUTPUT_FRAMES_ROOT="${OUTPUT_FRAMES_ROOT}"
+OUTPUT_JSONL_ROOT="${OUTPUT_JSONL_ROOT}"
+STATE_DIR="${STATE_DIR}"
+SCRIPT="${SCRIPT}"
+PYTHON="${PYTHON}"
+HOSTS_FILE="${HOSTS_FILE}"
+TMP_FFMPEG_DIR="${TMP_FFMPEG_DIR}"
+STRIP_PREFIX="${STRIP_PREFIX}"
+JOB_TAG="${JOB_TAG}"
+EOF
+
+# Per-part runner shipped to each remote node.
+cat > "${STATE_DIR}/run_part.sh" <<'INNER'
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/config.env"
+part="$1"
+input_jsonl="${JSONL_ROOT}/30s_v0_slim_${part}.jsonl"
+output_jsonl="${OUTPUT_JSONL_ROOT}/30s_v0_slim_done_${part}.jsonl"
+log="/tmp/${JOB_TAG}_${part}.log"
+mkdir -p "${OUTPUT_JSONL_ROOT}" "${OUTPUT_FRAMES_ROOT}" "${TMP_FFMPEG_DIR}"
+strip_args=()
+if [[ -n "${STRIP_PREFIX:-}" ]]; then
+  strip_args=(--strip-prefix "${STRIP_PREFIX}")
+fi
+exec setsid "${PYTHON}" "${SCRIPT}" \
+  --input-jsonl       "${input_jsonl}" \
+  --output-jsonl      "${output_jsonl}" \
+  --output-dir        "${OUTPUT_FRAMES_ROOT}" \
+  --max-frames        16 \
+  --max-pixels        213444 \
+  --patch-size        14 \
+  --factor-multiplier 3 \
+  --num-workers       32 \
+  "${strip_args[@]}" \
+  > "${log}" 2>&1 < /dev/null &
+INNER
+chmod +x "${STATE_DIR}/run_part.sh"
+
+PASS="${SSHPASS:?set SSHPASS env (do not commit a literal password)}"
+SSH="sshpass -p ${PASS} ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o LogLevel=ERROR"
+SCP="sshpass -p ${PASS} scp -q -o StrictHostKeyChecking=no -o LogLevel=ERROR"
+
+echo "[INFO] Preflight checks on all ${#HOSTS[@]} nodes..."
+preflight_failed=0
+for i in "${!HOSTS[@]}"; do
+  ip="${HOSTS[$i]}"
+  part=$(printf "part%02d" "$i")
+  input_jsonl="${JSONL_ROOT}/30s_v0_slim_${part}.jsonl"
+
+  result=$(${SSH} root@"${ip}" "
+    set -e
+    [[ -r '${input_jsonl}' ]] || { echo MISSING_INPUT; exit 0; }
+    [[ \$(wc -l < '${input_jsonl}') -gt 0 ]] || { echo EMPTY_INPUT; exit 0; }
+    command -v ffmpeg >/dev/null || { echo NO_FFMPEG; exit 0; }
+    command -v '${PYTHON}' >/dev/null || { echo NO_PYTHON; exit 0; }
+    '${PYTHON}' -c 'import cv2' 2>/dev/null || { echo NO_CV2; exit 0; }
+    [[ -w '${TMP_FFMPEG_DIR}' ]] || mkdir -p '${TMP_FFMPEG_DIR}' || { echo NO_TMPDIR; exit 0; }
+    pgrep -f '[r]un_cut_frames.py.*${part}\.jsonl' >/dev/null && { echo ALREADY_RUNNING; exit 0; }
+    free_gb=\$(df -BG --output=avail '${OUTPUT_FRAMES_ROOT%/*}' 2>/dev/null | tail -1 | tr -dc '0-9')
+    [[ \${free_gb:-0} -ge ${MIN_FREE_GB} ]] || { echo \"LOW_DISK_\${free_gb}G\"; exit 0; }
+    echo OK
+  " 2>&1 | tail -1)
+
+  if [[ "${result}" != "OK" ]]; then
+    echo "  [FAIL] ${ip} (${part}): ${result}"
+    preflight_failed=1
+  else
+    echo "  [OK]   ${ip} (${part})"
+  fi
+done
+
+if [[ ${preflight_failed} -ne 0 ]]; then
+  echo "[FATAL] Preflight failed. Fix issues above and re-run." >&2
+  exit 1
+fi
+
+echo "[INFO] Preflight passed. Launching with ${STAGGER_SECONDS}s stagger..."
+for i in "${!HOSTS[@]}"; do
+  ip="${HOSTS[$i]}"
+  part=$(printf "part%02d" "$i")
+  log="/tmp/${JOB_TAG}_${part}.log"
+
+  ${SCP} "${STATE_DIR}/run_part.sh" "${STATE_DIR}/config.env" root@"${ip}":/tmp/
+  pid=$(${SSH} -n root@"${ip}" "
+    bash /tmp/run_part.sh '${part}' >/dev/null 2>&1
+    sleep 1
+    pgrep -f '[r]un_cut_frames.py.*${part}\.jsonl' | head -1
+  ")
+
+  if [[ -z "${pid}" ]]; then
+    echo "  [FAIL] ${ip} ${part} did not start"
+    echo "${part} ${ip} - $(date +%s) FAILED_TO_START 0" >> "${STATE_DIR}/parts.assigned"
+  else
+    echo "  [OK]   ${ip} ${part} pid=${pid} log=${log}"
+    echo "${part} ${ip} ${pid} $(date +%s) RUNNING 0" >> "${STATE_DIR}/parts.assigned"
+  fi
+
+  if (( i < ${#HOSTS[@]} - 1 )); then
+    sleep ${STAGGER_SECONDS}
+  fi
+done
+
+echo ""
+echo "[DONE] All ${#HOSTS[@]} jobs launched. State dir: ${STATE_DIR}"
+echo "  Scheduler: STATE_DIR=${STATE_DIR} SSHPASS=... setsid bash ${HERE}/dist_cut_frames_30s_v0_p14_m3_scheduler.sh > /tmp/${JOB_TAG}_scheduler.log 2>&1 < /dev/null & disown"
+echo "  Stop:      STATE_DIR=${STATE_DIR} SSHPASS=... bash ${HERE}/dist_cut_frames_30s_v0_p14_m3_stop.sh"
