@@ -176,17 +176,31 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 <details>
 <summary><strong>🤖 Agent fast path — one block, idempotent (click to expand)</strong></summary>
 
-> **For code agents (Claude Code / opencode / etc.):** copy-paste this entire block from `<REPO_ROOT>` and run it. It re-runs safely — every step is guarded by an existence check, so it skips the 340 GB download if the bundle is already there and skips `docker load` if the image is already loaded. Human readers should follow the numbered sections (§0–§5) below instead.
+> **For code agents (Claude Code / opencode / etc.):** copy-paste this entire block from any working directory and run it. It self-bootstraps — clones the repo if missing, downloads the 340 GB bundle if missing, loads the docker image if missing, then launches training. Every step is guarded by an existence check, so re-runs are safe. Human readers should follow the numbered sections (§0–§5) below instead.
 
 ```bash
-# Run from <REPO_ROOT>. Requires: 8 GPUs, Docker + NVIDIA Container Toolkit,
-# huggingface-cli (only used if the bundle is missing).
+# Run from any working directory. Requires: 8 GPUs, Docker + NVIDIA Container Toolkit,
+# git, huggingface-cli (only used if the bundle is missing).
 set -euo pipefail
 
+REPO_URL="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.git"
+REPO_DIR="LLaVA-OneVision-2"
 BUNDLE_DIR="./ov2_quickstart"
 IMAGE="llava_megatron:26.05"
-OUTPUT_DIR="$(pwd)/output/quick_start_4b"
 CONTAINER_NAME="ov2_quickstart_4b"
+
+# 0) Repo — clone if the target script isn't reachable from $(pwd).
+#    If you're already inside the repo, this is a no-op and we stay put.
+if [ -f "./examples/llava_onevision2/quick_start_4b/quick_start.sh" ]; then
+    echo "[skip] already inside repo root at $(pwd)"
+elif [ -f "./${REPO_DIR}/examples/llava_onevision2/quick_start_4b/quick_start.sh" ]; then
+    echo "[skip] repo already cloned at ./${REPO_DIR}"
+    cd "${REPO_DIR}"
+else
+    git clone --depth 1 "${REPO_URL}" "${REPO_DIR}"
+    cd "${REPO_DIR}"
+fi
+OUTPUT_DIR="$(pwd)/output/quick_start_4b"
 
 # 1) Bundle (~340 GB) — skip if the three required subdirs already exist.
 if [ -d "${BUNDLE_DIR}/packed_mixed_sft_cap_v30s/node_a/webdataset" ] \
