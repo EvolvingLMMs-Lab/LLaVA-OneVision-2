@@ -181,7 +181,14 @@ def _cmd_merge(args: argparse.Namespace) -> int:
             e2e.run(model, processor, tokenizer, args.img_path, device)
 
     with log_stage("save"):
-        save_merged(model, args.output_path, tokenizer, processor, variant=args.variant)
+        save_merged(
+            model,
+            args.output_path,
+            tokenizer,
+            processor,
+            variant=args.variant,
+            processor_src=args.processor_path,
+        )
     logger.info("Done.")
     return 0
 
@@ -266,7 +273,31 @@ def _cmd_dry_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _enable_auto_trust_remote_code() -> None:
+    """Force ``trust_remote_code=True`` for every transformers loader.
+
+    Cascaded loaders (processor -> video_processor -> codec config) re-enter
+    ``resolve_trust_remote_code`` without inheriting the caller's ``True``,
+    hit ``input()``, and raise ``ValueError`` when stdin is closed (every
+    ``docker exec``). This module only loads checkpoints we produced or
+    vendored, so unconditional trust is correct.
+
+    Opt out with ``MERGE_OV2_NO_AUTO_TRUST=1``.
+    """
+    if os.environ.get("MERGE_OV2_NO_AUTO_TRUST") == "1":
+        return
+    try:
+        import transformers.dynamic_module_utils as _dmu
+    except ImportError:
+        return
+    if getattr(_dmu, "_merge_ov2_trust_patched", False):
+        return
+    _dmu.resolve_trust_remote_code = lambda *a, **kw: True
+    _dmu._merge_ov2_trust_patched = True
+
+
 def main(argv: list[str] | None = None) -> int:
+    _enable_auto_trust_remote_code()
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.cmd == "merge":

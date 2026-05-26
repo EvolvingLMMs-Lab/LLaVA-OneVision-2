@@ -56,19 +56,23 @@ _HUB_MODEL_IGNORE_PATTERNS: tuple[str, ...] = (
 # repos used as a processor source (e.g. lmms-lab/LLaVA-OneVision-1.5-*) are
 # full N-billion-param model repos with ~16GB of safetensors we never read.
 # Whitelist exactly the file shapes the *_from_pretrained loaders need.
+#
+# Custom-code processors (e.g. lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct)
+# resolve their auto_map entries via transformers.dynamic_module_utils, which
+# eagerly copies *every* relative .py sibling of the entry-point file
+# (chained `from .codec_video_processing_llava_onevision2 import ...` etc.).
+# We therefore allow all `*.py` rather than enumerating each suffix —
+# .safetensors / .bin / .pt are still filtered, so the multi-GB shards are
+# never downloaded.
 _HUB_PROCESSOR_ALLOW_PATTERNS: tuple[str, ...] = (
     "*.json",
     "*.txt",
     "*.model",
     "*.jinja",
+    "*.py",
     "tokenizer*",
     "processor_config*",
     "preprocessor_config*",
-    "tokenization_*.py",
-    "processing_*.py",
-    "image_processing_*.py",
-    "video_processing_*.py",
-    "feature_extraction_*.py",
 )
 
 
