@@ -35,24 +35,26 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Build contributors SVG and update README
+      - name: Build contributors SVGs and update README
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python docs/build_contributors_svg.py \
-            --owner "${GITHUB_REPOSITORY%/*}" \
-            --repo  "${GITHUB_REPOSITORY#*/}" \
-            --out   asset/contributors.svg \
-            --readme README.md
+            --owner     "${GITHUB_REPOSITORY%/*}" \
+            --repo      "${GITHUB_REPOSITORY#*/}" \
+            --out-dark  asset/contributors_dark.svg \
+            --out-light asset/contributors_light.svg \
+            --readme    README.md
 
       - name: Commit and push if changed
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [[ -z "$(git status --porcelain asset/contributors.svg README.md)" ]]; then
+          paths=(asset/contributors_dark.svg asset/contributors_light.svg README.md)
+          if [[ -z "$(git status --porcelain "${paths[@]}")" ]]; then
             echo "No changes to commit."
             exit 0
           fi
-          git add asset/contributors.svg README.md
-          git commit -m "chore(readme): refresh contributors SVG"
+          git add "${paths[@]}"
+          git commit -m "docs(readme): refresh contributors SVG"
           git push

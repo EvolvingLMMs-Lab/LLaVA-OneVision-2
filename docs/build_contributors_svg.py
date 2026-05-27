@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Build a self-contained SVG of repository contributors ranked by commit count.
+"""Build self-contained dark + light SVGs of repository contributors ranked by commit count.
 
 Fetches the contributor list from the GitHub REST API
 (``/repos/{owner}/{repo}/contributors``), filters out bots and explicitly
-excluded users, downloads each avatar, and embeds them as base64
-``<image>`` elements inside a single SVG grid. Also rewrites the README
-contributors block in place between two HTML markers.
+excluded users, downloads each avatar once, and renders two themed SVGs
+(``*_dark.svg`` + ``*_light.svg``) with avatars embedded as base64 ``<image>``
+elements. Also rewrites the README contributors block in place between two
+HTML markers using ``<picture>`` + ``prefers-color-scheme`` so GitHub
+automatically serves the right variant per viewer theme.
 
 Usage::
 
     python docs/build_contributors_svg.py \\
         --owner EvolvingLMMs-Lab \\
         --repo LLaVA-OneVision-2 \\
-        --out asset/contributors.svg \\
+        --out-dark  asset/contributors_dark.svg \\
+        --out-light asset/contributors_light.svg \\
         --readme README.md
 
 If ``GITHUB_TOKEN`` (or ``GH_TOKEN``) is set, it is sent as a Bearer token.
@@ -37,15 +40,41 @@ from xml.sax.saxutils import escape as xml_escape
 DEFAULT_EXCLUDE_LOGINS: frozenset[str] = frozenset({"jiankangdeng"})
 
 AVATAR_PX = 80
-CELL_PAD_X = 16
-CELL_PAD_Y = 8
-LABEL_GAP = 8
-LABEL_FONT_SIZE = 13
+CELL_PAD_X = 18
+CELL_PAD_Y = 18
+LABEL_GAP = 12
+LABEL_FONT_SIZE = 14
 LABEL_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
 COLUMNS_PER_ROW = 8
 
+TOP_RANK_ACCENT = "#f59e0b"
+
 README_MARKER_START = "<!-- readme: collaborators,contributors,jiankangdeng/- -start -->"
 README_MARKER_END = "<!-- readme: collaborators,contributors,jiankangdeng/- -end -->"
+
+
+@dataclass(frozen=True)
+class Theme:
+    name: str
+    background: str
+    avatar_stroke: str
+    label_fill: str
+
+
+# Palette matched to project's other dark/light assets (method_codec_selection_*.svg,
+# llava_onevision_2_{black,white}.svg). Keep these in sync if the project rebrands.
+THEME_DARK = Theme(
+    name="dark",
+    background="#0d1117",
+    avatar_stroke="#30363d",
+    label_fill="#f0f6fc",
+)
+THEME_LIGHT = Theme(
+    name="light",
+    background="#ffffff",
+    avatar_stroke="#d0d7de",
+    label_fill="#0f172a",
+)
 
 
 @dataclass(frozen=True)
@@ -120,7 +149,11 @@ def _truncate(text: str, max_chars: int = 16) -> str:
     return text[: max_chars - 1] + "\u2026"
 
 
-def build_svg(contributors: list[Contributor], avatar_pngs: dict[str, bytes]) -> str:
+def build_svg(
+    contributors: list[Contributor],
+    avatar_pngs: dict[str, bytes],
+    theme: Theme,
+) -> str:
     n = len(contributors)
     if n == 0:
         return '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" viewBox="0 0 0 0"></svg>\n'
@@ -142,6 +175,7 @@ def build_svg(contributors: list[Contributor], avatar_pngs: dict[str, bytes]) ->
         f'<defs><clipPath id="avatarClip">'
         f'<circle cx="{radius}" cy="{radius}" r="{radius}"/>'
         f"</clipPath></defs>"
+        f'<rect width="{width}" height="{height}" fill="{theme.background}"/>'
     ]
 
     for index, contributor in enumerate(contributors):
@@ -159,6 +193,11 @@ def build_svg(contributors: list[Contributor], avatar_pngs: dict[str, bytes]) ->
         commit_word = "commit" if contributor.contributions == 1 else "commits"
         title = f"{contributor.login} ({contributor.contributions} {commit_word})"
 
+        is_top = index == 0
+        stroke_color = TOP_RANK_ACCENT if is_top else theme.avatar_stroke
+        stroke_width = 2.0 if is_top else 1.5
+        label_weight = "600" if is_top else "500"
+
         out.append(
             f'<a xlink:href="{xml_escape(contributor.profile_url)}" target="_blank">'
             f"<title>{xml_escape(title)}</title>"
@@ -167,12 +206,12 @@ def build_svg(contributors: list[Contributor], avatar_pngs: dict[str, bytes]) ->
             f'xlink:href="data:image/png;base64,{b64}" '
             f'width="{AVATAR_PX}" height="{AVATAR_PX}" '
             f'clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>'
-            f'<circle cx="{radius}" cy="{radius}" r="{radius - 0.5}" '
-            f'fill="none" stroke="#d0d7de" stroke-width="1"/>'
+            f'<circle cx="{radius}" cy="{radius}" r="{radius - stroke_width / 2}" '
+            f'fill="none" stroke="{stroke_color}" stroke-width="{stroke_width}"/>'
             f"</g>"
             f'<text x="{label_x}" y="{label_y}" text-anchor="middle" '
             f'font-family="{LABEL_FONT_FAMILY}" font-size="{LABEL_FONT_SIZE}" '
-            f'fill="#24292f">'
+            f'font-weight="{label_weight}" fill="{theme.label_fill}">'
             f"{xml_escape(_truncate(contributor.login))}"
             f"</text>"
             f"</a>"
@@ -182,7 +221,7 @@ def build_svg(contributors: list[Contributor], avatar_pngs: dict[str, bytes]) ->
     return "".join(out)
 
 
-def rewrite_readme(readme_path: Path, svg_rel_path: str) -> bool:
+def rewrite_readme(readme_path: Path, dark_rel: str, light_rel: str) -> bool:
     """Replace the README marker block. Returns False if already up to date."""
     src = readme_path.read_text(encoding="utf-8")
     start = src.find(README_MARKER_START)
@@ -198,7 +237,11 @@ def rewrite_readme(readme_path: Path, svg_rel_path: str) -> bool:
         f"{README_MARKER_START}\n"
         f'<p align="center">\n'
         f'  <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2/graphs/contributors">\n'
-        f'    <img src="{svg_rel_path}" alt="Contributors ranked by commit count" />\n'
+        f"    <picture>\n"
+        f'      <source media="(prefers-color-scheme: dark)" srcset="{dark_rel}">\n'
+        f'      <source media="(prefers-color-scheme: light)" srcset="{light_rel}">\n'
+        f'      <img src="{light_rel}" alt="Contributors ranked by commit count" />\n'
+        f"    </picture>\n"
         f"  </a>\n"
         f"</p>\n"
         f"{README_MARKER_END}"
@@ -211,10 +254,13 @@ def rewrite_readme(readme_path: Path, svg_rel_path: str) -> bool:
 
 
 def _parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build a contributors SVG ranked by commit count and update README.")
+    parser = argparse.ArgumentParser(
+        description="Build a contributors SVG ranked by commit count and update README.",
+    )
     parser.add_argument("--owner", default="EvolvingLMMs-Lab")
     parser.add_argument("--repo", default="LLaVA-OneVision-2")
-    parser.add_argument("--out", type=Path, default=Path("asset/contributors.svg"))
+    parser.add_argument("--out-dark", type=Path, default=Path("asset/contributors_dark.svg"))
+    parser.add_argument("--out-light", type=Path, default=Path("asset/contributors_light.svg"))
     parser.add_argument(
         "--readme",
         type=Path,
@@ -226,11 +272,6 @@ def _parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         action="append",
         default=None,
         help=(f"Additional login to exclude (repeatable). Always-on defaults: {sorted(DEFAULT_EXCLUDE_LOGINS)}"),
-    )
-    parser.add_argument(
-        "--readme-svg-path",
-        default=None,
-        help="Path to embed into README <img src> (default: same as --out).",
     )
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args(list(argv) if argv is not None else None)
@@ -268,25 +309,31 @@ def main(argv: Iterable[str] | None = None) -> int:
         )
         avatar_pngs[c.login] = fetch_avatar_png(c.avatar_url, AVATAR_PX * 2)
 
-    svg = build_svg(contributors, avatar_pngs)
-
-    if args.dry_run:
-        print(
-            f"[contributors-svg] dry-run: would write {len(svg)} bytes to {args.out}",
-            file=sys.stderr,
-        )
-        return 0
-
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(svg, encoding="utf-8")
-    print(
-        f"[contributors-svg] wrote {len(svg)} bytes to {args.out}",
-        file=sys.stderr,
+    variants = (
+        (args.out_dark, THEME_DARK),
+        (args.out_light, THEME_LIGHT),
     )
 
+    for out_path, theme in variants:
+        svg = build_svg(contributors, avatar_pngs, theme)
+        if args.dry_run:
+            print(
+                f"[contributors-svg] dry-run: would write {len(svg)} bytes to {out_path} ({theme.name})",
+                file=sys.stderr,
+            )
+            continue
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(svg, encoding="utf-8")
+        print(
+            f"[contributors-svg] wrote {len(svg)} bytes to {out_path} ({theme.name})",
+            file=sys.stderr,
+        )
+
+    if args.dry_run:
+        return 0
+
     if args.readme and str(args.readme):
-        svg_rel = args.readme_svg_path or str(args.out)
-        changed = rewrite_readme(args.readme, svg_rel)
+        changed = rewrite_readme(args.readme, str(args.out_dark), str(args.out_light))
         print(
             f"[contributors-svg] README {'updated' if changed else 'already up to date'} ({args.readme})",
             file=sys.stderr,
