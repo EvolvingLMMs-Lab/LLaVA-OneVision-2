@@ -1,19 +1,60 @@
+name: Update contributors SVG
+
 on:
   push:
     branches:
       - main
-name: Generate a list of contributors
+  schedule:
+    # Weekly safety net in case a push from the workflow's own commit is suppressed.
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-contributors
+  cancel-in-progress: false
+
 jobs:
-  contrib-readme-en-job:
-    if: false
+  build-contributors-svg:
+    # Skip the run we triggered ourselves to avoid an infinite loop.
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    name: A job to automate contrib in readme
     steps:
-      - name: Contribute List
-        uses: akhilmhdh/contributors-readme-action@v2.3.11
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          image_size: 80
-          use_username: true
-          columns_per_row: 8
+          # Need a real token here so the follow-up push runs against this token,
+          # which has the permissions we declared above.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build contributors SVGs and update README
         env:
-          GITHUB_TOKEN: ${{ secrets.LLaVA_OV_CONTRIBUTORS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python docs/build_contributors_svg.py \
+            --owner     "${GITHUB_REPOSITORY%/*}" \
+            --repo      "${GITHUB_REPOSITORY#*/}" \
+            --out-dark  asset/contributors_dark.svg \
+            --out-light asset/contributors_light.svg \
+            --readme    README.md
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          paths=(asset/contributors_dark.svg asset/contributors_light.svg README.md)
+          if [[ -z "$(git status --porcelain "${paths[@]}")" ]]; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git add "${paths[@]}"
+          git commit -m "docs(readme): refresh contributors SVG"
+          git push
