@@ -149,6 +149,42 @@
             </article>
           </div>
         </section>
+
+        <section class="projects-column projects-column-community" aria-label="Community">
+          <h2 class="projects-column-title">
+            <span class="i18n" data-lang="en">Community</span><span class="i18n" data-lang="zh">社区</span>
+          </h2>
+
+          <div class="community-block" data-community-block="contributors">
+            <div class="community-block-header">
+              <h3 class="community-block-title">
+                <span class="i18n" data-lang="en">Contributors</span><span class="i18n" data-lang="zh">贡献者</span>
+              </h3>
+              <span class="community-block-count" data-count-for="contributors">—</span>
+            </div>
+            <p class="community-block-hint">
+              <span class="i18n" data-lang="en">Ranked by commit count.</span><span class="i18n" data-lang="zh">按提交数排序。</span>
+            </p>
+            <div class="community-grid" data-community-grid="contributors" role="list" aria-live="polite">
+              <div class="community-skeleton" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <div class="community-block" data-community-block="stargazers">
+            <div class="community-block-header">
+              <h3 class="community-block-title">
+                <span class="i18n" data-lang="en">Stargazers</span><span class="i18n" data-lang="zh">点亮 Star 的朋友</span>
+              </h3>
+              <span class="community-block-count" data-count-for="stargazers">—</span>
+            </div>
+            <p class="community-block-hint">
+              <span class="i18n" data-lang="en">Earliest first — thanks for the early signal.</span><span class="i18n" data-lang="zh">按 Star 时间从早到晚 — 感谢早期支持。</span>
+            </p>
+            <div class="community-grid community-grid-dense" data-community-grid="stargazers" role="list" aria-live="polite">
+              <div class="community-skeleton" aria-hidden="true"></div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -197,6 +233,99 @@
           applyLang(currentLang === 'zh' ? 'en' : 'zh');
         });
       }
+
+      // ── Community grids: contributors + stargazers ─────────────────────
+      (async function loadCommunity() {
+        const grids = {
+          contributors: document.querySelector('[data-community-grid="contributors"]'),
+          stargazers:   document.querySelector('[data-community-grid="stargazers"]'),
+        };
+        const counts = {
+          contributors: document.querySelector('[data-count-for="contributors"]'),
+          stargazers:   document.querySelector('[data-count-for="stargazers"]'),
+        };
+        if (!grids.contributors && !grids.stargazers) return;
+
+        const renderError = (grid, msg) => {
+          if (!grid) return;
+          grid.innerHTML = '';
+          const div = document.createElement('div');
+          div.className = 'community-error';
+          div.textContent = msg;
+          grid.appendChild(div);
+        };
+
+        let data;
+        try {
+          const resp = await fetch('../assets/community.json', { cache: 'no-cache' });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          data = await resp.json();
+        } catch (err) {
+          for (const g of Object.values(grids)) renderError(g, `Failed to load community data: ${err.message}`);
+          return;
+        }
+
+        const avatarBase = '../assets/';
+        const repoStargazersUrl = data.owner && data.repo
+          ? `https://github.com/${data.owner}/${data.repo}/stargazers`
+          : null;
+
+        function renderGrid(grid, items, { kind }) {
+          if (!grid) return;
+          grid.innerHTML = '';
+          const frag = document.createDocumentFragment();
+          items.forEach((item, idx) => {
+            if (!item.avatar) return;
+            const a = document.createElement('a');
+            a.className = 'community-avatar';
+            a.href = `https://github.com/${item.login}`;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.setAttribute('role', 'listitem');
+            if (kind === 'contributors') {
+              const c = item.contributions || 0;
+              a.title = `${item.login} (${c} commit${c === 1 ? '' : 's'})`;
+            } else if (kind === 'stargazers') {
+              const when = item.starred_at ? item.starred_at.slice(0, 10) : '';
+              a.title = when ? `${item.login} — starred ${when}` : item.login;
+            } else {
+              a.title = item.login;
+            }
+            if (idx === 0) a.classList.add('community-avatar-top');
+
+            const img = document.createElement('img');
+            img.src = avatarBase + item.avatar;
+            img.alt = item.login;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.width = 44;
+            img.height = 44;
+
+            a.appendChild(img);
+            frag.appendChild(a);
+          });
+          grid.appendChild(frag);
+        }
+
+        if (grids.contributors && Array.isArray(data.contributors)) {
+          renderGrid(grids.contributors, data.contributors, { kind: 'contributors' });
+          if (counts.contributors) counts.contributors.textContent = data.contributors.length.toString();
+        }
+
+        if (grids.stargazers && Array.isArray(data.stargazers)) {
+          renderGrid(grids.stargazers, data.stargazers, { kind: 'stargazers' });
+          if (counts.stargazers) {
+            counts.stargazers.textContent = data.stargazers.length.toString();
+            if (repoStargazersUrl) {
+              counts.stargazers.style.cursor = 'pointer';
+              counts.stargazers.title = 'View on GitHub';
+              counts.stargazers.addEventListener('click', () => {
+                window.open(repoStargazersUrl, '_blank', 'noopener,noreferrer');
+              });
+            }
+          }
+        }
+      })();
     </script>
   </body>
 </html>
