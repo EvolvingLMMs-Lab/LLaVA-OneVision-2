@@ -55,7 +55,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 
 ### 🎬 Codec-Aligned Vision Encoders
 
-Forget uniform patchification. **OneVision-Encoder** and **OneVision-Encoder-Lang** are HEVC-style vision transformers that treat video like a codec stream — selecting only motion- and residual-rich patches and sampling dense frames sparsely instead of sparse frames densely. The result is dramatically longer temporal coverage under the same token budget, where prior ViT backbones simply run out of context.
+Beyond uniform patchification. **OneVision-Encoder** and **OneVision-Encoder-Lang** are HEVC-style vision transformers that add a codec-stream input mode alongside image and uniform-frame video — selecting only motion- and residual-rich patches and sampling dense frames sparsely instead of sparse frames densely. The result is dramatically longer temporal coverage under the same token budget, where prior ViT backbones simply run out of context.
 
 ### 🧊 One Model, Every Modality
 

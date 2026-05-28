@@ -538,7 +538,7 @@
         x: L.sidePad, y: 58, 'class': 'cvf-title'
       }, 'Same token budget. Codec sampling unlocks low-frame regimes.'));
       var subText = el('text', { x: L.sidePad, y: 80, 'class': 'cvf-panel-sub' });
-      subText.innerHTML = 'Across four temporal grounding benchmarks, codec-stream input matches or exceeds uniform frame sampling, with the largest gains at <tspan font-weight="700" fill="#0d9488">low frame budgets</tspan> where uniform sampling starves the model. <tspan fill="#94a3b8">Hover any point. Click legend to toggle a series.</tspan>';
+      subText.innerHTML = 'Across four temporal grounding benchmarks, codec-stream input matches or exceeds uniform frame sampling, with the largest gains at <tspan font-weight="700" fill="#0d9488">low frame budgets</tspan> where the frame budget is too tight to cover the temporal signal. <tspan fill="#94a3b8">Hover any point. Click legend to toggle a series.</tspan>';
       svg.appendChild(subText);
       svg.appendChild(el('line', {
         x1: L.sidePad, y1: 100, x2: W - L.sidePad, y2: 100, 'class': 'cvf-divider'
