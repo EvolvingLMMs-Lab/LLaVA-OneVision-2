@@ -143,6 +143,43 @@ def fetch_avatar_png(avatar_url: str, size: int) -> bytes:
     return _http_get(sized, headers={"User-Agent": "build_contributors_svg.py"})
 
 
+def fetch_user_avatar_url(login: str) -> str:
+    """Resolve a single user's canonical ``avatar_url`` via the users API.
+
+    Falls back to the stable ``https://github.com/{login}.png`` redirect if the
+    user lookup fails (e.g. rate limit), which GitHub serves for any valid login.
+    """
+    try:
+        data = json.loads(_http_get(f"https://api.github.com/users/{login}", headers=_auth_headers()))
+        url = data.get("avatar_url")
+        if url:
+            return url
+    except RuntimeError as exc:
+        print(
+            f"[contributors-svg]   warning: users API lookup failed for {login} ({exc}); "
+            f"falling back to github.com/{login}.png",
+            file=sys.stderr,
+        )
+    return f"https://github.com/{login}.png"
+
+
+def parse_add_spec(spec: str) -> tuple[str, int]:
+    """Parse a ``--add`` value of form ``login`` or ``login:count`` (count >= 0)."""
+    login, sep, count_str = spec.partition(":")
+    login = login.strip()
+    if not login:
+        raise ValueError(f"--add spec missing login: {spec!r}")
+    if not sep:
+        return login, 1
+    try:
+        count = int(count_str)
+    except ValueError as exc:
+        raise ValueError(f"--add count must be an integer: {spec!r}") from exc
+    if count < 0:
+        raise ValueError(f"--add count must be >= 0: {spec!r}")
+    return login, count
+
+
 def _truncate(text: str, max_chars: int = 16) -> str:
     if len(text) <= max_chars:
         return text
@@ -273,6 +310,17 @@ def _parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(f"Additional login to exclude (repeatable). Always-on defaults: {sorted(DEFAULT_EXCLUDE_LOGINS)}"),
     )
+    parser.add_argument(
+        "--add",
+        action="append",
+        default=None,
+        metavar="login[:count]",
+        help=(
+            "Force-include a login the GitHub contributors API omits (repeatable). "
+            "Optional :count sets the commit count used for ranking (default 1). "
+            "If the login is already returned by the API, count overrides its value."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args(list(argv) if argv is not None else None)
 
@@ -290,6 +338,26 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
     raw = fetch_contributors(args.owner, args.repo)
     contributors = [c for c in raw if c.login not in excludes]
+
+    if args.add:
+        by_login = {c.login.lower(): c for c in contributors}
+        for spec in args.add:
+            login, count = parse_add_spec(spec)
+            if login in excludes:
+                print(f"[contributors-svg] --add {login} skipped (also excluded)", file=sys.stderr)
+                continue
+            existing = by_login.get(login.lower())
+            if existing is not None:
+                replacement = Contributor(login=existing.login, contributions=count, avatar_url=existing.avatar_url)
+                contributors[contributors.index(existing)] = replacement
+                by_login[login.lower()] = replacement
+                print(f"[contributors-svg] --add overrode {existing.login} count -> {count}", file=sys.stderr)
+            else:
+                added = Contributor(login=login, contributions=count, avatar_url=fetch_user_avatar_url(login))
+                contributors.append(added)
+                by_login[login.lower()] = added
+                print(f"[contributors-svg] --add force-included {login} ({count} commits)", file=sys.stderr)
+
     contributors.sort(key=lambda c: (-c.contributions, c.login.lower()))
 
     print(
