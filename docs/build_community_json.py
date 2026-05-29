@@ -106,16 +106,74 @@ def fetch_stargazers(owner: str, repo: str) -> list[Stargazer]:
     return out
 
 
+def fetch_user_avatar_url(login: str) -> str:
+    proc = subprocess.run(
+        ["gh", "api", f"users/{login}", "--jq", ".avatar_url"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    url = proc.stdout.strip()
+    if proc.returncode != 0 or not url:
+        print(
+            f"  warning: users API lookup failed for {login}; falling back to github.com/{login}.png",
+            file=sys.stderr,
+        )
+        return f"https://github.com/{login}.png"
+    return url
+
+
+def parse_add_spec(spec: str) -> tuple[str, int]:
+    login, sep, count_str = spec.partition(":")
+    login = login.strip()
+    if not login:
+        raise ValueError(f"--add spec missing login: {spec!r}")
+    if not sep:
+        return login, 1
+    try:
+        count = int(count_str)
+    except ValueError as exc:
+        raise ValueError(f"--add count must be an integer: {spec!r}") from exc
+    if count < 0:
+        raise ValueError(f"--add count must be >= 0: {spec!r}")
+    return login, count
+
+
+def apply_adds(contributors: list[Contributor], add_specs: list[str], exclude: frozenset[str]) -> list[Contributor]:
+    by_login = {c.login.lower(): c for c in contributors}
+    for spec in add_specs:
+        login, count = parse_add_spec(spec)
+        if login in exclude:
+            print(f"  --add {login} skipped (also excluded)", file=sys.stderr)
+            continue
+        existing = by_login.get(login.lower())
+        if existing is not None:
+            replacement = Contributor(login=existing.login, contributions=count, avatar_url=existing.avatar_url)
+            contributors[contributors.index(existing)] = replacement
+            by_login[login.lower()] = replacement
+            print(f"  --add overrode {existing.login} count -> {count}", file=sys.stderr)
+        else:
+            added = Contributor(login=login, contributions=count, avatar_url=fetch_user_avatar_url(login))
+            contributors.append(added)
+            by_login[login.lower()] = added
+            print(f"  --add force-included {login} ({count} commits)", file=sys.stderr)
+    contributors.sort(key=lambda c: (-c.contributions, c.login.lower()))
+    return contributors
+
+
 def build_community_json(
     owner: str,
     repo: str,
     out_path: Path,
     exclude_logins: frozenset[str] = DEFAULT_EXCLUDE_LOGINS,
+    add_specs: list[str] | None = None,
 ) -> Path:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"fetching contributors for {owner}/{repo}...", file=sys.stderr)
     contributors = fetch_contributors(owner, repo, exclude_logins)
+    if add_specs:
+        contributors = apply_adds(contributors, add_specs, exclude_logins)
     print(f"  -> {len(contributors)} contributors", file=sys.stderr)
 
     print(f"fetching stargazers for {owner}/{repo}...", file=sys.stderr)
@@ -168,6 +226,16 @@ def main() -> int:
         default=sorted(DEFAULT_EXCLUDE_LOGINS),
         help="logins to exclude from contributors (bots, etc.)",
     )
+    parser.add_argument(
+        "--add",
+        action="append",
+        default=None,
+        metavar="login[:count]",
+        help=(
+            "force-include a login the contributors API omits (repeatable); "
+            "optional :count sets the ranking commit count (default 1)"
+        ),
+    )
     args = parser.parse_args()
 
     build_community_json(
@@ -175,6 +243,7 @@ def main() -> int:
         repo=args.repo,
         out_path=args.out,
         exclude_logins=frozenset(args.exclude),
+        add_specs=args.add,
     )
     return 0
 

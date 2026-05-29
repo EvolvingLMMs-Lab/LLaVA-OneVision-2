@@ -1,0 +1,56 @@
+name: Update community JSON
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Daily refresh so stargazer counts on the site stay reasonably current.
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-community-json
+  cancel-in-progress: false
+
+jobs:
+  build-community-json:
+    # Skip the run we triggered ourselves to avoid an infinite loop.
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build community.json (contributors + stargazers)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python docs/build_community_json.py \
+            --owner "${GITHUB_REPOSITORY%/*}" \
+            --repo  "${GITHUB_REPOSITORY#*/}" \
+            --add   YunyaoYan:1
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          path=docs/page/assets/community.json
+          if [[ -z "$(git status --porcelain "$path")" ]]; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git add "$path"
+          git commit -m "docs(page): refresh community.json"
+          git push
