@@ -18,12 +18,14 @@
   <body>
     <nav class="site-navbar">
       <a href="../index.html" class="nav-item" aria-label="Back to LLaVA-OneVision-2">&larr; Back to LLaVA-OneVision-2</a>
-      <div class="theme-switcher">
-        <button data-theme="blue" class="theme-dot active" style="--dot-color:#2563eb" aria-label="Blue theme"></button>
-        <button data-theme="dark" class="theme-dot" style="--dot-color:#0f172a" aria-label="Dark theme"></button>
-        <button data-theme="forest" class="theme-dot" style="--dot-color:#166534" aria-label="Forest theme"></button>
-        <button data-theme="warm" class="theme-dot" style="--dot-color:#d97706" aria-label="Warm theme"></button>
-        <button data-theme="mono" class="theme-dot" style="--dot-color:#171717" aria-label="Mono theme"></button>
+      <div class="theme-switcher" role="group" aria-label="Theme">
+        <span class="theme-thumb" aria-hidden="true"></span>
+        <button data-theme="blue" class="theme-seg active" aria-label="Light theme" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button data-theme="dark" class="theme-seg" aria-label="Dark theme" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </button>
       </div>
       <button class="nav-item" type="button" id="lang-toggle">中文</button>
     </nav>
@@ -193,28 +195,34 @@
     </footer>
 
     <script>
-      const dots = document.querySelectorAll('.theme-dot');
+      const switcher = document.querySelector('.theme-switcher');
+      const dots = document.querySelectorAll('.theme-seg');
       const root = document.documentElement;
-      
+
+      function highlight(theme) {
+        if (switcher) switcher.setAttribute('data-active', theme === 'dark' ? 'dark' : 'blue');
+        dots.forEach(d => {
+          const isActive = d.getAttribute('data-theme') === theme;
+          d.classList.toggle('active', isActive);
+          d.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+      }
+
       const savedTheme = localStorage.getItem('llava-onevision-2-theme');
       if (savedTheme) {
-        document.body.setAttribute('data-theme', savedTheme);
-        dots.forEach(d => {
-          if (d.getAttribute('data-theme') === savedTheme) {
-            d.classList.add('active');
-          } else {
-            d.classList.remove('active');
-          }
-        });
+        root.dataset.theme = savedTheme;
+        highlight(savedTheme);
+      } else {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        highlight(prefersDark ? 'dark' : 'blue');
       }
 
       dots.forEach(dot => {
         dot.addEventListener('click', () => {
           const theme = dot.getAttribute('data-theme');
-          document.body.setAttribute('data-theme', theme);
+          root.dataset.theme = theme;
           localStorage.setItem('llava-onevision-2-theme', theme);
-          dots.forEach(d => d.classList.remove('active'));
-          dot.classList.add('active');
+          highlight(theme);
         });
       });
 

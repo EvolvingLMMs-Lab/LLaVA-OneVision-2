@@ -16,7 +16,7 @@ href="docs/page/assets/wechat.png">WeChat Group</a></b> 👈
 </p>
 
 <p align="center">
-🤗 <b>2 <a href="#models">Models</a></b> · <b><a href="#datasets">Datasets</a></b> · <b><a
+🤗 <b>2 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct">Models</a></b> · <b><a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data">Datasets</a></b> · <b><a
 href="https://arxiv.org/pdf/2605.25979">Technical Report</a></b> · <b><a
 href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b> · <b><a
 href="https://huggingface.co/spaces/FeilongTang/OneVision-Encoder-Codec-View">Codec&nbsp;Playground</a></b> · <b><a
@@ -490,8 +490,8 @@ If you find *LLaVA-OneVision-2* useful in your research, please consider to cite
 
 ```
 @inproceedings{LLaVA-OneVision-2,
-  title={LLaVA-OneVision-2},
-  author={llava-onevision contributors},
+  title={LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence},
+  author={An, Xiang and Xie, Yin and Tang, Feilong and Yan, Yunyao and Tan, Huajie and Zhu, Didi and Chen, Changrui and Zhao, Xiuwei and Qin, Bin and Yang, Kaicheng and Shen, Yifei and Zhang, Yuanhan and Zhang, Kaichen and Zhang, Wenkang and Cheng, Zheng and Zhang, Nansen and Wu, Chunsheng and Ge, Chunjiang and Ran, Zimin and Song, Dehua and Li, Chunyuan and Feng, Shikun and Hu, Ming and Chen, Zhangquan and Niu, Junbo and Li, Bo and Feng, Ziyong and Liu, Ziwei and Ge, Zongyuan and Deng, Jiankang},
   booktitle={arXiv},
   year={2026}
 }
