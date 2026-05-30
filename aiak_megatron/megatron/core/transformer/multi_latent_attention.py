@@ -88,7 +88,7 @@ class MultiLatentAttention(Attention):
         self.key_hidden_size = self.q_head_dim
         self.val_hidden_size = self.config.v_head_dim
 
-        mscale = _yarn_get_mscale(self.config.rotary_scaling_factor, self.config.mscale)
+        mscale = _yarn_get_mscale(self.config.rotary_scaling_factor, self.config.mscale_all_dim)
         self.softmax_scale = mscale * mscale / math.sqrt(self.q_head_dim)
 
         if self.config.rope_type == "rope":
@@ -102,7 +102,7 @@ class MultiLatentAttention(Attention):
                 self.config.qk_pos_emb_head_dim,
                 rotary_base=self.config.rotary_base,
                 scaling_factor=self.config.rotary_scaling_factor,
-                original_max_position_embeddings=self.config.max_position_embeddings,
+                original_max_position_embeddings=self.config.original_max_position_embeddings,
                 beta_fast=self.config.beta_fast,
                 beta_slow=self.config.beta_slow,
                 mscale=self.config.mscale,
