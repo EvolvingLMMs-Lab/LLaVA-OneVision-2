@@ -12,7 +12,7 @@
 
 <p align="center">
 👉 <b><a
-href="docs/page/assets/wechat.png">WeChat Group</a></b> 👈
+href="https://github.com/anxiangsir/ov2_asset/blob/main/wechat.jpg">WeChat Group</a></b> 👈
 </p>
 
 <p align="center">
