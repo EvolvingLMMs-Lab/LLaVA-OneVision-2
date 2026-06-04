@@ -40,6 +40,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 <!-- TOC -->
 - [Introduction](#introduction)
 - [Results](#evaluation-results)
+- [Evaluation Reproduction](#evaluation-reproduction)
 - [Method](#method)
 - [Models](#models)
 - [Datasets](#datasets)
@@ -95,6 +96,18 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
     <img src="asset/method_codec_vs_frame_light.svg" width="100%" alt="Codec-aligned sampling compared with uniform frame sampling across video benchmarks">
   </picture>
 </p>
+
+## Evaluation Reproduction
+
+The evaluation settings behind the reported LLaVA-OneVision-2 results are
+published in the `llava-onevision2` branch of `lmms-eval`:
+
+- Branch: https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/llava-onevision2
+- Reproduction guide: https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/llava-onevision2/README.md
+
+That branch includes the exact evaluation model wrapper, benchmark/task
+configs, Docker environment, and thin launcher scripts used to reproduce the
+reported numbers for both the frames backend and the codec backend.
 
 
 ## Method
