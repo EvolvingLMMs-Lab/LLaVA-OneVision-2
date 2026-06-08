@@ -58,7 +58,12 @@ jobs:
           fi
           git add "$path"
           git commit -m "docs(page): refresh community.json"
-          git push
+          # Daily cron and any other concurrent bot push (e.g. reademe-contributors)
+          # can land a commit on main between our checkout and our push. Without
+          # this rebase the push is rejected with "fetch first"; --autostash also
+          # covers the case where the workflow file itself was edited in that gap.
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
 
       # Deploy Pages in the same workflow. We intentionally do NOT re-checkout
       # between the push and these steps — the working tree still has the

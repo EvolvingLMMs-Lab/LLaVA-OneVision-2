@@ -57,4 +57,9 @@ jobs:
           fi
           git add "${paths[@]}"
           git commit -m "docs(readme): refresh contributors SVG"
-          git push
+          # Guard against a concurrent bot push landing on main between our
+          # checkout and our push (would otherwise fail with "fetch first").
+          # --autostash covers the case where the workflow file itself was
+          # edited in the same gap.
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
