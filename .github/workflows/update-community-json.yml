@@ -11,8 +11,12 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
+  # Bot-driven community refresh + pages deploy share this lock so we never
+  # run two deploys against the same Pages environment in parallel.
   group: update-community-json
   cancel-in-progress: false
 
@@ -23,13 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -43,6 +47,7 @@ jobs:
             --add   YunyaoYan:1
 
       - name: Commit and push if changed
+        id: push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -54,3 +59,21 @@ jobs:
           git add "$path"
           git commit -m "docs(page): refresh community.json"
           git push
+
+      # Deploy Pages in the same workflow. We intentionally do NOT re-checkout
+      # between the push and these steps — the working tree still has the
+      # community.json we just committed, which is what we want uploaded as
+      # the artifact.
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/page
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
