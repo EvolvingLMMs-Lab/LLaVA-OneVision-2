@@ -51,6 +51,11 @@ def llavaov_2_model_provider(
         setattr(vision_config, k, v)
     for k, v in asdict(get_adapeter_config(model_family, args.model_name)).items():
         setattr(adapter_config, k, v)
+    # The adapter's linears use parallel_mode=None (non-tensor-parallel), so there is
+    # no TP communication to overlap. Disable tp_comm_overlap for the adapter config
+    # (mirrors vision_config above); otherwise TELinear asserts on a missing ub buffer
+    # name when --tp-comm-overlap is enabled.
+    adapter_config.tp_comm_overlap = False
     # print(vision_config)
     setattr(language_config, "image_token_id", 151655)
     setattr(language_config, "video_token_id", 151656)
