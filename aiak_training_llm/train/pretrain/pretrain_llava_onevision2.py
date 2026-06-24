@@ -168,6 +168,30 @@ def get_batch(data_iterator):
             max_seqlen_kv=max_lengths[0].item(),
         )
 
+        # Cover the packing-pad tail under Sequence Parallel / Context Parallel.
+        # The offline packer can leave cu_seqlens[-1] < tokens.shape[1] (a few
+        # trailing pad tokens that belong to no attention segment). This is
+        # tolerated without SP/CP, but under SP/CP the sequence is scattered
+        # across ranks then gathered for attention; a physical-width vs
+        # logical-cu_seqlens mismatch corrupts the gather and produces NaN
+        # gradients in linear_fc2 backward at iteration 1. Adding the tail as its
+        # own self-attending, loss-masked segment makes cu_seqlens[-1] == width
+        # without altering real-token attention or loss.
+        if args.sequence_parallel or args.context_parallel_size > 1:
+            _phys_len = tokens.shape[1]
+            _last_boundary = int(packed_seq_params.cu_seqlens_q[-1].item())
+            if _last_boundary < _phys_len:
+                _tail_len = _phys_len - _last_boundary
+                _tail_end = packed_seq_params.cu_seqlens_q[-1:] + _tail_len
+                packed_seq_params = PackedSeqParams(
+                    qkv_format="thd",
+                    cu_seqlens_q=torch.cat([packed_seq_params.cu_seqlens_q, _tail_end]),
+                    cu_seqlens_kv=torch.cat([packed_seq_params.cu_seqlens_kv, _tail_end]),
+                    max_seqlen_q=max(packed_seq_params.max_seqlen_q, _tail_len),
+                    max_seqlen_kv=max(packed_seq_params.max_seqlen_kv, _tail_len),
+                )
+                loss_mask[:, -_tail_len:] = 0
+
     # Pad sequence for Sequence Parallelism (SP) divisibility.
     # SP requires sequence length to be divisible by TP size;
     # when combined with CP, it must be divisible by TP * CP * 2.
