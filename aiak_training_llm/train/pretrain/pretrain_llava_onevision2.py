@@ -234,6 +234,12 @@ def get_batch(data_iterator):
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
 
+    if __import__('os').environ.get('MFU_DBG','0')=='1' and locals().get('packed_seq_params') is not None:
+        _cs=packed_seq_params.cu_seqlens_q.to('cpu')
+        _d=(_cs[1:]-_cs[:-1]).tolist()
+        _sumsq=sum(x*x for x in _d)
+        if (not __import__('torch').distributed.is_initialized()) or __import__('torch').distributed.get_rank()==0:
+            print('[MFU_DBG] width=%d nseg=%d sumsq=%d maxseg=%d' % (tokens.shape[1], len(_d), _sumsq, max(_d) if _d else 0), flush=True)
     # TODO
     attn_mask_type = AttnMaskType.causal
     attn_mask = None
