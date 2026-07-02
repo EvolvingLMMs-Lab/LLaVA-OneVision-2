@@ -223,10 +223,17 @@ class LlavaOnevision2(MegatronModule):
             image_embeddings = None
         elif self.add_encoder:
             if images is not None:
+                _prof = __import__('os').environ.get('PROF_TAGS') == '1'
+                if _prof:
+                    torch.cuda.synchronize(); _vt0 = __import__('time').perf_counter()
                 image_embeddings = self.vision_model(
                     images, grid_thw=image_grid_thw, patch_positions=patch_positions
                 )  # [img_len, h_vision]
                 image_embeddings = self.adapter(image_embeddings)
+                if _prof:
+                    torch.cuda.synchronize()
+                    if (not torch.distributed.is_initialized()) or torch.distributed.get_rank() == 0:
+                        print('[PROF_TAGS] vision+adapter fwd: %.1f ms' % ((__import__('time').perf_counter() - _vt0) * 1000), flush=True)
 
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]

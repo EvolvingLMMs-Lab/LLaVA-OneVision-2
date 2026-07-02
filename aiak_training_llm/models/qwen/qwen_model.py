@@ -288,7 +288,14 @@ class QwenModel(LanguageModule):
             # [s b h] => [b s h]
             return logits.transpose(0, 1).contiguous()
 
+        _prof = __import__('os').environ.get('PROF_TAGS') == '1'
+        if _prof:
+            __import__('torch').cuda.synchronize(); _ct0 = __import__('time').perf_counter()
         loss = self.compute_language_model_loss(labels, logits)
+        if _prof:
+            __import__('torch').cuda.synchronize()
+            if (not __import__('torch').distributed.is_initialized()) or __import__('torch').distributed.get_rank() == 0:
+                print('[PROF_TAGS] cross_entropy fwd: %.1f ms' % ((__import__('time').perf_counter() - _ct0) * 1000), flush=True)
 
         return loss
 
