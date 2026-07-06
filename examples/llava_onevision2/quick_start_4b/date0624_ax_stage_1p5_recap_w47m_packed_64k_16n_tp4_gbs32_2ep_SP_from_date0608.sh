@@ -51,7 +51,7 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}
 OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/baseline/checkpoints/date0624-recap-w47m-packed-64k-16n-tp4-gbs32-2ep-SP-from-date0608}"
 DATA_PATH=${DATA_PATH:-"/vlm/yinxie/code/yamls/mixed_6sets_packed_64k/mixed_6sets_packed_64k/dataset_fix_recap_w47m_20260624.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/code/OV21/baseline/checkpoints/date0624-recap-w47m-packed-64k-16n-tp4-gbs32-2ep-SP-from-date0608/date0624_ax_stage_1p5_recap_w47m_packed_64k_16n_tp4_gbs32_2ep_SP_from_date0608"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/code/OV21/baseline/checkpoints/date0608-release-load-TP4"}
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
