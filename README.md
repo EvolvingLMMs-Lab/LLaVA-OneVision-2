@@ -12,7 +12,7 @@
 
 <p align="center">
 👉 <b><a
-href="https://github.com/anxiangsir/ov2_asset/blob/main/wechat.jpg">WeChat Group</a></b> 👈
+href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a></b> 👈
 </p>
 
 <p align="center">
@@ -20,6 +20,7 @@ href="https://github.com/anxiangsir/ov2_asset/blob/main/wechat.jpg">WeChat Group
 href="https://arxiv.org/pdf/2605.25979">Technical Report</a></b> · <b><a
 href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b> · <b><a
 href="https://huggingface.co/spaces/FeilongTang/OneVision-Encoder-Codec-View">Codec&nbsp;Playground</a></b> · <b><a
+href="https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/">vLLM</a></b> · <b><a
 href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 </p>
 
