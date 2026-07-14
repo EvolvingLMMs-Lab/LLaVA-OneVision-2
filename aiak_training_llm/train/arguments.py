@@ -389,6 +389,13 @@ def _add_extra_multimodal_args(parser):
     group.add_argument("--dataloader-save", type=str, default=None,
                        help="Energon dataloader state save path")
 
+    group.add_argument("--vision-frame-windows-size", type=int, default=None,
+                       help="ViT temporal attention window in frames. Video samples are "
+                            "split into windows of this many frames and self-attention is "
+                            "confined within each window (packed cu_seqlens segments). "
+                            "0 disables splitting (full-video attention). "
+                            "Default None keeps the VisionConfig default (4).")
+
     group.add_argument("--packing-pretrain-data", action='store_true',
                        help="Whether to pack multiple pretrain data into one.")
 
