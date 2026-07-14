@@ -49,6 +49,10 @@ def llavaov_2_model_provider(
     model_family = get_model_family(args.model_name)
     for k, v in asdict(get_vision_config(model_family, args.model_name)).items():
         setattr(vision_config, k, v)
+    # CLI override for the ViT temporal attention window (--vision-frame-windows-size);
+    # None = keep the VisionConfig default.
+    if getattr(args, "vision_frame_windows_size", None) is not None:
+        vision_config.frame_windows_size = args.vision_frame_windows_size
     for k, v in asdict(get_adapeter_config(model_family, args.model_name)).items():
         setattr(adapter_config, k, v)
     # The adapter's linears use parallel_mode=None (non-tensor-parallel), so there is
