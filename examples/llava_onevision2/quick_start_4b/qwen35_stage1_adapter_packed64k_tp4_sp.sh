@@ -14,12 +14,16 @@
 #   * --load = the TP4 mcore ckpt converted from the merged Qwen3.5 HF model.
 #   * SP + M-RoPE fix (commit 21fc2db) is required and already in this tree.
 #
-# >>> CRITICAL DATA PREREQUISITE <<<
-#   The packed dataset MUST be re-packed/re-tokenized with the Qwen3.5
-#   tokenizer (248320 vocab; image/video/vision token ids 248056/57/53/54).
-#   The existing p16m33-packed bins hold Qwen2/Qwen3 token ids (151655 image
-#   token, 151936 vocab) and would feed WRONG ids to the Qwen3.5 model.
-#   Point DATA_PATH at a Qwen3.5-tokenized packed 64k yaml before a real run.
+# DATA: the offline-packed webdataset stores RAW conversation text + image
+#   bytes (NOT pre-tokenized ids); tokenization is done live at load with
+#   --hf-tokenizer-path. So the EXISTING mixed_64k bins are reused as-is with
+#   the Qwen3.5 tokenizer -- no re-tokenization needed. The only tokenizer-
+#   dependent artifact is the bin grouping (s2/s3 token-length packing): if
+#   Qwen3.5 token counts per sample differ enough from the packing tokenizer,
+#   near-64k bins may overflow and get dropped at load. If that loss is
+#   material, re-run ONLY offline_packing s2(+s3+s4) with the Qwen3.5
+#   tokenizer to re-bin (no image reprocessing). Image token count is
+#   unchanged (depends on merge3, not the text tokenizer).
 #
 # Stage: default trains the ADAPTER ONLY (the merged model ships a randomly
 #   initialized merger/adapter — align it first).  Set TRAINABLE to
@@ -42,8 +46,8 @@ AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/qwen35/checkpoints}"
-# CRITICAL: must be a Qwen3.5-tokenizer packed dataset (see header). Placeholder:
-DATA_PATH=${DATA_PATH:-"/vlm/yinxie/code/yamls/qwen35_packed_64k/REPLACE_WITH_QWEN35_PACKED.yaml"}
+# Existing mixed_64k packed webdataset (raw text + images; tokenized live).
+DATA_PATH=${DATA_PATH:-"/vlm/yinxie/code/yamls/mixed_6sets_packed_64k/mixed_6sets_packed_64k/dataset_fix_recap_w47m_20260624.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/vlm/yinxie/pretrain_models/ov2_qwen35_processor"}
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1"}
 
