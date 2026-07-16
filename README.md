@@ -11,9 +11,9 @@
 </p>
 
 <p align="center">
-  <em>The core work on this project was led by <b>Glint Lab</b>.
-  For an interactive online experience, visit
-  <a href="https://ve2s.ai/">ve2s.ai</a>.</em>
+  <b>🌟 The core work on this project is led by <a href="https://www.glint-mvt.com">Glint Lab</a> 🌟</b>
+  <br>
+  <sub>For an interactive online experience, visit <a href="https://ve2s.ai/">ve2s.ai</a>.</sub>
 </p>
 
 <p align="center">
