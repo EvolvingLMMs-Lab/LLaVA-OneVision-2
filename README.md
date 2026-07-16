@@ -10,18 +10,15 @@
   <strong>Fully Open Framework for Democratized Multimodal Training</strong>
 </p>
 
-<p align="center">
-  <a href="https://www.glint-mvt.com">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="asset/glint_lab_dark.svg">
-      <img alt="The core work on this project is led by Glint Lab" src="asset/glint_lab_light.svg" width="720" style="max-width: 100%;">
-    </picture>
-  </a>
-</p>
+<table align="center">
+<tr><td>
 
-<p align="center">
-  <sub>🌐 For an interactive online experience, visit <b><a href="https://ve2s.ai/">ve2s.ai</a></b>.</sub>
-</p>
+> [!IMPORTANT]
+> 🌟 **The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).**
+> For an interactive online experience, visit **[ve2s.ai](https://ve2s.ai/)**.
+
+</td></tr>
+</table>
 
 <p align="center">
 👉 <b><a
