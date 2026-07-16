@@ -7,16 +7,155 @@ import shutil
 import tarfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import webdataset as wds
 from tqdm import tqdm
 
 from s4_pack_samples import PackSamplesConfig, SamplePacker
 from s5_convert_to_webdataset import WebDatasetConfig, WebDatasetConverter
+from image_preprocess import ImagePolicy
 
 
-def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any]) -> dict[str, Any]:
+# ---------------------------------------------------------------------------
+# Manifest helpers (new path; manifest mode is preferred)
+# ---------------------------------------------------------------------------
+
+def load_manifest_index(manifest_path: str) -> dict[str, dict[str, Any]]:
+    """Load manifest.jsonl into a dict keyed by ``name``."""
+    if not manifest_path:
+        return {}
+    if not os.path.exists(manifest_path):
+        raise FileNotFoundError(f"Manifest file not found: {manifest_path}")
+    index: dict[str, dict[str, Any]] = {}
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            rec = json.loads(line)
+            name = rec.get("name")
+            if name:
+                index[name] = rec
+    return index
+
+
+def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
+    list[str], list[str], list[str], list[Optional[str]], Any, int
+]:
+    """Mirror of ``SamplePacker._extract_bmr_content`` but for a manifest entry.
+
+    Returns:
+        (images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal)
+    """
+    raw = entry.get("raw", {}) or {}
+    images_abs = list(entry.get("images_abs") or [])
+    patch_pos_abs = list(entry.get("patch_pos_abs") or [])
+
+    fps = raw.get("fps", None)
+    timestamp_decimal = raw.get("timestamp_decimal", 1)
+    if timestamp_decimal is None:
+        timestamp_decimal = 1
+
+    messages = raw.get("messages") or raw.get("conversations") or []
+    prompts: list[str] = []
+    responses: list[str] = []
+    for msg in messages:
+        if not isinstance(msg, dict):
+            continue
+        role = msg.get("role", "")
+        content = msg.get("content", "")
+        if role in ("human", "user"):
+            prompts.append(content)
+        elif role in ("gpt", "assistant"):
+            responses.append(content)
+
+    return images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal
+
+
+def build_direct_sample_from_manifest(
+    bin_index: int, bin_data: list[Any], manifest_index: dict[str, dict[str, Any]],
+    image_policy: Optional[ImagePolicy] = None,
+) -> dict[str, Any]:
+    """Build a webdataset sample dict from a bin using a manifest index.
+
+    All image / npy reads happen directly from the absolute paths recorded in
+    the manifest -- no per-sample JSON files are required.
+    """
+    sample_key = f"ps_{bin_index:08d}"
+    sample: dict[str, Any] = {"__key__": sample_key}
+
+    packed_images: list[list[str]] = []
+    packed_prompts: list[list[str]] = []
+    packed_captions: list[list[str]] = []
+    packed_patch_positions: list[list[str]] = []
+    packed_fps: list[Any] = []
+    packed_timestamp_decimals: list[int] = []
+
+    for sample_idx, item in enumerate(bin_data):
+        raw_name = str(item["name"])
+        entry = manifest_index.get(raw_name)
+        if entry is None:
+            raise FileNotFoundError(f"Sample {raw_name} not found in manifest")
+
+        images, prompts, responses, patch_positions, fps, timestamp_decimal = (
+            _extract_bmr_from_manifest_entry(entry)
+        )
+
+        sample_image_names: list[str] = []
+        sample_patch_position_names: list[str] = []
+
+        for img_idx, img_src in enumerate(images):
+            if not img_src:
+                continue
+
+            img_payload_name = f"img{sample_idx:03d}_sub{img_idx:03d}.jpg"
+            sample_image_names.append(img_payload_name)
+
+            with open(img_src, "rb") as f:
+                img_bytes = f.read()
+            if image_policy is not None and image_policy.enabled:
+                img_bytes, _info = image_policy.apply_to_bytes(img_bytes, src_name=img_src)
+            sample[f"img{sample_idx}_{img_idx}.jpg"] = img_bytes
+
+            pp_payload_name = ""
+            if img_idx < len(patch_positions):
+                pp_src = patch_positions[img_idx]
+                if pp_src:
+                    with open(pp_src, "rb") as f:
+                        sample[f"img{sample_idx}_{img_idx}.npy"] = f.read()
+                    pp_payload_name = f"img{sample_idx:03d}_sub{img_idx:03d}.npy"
+
+            sample_patch_position_names.append(pp_payload_name)
+
+        packed_images.append(sample_image_names)
+        packed_patch_positions.append(sample_patch_position_names)
+        packed_prompts.append(prompts if prompts else [""])
+        packed_captions.append(responses if responses else [""])
+        packed_fps.append(fps)
+        packed_timestamp_decimals.append(timestamp_decimal)
+
+    payload: dict[str, Any] = {
+        "images": packed_images,
+        "prompts": packed_prompts,
+        "captions": packed_captions,
+        "sample_count": len(packed_images),
+        "patch_positions": packed_patch_positions,
+    }
+    if any(fps is not None for fps in packed_fps):
+        payload["fps"] = packed_fps
+    payload["timestamp_decimal"] = packed_timestamp_decimals
+
+    sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    return sample
+
+
+# ---------------------------------------------------------------------------
+# Legacy path (per-sample JSON files on disk via s4_pack_samples.SamplePacker)
+# ---------------------------------------------------------------------------
+
+def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any],
+                        image_policy: Optional[ImagePolicy] = None) -> dict[str, Any]:
     sample_key = f"ps_{bin_index:08d}"
     sample: dict[str, Any] = {"__key__": sample_key}
 
@@ -50,7 +189,10 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
             sample_image_names.append(img_payload_name)
 
             with open(img_src, "rb") as f:
-                sample[f"img{sample_idx}_{img_idx}.jpg"] = f.read()
+                img_bytes = f.read()
+            if image_policy is not None and image_policy.enabled:
+                img_bytes, _info = image_policy.apply_to_bytes(img_bytes, src_name=img_src)
+            sample[f"img{sample_idx}_{img_idx}.jpg"] = img_bytes
 
             pp_payload_name = ""
             if img_idx < len(patch_positions):
@@ -87,13 +229,16 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
 def process_chunk(
     chunk_id: int,
     bins_chunk: list[tuple[int, list[Any]]],
-    config: PackSamplesConfig,
+    config: Optional[PackSamplesConfig],
     output_dir: str,
     shard_prefix: str,
     max_samples_per_shard: int,
     max_shard_size: int,
+    manifest_index: Optional[dict[str, dict[str, Any]]] = None,
+    image_policy: Optional[ImagePolicy] = None,
 ) -> tuple[int, list[str]]:
-    packer = SamplePacker(config)
+    use_manifest = manifest_index is not None
+    packer = SamplePacker(config) if (not use_manifest and config is not None) else None
     shard_pattern = os.path.join(output_dir, f"{shard_prefix}-{chunk_id:03d}-%03d.tar")
     processed = 0
 
@@ -105,7 +250,10 @@ def process_chunk(
     ) as sink:
         for bin_index, bin_data in bins_chunk:
             try:
-                sample = build_direct_sample(packer, bin_index, bin_data)
+                if use_manifest:
+                    sample = build_direct_sample_from_manifest(bin_index, bin_data, manifest_index, image_policy)
+                else:
+                    sample = build_direct_sample(packer, bin_index, bin_data, image_policy)
             except (FileNotFoundError, OSError) as exc:
                 skipped += 1
                 print(
@@ -200,8 +348,14 @@ def finalize_output(output_dir: Path, shard_prefix: str, sample_class_name: str,
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert bins directly to WebDataset")
     parser.add_argument("--bins-file", required=True)
-    parser.add_argument("--source-dir", default="")
-    parser.add_argument("--source-dirs", default="")
+    parser.add_argument(
+        "--manifest",
+        default="",
+        help="Path to manifest.jsonl produced by s1_build_manifest.py. "
+             "When set, this is the preferred input and --source-dir/--source-dirs are ignored.",
+    )
+    parser.add_argument("--source-dir", default="", help="[legacy] per-sample json directory")
+    parser.add_argument("--source-dirs", default="", help="[legacy] comma-separated list")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--chunk-count", type=int, default=0)
@@ -213,23 +367,53 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resume-chunks", default="")
     parser.add_argument("--finalize-only", action="store_true", default=False)
     parser.add_argument("--skip-finalize", action="store_true", default=False)
+    # Image preprocessing policy (offline resize/re-encode)
+    parser.add_argument("--no-preprocess", action="store_true", default=False,
+                        help="Disable offline image resize/re-encode")
+    parser.add_argument("--longest-edge", type=int, default=3072,
+                        help="Cap on max(width, height); 0 to disable")
+    parser.add_argument("--jpeg-quality", type=int, default=92)
+    parser.add_argument("--max-pixels-offline", type=int, default=None,
+                        help="Optional max pixels cap (alternative/additional to longest-edge)")
+    parser.add_argument("--no-exif-transpose", action="store_true", default=False)
+    parser.add_argument("--no-force-jpeg", action="store_true", default=False,
+                        help="Do NOT recode PNG/WebP/etc to JPEG")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
 
-    source_dirs = [item.strip() for item in args.source_dirs.split(",") if item.strip()]
-    config = PackSamplesConfig(
-        bins_file=args.bins_file,
-        source_dir=args.source_dir,
-        source_dirs=source_dirs,
-        output_dir=args.output_dir,
-        task_type="bmr",
-        clear_output_dir=False,
-        workers=args.workers,
+    use_manifest = bool(args.manifest)
+
+    # Build image preprocessing policy (Q4=A: enabled by default).
+    from image_preprocess import policy_from_args
+    image_policy = policy_from_args(args, default_enabled=True)
+    print(
+        f"# image_policy: enabled={image_policy.enabled} longest_edge={image_policy.longest_edge} "
+        f"jpeg_quality={image_policy.jpeg_quality} exif_transpose={image_policy.exif_transpose} "
+        f"force_jpeg={image_policy.force_jpeg} max_pixels={image_policy.max_pixels}",
+        flush=True,
     )
-    config.validate()
+
+    manifest_index: dict[str, dict[str, Any]] = {}
+    config: Optional[PackSamplesConfig] = None
+
+    if use_manifest:
+        manifest_index = load_manifest_index(args.manifest)
+        print(f"# Loaded manifest with {len(manifest_index)} entries: {args.manifest}", flush=True)
+    else:
+        source_dirs = [item.strip() for item in args.source_dirs.split(",") if item.strip()]
+        config = PackSamplesConfig(
+            bins_file=args.bins_file,
+            source_dir=args.source_dir,
+            source_dirs=source_dirs,
+            output_dir=args.output_dir,
+            task_type="bmr",
+            clear_output_dir=False,
+            workers=args.workers,
+        )
+        config.validate()
 
     output_path = Path(args.output_dir)
     chunk_count = args.chunk_count or args.workers
@@ -283,6 +467,8 @@ def main() -> None:
                 args.shard_prefix,
                 args.max_samples_per_shard,
                 args.max_shard_size,
+                manifest_index if use_manifest else None,
+                image_policy,
             ): chunk_id
             for chunk_id in selected_chunk_ids
         }

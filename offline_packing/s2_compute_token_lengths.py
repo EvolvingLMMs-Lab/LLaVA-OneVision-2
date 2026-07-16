@@ -209,13 +209,106 @@ def get_resource_monitor() -> ResourceMonitor:
         _resource_monitor = ResourceMonitor()
     return _resource_monitor
 from jinja2 import Template
-from qwen_vl_utils import fetch_image
 
 from transformers import AutoProcessor
+from PIL import Image, ImageOps
 
 
-# Global cross-process counter (defined at module level for subprocess inheritance)
+def _load_image_pil(path: str) -> "Image.Image":
+    """Open + EXIF-transpose + RGB-convert. Caller passes PIL to HF processor,
+    so smart_resize alignment (patch_size * merge_size) is auto-applied."""
+    img = Image.open(path)
+    img.load()
+    img = ImageOps.exif_transpose(img)
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    return img
+
+
+# ============================================================================
+# Fast image-metadata path: read W/H from header without decoding pixels
+# ============================================================================
+# Speedup: 5-50× per image vs full PIL decode (no need to materialize RGB
+# array). Combined with smart_resize replica below, lets us compute exact
+# token counts byte-equal to the full-decode path.
+
+import math as _math
+
+
+def _read_image_size_fast(path: str) -> tuple[int, int]:
+    """Return (visual_height, visual_width) WITHOUT decoding pixel data.
+
+    Applies EXIF Orientation tag so the result matches what
+    ``ImageOps.exif_transpose`` would visually produce. Orientations
+    5/6/7/8 (rotate 90/270 with optional mirror) swap W and H; 1/2/3/4
+    keep dims unchanged.
+
+    Reads only the file header + EXIF block — no IDCT, no RGB buffer.
+
+    Raises:
+        Any PIL exception if the header cannot be parsed (HEIC without
+        plugin, corrupt header, etc.). Caller should fall back to full
+        decode on failure.
+    """
+    with Image.open(path) as img:
+        w, h = img.size  # PIL convention: (W, H)
+        if w <= 0 or h <= 0:
+            raise ValueError(f"invalid header size {w}x{h}")
+        orient = 1
+        try:
+            exif = img.getexif()
+            if exif is not None:
+                orient = int(exif.get(0x0112, 1))  # 0x0112 = Orientation
+        except Exception:
+            pass
+        if orient in (5, 6, 7, 8):
+            w, h = h, w
+        return h, w
+
+
+def _qwen2vl_smart_resize(
+    height: int,
+    width: int,
+    factor: int,
+    min_pixels: int,
+    max_pixels: int,
+) -> tuple[int, int]:
+    """Replica of transformers Qwen2-VL ``smart_resize`` (also used by
+    LLaVA-OneVision-2 image processor).
+
+    Aligns dimensions to ``factor`` (= patch_size * merge_size), then scales
+    to fit within ``[min_pixels, max_pixels]`` budget while keeping aspect
+    ratio. Returns (resized_height, resized_width) — both multiples of
+    ``factor`` so ``grid_h = rH // patch_size`` and ``grid_w = rW //
+    patch_size`` are integer multiples of ``merge_size``.
+    """
+    if max(height, width) / max(min(height, width), 1) > 200:
+        # Extreme aspect ratio: refuse fast path so caller falls back to
+        # full decode (where the processor will raise the same way).
+        raise ValueError(f"aspect ratio too extreme: {height}x{width}")
+    h_bar = round(height / factor) * factor
+    w_bar = round(width / factor) * factor
+    if h_bar * w_bar > max_pixels:
+        beta = _math.sqrt((height * width) / max_pixels)
+        h_bar = max(factor, _math.floor(height / beta / factor) * factor)
+        w_bar = max(factor, _math.floor(width / beta / factor) * factor)
+    elif h_bar * w_bar < min_pixels:
+        beta = _math.sqrt(min_pixels / max(height * width, 1))
+        h_bar = _math.ceil(height * beta / factor) * factor
+        w_bar = _math.ceil(width * beta / factor) * factor
+    return h_bar, w_bar
+
+
+# Global cross-process counter. Under 'fork' it is inherited by workers; under
+# 'spawn' each worker starts with None and must call `_init_worker` (Pool's
+# initializer hook) to receive a handle to the same shared mp.Value.
 global_total_counter: Optional[Value] = None
+
+
+def _init_worker(counter):
+    """Pool initializer: receive shared counter handle in spawned worker."""
+    global global_total_counter
+    global_total_counter = counter
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -260,7 +353,16 @@ Examples:
         "--data-dir",
         type=str,
         default=None,
-        help="Directory containing sample JSON files",
+        help="[legacy] Directory containing sample JSON files (used when --manifest is not given)",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=str,
+        default=None,
+        help=(
+            "Path to a manifest.jsonl produced by s1_build_manifest.py. "
+            "When given, --data-dir is ignored and absolute image/npy paths from the manifest are used."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -314,8 +416,8 @@ Examples:
     parser.add_argument(
         "--max-pixels",
         type=int,
-        default=12845056,
-        help="Maximum pixels for image resizing (default: 12845056)",
+        default=None,
+        help="Maximum pixels for image resizing (default: None, will use processor's config.json value)",
     )
 
     # Processing settings
@@ -402,6 +504,7 @@ def build_config_from_args(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "data": {
             "directory": args.data_dir,
+            "manifest": args.manifest,
             "output_base": output_base,
             "output_token": output_token,
         },
@@ -517,6 +620,46 @@ def find_valid_json_files(directory: Path) -> set[str]:
     return json_set
 
 
+def load_manifest(manifest_path: Path) -> dict[str, dict[str, Any]]:
+    """
+    Load a manifest.jsonl file into a dict keyed by ``name``.
+
+    Each manifest line is expected to have the schema produced by
+    ``s1_build_manifest.py``::
+
+        {"name": ..., "raw": {...}, "images_abs": [...], "patch_pos_abs": [...], ...}
+
+    Args:
+        manifest_path: Path to manifest.jsonl.
+
+    Returns:
+        Dict mapping sample name to its manifest entry.
+    """
+    manifest_path = Path(manifest_path)
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Manifest file not found: {manifest_path}")
+
+    entries: dict[str, dict[str, Any]] = {}
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        for ln_no, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError as exc:
+                logging.warning(f"manifest line {ln_no} is not valid JSON: {exc}")
+                continue
+            name = rec.get("name")
+            if not name:
+                logging.warning(f"manifest line {ln_no} missing 'name'; skipping")
+                continue
+            entries[name] = rec
+    logging.info(f"Loaded {len(entries)} entries from manifest: {manifest_path}")
+    return entries
+
+
+
 def find_paired_files(directory: Path) -> set[str]:
     """
     Find files that have both JSON and image counterparts.
@@ -609,22 +752,28 @@ def calculate_optimal_concurrency(total_samples: int, chunk_size: int) -> tuple[
     """
     cpu_count = multiprocessing.cpu_count()
     mem_gb = psutil.virtual_memory().total / (1024**3)
-    
-    # Estimate memory per process (processor + images): ~2-4GB
-    mem_per_process_gb = 3
+
+    # Estimate memory per process (processor + PIL decoded images + tensor cache).
+    # Empirically: HF processor with longest_edge=3072 -> ~10-12 GB RSS per worker
+    # under sustained load. Earlier value of 3 GB caused 60x worker fork on 256 GB
+    # machines, OOM and stall.
+    mem_per_process_gb = int(os.environ.get("S2_MEM_PER_PROC_GB", "12"))
     max_processes_by_mem = max(1, int(mem_gb * 0.7 / mem_per_process_gb))
-    
-    # Limit processes to CPU count or memory constraint
-    n_processes = min(cpu_count, max_processes_by_mem)
-    
+
+    # Hard upper cap to avoid fork storms regardless of CPU count.
+    hard_cap = int(os.environ.get("S2_MAX_PROCESSES", "16"))
+
+    # Limit processes to CPU count, memory constraint, and hard cap.
+    n_processes = min(cpu_count, max_processes_by_mem, hard_cap)
+
     # Calculate threads per process
     # Rule: processes * threads should not exceed 2 * cpu_count for I/O bound tasks
     total_threads_budget = cpu_count * 2
     n_threads = max(4, total_threads_budget // n_processes)
-    
-    # Cap threads to avoid excessive context switching
-    n_threads = min(n_threads, 32)
-    
+
+    # Cap threads to avoid excessive context switching and tensor memory peak.
+    n_threads = min(n_threads, int(os.environ.get("S2_MAX_THREADS_PER_PROC", "8")))
+
     total_chunks = (total_samples + chunk_size - 1) // chunk_size
     n_processes = min(n_processes, total_chunks)
     
@@ -656,7 +805,20 @@ class TokenLengthProcessor:
         self.task_type = config["sample"]["task_type"]
         self.del_one_token = config["sample"]["del_one_token"]
 
-        self.data_directory = Path(config["data"]["directory"])
+        # Manifest mode (preferred) or legacy data-dir mode
+        manifest_path = config["data"].get("manifest")
+        self.manifest_path: Optional[Path] = Path(manifest_path) if manifest_path else None
+        self.use_manifest: bool = self.manifest_path is not None
+
+        if self.use_manifest:
+            # In manifest mode, data_directory is unused. Set to manifest's parent for compat.
+            self.data_directory = self.manifest_path.parent
+        else:
+            data_dir = config["data"].get("directory")
+            if not data_dir:
+                raise ValueError("Either 'manifest' or 'directory' must be provided in config.data")
+            self.data_directory = Path(data_dir)
+
         self.output_file = Path(config["data"]["output_base"])
         self.token_info_file = Path(config["data"]["output_token"])
 
@@ -672,9 +834,16 @@ class TokenLengthProcessor:
 
         self.use_shm = config["logging"]["use_shm"]
         self.temp_dir = "/dev/shm" if self.use_shm else None
-        
+
         # NPY mode control
         self.no_npy = config.get("processing_mode", {}).get("no_npy", False)
+
+        # Persistent stage0 directory for resume-on-restart.
+        # Lives next to token_info.txt so the same output dir owns all artifacts.
+        # Worker writes `stage0_chunk_{idx:05d}.txt` atomically (via tmp+rename),
+        # main() scans existing ones on startup and skips them.
+        self.resume_dir = self.token_info_file.parent / "stage0_persistent"
+        self.resume_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize chat template based on task type
         self._init_template()
@@ -749,25 +918,10 @@ class TokenLengthProcessor:
                     img_input = []
                     for cur_img in json_data["images"]:
                         cur_img_path = str(self.data_directory / cur_img)
-                        img = fetch_image(
-                            {
-                                "type": "image",
-                                "image": cur_img_path,
-                                "min_pixels": self.min_pixels,
-                                "max_pixels": self.max_pixels,
-                            }
-                        )
-                        img_input.append(img)
+                        img_input.append(_load_image_pil(cur_img_path))
                 else:
                     # Single image sample
-                    img_input = fetch_image(
-                        {
-                            "type": "image",
-                            "image": img_path,
-                            "min_pixels": self.min_pixels,
-                            "max_pixels": self.max_pixels,
-                        }
-                    )
+                    img_input = _load_image_pil(img_path)
 
             # Compute token length
             base_name = Path(json_path).stem
@@ -820,9 +974,9 @@ class TokenLengthProcessor:
             return (None, 0)
 
         def sort_key(line: str) -> int:
-            """Extract token length for sorting."""
-            _, token_str = line.strip().split(":", 1)
-            return int(token_str)
+            """Extract token length for sorting. Line format: name:token_len[:patch_count]."""
+            parts = line.strip().split(":")
+            return int(parts[1])
 
         try:
             filtered_count = 0
@@ -841,11 +995,12 @@ class TokenLengthProcessor:
 
                 # Merge sort and filter by max token length
                 for _, line in merge(*iterators, key=lambda x: x[0]):
-                    _, token_str = line.strip().split(":", 1)
-                    if int(token_str) <= self.max_token_len:
+                    parts = line.strip().split(":")
+                    token_val = int(parts[1])
+                    if token_val <= self.max_token_len:
                         out_f.write(line)
                     else:
-                        self.logger.debug(f"Token length {token_str} > {self.max_token_len}: filtered")
+                        self.logger.debug(f"Token length {token_val} > {self.max_token_len}: filtered")
                         filtered_count += 1
 
                 # Close all file handles
@@ -999,27 +1154,57 @@ def process_chunk(args: tuple) -> Optional[str]:
         temp_dir,
         sample_timeout,  # Timeout per sample in seconds
         no_npy,  # Disable NPY mode flag
+        resume_dir,  # Persistent stage0 directory (str path) for resume-on-restart
     ) = args
 
     processor = None
     processed_count = 0
     logger = logging.getLogger(__name__)
 
+    # libc handle for malloc_trim — forces glibc to return free pages to OS,
+    # avoiding monotonic RSS growth in long-lived workers.
     try:
-        # Initialize processor (each subprocess needs its own instance)
-        processor = AutoProcessor.from_pretrained(
-            ckpt_dir,
-            min_pixels=min_pixels,
-            max_pixels=max_pixels,
-            trust_remote_code=True,
-            use_fast=False,
-        )
+        import ctypes as _ctypes
+        _libc = _ctypes.CDLL("libc.so.6")
+    except Exception:
+        _libc = None
 
-        # Extract spatial merge_size from the image processor for NPY-mode token math.
-        # Patch tokens after spatial merging = npy.shape[0] // (merge_size ** 2).
-        # Default to 2 (Qwen2-VL / Qwen2.5-VL) if not present, but log it loudly.
-        image_processor = getattr(processor, "image_processor", None)
+    try:
+        # FAST_TOKENIZER=1 (default 0 for safety): skip AutoProcessor entirely.
+        # AutoProcessor pulls image_processor + tokenizer + chat_template +
+        # builds tensors per call, costing ~1.5-2 GB baseline RSS per worker.
+        # With fast tokenizer we only need:
+        #   * tokenizer.encode(text)        → text token count
+        #   * _read_image_size_fast(path)   → header-only W/H
+        #   * _qwen2vl_smart_resize(...)    → grid_h/w
+        # Cuts worker baseline to ~700 MB, enables 2-3x more parallelism.
+        use_fast_tokenizer = os.environ.get("FAST_TOKENIZER", "0") == "1"
+
+        # Initialize processor (each subprocess needs its own instance).
+        # Pass min/max_pixels ONLY when explicitly set; otherwise honor processor_config.json.
+        ap_kwargs = dict(trust_remote_code=True, use_fast=False)
+        if min_pixels is not None:
+            ap_kwargs["min_pixels"] = min_pixels
+        if max_pixels is not None:
+            ap_kwargs["max_pixels"] = max_pixels
+
+        tokenizer = None
+        image_processor = None
+        if use_fast_tokenizer:
+            # Need image_processor to read patch_size / merge_size / min/max pixels.
+            # AutoImageProcessor is lightweight (no tokenizer, no tensors).
+            from transformers import AutoTokenizer, AutoImageProcessor
+            tokenizer = AutoTokenizer.from_pretrained(ckpt_dir, trust_remote_code=True)
+            image_processor = AutoImageProcessor.from_pretrained(
+                ckpt_dir, trust_remote_code=True, use_fast=False,
+            )
+            processor = None  # not used in this path
+        else:
+            processor = AutoProcessor.from_pretrained(ckpt_dir, **ap_kwargs)
+            image_processor = getattr(processor, "image_processor", None)
+            tokenizer = getattr(processor, "tokenizer", None)
         merge_size = getattr(image_processor, "merge_size", None) if image_processor is not None else None
+        patch_size = getattr(image_processor, "patch_size", None) if image_processor is not None else None
         if merge_size is None:
             merge_size = 2
             logger.warning(
@@ -1027,7 +1212,45 @@ def process_chunk(args: tuple) -> Optional[str]:
                 f"This will give WRONG NPY token counts for models with merge_size != 2."
             )
         merge_factor = int(merge_size) ** 2
-        logger.info(f"NPY-mode token math: merge_size={merge_size}, merge_factor={merge_factor}")
+
+        # Fast-header-path parameters (read from processor; fall back gracefully)
+        ip_size = getattr(image_processor, "size", None) or {}
+        ip_min_pixels = (
+            getattr(image_processor, "min_pixels", None)
+            or (ip_size.get("shortest_edge") if isinstance(ip_size, dict) else None)
+            or 3136
+        )
+        ip_max_pixels = (
+            getattr(image_processor, "max_pixels", None)
+            or (ip_size.get("longest_edge") if isinstance(ip_size, dict) else None)
+            or 12845056
+        )
+        _factor = int(patch_size or 16) * int(merge_size)
+        # FAST_IMG_META=1 (default) → read W/H from header, skip pixel decode.
+        # Set FAST_IMG_META=0 to force legacy full-decode path (for A/B testing).
+        use_fast_img_meta = os.environ.get("FAST_IMG_META", "1") == "1"
+
+        # Lightweight text token counter. Uses tokenizer.encode (just an int list
+        # of token IDs) when FAST_TOKENIZER=1; falls back to processor(text=[...])
+        # which materializes input_ids tensor + attention_mask + padding.
+        def _count_text_tokens(txt: str) -> int:
+            if use_fast_tokenizer:
+                return len(tokenizer.encode(txt, add_special_tokens=False))
+            out = processor(
+                text=[txt], images=None, videos=None,
+                padding=True, return_tensors="pt",
+            )
+            n = out["input_ids"].shape[1]
+            del out
+            return n
+
+        logger.info(
+            f"Processor loaded: patch_size={patch_size}, merge_size={merge_size}, "
+            f"factor={(patch_size or 0) * int(merge_size)}, merge_factor={merge_factor}, "
+            f"effective min_pixels={getattr(image_processor, 'min_pixels', None)}, "
+            f"max_pixels={getattr(image_processor, 'max_pixels', None)}, "
+            f"fast_img_meta={use_fast_img_meta}, fast_tokenizer={use_fast_tokenizer}"
+        )
 
         # Initialize template based on task type
         if task_type == "pretrain":
@@ -1051,10 +1274,44 @@ def process_chunk(args: tuple) -> Optional[str]:
 
         data_directory = Path(data_directory)
 
-        # Generate file paths for current chunk
-        # Each sample will have: (json_path, img_path, npy_path) tuple
-        full_paths = []
-        for fn in chunk:
+        # Generate file paths for current chunk.
+        # `chunk` is either:
+        #   * a list of base-name strings (legacy --data-dir mode), or
+        #   * a list of manifest-entry dicts (new --manifest mode).
+        # Each entry is normalized to (json_path_or_None, raw_data_or_None,
+        # img_path, npy_path, base_name).
+        full_paths: list[tuple[Optional[str], Optional[dict], str, str, str]] = []
+        manifest_mode = bool(chunk) and isinstance(chunk[0], dict)
+        for entry in chunk:
+            if manifest_mode:
+                base_name = entry["name"]
+                images_abs = entry.get("images_abs") or []
+                patch_pos_abs = entry.get("patch_pos_abs") or []
+                raw_data = dict(entry.get("raw", {}))  # shallow copy; we annotate it
+
+                # Stash the absolute image list on the raw dict so the worker
+                # can fetch multi-image samples without needing data_directory.
+                if images_abs:
+                    raw_data["__manifest_images_abs__"] = images_abs
+
+                # Pick the npy path of the first image if present
+                first_npy = patch_pos_abs[0] if patch_pos_abs and patch_pos_abs[0] else None
+
+                if not no_npy and first_npy and os.path.exists(first_npy):
+                    cur_img = "_____.jpg"
+                    cur_npy = first_npy
+                elif images_abs:
+                    cur_img = images_abs[0]
+                    cur_npy = "_____.npy"
+                else:
+                    cur_img = "_____.jpg"
+                    cur_npy = "_____.npy"
+
+                full_paths.append((None, raw_data, cur_img, cur_npy, base_name))
+                continue
+
+            # Legacy data-dir mode
+            fn = entry
             cur_json = str(data_directory / f"{fn}.json")
             cur_npy = str(data_directory / f"{fn}.npy")
 
@@ -1062,7 +1319,7 @@ def process_chunk(args: tuple) -> Optional[str]:
             if not no_npy and os.path.exists(cur_npy):
                 # NPY mode: has npy file
                 cur_img = "_____.jpg"
-                full_paths.append((cur_json, cur_img, cur_npy))
+                full_paths.append((cur_json, None, cur_img, cur_npy, fn))
             else:
                 # Standard mode: process image
                 if f"{fn}.json".startswith("__img--output_"):
@@ -1077,7 +1334,7 @@ def process_chunk(args: tuple) -> Optional[str]:
                         else:
                             # Text-only sample without images
                             cur_img = "_____.jpg"
-                full_paths.append((cur_json, cur_img, "_____.npy"))
+                full_paths.append((cur_json, None, cur_img, "_____.npy", fn))
 
         n_samples = len(chunk)
         proc_name = multiprocessing.current_process().name
@@ -1088,33 +1345,42 @@ def process_chunk(args: tuple) -> Optional[str]:
         chunk_results = []
 
         def process_single_sample(
-            json_path: str,
+            json_path: Optional[str],
+            raw_data: Optional[dict],
             img_path: str,
             npy_path: Optional[str] = None,
+            base_name: str = "",
             sample_timeout: int = 120,
         ) -> tuple[Optional[int], str]:
             """
             Process a single sample within thread pool with timeout protection.
-            
+
             Supports two modes:
             1. Standard mode: Process image and text using processor
             2. NPY mode: If npy_path is provided, calculate patch tokens directly
                from npy file's first dimension (patches = npy_dim0 // merge_size**2)
-            
+
             Args:
-                json_path: Path to JSON file.
+                json_path: Path to JSON file. May be None when ``raw_data`` is
+                    supplied (manifest mode).
+                raw_data: Pre-loaded sample dict (manifest mode). Mutually
+                    exclusive with ``json_path``: at least one must be set.
                 img_path: Path to image file.
                 npy_path: Path to NPY file (optional). If provided, uses NPY mode.
+                base_name: The sample's globally unique name (used as the result key).
                 sample_timeout: Timeout in seconds for processing this sample.
             """
-            base_name = Path(json_path).stem
-            
-            try:
-                if not Path(json_path).exists():
-                    raise FileNotFoundError(f"JSON file not found: {json_path}")
+            if not base_name:
+                base_name = Path(json_path).stem if json_path else "unknown"
 
-                with open(json_path, "r", encoding="utf-8") as f:
-                    json_data = json.load(f)
+            try:
+                if raw_data is not None:
+                    json_data = raw_data
+                else:
+                    if not Path(json_path).exists():
+                        raise FileNotFoundError(f"JSON file not found: {json_path}")
+                    with open(json_path, "r", encoding="utf-8") as f:
+                        json_data = json.load(f)
 
                 if task_type == "pretrain":
                     txt_input = template.render(captions=json_data["captions"])
@@ -1134,63 +1400,93 @@ def process_chunk(args: tuple) -> Optional[str]:
                         npy_first_dim = npy_data.shape[0]
 
                         patch_tokens = npy_first_dim // merge_factor
-                        
+
                         # Count image placeholders in text
-                        # Each <|image_pad|> in text will be tokenized as 1 token,
-                        # but in image mode it gets replaced by actual image patches.
-                        # So we need to subtract these placeholders from text tokens.
                         n_image_placeholders = txt_input.count("<|image_pad|>")
-                        
-                        # Compute text tokens
-                        inputs = processor(
-                            text=[txt_input],
-                            images=None,
-                            videos=None,
-                            padding=True,
-                            return_tensors="pt",
-                        )
-                        text_tokens = inputs["input_ids"].shape[1]
-                        
-                        # Total tokens = text_tokens - n_placeholders + patch_tokens
-                        # This matches how processor handles images: it replaces
-                        # placeholder tokens with actual image patch tokens
+
+                        # Compute text tokens (lightweight path when FAST_TOKENIZER=1)
+                        text_tokens = _count_text_tokens(txt_input)
+
                         token_len = text_tokens - n_image_placeholders + patch_tokens
-                        
+                        # patch_count for ViT load balancing = raw patches (before spatial merge)
+                        patch_count = int(npy_first_dim)
+
                         # Clean up
-                        del inputs
                         del npy_data
-                        
-                        return (token_len, base_name)
+
+                        return (token_len, base_name, patch_count)
                     except Exception as e:
                         raise RuntimeError(f"NPY processing failed: {e}")
-                
+
                 # Standard mode: Process image(s) and text
                 if img_path == "_____.jpg":
                     img_input = None
+                    # Text-only sample: no images to process.
+                    # Under FAST_TOKENIZER=1 we never call processor(), so return now.
+                    if use_fast_tokenizer:
+                        token_len = _count_text_tokens(txt_input)
+                        return (token_len, base_name, 0)
                 else:
-                    # Load images with memory cleanup
-                    if len(json_data.get("images", [])) > 1:
-                        img_input = []
-                        for cur_img in json_data["images"]:
-                            cur_img_path = str(data_directory / cur_img)
-                            img = fetch_image(
-                                {
-                                    "type": "image",
-                                    "image": cur_img_path,
-                                    "min_pixels": min_pixels,
-                                    "max_pixels": max_pixels,
-                                }
-                            )
-                            img_input.append(img)
+                    # Manifest mode supplies absolute paths via ``images_abs``;
+                    # legacy mode stores relative names in json_data["images"].
+                    manifest_imgs_abs = json_data.get("__manifest_images_abs__")
+                    if len(json_data.get("images", [])) > 1 or (
+                        manifest_imgs_abs and len(manifest_imgs_abs) > 1
+                    ):
+                        if manifest_imgs_abs:
+                            img_paths_list = manifest_imgs_abs
+                        else:
+                            img_paths_list = [
+                                str(data_directory / p) for p in json_data["images"]
+                            ]
                     else:
-                        img_input = fetch_image(
-                            {
-                                "type": "image",
-                                "image": img_path,
-                                "min_pixels": min_pixels,
-                                "max_pixels": max_pixels,
-                            }
+                        img_paths_list = [img_path]
+
+                    # --- Fast header path -------------------------------------
+                    # Try to compute patch_count from JPEG/PNG headers without
+                    # decoding pixels. Falls back to full PIL decode below on
+                    # any error (unsupported format, corrupt header, etc.).
+                    if use_fast_img_meta:
+                        try:
+                            n_image_placeholders = txt_input.count("<|image_pad|>")
+                            text_tokens = _count_text_tokens(txt_input)
+
+                            patch_count_total = 0
+                            grid_tokens_total = 0  # in merge-units (= LLM image tokens)
+                            for p in img_paths_list:
+                                h, w = _read_image_size_fast(p)
+                                rh, rw = _qwen2vl_smart_resize(
+                                    h, w, _factor, ip_min_pixels, ip_max_pixels,
+                                )
+                                gh = rh // int(patch_size)
+                                gw = rw // int(patch_size)
+                                # raw patches before spatial merge:
+                                patch_count_total += gh * gw
+                                # merge-unit tokens (what LLM sees):
+                                grid_tokens_total += (gh * gw) // merge_factor
+
+                            token_len = text_tokens - n_image_placeholders + grid_tokens_total
+                            return (token_len, base_name, patch_count_total)
+                        except Exception:
+                            # Fall through to legacy full-decode path.
+                            pass
+
+                    # --- Legacy full-decode path ------------------------------
+                    # NOTE: Not supported when FAST_TOKENIZER=1 (no processor).
+                    # That path requires processor() which we deliberately skip
+                    # for memory efficiency. The fast_img_meta path above MUST
+                    # succeed for these samples; if it raises we re-raise so
+                    # the sample is counted as failed instead of silently using
+                    # a wrong code branch.
+                    if use_fast_tokenizer:
+                        raise RuntimeError(
+                            f"FAST_TOKENIZER=1 but fast_img_meta path failed for "
+                            f"{img_paths_list}; processor() unavailable"
                         )
+                    if len(img_paths_list) > 1:
+                        img_input = [_load_image_pil(p) for p in img_paths_list]
+                    else:
+                        img_input = _load_image_pil(img_paths_list[0])
 
                 inputs = processor(
                     text=[txt_input],
@@ -1200,21 +1496,31 @@ def process_chunk(args: tuple) -> Optional[str]:
                     return_tensors="pt",
                 )
                 token_len = inputs["input_ids"].shape[1]
-                
+
+                # patch_count = sum of raw image patches across all images in this sample.
+                # image_grid_thw is (n_images, 3) — already in merge-units, so multiply by merge_factor.
+                patch_count = 0
+                if img_input is not None and "image_grid_thw" in inputs:
+                    igt = inputs["image_grid_thw"]
+                    try:
+                        patch_count = int(igt.prod(dim=1).sum().item()) * merge_factor
+                    except Exception:
+                        patch_count = 0
+
                 # Clean up to free memory
                 del inputs
                 if img_input is not None:
                     del img_input
-                
-                return (token_len, base_name)
+
+                return (token_len, base_name, patch_count)
 
             except TimeoutException:
-                return (None, f"Timeout [{base_name}]: exceeded {sample_timeout}s")
+                return (None, f"Timeout [{base_name}]: exceeded {sample_timeout}s", 0)
             except MemoryError:
                 gc.collect()
-                return (None, f"MemoryError [{base_name}]: insufficient memory")
+                return (None, f"MemoryError [{base_name}]: insufficient memory", 0)
             except Exception as e:
-                return (None, f"Processing failed [{base_name}]: {e}")
+                return (None, f"Processing failed [{base_name}]: {e}", 0)
 
         # Adaptive timeout based on sample complexity (use config value)
         # sample_timeout is passed from main process via args
@@ -1236,9 +1542,11 @@ def process_chunk(args: tuple) -> Optional[str]:
                 tasks = {
                     executor.submit(
                         process_single_sample,
-                        full_paths[idx][0],  # json_path
-                        full_paths[idx][1],  # img_path
-                        full_paths[idx][2],  # npy_path
+                        full_paths[idx][0],  # json_path or None
+                        full_paths[idx][1],  # raw_data or None
+                        full_paths[idx][2],  # img_path
+                        full_paths[idx][3],  # npy_path
+                        full_paths[idx][4],  # base_name
                         sample_timeout,
                     ): idx
                     for idx in range(batch_start, batch_end)
@@ -1249,11 +1557,11 @@ def process_chunk(args: tuple) -> Optional[str]:
                 try:
                     for future in as_completed(tasks, timeout=batch_timeout):
                         try:
-                            token_len, name = future.result(timeout=sample_timeout)
+                            token_len, name, patch_count = future.result(timeout=sample_timeout)
                             if del_one_token:
                                 token_len = token_len + 1 if token_len else None
                             if token_len is not None:
-                                chunk_results.append((token_len, name))
+                                chunk_results.append((token_len, name, patch_count))
                                 processed_count += 1
                             else:
                                 logger.warning(name)
@@ -1273,23 +1581,29 @@ def process_chunk(args: tuple) -> Optional[str]:
                         if not future.done():
                             future.cancel()
             
-            # Periodic garbage collection
-            if batch_start > 0 and batch_start % (batch_size * 5) == 0:
-                gc.collect()
+            # Periodic garbage collection + malloc_trim to release pages to OS.
+            # Without malloc_trim, glibc holds onto freed memory in the arena
+            # and worker RSS grows monotonically (12+ GB observed).
+            gc.collect()
+            if _libc is not None:
+                try:
+                    _libc.malloc_trim(0)
+                except Exception:
+                    pass
 
-        # Write stage0 file and add to queue
+        # Write stage0 file and add to queue.
+        # Persistent path: {resume_dir}/stage0_chunk_{idx:05d}.txt
+        # Written atomically (tmp + rename) so a partial file from a crashed
+        # worker is never picked up by the main process on resume.
         if chunk_results:
             chunk_results_sorted = sorted(chunk_results, key=lambda x: x[0])
-            with tempfile.NamedTemporaryFile(
-                mode="w+",
-                delete=False,
-                prefix=f"stage0_chunk{chunk_idx:03d}_",
-                encoding="utf-8",
-                dir=temp_dir,
-            ) as f:
-                stage0_file = f.name
-                for token_len, name in chunk_results_sorted:
-                    f.write(f"{name}:{token_len}\n")
+            final_name = f"stage0_chunk_{chunk_idx:05d}.txt"
+            stage0_file = os.path.join(resume_dir, final_name)
+            tmp_file = stage0_file + ".tmp"
+            with open(tmp_file, "w", encoding="utf-8") as f:
+                for token_len, name, patch_count in chunk_results_sorted:
+                    f.write(f"{name}:{token_len}:{patch_count}\n")
+            os.replace(tmp_file, stage0_file)
 
             stage0_queue.put(stage0_file)
 
@@ -1342,6 +1656,8 @@ def main() -> None:
             config["logging"]["level"] = args.log_level.upper()
         if args.data_dir:
             config["data"]["directory"] = args.data_dir
+        if args.manifest:
+            config["data"]["manifest"] = args.manifest
         if args.output:
             config["data"]["output_token"] = args.output
         if args.model_path:
@@ -1352,8 +1668,8 @@ def main() -> None:
             config["sample"]["task_type"] = args.task_type
     else:
         # Build config entirely from command line arguments
-        if not args.data_dir:
-            print("Error: --data-dir is required when not using --config")
+        if not args.data_dir and not args.manifest:
+            print("Error: either --manifest or --data-dir is required when not using --config")
             sys.exit(1)
         if not args.output:
             print("Error: --output is required when not using --config")
@@ -1379,8 +1695,13 @@ def main() -> None:
         logger.info("Starting token length computation pipeline")
         logger.info("=" * 60)
 
-        # Step 1: Find valid JSON files
-        base_names = find_valid_json_files(processor_config.data_directory)
+        # Step 1: Discover samples (manifest mode preferred, legacy data-dir fallback)
+        manifest_entries: dict[str, dict[str, Any]] = {}
+        if processor_config.use_manifest:
+            manifest_entries = load_manifest(processor_config.manifest_path)
+            base_names = set(manifest_entries.keys())
+        else:
+            base_names = find_valid_json_files(processor_config.data_directory)
         total_original = len(base_names)
         logger.info(f"Found {total_original} original sample files")
 
@@ -1388,16 +1709,30 @@ def main() -> None:
             logger.warning("No samples found, exiting")
             return
 
-        # Write base names for chunked reading
+        # Write base names for chunked reading (kept for legacy compatibility / debugging)
         write_base_names_to_file(base_names, processor_config.output_file)
 
-        # Step 2: Initialize cross-process queue and event
-        manager = Manager()
+        # Step 2: Initialize cross-process queue and event.
+        # Use 'spawn' context (vs default 'fork'): each worker starts from a
+        # fresh Python interpreter, importing transformers + tokenizer from
+        # scratch (~700 MB baseline). With fork, every worker inherits parent's
+        # ~10 GB RSS via copy-on-write, but as soon as Python allocates new
+        # objects the pages become private (~5-6 GB private dirty per worker).
+        # Spawn caps each worker's RSS at ~3 GB sustained, enabling ~24+
+        # workers on a 256 GB box without OOM.
+        use_spawn = os.environ.get("S2_USE_SPAWN", "1") == "1"
+        if use_spawn:
+            mp_ctx = multiprocessing.get_context("spawn")
+            logger.info("Multiprocessing context: spawn (memory-efficient)")
+        else:
+            mp_ctx = multiprocessing.get_context("fork")
+            logger.info("Multiprocessing context: fork (legacy)")
+        manager = mp_ctx.Manager()
         stage0_queue = manager.Queue()
         stop_event = manager.Event()
 
-        # Initialize global counter
-        global_total_counter = Value("i", 0)
+        # Initialize global counter (must be ctx-bound for spawn)
+        global_total_counter = mp_ctx.Value("i", 0)
 
         # Step 3: Start stage1 merger thread
         stage1_thread = threading.Thread(
@@ -1414,15 +1749,59 @@ def main() -> None:
         stage1_thread.start()
         logger.info("Stage1 merger thread started")
 
-        # Step 4: Prepare chunks for multiprocessing
-        all_chunks = list(
-            read_lines_in_chunks(
-                processor_config.output_file,
-                processor_config.chunk_size,
+        # Step 4: Prepare chunks for multiprocessing.
+        # In manifest mode, each chunk is a list of manifest-entry dicts.
+        # In legacy mode, each chunk is a list of base-name strings.
+        if processor_config.use_manifest:
+            entries_list = list(manifest_entries.values())
+            cs = processor_config.chunk_size
+            all_chunks = [entries_list[i:i + cs] for i in range(0, len(entries_list), cs)]
+        else:
+            all_chunks = list(
+                read_lines_in_chunks(
+                    processor_config.output_file,
+                    processor_config.chunk_size,
+                )
             )
-        )
         total_chunks = len(all_chunks)
         logger.info(f"Divided into {total_chunks} chunks")
+
+        # Resume-on-restart: scan persistent stage0 directory and identify
+        # chunks already completed in a previous run. Their files are pushed
+        # straight into stage0_queue (so stage1 merger picks them up), and the
+        # process_args list filters them out so workers don't redo them.
+        resume_dir_path = processor_config.resume_dir
+        done_idxs: set[int] = set()
+        try:
+            for fname in os.listdir(resume_dir_path):
+                if not fname.startswith("stage0_chunk_") or not fname.endswith(".txt"):
+                    continue
+                try:
+                    idx = int(fname[len("stage0_chunk_"):-len(".txt")])
+                except ValueError:
+                    continue
+                # Sanity: file must be non-empty and look like name:tok:patch lines.
+                fpath = os.path.join(resume_dir_path, fname)
+                if os.path.getsize(fpath) == 0:
+                    continue
+                done_idxs.add(idx)
+        except FileNotFoundError:
+            pass
+
+        if done_idxs:
+            logger.info(
+                f"Resume: found {len(done_idxs)} pre-existing stage0 files in "
+                f"{resume_dir_path}; skipping those chunks"
+            )
+            # Pre-load completed stage0 files into the merger queue and counter.
+            resumed_samples = 0
+            for idx in sorted(done_idxs):
+                fpath = os.path.join(resume_dir_path, f"stage0_chunk_{idx:05d}.txt")
+                stage0_queue.put(fpath)
+                resumed_samples += count_lines(fpath)
+            with global_total_counter.get_lock():
+                global_total_counter.value += resumed_samples
+            logger.info(f"Resume: pre-queued {resumed_samples} samples from {len(done_idxs)} files")
 
         # Step 5: Process chunks with multiprocessing pool
         # Calculate optimal concurrency based on system resources
@@ -1447,13 +1826,21 @@ def main() -> None:
                 processor_config.temp_dir,
                 processor_config.timeout,  # Timeout per sample
                 processor_config.no_npy,  # Disable NPY mode flag
+                str(processor_config.resume_dir),  # Persistent stage0 dir
             )
             for idx, chunk in enumerate(all_chunks)
+            if (idx + 1) not in done_idxs
         ]
+        remaining_chunks = len(process_args)
+        logger.info(
+            f"Chunks: total={total_chunks}, resumed={len(done_idxs)}, "
+            f"remaining={remaining_chunks}"
+        )
         
-        # Use maxtasksperchild to prevent memory leaks in long-running processes
-        # Each process will be recycled after processing 10 chunks
-        maxtasksperchild = max(5, total_chunks // (n_processes * 2)) if total_chunks > 50 else None
+        # Use maxtasksperchild to prevent memory leaks in long-running processes.
+        # Each worker accumulates ~10 GB RSS due to HF processor + PIL caches;
+        # recycle aggressively (every 3 chunks = 1500 samples by default).
+        maxtasksperchild = int(os.environ.get("S2_MAXTASKS_PER_CHILD", "3"))
         
         logger.info(
             f"Starting pool with {n_processes} processes, "
@@ -1462,9 +1849,18 @@ def main() -> None:
         )
         
         resource_monitor = get_resource_monitor()
-        
-        with Pool(processes=n_processes, maxtasksperchild=maxtasksperchild) as process_pool:
-            stage0_files = []
+
+        # Short-circuit: if every chunk was resumed, skip pool entirely.
+        stage0_files = []
+        if remaining_chunks == 0:
+            logger.info("All chunks already completed in a previous run; skipping pool")
+            n_processes = 0  # for the log below
+        with mp_ctx.Pool(
+            processes=max(1, n_processes),
+            maxtasksperchild=maxtasksperchild,
+            initializer=_init_worker,
+            initargs=(global_total_counter,),
+        ) as process_pool:
             failed_chunks = []
             stalled_check_interval = 180  # Check for stalled progress every 3 minutes
             last_progress_time = time.time()
@@ -1476,7 +1872,7 @@ def main() -> None:
                 result_iter = process_pool.imap_unordered(process_chunk, process_args)
                 completed = 0
                 
-                while completed < total_chunks:
+                while completed < remaining_chunks:
                     try:
                         # Use next() with timeout to detect stalls
                         result = result_iter.__next__()
@@ -1492,13 +1888,14 @@ def main() -> None:
                         last_completed = completed
 
                         # Progress logging with ETA
-                        if completed % 5 == 0 or completed == total_chunks:
+                        if completed % 5 == 0 or completed == remaining_chunks:
                             elapsed = time.time() - start_time
-                            eta = (elapsed / completed) * (total_chunks - completed) if completed > 0 else 0
+                            eta = (elapsed / completed) * (remaining_chunks - completed) if completed > 0 else 0
                             status = resource_monitor.get_status()
                             logger.info(
-                                f"Progress: {completed}/{total_chunks} chunks "
-                                f"({len(stage0_files)} successful) | "
+                                f"Progress: {completed}/{remaining_chunks} chunks "
+                                f"(resumed {len(done_idxs)}, total {total_chunks}) | "
+                                f"{len(stage0_files)} fresh stage0 files | "
                                 f"ETA: {eta/60:.1f}min | "
                                 f"CPU: {status['cpu_percent']:.0f}% | "
                                 f"MEM: {status['mem_percent']:.0f}%"
@@ -1583,9 +1980,11 @@ def main() -> None:
         else:
             logger.info("Stage1 thread exited normally")
 
-        # Verify stage1 file count
+        # Verify stage1 file count.
+        # Expected count must include resumed stage0 files (pre-queued to merger).
+        total_stage0_in_merge = len(stage0_files) + len(done_idxs)
         expected_stage1_count = (
-            len(stage0_files) + processor_config.stage1_chunk - 1
+            total_stage0_in_merge + processor_config.stage1_chunk - 1
         ) // processor_config.stage1_chunk
         if len(stage1_files) != expected_stage1_count:
             logger.warning(
@@ -1628,9 +2027,12 @@ def main() -> None:
 
         threading.Event().wait(2)
 
-        # Clean up temporary files
-        all_temp_files = stage0_files + stage1_files
-        for fpath in all_temp_files:
+        # Clean up temporary files.
+        # NOTE: stage0_files now live in resume_dir (persistent). We deliberately
+        # do NOT delete them so the next run can resume cheaply if final merge
+        # crashes or the user wants to re-run downstream. Only stage1 (tmp) is
+        # garbage-collected here.
+        for fpath in stage1_files:
             if fpath != str(processor_config.token_info_file) and os.path.exists(fpath):
                 try:
                     os.remove(fpath)
