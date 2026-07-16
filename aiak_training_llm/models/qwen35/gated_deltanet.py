@@ -272,7 +272,12 @@ class GatedDeltaNet(HuggingFaceModule):
             hidden_states = gather_from_sequence_parallel_region(hidden_states, group=None)
 
         cu_seqlens = None if packed_seq_params is None else packed_seq_params.cu_seqlens_q
-        cu_seqlens_cpu = None if packed_seq_params is None else packed_seq_params.cu_seqlens_cpu
+        # PackedSeqParams (aiak mcore 0.12) has no cu_seqlens_cpu field; fla needs a CPU
+        # copy of the segment boundaries for its varlen chunk math. Derive it from
+        # cu_seqlens when the field is absent/None.
+        cu_seqlens_cpu = getattr(packed_seq_params, "cu_seqlens_cpu", None) if packed_seq_params is not None else None
+        if cu_seqlens_cpu is None and cu_seqlens is not None:
+            cu_seqlens_cpu = cu_seqlens.detach().to("cpu")
         hidden_states = hidden_states.transpose(0, 1).contiguous() # [S, B, D] -> [B, S, D]
         if attention_mask is not None:
             if attention_mask.dim() >= 3 and attention_mask.shape[2] > 1: # [B, 1, S, S]
