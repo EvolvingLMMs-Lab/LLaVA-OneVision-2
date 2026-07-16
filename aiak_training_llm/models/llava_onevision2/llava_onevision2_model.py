@@ -564,8 +564,11 @@ class LlavaOnevision2(MegatronModule):
         # the image/video grids + input_ids and stash them on the language model, so
         # QwenModel builds the correct rotary embedding (replacing the text-path
         # arange placeholder). Text-only samples fall back to arange (handled in
-        # QwenModel). SP / packed / CP still use the placeholder (those paths scatter
-        # the sequence, so a full-length 3D position id would mismatch); guarded here.
+        # QwenModel). SP now runs get_rope_index too: input_ids here is full-length
+        # and unsharded (SP scatter touches only combined_embeddings), so it yields
+        # unpadded full-length positions and QwenModel pads them up to the SP-gathered
+        # length. Packed uses get_rope_index_packed; CP still uses the placeholder +
+        # qwen35_rope CP-slice.
         if self.add_decoder and getattr(self.language_model, "use_qwen35_mrope", False):
             _mrope_pos = None
             _has_vision = (image_grid_thw is not None) or (video_grid_thw is not None)
@@ -573,10 +576,9 @@ class LlavaOnevision2(MegatronModule):
                 packed_seq_params is not None
                 and getattr(packed_seq_params, "qkv_format", None) == "thd"
             )
-            # Non-packed / non-SP / non-CP "simple" path (unchanged).
+            # Non-packed / non-CP "simple" full-length path (now includes SP).
             _simple = (
                 not _is_packed
-                and not getattr(self.config, "sequence_parallel", False)
                 and getattr(self.config, "context_parallel_size", 1) == 1
             )
             if _has_vision and _is_packed and input_ids is not None:
