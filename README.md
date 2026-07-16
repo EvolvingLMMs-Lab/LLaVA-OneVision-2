@@ -11,10 +11,12 @@
 </p>
 
 <table align="center">
-<tr><td align="center">
-🌟&nbsp; The core work on this project is led by <b><a href="https://www.glint-mvt.com">Glint Lab</a></b> &nbsp;🌟
-<br>
-<sub>For an interactive online experience, visit <b><a href="https://ve2s.ai/">ve2s.ai</a></b>.</sub>
+<tr><td>
+
+> [!IMPORTANT]
+> 🌟 **The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).**
+> For an interactive online experience, visit **[ve2s.ai](https://ve2s.ai/)**.
+
 </td></tr>
 </table>
 
