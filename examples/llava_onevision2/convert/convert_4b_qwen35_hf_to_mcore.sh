@@ -15,7 +15,7 @@
 #
 #   LOAD  merged HF checkpoint (LlavaOnevision2ForConditionalGeneration)
 #   SAVE  output Megatron-Core checkpoint dir
-#   TP    tensor-parallel size  (default 1)   -- only TP=1,PP=1 validated so far
+#   TP    tensor-parallel size  (default 1)   -- TP in {1,2,4}, PP=1
 #   PP    pipeline-parallel size (default 1)
 #
 # Example:
@@ -53,7 +53,8 @@ python $CUSTOM/qwen35_hf_to_mcore.py \
     --load_ckpt_path=$LOAD \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \
-    --full_attention_interval=$FULL_ATTENTION_INTERVAL
+    --full_attention_interval=$FULL_ATTENTION_INTERVAL \
+    --tensor_model_parallel_size=$TP
 
 # ---- vit (reuse validated converter) ----------------------------------------
 python $CONVERT_CHECKPOINT_PATH/model.py \
