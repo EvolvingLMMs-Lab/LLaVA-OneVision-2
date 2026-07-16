@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 84" width="760" height="84" role="img" aria-label="The core work on this project is led by Glint Lab">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b3350"/>
+      <stop offset="1" stop-color="#15263c"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-30%" width="120%" height="170%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <clipPath id="card"><rect x="8" y="8" width="744" height="64" rx="18"/></clipPath>
+  </defs>
+  <rect x="8" y="8" width="744" height="64" rx="18" fill="url(#bg)" stroke="#2f5a8f" stroke-width="1.2" filter="url(#shadow)"/>
+  <g clip-path="url(#card)"><rect x="8" y="8" width="7" height="64" fill="#4a9eff"/></g>
+  <text x="384" y="46" text-anchor="middle" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="20" fill="#cfe3fb">
+    <tspan fill="#ffd45e">&#9733;</tspan>
+    <tspan dx="6">The core work on this project is led by </tspan><tspan font-weight="700" fill="#6db3ff">Glint&#160;Lab</tspan>
+    <tspan dx="6" fill="#ffd45e">&#9733;</tspan>
+  </text>
+</svg>
