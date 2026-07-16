@@ -48,6 +48,19 @@ class LlavaOnevision2Config:
     kv_channels: int = None
     num_experts: int = None
     moe_ffn_hidden_size: int = None
+    # --- Qwen3.5 hybrid-attention (M-RoPE + gated delta-net) extras ---
+    # Defaults keep every existing arch (Qwen3 path) unaffected: language_model_type
+    # stays None -> provider/QwenModel take the standard rope path.
+    language_model_type: str = None
+    linear_key_head_dim: int = 128
+    linear_value_head_dim: int = 128
+    linear_num_key_heads: int = 16
+    linear_num_value_heads: int = 32
+    linear_conv_kernel_dim: int = 4
+    full_attention_interval: int = 4
+    mrope_section: list = None
+    mrope_interleaved: bool = False
+    partial_rotary_factor: float = 1.0
 
 @register_model_config(model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-layer1")
 def llava_onevision2_layer1():
@@ -273,6 +286,48 @@ def llava_onevision2_14b():
     )
 
 
+@register_model_config(
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-4b-qwen35"
+)
+def llava_onevision2_4b_qwen35():
+    """llava-onevision2-4b with the Qwen3.5 hybrid-attention LLM backbone.
+
+    LLM = ported+validated Qwen3.5-4B (32 hybrid layers: linear gated-delta-net +
+    periodic full attention every full_attention_interval, interleaved 3D M-RoPE,
+    partial rotary 0.25). ViT/adapter reuse the p16/merge3 encoder (see
+    get_vision_config 'qwen35' branch). language_model_type='qwen3_5' triggers the
+    provider + QwenModel Qwen3.5 branches.
+    """
+    return LlavaOnevision2Config(
+        num_layers=32,
+        hidden_size=2560,
+        ffn_hidden_size=9216,
+        num_attention_heads=16,
+        group_query_attention=True,
+        num_query_groups=4,
+        kv_channels=256,
+        vocab_size_in_config_file=248320,  # Qwen3.5 padded vocab (248320 % 128 == 0); matches merged HF text_config.vocab_size
+        make_vocab_size_divisible_by=128,
+        qk_layernorm=True,
+        add_qkv_bias=False,
+        swiglu=True,
+        rotary_base=10000000,
+        untie_embeddings_and_output_weights=False,  # tie_word_embeddings=True
+        norm_epsilon=1e-06,
+        # Qwen3.5 hybrid-attention extras
+        language_model_type="qwen3_5",
+        linear_key_head_dim=128,
+        linear_value_head_dim=128,
+        linear_num_key_heads=16,
+        linear_num_value_heads=32,
+        linear_conv_kernel_dim=4,
+        full_attention_interval=4,
+        mrope_section=[11, 11, 10],
+        mrope_interleaved=True,
+        partial_rotary_factor=0.25,
+    )
+
+
 @dataclass
 class VisionConfig:
     """configuration for vision model
@@ -350,6 +405,11 @@ def get_vision_config(model_family, model_name):
     elif "p14m3" in model_name:
         config.patch_size = 14
         config.image_size = (336, 336)
+        config.spatial_merge_size = 3
+    elif "qwen35" in model_name:
+        # Qwen3.5 VLM reuses the p16/merge3 encoder (patch16, 384px, 3x3 spatial merge).
+        config.patch_size = 16
+        config.image_size = (384, 384)
         config.spatial_merge_size = 3
     return config
 

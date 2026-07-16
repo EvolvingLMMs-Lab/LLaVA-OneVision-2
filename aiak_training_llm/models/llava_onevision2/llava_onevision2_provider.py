@@ -12,8 +12,52 @@ from aiak_training_llm.models.llava_onevision2.llava_onevision2_layer_spec impor
     get_vision_layer_with_spec,
 )
 from aiak_training_llm.models.llava_onevision2.llava_onevision2_model import LlavaOnevision2
+from aiak_training_llm.models.qwen35.qwen35_layer_spec import get_qwen3_5_transformer_layer_spec
 from aiak_training_llm.utils import build_transformer_config, get_args, print_rank_0
 from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
+
+
+# Fields that the Qwen3.5 mcore modules read off the TransformerConfig via getattr.
+# core_transformer_config_from_args only copies known TransformerConfig fields, so
+# these must be threaded onto language_config explicitly.
+_QWEN35_EXTRA_FIELDS = (
+    "linear_key_head_dim",
+    "linear_value_head_dim",
+    "linear_num_key_heads",
+    "linear_num_value_heads",
+    "linear_conv_kernel_dim",
+    "full_attention_interval",
+    "mrope_section",
+    "mrope_interleaved",
+    "partial_rotary_factor",
+)
+
+
+def is_qwen35(src) -> bool:
+    """True if this arch uses the Qwen3.5 hybrid-attention LLM backbone."""
+    return getattr(src, "language_model_type", None) in ("qwen3_5", "qwen35")
+
+
+def apply_qwen35_language_config(language_config, src):
+    """Thread the Qwen3.5 hybrid-attention fields + required rope flags from ``src``
+    (the args namespace or a model-config object) onto ``language_config`` so the
+    ported mcore modules and Qwen35RotaryEmbedding read them via getattr.
+
+    Mirrors the proven full-model parity recipe: rotary_interleaved=False,
+    apply_rope_fusion=False, multi_latent_attention=False.
+    """
+    for k in _QWEN35_EXTRA_FIELDS:
+        v = getattr(src, k, None)
+        if v is not None:
+            setattr(language_config, k, v)
+    language_config.language_model_type = "qwen3_5"
+    language_config.rotary_interleaved = False
+    language_config.apply_rope_fusion = False
+    language_config.multi_latent_attention = False
+    # num_moe_experts absent -> dense MLP path in the layer spec.
+    if getattr(language_config, "num_moe_experts", None) is None:
+        language_config.num_moe_experts = None
+    return language_config
 
 
 @register_model_provider(model_family=[VisionLanguageModelFamilies.LLAVA_ONEVISION2])
@@ -63,6 +107,10 @@ def llavaov_2_model_provider(
     # print(vision_config)
     setattr(language_config, "image_token_id", 151655)
     setattr(language_config, "video_token_id", 151656)
+    # Fields needed by the multimodal 3D M-RoPE get_rope_index (Qwen2.5-VL token space).
+    setattr(language_config, "vision_start_token_id", 151652)
+    setattr(language_config, "spatial_merge_size", getattr(vision_config, "spatial_merge_size", 2))
+    setattr(language_config, "tokens_per_second", 2)
 
     # FIXME: fix this if model_type is encoder_and_decoder
     if args.encoder_pipeline_model_parallel_size in [0, None]:
@@ -108,7 +156,13 @@ def llavaov_2_model_provider(
     else:
         adapter_layer_spec = get_adapeter_layer_with_spec()
         vision_layer_spec = get_vision_layer_with_spec()
-        language_layer_spec = get_qwen_layer_with_te_spec(language_config)
+        if is_qwen35(args):
+            # Qwen3.5 hybrid-attention backbone: thread extra fields + rope flags onto
+            # language_config, then build the hybrid (linear + full attention) spec.
+            apply_qwen35_language_config(language_config, args)
+            language_layer_spec = get_qwen3_5_transformer_layer_spec(language_config)[0]
+        else:
+            language_layer_spec = get_qwen_layer_with_te_spec(language_config)
 
     model = LlavaOnevision2(
         language_config=language_config,
