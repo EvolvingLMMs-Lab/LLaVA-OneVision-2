@@ -11,6 +11,12 @@
 </p>
 
 <p align="center">
+  <em>The core work on this project was led by <b>Glint Lab</b>.
+  For an interactive online experience, visit
+  <a href="https://ve2s.ai/">ve2s.ai</a>.</em>
+</p>
+
+<p align="center">
 👉 <b><a
 href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a></b> 👈
 </p>
