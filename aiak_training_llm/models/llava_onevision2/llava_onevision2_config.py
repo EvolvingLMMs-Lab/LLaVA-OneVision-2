@@ -411,6 +411,9 @@ def get_vision_config(model_family, model_name):
         config.patch_size = 16
         config.image_size = (384, 384)
         config.spatial_merge_size = 3
+        # Qwen3.5 ViT uses per-frame self-attention (no 4-frame temporal merge);
+        # frame_windows_size=1 => each frame is its own attention segment.
+        config.frame_windows_size = 1
     return config
 
 

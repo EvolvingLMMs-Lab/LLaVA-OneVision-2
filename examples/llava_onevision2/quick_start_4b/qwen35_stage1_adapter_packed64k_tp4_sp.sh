@@ -114,6 +114,7 @@ QWEN35_ARGS=(
     --mrope-section 11 11 10
     --mrope-interleaved
     --partial-rotary-factor 0.25
+    --vision-frame-windows-size 1
 )
 
 DATA_ARGS=(
