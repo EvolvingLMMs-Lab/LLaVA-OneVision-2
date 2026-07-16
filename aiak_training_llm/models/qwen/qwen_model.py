@@ -267,6 +267,14 @@ class QwenModel(LanguageModule):
                     dev = input_ids.device
                 else:
                     S, B, dev = position_ids.shape[-1], position_ids.shape[0], position_ids.device
+                # Under sequence-parallel, decoder_input is the SP-scattered [S/tp, B, H];
+                # rope must be built at the FULL gathered length because attention's
+                # SP->TP all-gather restores the full sequence before rope is applied.
+                # Mirror the standard get_rotary_seq_len up-scale (rotary_pos_embedding.py).
+                # Guard on decoder_input so full-length input_ids/position_ids fallbacks
+                # are not double-scaled.
+                if decoder_input is not None and self.config.sequence_parallel:
+                    S = S * self.config.tensor_model_parallel_size
                 mrope_position_ids = getattr(self, '_mrope_position_ids', None)
                 if mrope_position_ids is None:
                     # TODO(multimodal): for image/video inputs the 3 (T,H,W) position-id
@@ -278,6 +286,17 @@ class QwenModel(LanguageModule):
                     mrope_position_ids = (
                         torch.arange(S, device=dev).view(1, 1, S).expand(3, B, S).contiguous()
                     )
+                elif mrope_position_ids.shape[-1] != S:
+                    # get_rope_index returns unpadded full-length positions; pad (by
+                    # replicating the last position, whose value is irrelevant since pad
+                    # tokens are masked/discarded and unattended) or truncate to the
+                    # SP-padded gathered length S so cos_/sin_ broadcast against the query.
+                    L = mrope_position_ids.shape[-1]
+                    if L < S:
+                        pad = mrope_position_ids[..., -1:].expand(3, B, S - L)
+                        mrope_position_ids = torch.cat((mrope_position_ids, pad), dim=-1).contiguous()
+                    else:
+                        mrope_position_ids = mrope_position_ids[..., :S].contiguous()
                 rotary_pos_emb = self.rotary_pos_emb(
                     mrope_position_ids,
                     packed_seq=packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
