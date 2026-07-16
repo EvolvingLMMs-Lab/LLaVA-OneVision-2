@@ -161,6 +161,104 @@ def get_rope_index(
     return position_ids, mrope_position_deltas
 
 
+def get_rope_index_packed(
+    input_ids,
+    cu_seqlens,
+    image_grid_thw=None,
+    video_grid_thw=None,
+    spatial_merge_size=2,
+    image_token_id=151655,
+    video_token_id=151656,
+    vision_start_token_id=151652,
+    tokens_per_second=2,
+    second_per_grid_ts=None,
+):
+    """Packed-mode Qwen 3D M-RoPE position ids.
+
+    In packed (thd) mode the microbatch holds a single [1, S] row that is the
+    concatenation of many independent samples; ``cu_seqlens`` gives the segment
+    boundaries. Each segment is an independent sample: its (T, H, W) positions
+    must RESTART at 0 and its image/video spans must get the 2D H/W grid layout.
+    Image / video grids are laid out in sequence order across ALL segments, so
+    we walk segments left-to-right and consume ``image_grid_thw`` /
+    ``video_grid_thw`` rows with running cursors.
+
+    Args:
+        input_ids: LongTensor [1, S] or [S] (the full packed sequence).
+        cu_seqlens: 1D LongTensor [nseg + 1] of segment boundaries (cu_seqlens_q).
+        image_grid_thw / video_grid_thw: [num_*, 3] grids across all segments.
+        (other args identical to get_rope_index)
+
+    Returns:
+        position_ids: LongTensor [3, 1, S] (T, H, W rows), positions restart per
+        segment; image/video spans carry the 2D grid layout.
+    """
+    # Packing requires micro-batch-size == 1 (single packed row), matching the
+    # data-side guard in get_batch (`cu_lengths.shape[0] == 1`) and LoongForge.
+    if input_ids.dim() == 2:
+        assert input_ids.shape[0] == 1, (
+            "packed 3D M-RoPE requires micro-batch-size == 1 (got batch "
+            + str(input_ids.shape[0]) + ")"
+        )
+    ids = input_ids[0] if input_ids.dim() == 2 else input_ids
+    device = ids.device
+    total_len = ids.shape[0]
+    cu = cu_seqlens.detach().to("cpu").long().tolist()
+
+    pos_chunks = []
+    img_cursor, vid_cursor = 0, 0
+    for k in range(len(cu) - 1):
+        s0, s1 = cu[k], cu[k + 1]
+        if s1 <= s0:
+            continue
+        seg = ids[s0:s1]
+        # Count image/video vision tokens inside this segment (in order).
+        vstart = torch.argwhere(seg == vision_start_token_id).squeeze(1)
+        n_img, n_vid = 0, 0
+        if vstart.numel() > 0:
+            nxt = (vstart + 1).clamp(max=seg.shape[0] - 1)
+            vtok = seg[nxt]
+            n_img = int((vtok == image_token_id).sum().item())
+            n_vid = int((vtok == video_token_id).sum().item())
+        seg_img = None
+        seg_vid = None
+        seg_spgts = None
+        if n_img > 0 and image_grid_thw is not None:
+            seg_img = image_grid_thw[img_cursor:img_cursor + n_img]
+        if n_vid > 0 and video_grid_thw is not None:
+            seg_vid = video_grid_thw[vid_cursor:vid_cursor + n_vid]
+            if second_per_grid_ts is not None:
+                seg_spgts = second_per_grid_ts[vid_cursor:vid_cursor + n_vid]
+        seg_pos, _ = get_rope_index(
+            input_ids=seg.unsqueeze(0),
+            image_grid_thw=seg_img,
+            video_grid_thw=seg_vid,
+            spatial_merge_size=spatial_merge_size,
+            image_token_id=image_token_id,
+            video_token_id=video_token_id,
+            vision_start_token_id=vision_start_token_id,
+            tokens_per_second=tokens_per_second,
+            second_per_grid_ts=seg_spgts,
+            attention_mask=None,
+        )
+        pos_chunks.append(seg_pos[:, 0, :].to(device))  # [3, seg_len]
+        img_cursor += n_img
+        vid_cursor += n_vid
+
+    if len(pos_chunks) == 0:
+        return (
+            torch.arange(total_len, device=device).view(1, 1, -1).expand(3, 1, -1).contiguous()
+        )
+    positions = torch.cat(pos_chunks, dim=1)  # [3, covered_len]
+    # Safety: if cu_seqlens does not cover the full physical width (shouldn't
+    # happen after get_batch's tail fix), pad the remainder with a local arange.
+    if positions.shape[1] < total_len:
+        pad_len = total_len - positions.shape[1]
+        extra = torch.arange(pad_len, device=device).view(1, -1).expand(3, -1)
+        positions = torch.cat([positions, extra], dim=1)
+    return positions.unsqueeze(1).contiguous()  # [3, 1, S]
+
+
 class LlavaOnevision2(MegatronModule):
     """
     Args:
@@ -471,12 +569,35 @@ class LlavaOnevision2(MegatronModule):
         if self.add_decoder and getattr(self.language_model, "use_qwen35_mrope", False):
             _mrope_pos = None
             _has_vision = (image_grid_thw is not None) or (video_grid_thw is not None)
+            _is_packed = (
+                packed_seq_params is not None
+                and getattr(packed_seq_params, "qkv_format", None) == "thd"
+            )
+            # Non-packed / non-SP / non-CP "simple" path (unchanged).
             _simple = (
-                packed_seq_params is None
+                not _is_packed
                 and not getattr(self.config, "sequence_parallel", False)
                 and getattr(self.config, "context_parallel_size", 1) == 1
             )
-            if _has_vision and _simple and input_ids is not None:
+            if _has_vision and _is_packed and input_ids is not None:
+                # Packed multimodal: per-segment 3D positions (restart at 0 each
+                # segment; image/video spans get the 2D H/W grid layout). Full
+                # sequence length, matching the placeholder convention QwenModel
+                # / Qwen35RotaryEmbedding expect (SP gathers, CP-slice skipped in
+                # packed rope).
+                _mrope_pos = get_rope_index_packed(
+                    input_ids=input_ids,
+                    cu_seqlens=packed_seq_params.cu_seqlens_q,
+                    image_grid_thw=image_grid_thw,
+                    video_grid_thw=video_grid_thw,
+                    spatial_merge_size=getattr(self.config, "spatial_merge_size", 2),
+                    image_token_id=self.config.image_token_id,
+                    video_token_id=self.config.video_token_id,
+                    vision_start_token_id=getattr(self.config, "vision_start_token_id", 151652),
+                    tokens_per_second=getattr(self.config, "tokens_per_second", 2),
+                )
+                _mrope_pos = _mrope_pos.to(input_ids.device)
+            elif _has_vision and _simple and input_ids is not None:
                 _mrope_pos, _ = get_rope_index(
                     input_ids=input_ids,
                     image_grid_thw=image_grid_thw,
