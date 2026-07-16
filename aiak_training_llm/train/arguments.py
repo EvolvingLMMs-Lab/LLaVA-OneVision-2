@@ -39,6 +39,7 @@ def aiak_extra_train_args_provider(parser: argparse.ArgumentParser):
     parser = _add_extra_video_args(parser)
     parser = _add_extra_training_args(parser)
     parser = _add_extra_multimodal_args(parser)
+    parser = _add_extra_qwen35_args(parser)
     parser = _add_extra_parallel_args(parser)
 
     parser = _add_extra_training_rice_vl_args(parser)
@@ -425,6 +426,37 @@ def _add_extra_multimodal_args(parser):
 
     group.add_argument('--fps-max-frames', type=int, default=768,
                        help='The maximum number of frames of the video')
+    return parser
+
+
+def _add_extra_qwen35_args(parser):
+    """Register Megatron args for the Qwen3.5 hybrid-attention LLM extras.
+
+    Every field added to LlavaOnevision2Config must have a matching argparse arg,
+    because _validate_extra_model_args asserts hasattr(args, field.name) for each
+    dataclass field. Defaults mirror the dataclass defaults so non-qwen35 archs are
+    unaffected. language_model_type is already registered under extra-multimodal.
+    """
+    group = parser.add_argument_group(title='extra-qwen35')
+    group.add_argument('--linear-key-head-dim', type=int, default=128,
+                       help='Gated delta-net key head dim (Qwen3.5).')
+    group.add_argument('--linear-value-head-dim', type=int, default=128,
+                       help='Gated delta-net value head dim (Qwen3.5).')
+    group.add_argument('--linear-num-key-heads', type=int, default=16,
+                       help='Gated delta-net number of key heads (Qwen3.5).')
+    group.add_argument('--linear-num-value-heads', type=int, default=32,
+                       help='Gated delta-net number of value heads (Qwen3.5).')
+    group.add_argument('--linear-conv-kernel-dim', type=int, default=4,
+                       help='Gated delta-net short-conv kernel size (Qwen3.5).')
+    group.add_argument('--full-attention-interval', type=int, default=4,
+                       help='Every Nth layer is full attention; others are linear '
+                            'gated delta-net (Qwen3.5).')
+    group.add_argument('--mrope-section', type=int, nargs='+', default=None,
+                       help='3D M-RoPE section split [T,H,W] (Qwen3.5).')
+    group.add_argument('--mrope-interleaved', action='store_true', default=False,
+                       help='Use interleaved M-RoPE section layout (Qwen3.5).')
+    group.add_argument('--partial-rotary-factor', type=float, default=1.0,
+                       help='Fraction of head_dim that gets rotary embedding (Qwen3.5).')
     return parser
 
 
