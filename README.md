@@ -10,11 +10,9 @@
   <strong>Fully Open Framework for Democratized Multimodal Training</strong>
 </p>
 
-<p align="center">
-  <b>🌟 The core work on this project is led by <a href="https://www.glint-mvt.com">Glint Lab</a> 🌟</b>
-  <br>
-  <sub>For an interactive online experience, visit <a href="https://ve2s.ai/">ve2s.ai</a>.</sub>
-</p>
+> [!IMPORTANT]
+> 🌟 The core work on this project is led by **[Glint Lab](https://www.glint-mvt.com)**.
+> For an interactive online experience, visit **[ve2s.ai](https://ve2s.ai/)**.
 
 <p align="center">
 👉 <b><a
