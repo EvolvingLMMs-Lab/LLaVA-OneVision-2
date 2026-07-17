@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LLaVA-OneVision-2 4B *Qwen3.5* backbone — stage-1 alignment (adapter-only),
-# packed 64k, TP=4 + Sequence-Parallel.  Launch via launch_date05_training.sh
+# LLaVA-OneVision-2 4B *Qwen3.5* backbone — PACKED 64k template, TP=4 + SP.
+# For stage-1.5 / later stages (packed SFT). Stage-1 ALIGNMENT uses the
+# non-packed ax_stage_1_alignment_qwen35_adapter_only.sh instead.
+# Set TRAINABLE="language_model adapter vision_model" for full stage-1.5.  Launch via launch_date05_training.sh
 # (pass --ips "<node list>"; it exports LIST_IP/MASTER_ADDR/MASTER_PORT).
 #
 # WHAT IS DIFFERENT vs the Qwen3 (p16m3) scripts — all REQUIRED for Qwen3.5:
