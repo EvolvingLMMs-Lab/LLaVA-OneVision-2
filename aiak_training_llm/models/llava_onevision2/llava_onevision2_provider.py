@@ -105,10 +105,22 @@ def llavaov_2_model_provider(
     # name when --tp-comm-overlap is enabled.
     adapter_config.tp_comm_overlap = False
     # print(vision_config)
-    setattr(language_config, "image_token_id", 151655)
-    setattr(language_config, "video_token_id", 151656)
-    # Fields needed by the multimodal 3D M-RoPE get_rope_index (Qwen2.5-VL token space).
-    setattr(language_config, "vision_start_token_id", 151652)
+    # Vision placeholder token ids MUST match the training tokenizer, else the
+    # model never finds image tokens in input_ids -> the adapter is bypassed in
+    # forward -> grad norm 0 (adapter never trains). Qwen3.5 uses a different
+    # token space (248056/248057/248053/248054) than Qwen3/OV1.5 (151655/...).
+    _is_qwen35 = (getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35")
+                  or "qwen35" in getattr(args, "model_name", ""))
+    if _is_qwen35:
+        setattr(language_config, "image_token_id", 248056)
+        setattr(language_config, "video_token_id", 248057)
+        setattr(language_config, "vision_start_token_id", 248053)
+        setattr(language_config, "vision_end_token_id", 248054)
+    else:
+        setattr(language_config, "image_token_id", 151655)
+        setattr(language_config, "video_token_id", 151656)
+        # Fields needed by the multimodal 3D M-RoPE get_rope_index (Qwen2.5-VL token space).
+        setattr(language_config, "vision_start_token_id", 151652)
     setattr(language_config, "spatial_merge_size", getattr(vision_config, "spatial_merge_size", 2))
     setattr(language_config, "tokens_per_second", 2)
 
