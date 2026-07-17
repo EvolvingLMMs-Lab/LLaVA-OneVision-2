@@ -112,8 +112,16 @@ def get_batch(data_iterator):
     cu_lengths = tensor_parallel.broadcast_data(["cu_lengths"], data, torch.int32)["cu_lengths"]
     max_lengths = tensor_parallel.broadcast_data(["max_lengths"], data, torch.int32)["max_lengths"]
 
-    has_video = video_token_id in tokens
-    has_image = image_token_id in tokens
+    # Vision token ids depend on the LLM tokenizer. Qwen3.5 uses 248056/248057;
+    # Qwen3/OV1.5 use the module-level 151655/151656. Using the wrong id makes
+    # has_image False -> imgs never broadcast -> images=None in the model forward
+    # -> the adapter is skipped -> grad norm 0 (adapter never trains).
+    if getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35"):
+        _img_tok, _vid_tok = 248056, 248057
+    else:
+        _img_tok, _vid_tok = image_token_id, video_token_id
+    has_video = _vid_tok in tokens
+    has_image = _img_tok in tokens
     thw = None
     video_grid_thw = None
     imgs = None
