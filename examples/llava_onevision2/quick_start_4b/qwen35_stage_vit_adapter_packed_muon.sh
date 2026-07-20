@@ -15,9 +15,10 @@
 #     text+images tokenized live, so it is reused as-is with this tokenizer.
 #   * --cross-entropy-loss-fusion (large 248320 vocab CE at TP1).
 #
-# Continue-train semantics: --load points at the stage-1 SAVE dir; with
-# --no-load-optim --no-load-rng only the weights are loaded and a fresh muon
-# optimizer state is started (matches the reference recipe).
+# NEW-STAGE semantics: the stage-1 checkpoint provides ONLY the pretrained
+# weights (initialization). --finetune loads those weights, resets iteration to
+# 0 and skips optimizer/rng/dataloader state, so this stage trains from step 0
+# with a fresh muon optimizer and a fresh cosine LR schedule (warmup from 0).
 #
 # Nodes: 192.0.2.12 (cluster2) + 192.0.2.14 (cluster1). Cross-cluster is one
 # RoCE fabric and works with UNIFORM auto-detect containers (both on the same
@@ -150,6 +151,7 @@ TRAINING_ARGS=(
     --initial-loss-scale 65536
     --bf16
     --cross-entropy-loss-fusion
+    --finetune
     --load "$CHECKPOINT_PATH"
     --no-load-optim
     --no-load-rng
