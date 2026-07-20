@@ -161,6 +161,10 @@ def get_rope_index(
     return position_ids, mrope_position_deltas
 
 
+_MROPE_A_LOGGED = False
+_MROPE_FB_LOGGED = False
+
+
 def _rope_from_patch_positions(
     ids, cu, patch_positions, merge, image_token_id, video_token_id, device, total_len
 ):
@@ -285,6 +289,11 @@ def _rope_from_patch_positions(
         pad = total_len - positions.shape[1]
         extra = torch.arange(pad, device=device).view(1, -1).expand(3, -1)
         positions = torch.cat([positions, extra], dim=1)
+    global _MROPE_A_LOGGED
+    if not _MROPE_A_LOGGED:
+        import sys as _sys
+        _sys.stderr.write("[MROPE-A] real patch_positions path ACTIVE (merged_tok=%d, vision_tok_seen=%d)\n" % (n_tok, n_vision_tokens_seen))
+        _MROPE_A_LOGGED = True
     return positions.unsqueeze(1).contiguous()
 
 
@@ -347,6 +356,11 @@ def get_rope_index_packed(
     )
     if _pp_pos is not None:
         return _pp_pos
+    global _MROPE_FB_LOGGED
+    if not _MROPE_FB_LOGGED:
+        import sys as _sys
+        _sys.stderr.write("[MROPE-A] FELL BACK to grid path (patch_positions absent/unusable)\n")
+        _MROPE_FB_LOGGED = True
     # Fallback (no usable patch_positions): reconstruct from grid_thw.
 
     # OV2 gives EACH frame/tile of a visual its own <vision_start> token, while
