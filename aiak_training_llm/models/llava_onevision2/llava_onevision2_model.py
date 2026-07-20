@@ -161,6 +161,133 @@ def get_rope_index(
     return position_ids, mrope_position_deltas
 
 
+def _rope_from_patch_positions(
+    ids, cu, patch_positions, merge, image_token_id, video_token_id, device, total_len
+):
+    """Build packed 3D M-RoPE positions from real per-patch positions.
+
+    patch_positions arrives BLOCK-LAYOUT + PATCH-LEVEL (the task encoder already
+    ran convert_positions_to_block_layout): every ``merge*merge`` consecutive
+    patches form one merged vision token, in the same order as the <image_pad>/
+    <video_pad> tokens appear in the packed sequence. We reduce it to one
+    (t, h//merge, w//merge) per merged token, then walk the sequence:
+
+      * text token          -> running scalar position (cur, cur, cur)
+      * vision token         -> (base + frame_order, base + h_m, base + w_m)
+                                where base is captured at the visual start and
+                                frame_order is the dense rank of the real t
+                                within that visual (0,30,60 -> 0,1,2).
+
+    A new visual is detected when a block start (h_m==0 and w_m==0) has t that
+    did NOT advance past the visual's first t (image after image, or a new video
+    whose t restarts). Returns [3, 1, S] LongTensor, or None to signal the
+    caller to fall back to the grid path.
+    """
+    pp = patch_positions
+    if isinstance(pp, (list, tuple)):
+        pp = [p for p in pp if p is not None and (p.numel() if torch.is_tensor(p) else len(p)) > 0]
+        if not pp:
+            return None
+        pp = torch.cat([p if torch.is_tensor(p) else torch.as_tensor(p) for p in pp], dim=0)
+    if pp is None or (torch.is_tensor(pp) and pp.numel() == 0):
+        return None
+    pp = pp.detach().to("cpu").long()
+    if pp.dim() != 2 or pp.shape[1] != 3:
+        return None
+    m2 = merge * merge
+    if pp.shape[0] % m2 != 0:
+        return None
+    # representative patch of each merge*merge block; assert intra-block consistency
+    rep = pp[::m2]
+    if merge > 1:
+        blk = pp[: (pp.shape[0] // m2) * m2].view(-1, m2, 3)
+        bt = blk[:, :, 0]
+        bh = blk[:, :, 1] // merge
+        bw = blk[:, :, 2] // merge
+        same = (
+            (bt == bt[:, :1]).all()
+            and (bh == bh[:, :1]).all()
+            and (bw == bw[:, :1]).all()
+        )
+        if not same:
+            # layout is not the expected 3x3 block order -> do not trust it
+            return None
+    merged_t = rep[:, 0].tolist()
+    merged_h = (rep[:, 1] // merge).tolist()
+    merged_w = (rep[:, 2] // merge).tolist()
+    n_tok = len(merged_t)
+
+    vp = 0  # global cursor into merged vision tokens (sequence order)
+    pos_chunks = []
+    n_vision_tokens_seen = 0
+    for k in range(len(cu) - 1):
+        s0, s1 = cu[k], cu[k + 1]
+        if s1 <= s0:
+            continue
+        seg = ids[s0:s1].tolist()
+        n = len(seg)
+        t_row = [0] * n
+        h_row = [0] * n
+        w_row = [0] * n
+        cur = 0
+        vis_base = None      # baseline captured at the current visual's start
+        vis_first_t = None   # t of the current visual's first frame
+        vis_rank = {}        # real_t -> dense frame order within current visual
+        vis_max = 0          # max offset used inside the current visual
+        for i in range(n):
+            tok = seg[i]
+            if tok == image_token_id or tok == video_token_id:
+                if vp < n_tok:
+                    tt, hh, ww = merged_t[vp], merged_h[vp], merged_w[vp]
+                    vp += 1
+                else:
+                    tt, hh, ww = (vis_first_t or 0), 0, 0
+                n_vision_tokens_seen += 1
+                block_start = (hh == 0 and ww == 0)
+                new_visual = (
+                    vis_base is None
+                    or (block_start and vis_first_t is not None and tt <= vis_first_t)
+                )
+                if new_visual:
+                    if vis_base is not None:
+                        cur = max(cur, vis_base + vis_max + 1)
+                    vis_base = cur
+                    vis_first_t = tt
+                    vis_rank = {}
+                    vis_max = 0
+                if tt not in vis_rank:
+                    vis_rank[tt] = len(vis_rank)
+                f = vis_rank[tt]
+                t_row[i] = vis_base + f
+                h_row[i] = vis_base + hh
+                w_row[i] = vis_base + ww
+                if f > vis_max:
+                    vis_max = f
+                if hh > vis_max:
+                    vis_max = hh
+                if ww > vis_max:
+                    vis_max = ww
+            else:
+                # text token (includes <X.X seconds>, vision_start/end, newlines)
+                t_row[i] = cur
+                h_row[i] = cur
+                w_row[i] = cur
+                cur += 1
+        pos_chunks.append(torch.tensor([t_row, h_row, w_row], device=device))
+
+    # if the sequence had no vision tokens at all, this path adds nothing
+    if n_vision_tokens_seen == 0:
+        return None
+    if not pos_chunks:
+        return None
+    positions = torch.cat(pos_chunks, dim=1)
+    if positions.shape[1] < total_len:
+        pad = total_len - positions.shape[1]
+        extra = torch.arange(pad, device=device).view(1, -1).expand(3, -1)
+        positions = torch.cat([positions, extra], dim=1)
+    return positions.unsqueeze(1).contiguous()
+
+
 def get_rope_index_packed(
     input_ids,
     cu_seqlens,
@@ -172,6 +299,7 @@ def get_rope_index_packed(
     vision_start_token_id=151652,
     tokens_per_second=2,
     second_per_grid_ts=None,
+    patch_positions=None,
 ):
     """Packed-mode Qwen 3D M-RoPE position ids.
 
@@ -204,6 +332,22 @@ def get_rope_index_packed(
     device = ids.device
     total_len = ids.shape[0]
     cu = cu_seqlens.detach().to("cpu").long().tolist()
+
+    # ----------------------------------------------------------------------
+    # Preferred path: real per-patch (t, h, w) from patch_positions.npy.
+    # Qwen3.5 M-RoPE temporal is the FRAME ORDER (arange), spatial is the
+    # merged (h//merge, w//merge) grid; absolute timing is carried separately
+    # by the <X.X seconds> timestamp TEXT tokens (not by M-RoPE). We therefore
+    # use patch_positions only to recover, per merged vision token in sequence
+    # order, its (frame_order, h//merge, w//merge). Real absolute frame numbers
+    # (e.g. 0,30,60) are dense-ranked to 0,1,2 per visual.
+    _pp_pos = _rope_from_patch_positions(
+        ids, cu, patch_positions, spatial_merge_size,
+        image_token_id, video_token_id, device, total_len,
+    )
+    if _pp_pos is not None:
+        return _pp_pos
+    # Fallback (no usable patch_positions): reconstruct from grid_thw.
 
     # OV2 gives EACH frame/tile of a visual its own <vision_start> token, while
     # image_grid_thw / video_grid_thw store ONE row [t, h, w] per visual (t =
@@ -636,6 +780,7 @@ class LlavaOnevision2(MegatronModule):
                     video_token_id=self.config.video_token_id,
                     vision_start_token_id=getattr(self.config, "vision_start_token_id", 151652),
                     tokens_per_second=getattr(self.config, "tokens_per_second", 2),
+                    patch_positions=patch_positions,
                 )
                 _mrope_pos = _mrope_pos.to(input_ids.device)
             elif _has_vision and _simple and input_ids is not None:
