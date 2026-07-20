@@ -205,6 +205,30 @@ def get_rope_index_packed(
     total_len = ids.shape[0]
     cu = cu_seqlens.detach().to("cpu").long().tolist()
 
+    # OV2 gives EACH frame/tile of a visual its own <vision_start> token, while
+    # image_grid_thw / video_grid_thw store ONE row [t, h, w] per visual (t =
+    # number of frames/tiles). Qwen get_rope_index assumes 1 <vision_start> <->
+    # 1 grid row <-> 1 contiguous token run, so expand every [t, h, w] row into t
+    # rows of [1, h, w]: then the per-segment <vision_start> count equals the grid
+    # row count and each image/video run is contiguous, restoring that invariant.
+    def _expand_grid(grid, spgts):
+        if grid is None or grid.numel() == 0:
+            return grid, spgts
+        rows, sp = [], []
+        for r in range(grid.shape[0]):
+            t = int(grid[r, 0].item())
+            one = grid[r:r + 1].clone()
+            one[0, 0] = 1
+            for _ in range(max(t, 1)):
+                rows.append(one)
+                if spgts is not None:
+                    sp.append(spgts[r:r + 1])
+        g = torch.cat(rows, dim=0) if rows else grid
+        s = torch.cat(sp, dim=0) if (spgts is not None and sp) else spgts
+        return g, s
+    image_grid_thw, _ = _expand_grid(image_grid_thw, None)
+    video_grid_thw, second_per_grid_ts = _expand_grid(video_grid_thw, second_per_grid_ts)
+
     pos_chunks = []
     img_cursor, vid_cursor = 0, 0
     for k in range(len(cu) - 1):
@@ -212,7 +236,7 @@ def get_rope_index_packed(
         if s1 <= s0:
             continue
         seg = ids[s0:s1]
-        # Count image/video vision tokens inside this segment (in order).
+        # After the expansion above, each <vision_start> maps to exactly one grid row.
         vstart = torch.argwhere(seg == vision_start_token_id).squeeze(1)
         n_img, n_vid = 0, 0
         if vstart.numel() > 0:
@@ -229,19 +253,34 @@ def get_rope_index_packed(
             seg_vid = video_grid_thw[vid_cursor:vid_cursor + n_vid]
             if second_per_grid_ts is not None:
                 seg_spgts = second_per_grid_ts[vid_cursor:vid_cursor + n_vid]
-        seg_pos, _ = get_rope_index(
-            input_ids=seg.unsqueeze(0),
-            image_grid_thw=seg_img,
-            video_grid_thw=seg_vid,
-            spatial_merge_size=spatial_merge_size,
-            image_token_id=image_token_id,
-            video_token_id=video_token_id,
-            vision_start_token_id=vision_start_token_id,
-            tokens_per_second=tokens_per_second,
-            second_per_grid_ts=seg_spgts,
-            attention_mask=None,
-        )
-        pos_chunks.append(seg_pos[:, 0, :].to(device))  # [3, seg_len]
+        try:
+            seg_pos, _ = get_rope_index(
+                input_ids=seg.unsqueeze(0),
+                image_grid_thw=seg_img,
+                video_grid_thw=seg_vid,
+                spatial_merge_size=spatial_merge_size,
+                image_token_id=image_token_id,
+                video_token_id=video_token_id,
+                vision_start_token_id=vision_start_token_id,
+                tokens_per_second=tokens_per_second,
+                second_per_grid_ts=seg_spgts,
+                attention_mask=None,
+            )
+            seg_chunk = seg_pos[:, 0, :].to(device)
+        except Exception as _e:
+            # Safety net: a malformed segment must not kill a long run. Fall back
+            # to a plain arange for this segment; cursors still advance by the
+            # per-segment vision counts so later segments stay grid-aligned.
+            import sys
+            sys.stderr.write(
+                "[MROPE] segment k=%d fell back to arange (n_img=%d n_vid=%d): %s\n"
+                % (k, n_img, n_vid, repr(_e))
+            )
+            seg_len = int(seg.shape[0])
+            seg_chunk = (
+                torch.arange(seg_len, device=device).view(1, -1).expand(3, -1).contiguous()
+            )
+        pos_chunks.append(seg_chunk)  # [3, seg_len]
         img_cursor += n_img
         vid_cursor += n_vid
 
@@ -251,7 +290,7 @@ def get_rope_index_packed(
         )
     positions = torch.cat(pos_chunks, dim=1)  # [3, covered_len]
     # Safety: if cu_seqlens does not cover the full physical width (shouldn't
-    # happen after get_batch's tail fix), pad the remainder with a local arange.
+    # happen after the get_batch tail fix), pad the remainder with a local arange.
     if positions.shape[1] < total_len:
         pad_len = total_len - positions.shape[1]
         extra = torch.arange(pad_len, device=device).view(1, -1).expand(3, -1)
