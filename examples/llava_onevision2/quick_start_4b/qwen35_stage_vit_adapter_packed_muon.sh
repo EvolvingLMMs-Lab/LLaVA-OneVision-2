@@ -28,8 +28,13 @@ TP="${1:-1}"
 PP="${2:-1}"
 SEQ_LEN="${3:-32000}"
 MBS="${4:-1}"
-GBS="${5:-256}"
+GBS="${5:-48}"   # 6 nodes x8 = DP48 @ TP1 (1 microbatch/DP)
 TRAINABLE="${TRAINABLE:-adapter vision_model}"
+# Activation recompute: none | full | block:<N>. Measured on 6xA800 GBS48:
+# none OOMs (GatedDeltaNet qkvz/chunk intermediates too big even with frozen
+# LLM); block:16 (recompute 16, store 16) = 4.6 s/step vs full 5.2 (=12%% faster)
+# at 73GB peak. Default block:16.
+RECOMPUTE="${RECOMPUTE:-block:16}"
 TOTAL_SAMPLES="${TOTAL_SAMPLES:-8000000}"
 EPOCHS="${EPOCHS:-1}"
 NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
@@ -51,7 +56,7 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    declare -a list_ip=( "172.16.5.19" "172.16.5.22" )
+    declare -a list_ip=( "172.16.5.19" "172.16.5.22" "172.16.5.29" "172.16.5.40" "172.16.5.86" "172.16.5.89" )
 fi
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')
@@ -117,12 +122,15 @@ DATA_ARGS=(
     --data-path "$DATA_PATH"
     --dataloader-type external
     --split 100,0,0
-    --num-workers 2
+    --num-workers 6
     --chat-template qwen2-vl
-    --recompute-granularity full
-    --recompute-method uniform
-    --recompute-num-layers 1
 )
+
+RECOMPUTE_ARGS=()
+case "$RECOMPUTE" in
+  full)    RECOMPUTE_ARGS=( --recompute-granularity full --recompute-method uniform --recompute-num-layers 1 );;
+  block:*) RECOMPUTE_ARGS=( --recompute-granularity full --recompute-method block --recompute-num-layers "${RECOMPUTE#block:}" );;
+esac
 
 TRAINING_ARGS=(
     --training-phase sft
@@ -189,5 +197,6 @@ PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     "${DATA_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \
+    ${RECOMPUTE_ARGS[@]:+"${RECOMPUTE_ARGS[@]}"} \
     "${LOGGING_ARGS[@]}" \
     2>&1 | tee "$logfile"
