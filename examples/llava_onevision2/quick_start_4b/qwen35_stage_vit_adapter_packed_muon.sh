@@ -35,6 +35,10 @@ TRAINABLE="${TRAINABLE:-adapter vision_model}"
 # LLM); block:16 (recompute 16, store 16) = 4.6 s/step vs full 5.2 (=12%% faster)
 # at 73GB peak. Default block:16.
 RECOMPUTE="${RECOMPUTE:-block:16}"
+# RESUME=1: continue THIS run from its own latest checkpoint (loads weights +
+# muon optimizer + iteration; lr schedule continues). Default 0 = fresh start
+# from the stage-1 checkpoint via --finetune (step 0, fresh optimizer).
+RESUME="${RESUME:-0}"
 TOTAL_SAMPLES="${TOTAL_SAMPLES:-8000000}"
 EPOCHS="${EPOCHS:-1}"
 NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
@@ -122,7 +126,7 @@ DATA_ARGS=(
     --data-path "$DATA_PATH"
     --dataloader-type external
     --split 100,0,0
-    --num-workers 6
+    --num-workers 12
     --chat-template qwen2-vl
 )
 
@@ -131,6 +135,12 @@ case "$RECOMPUTE" in
   full)    RECOMPUTE_ARGS=( --recompute-granularity full --recompute-method uniform --recompute-num-layers 1 );;
   block:*) RECOMPUTE_ARGS=( --recompute-granularity full --recompute-method block --recompute-num-layers "${RECOMPUTE#block:}" );;
 esac
+
+if [[ "$RESUME" == "1" ]]; then
+    LOAD_ARGS=( --load "$SAVE_CKPT_PATH" )
+else
+    LOAD_ARGS=( --finetune --load "$CHECKPOINT_PATH" --no-load-optim --no-load-rng )
+fi
 
 TRAINING_ARGS=(
     --training-phase sft
@@ -159,10 +169,7 @@ TRAINING_ARGS=(
     --initial-loss-scale 65536
     --bf16
     --cross-entropy-loss-fusion
-    --finetune
-    --load "$CHECKPOINT_PATH"
-    --no-load-optim
-    --no-load-rng
+    "${LOAD_ARGS[@]}"
     --save "$SAVE_CKPT_PATH"
     --save-interval 2000
     --ckpt-format torch
