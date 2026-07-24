@@ -1,16 +1,16 @@
 {
   "owner": "EvolvingLMMs-Lab",
   "repo": "LLaVA-OneVision-2",
-  "generated_at": "2026-07-13T06:07:37.958242+00:00",
+  "generated_at": "2026-07-24T02:43:01.265630+00:00",
   "contributors": [
     {
       "login": "anxiangsir",
-      "contributions": 202,
+      "contributions": 203,
       "avatar_url": "https://avatars.githubusercontent.com/u/31175974?v=4"
     },
     {
       "login": "yiyexy",
-      "contributions": 29,
+      "contributions": 31,
       "avatar_url": "https://avatars.githubusercontent.com/u/35927125?v=4"
     },
     {
@@ -5236,11 +5236,6 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/180505339?v=4"
     },
     {
-      "login": "chenbhao",
-      "starred_at": "2026-06-03T13:32:36Z",
-      "avatar_url": "https://avatars.githubusercontent.com/u/269585028?v=4"
-    },
-    {
       "login": "wgxsnb-code",
       "starred_at": "2026-06-04T01:39:31Z",
       "avatar_url": "https://avatars.githubusercontent.com/u/270242502?v=4"
@@ -5769,6 +5764,76 @@
       "login": "albadore",
       "starred_at": "2026-07-13T06:03:20Z",
       "avatar_url": "https://avatars.githubusercontent.com/u/104982471?v=4"
+    },
+    {
+      "login": "jbjeong",
+      "starred_at": "2026-07-13T07:01:15Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30853761?v=4"
+    },
+    {
+      "login": "WithLi",
+      "starred_at": "2026-07-15T10:38:06Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22574581?v=4"
+    },
+    {
+      "login": "noticeable",
+      "starred_at": "2026-07-16T09:23:27Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13158577?v=4"
+    },
+    {
+      "login": "enstan",
+      "starred_at": "2026-07-17T13:15:57Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22431867?v=4"
+    },
+    {
+      "login": "Yicheng0Wang",
+      "starred_at": "2026-07-18T12:22:46Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116692935?v=4"
+    },
+    {
+      "login": "hundredthtree-OvO",
+      "starred_at": "2026-07-19T06:18:53Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/186458525?v=4"
+    },
+    {
+      "login": "AIOKWORK",
+      "starred_at": "2026-07-20T03:44:55Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/269617022?v=4"
+    },
+    {
+      "login": "Titor99",
+      "starred_at": "2026-07-20T13:47:30Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36624845?v=4"
+    },
+    {
+      "login": "songtf525",
+      "starred_at": "2026-07-21T02:14:25Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26566132?v=4"
+    },
+    {
+      "login": "894125916",
+      "starred_at": "2026-07-21T09:45:54Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70794650?v=4"
+    },
+    {
+      "login": "fivejjs",
+      "starred_at": "2026-07-21T12:41:03Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1405491?v=4"
+    },
+    {
+      "login": "TaurusOasis",
+      "starred_at": "2026-07-22T07:33:07Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6480549?v=4"
+    },
+    {
+      "login": "Umbreller-F",
+      "starred_at": "2026-07-23T01:33:26Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84849422?v=4"
+    },
+    {
+      "login": "Hersh-Desai-Michigan",
+      "starred_at": "2026-07-23T19:27:41Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46054269?v=4"
     }
   ]
 }
