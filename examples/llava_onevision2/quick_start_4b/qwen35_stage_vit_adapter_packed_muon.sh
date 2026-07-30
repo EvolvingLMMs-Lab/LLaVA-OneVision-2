@@ -126,7 +126,7 @@ DATA_ARGS=(
     --data-path "$DATA_PATH"
     --dataloader-type external
     --split 100,0,0
-    --num-workers 12
+    --num-workers 16
     --chat-template qwen2-vl
 )
 
