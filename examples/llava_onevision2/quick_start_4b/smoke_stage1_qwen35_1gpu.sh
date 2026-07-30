@@ -36,7 +36,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_qwen35}"
 DATA_PATH="${DATA_PATH:-/data/47m_sft_packed_8k/dataset.yaml}"
 # p16m3 tokenizer (Qwen2.5-VL token space: image_token_id=151655), consistent
 # with the packed p16m3 data AND the provider's image/video token ids.
-TOKENIZER_PATH="${TOKENIZER_PATH:-/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33}"
+TOKENIZER_PATH="${TOKENIZER_PATH:-/models/ov2_qwen35_processor}"
 # Converted Qwen3.5-backbone mcore checkpoint (TP1/PP1, loads 0 missing/0 unexpected).
 CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1}"
 

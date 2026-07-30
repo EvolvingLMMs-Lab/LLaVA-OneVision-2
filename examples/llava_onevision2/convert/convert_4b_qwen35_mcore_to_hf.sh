@@ -94,7 +94,8 @@ python $CUSTOM/qwen35_mcore_to_hf.py \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \
     --full_attention_interval=$FULL_ATTENTION_INTERVAL \
-    --tensor_model_parallel_size=$TP
+    --tensor_model_parallel_size=$TP \
+    --hf_config_path=$REFERENCE
 
 # ---- vit (reuse validated mcore->hf converter) ------------------------------
 python $CONVERT_CHECKPOINT_PATH/model.py \
