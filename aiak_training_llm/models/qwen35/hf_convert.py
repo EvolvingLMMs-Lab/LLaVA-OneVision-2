@@ -35,6 +35,30 @@ FULL_HD = 256  # head_dim
 HIDDEN = 2560
 
 
+def dims_from_hf_config(model_dir):
+    """Read hybrid-attention dims from a (merged) HF checkpoint's config.json.
+
+    Returns a kwargs dict for the layer converters. Missing keys fall back to
+    the module-level Qwen3.5-4B defaults, so passing dims from any Qwen3.5
+    variant (e.g. 2B: 24 layers, hidden 2048, 8 heads / 2 KV groups,
+    linear_num_value_heads=16) makes the converters variant-agnostic.
+    """
+    import json
+    import os
+    cfg = json.load(open(os.path.join(model_dir, "config.json")))
+    tc = cfg.get("text_config", cfg)
+    return {
+        "lin_nk": tc.get("linear_num_key_heads", LIN_NK),
+        "lin_nv": tc.get("linear_num_value_heads", LIN_NV),
+        "lin_dk": tc.get("linear_key_head_dim", LIN_DK),
+        "lin_dv": tc.get("linear_value_head_dim", LIN_DV),
+        "full_nkv": tc.get("num_key_value_heads", FULL_NKV),
+        "full_hd": tc.get("head_dim", FULL_HD),
+        "hidden": tc.get("hidden_size", HIDDEN),
+    }
+
+
+
 def cat_qkv_z_to_qkvz(qkv_weight, z_weight, nk=LIN_NK, nv=LIN_NV, dk=LIN_DK, dv=LIN_DV):
     """HF [in_proj_qkv, in_proj_z] -> mcore interleaved in_proj_qkvz.
 
@@ -81,7 +105,7 @@ def cat_attn_qgkv(q, k, v, num_key_value_heads=FULL_NKV, hidden_size=HIDDEN):
     return value
 
 
-def convert_linear_attn_layer(hf_sd_layer):
+def convert_linear_attn_layer(hf_sd_layer, dims=None):
     """Convert one HF linear-attention layer's ``linear_attn.*`` params to mcore
     ``self_attention.*`` params (GatedDeltaNet).
 
@@ -109,12 +133,20 @@ def convert_linear_attn_layer(hf_sd_layer):
     out["out_norm.weight"] = g("norm.weight").clone()
     out["out_proj.weight"] = g("out_proj.weight").clone()
     # interleaved projections
-    out["in_proj_qkvz.weight"] = cat_qkv_z_to_qkvz(g("in_proj_qkv.weight"), g("in_proj_z.weight"))
-    out["in_proj_ba.weight"] = cat_b_a_to_ba(g("in_proj_b.weight"), g("in_proj_a.weight"))
+    d = dims or {}
+    out["in_proj_qkvz.weight"] = cat_qkv_z_to_qkvz(
+        g("in_proj_qkv.weight"), g("in_proj_z.weight"),
+        nk=d.get("lin_nk", LIN_NK), nv=d.get("lin_nv", LIN_NV),
+        dk=d.get("lin_dk", LIN_DK), dv=d.get("lin_dv", LIN_DV),
+    )
+    out["in_proj_ba.weight"] = cat_b_a_to_ba(
+        g("in_proj_b.weight"), g("in_proj_a.weight"),
+        nk=d.get("lin_nk", LIN_NK), nv=d.get("lin_nv", LIN_NV),
+    )
     return out
 
 
-def convert_full_attn_layer(hf_sd_layer):
+def convert_full_attn_layer(hf_sd_layer, dims=None):
     """Convert one HF full-attention layer's ``self_attn.*`` params to mcore
     ``self_attention.*`` params (Qwen3NextSelfAttention).
 
@@ -127,8 +159,11 @@ def convert_full_attn_layer(hf_sd_layer):
         return hf_sd_layer["self_attn." + name]
 
     out = {}
+    d = dims or {}
     out["linear_qkv.weight"] = cat_attn_qgkv(
-        g("q_proj.weight"), g("k_proj.weight"), g("v_proj.weight")
+        g("q_proj.weight"), g("k_proj.weight"), g("v_proj.weight"),
+        num_key_value_heads=d.get("full_nkv", FULL_NKV),
+        hidden_size=d.get("hidden", HIDDEN),
     )
     out["linear_proj.weight"] = g("o_proj.weight").clone()
     out["q_layernorm.weight"] = g("q_norm.weight").clone()
@@ -194,7 +229,7 @@ def split_attn_qgkv(linear_qkv, num_key_value_heads=FULL_NKV, head_dim=FULL_HD):
     return q, k, v
 
 
-def mcore_to_hf_linear_attn_layer(mcore_layer):
+def mcore_to_hf_linear_attn_layer(mcore_layer, dims=None):
     """Inverse of convert_linear_attn_layer. Returns HF ``linear_attn.*`` params.
 
     Accepts mcore names either bare (``A_log`` ...) or ``self_attention.``-prefixed.
@@ -212,16 +247,24 @@ def mcore_to_hf_linear_attn_layer(mcore_layer):
         out["linear_attn.conv1d.bias"] = g("conv1d.bias").clone()
     out["linear_attn.norm.weight"] = g("out_norm.weight").clone()
     out["linear_attn.out_proj.weight"] = g("out_proj.weight").clone()
-    in_proj_qkv, in_proj_z = split_qkvz_to_qkv_z(g("in_proj_qkvz.weight"))
+    d = dims or {}
+    in_proj_qkv, in_proj_z = split_qkvz_to_qkv_z(
+        g("in_proj_qkvz.weight"),
+        nk=d.get("lin_nk", LIN_NK), nv=d.get("lin_nv", LIN_NV),
+        dk=d.get("lin_dk", LIN_DK), dv=d.get("lin_dv", LIN_DV),
+    )
     out["linear_attn.in_proj_qkv.weight"] = in_proj_qkv
     out["linear_attn.in_proj_z.weight"] = in_proj_z
-    b, a = split_ba_to_b_a(g("in_proj_ba.weight"))
+    b, a = split_ba_to_b_a(
+        g("in_proj_ba.weight"),
+        nk=d.get("lin_nk", LIN_NK), nv=d.get("lin_nv", LIN_NV),
+    )
     out["linear_attn.in_proj_b.weight"] = b
     out["linear_attn.in_proj_a.weight"] = a
     return out
 
 
-def mcore_to_hf_full_attn_layer(mcore_layer):
+def mcore_to_hf_full_attn_layer(mcore_layer, dims=None):
     """Inverse of convert_full_attn_layer. Returns HF ``self_attn.*`` params.
 
     Accepts mcore names either bare (``linear_qkv.weight`` ...) or
@@ -233,7 +276,12 @@ def mcore_to_hf_full_attn_layer(mcore_layer):
         return mcore_layer["self_attention." + name]
 
     out = {}
-    q, k, v = split_attn_qgkv(g("linear_qkv.weight"))
+    d = dims or {}
+    q, k, v = split_attn_qgkv(
+        g("linear_qkv.weight"),
+        num_key_value_heads=d.get("full_nkv", FULL_NKV),
+        head_dim=d.get("full_hd", FULL_HD),
+    )
     out["self_attn.q_proj.weight"] = q
     out["self_attn.k_proj.weight"] = k
     out["self_attn.v_proj.weight"] = v

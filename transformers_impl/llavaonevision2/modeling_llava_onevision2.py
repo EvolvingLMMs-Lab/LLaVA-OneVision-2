@@ -24,6 +24,36 @@ from transformers.utils.generic import is_flash_attention_requested
 from .configuration_llava_onevision2 import LlavaOnevision2Config, LlavaOnevision2VisionConfig
 
 
+def _default_patch_positions_from_grid(grid_thw, spatial_merge_size, device):
+    """Fallback patch positions when the processor does not provide them.
+
+    Matches the training-side default (task encoder): per visual row [t, h, w],
+    t=0 for all patches, h/w row-major over t*h*w patches, then reordered into
+    the spatial-merge block layout the vision RoPE expects.
+    """
+    chunks = []
+    for i in range(grid_thw.shape[0]):
+        t, h, w = (int(x) for x in grid_thw[i].tolist())
+        n = t * h * w
+        hh = torch.arange(h, dtype=torch.long).repeat_interleave(w).repeat(t)
+        ww = torch.arange(w, dtype=torch.long).repeat(h).repeat(t)
+        tt = torch.zeros(n, dtype=torch.long)
+        pos = torch.stack([tt, hh, ww], dim=1)
+        m = spatial_merge_size
+        if m > 1:
+            idx = (
+                torch.arange(n)
+                .view(t, h, w)
+                .view(t, h // m, m, w // m, m)
+                .permute(0, 1, 3, 2, 4)
+                .reshape(-1)
+            )
+            pos = pos[idx]
+        chunks.append(pos)
+    return torch.cat(chunks, dim=0).to(device)
+
+
+
 @dataclass
 @auto_docstring(
     custom_intro="""
@@ -840,6 +870,14 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         # 2. RoPE Construction
         if patch_positions is not None and patch_positions.dim() == 3:
             patch_positions = patch_positions.squeeze(0)
+        if patch_positions is None:
+            if grid_thw is None:
+                raise ValueError("vision forward needs `patch_positions` or `grid_thw`")
+            patch_positions = _default_patch_positions_from_grid(
+                grid_thw,
+                getattr(self.config, "spatial_merge_size", 3),
+                hidden_states.device,
+            )
         freqs_visible = self.video_rope.forward_from_positions(patch_positions)
 
         # Concatenate D/2 + D/2 -> D for applying rope

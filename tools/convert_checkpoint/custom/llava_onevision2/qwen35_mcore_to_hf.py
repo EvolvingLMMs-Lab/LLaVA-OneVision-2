@@ -114,7 +114,7 @@ def unshard_language(shards, tp):
 
 
 def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
-                                 orig_vocab_size=None):
+                                 orig_vocab_size=None, dims=None):
     """Full TP1 mcore language dict -> HF ``model.language_model.*`` (+ lm_head)."""
     out = {}
 
@@ -145,10 +145,10 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
 
         is_full = ((i + 1) % full_attention_interval == 0)
         if is_full:
-            attn = mcore_to_hf_full_attn_layer(layer_sd)
+            attn = mcore_to_hf_full_attn_layer(layer_sd, dims=dims)
             n_full += 1
         else:
-            attn = mcore_to_hf_linear_attn_layer(layer_sd)
+            attn = mcore_to_hf_linear_attn_layer(layer_sd, dims=dims)
             n_lin += 1
         for k, v in attn.items():
             out[hpre + k] = v
@@ -166,6 +166,9 @@ def main():
     ap.add_argument("--num_layers", type=int, default=32)
     ap.add_argument("--full_attention_interval", type=int, default=4)
     ap.add_argument("--tensor_model_parallel_size", type=int, default=1)
+    ap.add_argument("--hf_config_path", type=str, default=None,
+                    help="HF model dir whose config.json provides hybrid-attn dims "
+                         "(e.g. the reference merged model); default = Qwen3.5-4B dims")
     ap.add_argument("--orig_vocab_size", type=int, default=None,
                     help="if the mcore embedding was vocab-padded, cut back to this size")
     args = ap.parse_args()
@@ -176,8 +179,11 @@ def main():
     print(f"[qwen35_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
     shards = load_language_shards(args.load_ckpt_path, tp)
     lang = unshard_language(shards, tp)
+    from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
+    dims = dims_from_hf_config(args.hf_config_path) if args.hf_config_path else None
+    print(f"[qwen35_mcore_to_hf] dims: {dims or 'default (4B)'}")
     hf = convert_language_mcore_to_hf(lang, args.num_layers, args.full_attention_interval,
-                                      orig_vocab_size=args.orig_vocab_size)
+                                      orig_vocab_size=args.orig_vocab_size, dims=dims)
 
     os.makedirs(args.save_ckpt_path, exist_ok=True)
     out_path = os.path.join(args.save_ckpt_path, "model.safetensors")

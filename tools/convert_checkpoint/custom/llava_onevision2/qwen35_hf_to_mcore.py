@@ -93,7 +93,7 @@ def load_hf_state_dict(load_path):
     return sd
 
 
-def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state=True):
+def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state=True, dims=None):
     """Convert the Qwen3.5 language weights from a merged HF state dict to mcore.
 
     Returns a flat dict of ``language_model.*`` -> tensor.
@@ -123,10 +123,10 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
         # attention: dispatch on layer type
         is_full = ((i + 1) % full_attention_interval == 0)
         if is_full:
-            attn = convert_full_attn_layer(layer_sd)
+            attn = convert_full_attn_layer(layer_sd, dims=dims)
             n_full += 1
         else:
-            attn = convert_linear_attn_layer(layer_sd)
+            attn = convert_linear_attn_layer(layer_sd, dims=dims)
             n_lin += 1
         for k, v in attn.items():
             out[mpre + "self_attention." + k] = v
@@ -244,8 +244,11 @@ def main():
 
     print(f"[qwen35_hf_to_mcore] loading HF checkpoint: {args.load_ckpt_path}")
     hf_sd = load_hf_state_dict(args.load_ckpt_path)
+    from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
+    dims = dims_from_hf_config(args.load_ckpt_path)
+    print(f"[qwen35_hf_to_mcore] dims from config: {dims}")
     lang = convert_language(hf_sd, args.num_layers, args.full_attention_interval,
-                            add_extra_state=not args.no_extra_state)
+                            add_extra_state=not args.no_extra_state, dims=dims)
 
     shards = shard_language(lang, tp)
 
