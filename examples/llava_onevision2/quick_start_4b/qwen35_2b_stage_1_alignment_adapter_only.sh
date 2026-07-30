@@ -48,7 +48,7 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    declare -a list_ip=( "localhost" )
+    declare -a list_ip=( "192.0.2.12" "192.0.2.14" "192.0.2.17" "192.0.2.27" )
 fi
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')
