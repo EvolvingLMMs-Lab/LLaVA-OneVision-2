@@ -182,6 +182,7 @@ MODEL_PARALLEL_ARGS=(
     --tensor-model-parallel-size "${TP}"
     --use-distributed-optimizer
     --distributed-backend nccl
+    --distributed-timeout-minutes 30   # monster packed bins can stall a rank >10min (NCCL default) -> died at it11427; 30min tolerates NFS spikes
 )
 if (( TP > 1 )); then
     MODEL_PARALLEL_ARGS+=( --sequence-parallel )

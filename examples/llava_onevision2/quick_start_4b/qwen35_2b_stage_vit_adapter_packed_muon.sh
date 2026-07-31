@@ -28,13 +28,13 @@ TP="${1:-1}"
 PP="${2:-1}"
 SEQ_LEN="${3:-32000}"
 MBS="${4:-1}"
-GBS="${5:-64}"   # 4 nodes x8 = DP32 @ TP1 (2 microbatch/DP; 48 not divisible by 32)
+GBS="${5:-32}"   # 4 nodes x8 = DP32 @ TP1 (1 microbatch/DP)
 TRAINABLE="${TRAINABLE:-adapter vision_model}"
 # Activation recompute: none | full | block:<N>. Measured on 6xA800 GBS48:
 # none OOMs (GatedDeltaNet qkvz/chunk intermediates too big even with frozen
 # LLM); block:16 (recompute 16, store 16) = 4.6 s/step vs full 5.2 (=12%% faster)
 # at 73GB peak. Default block:16.
-RECOMPUTE="${RECOMPUTE:-block:16}"
+RECOMPUTE="${RECOMPUTE:-block:8}"   # measured on 2B: none OOMs, block:8 fits (76GB peak) and runs
 # RESUME=1: continue THIS run from its own latest checkpoint (loads weights +
 # muon optimizer + iteration; lr schedule continues). Default 0 = fresh start
 # from the stage-1 checkpoint via --finetune (step 0, fresh optimizer).
@@ -182,6 +182,7 @@ MODEL_PARALLEL_ARGS=(
     --tensor-model-parallel-size "${TP}"
     --use-distributed-optimizer
     --distributed-backend nccl
+    --distributed-timeout-minutes 30   # monster packed bins can stall a rank >10min (NCCL default) -> died at it11427; 30min tolerates NFS spikes
 )
 if (( TP > 1 )); then
     MODEL_PARALLEL_ARGS+=( --sequence-parallel )
