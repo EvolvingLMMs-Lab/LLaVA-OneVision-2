@@ -53,7 +53,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/qwen35/checkpoints}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/vlm/yinxie/pretrain_models/ov2_qwen35_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/pretrain_models/date0805_qwen35_2b_s2_iter10000_mcore_tp2pp1"}  # vit+adapter run ended EARLY at ckpt 10000/41667 (external kill + planned stop)
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/pretrain_models/date0805_qwen35_2b_s1_iter10000_mcore_tp2pp1"}  # stage naming: s0=adapter-only, s1=vit+adapter (ended early at 10k/41667), s2=full model (this script)
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
