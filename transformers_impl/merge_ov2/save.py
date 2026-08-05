@@ -13,7 +13,8 @@ _VARIANT_SPEC = {
         "model_cls_path": ("llavaonevision2.modeling_llava_onevision2", "LlavaOnevision2ForConditionalGeneration"),
         "auto_config": "configuration_llava_onevision2.LlavaOnevision2Config",
         "auto_model": "modeling_llava_onevision2.LlavaOnevision2ForConditionalGeneration",
-        "files": ("configuration_llava_onevision2.py", "modeling_llava_onevision2.py"),
+        "files": ("configuration_llava_onevision2.py", "modeling_llava_onevision2.py",
+                  "processing_llava_onevision2.py", "video_processing_llava_onevision2.py"),
     },
     "moe": {
         "config_cls_path": ("llavaonevision2.configuration_llava_onevision2_moe", "LlavaOnevision2MoeConfig"),
@@ -44,7 +45,15 @@ def save_merged(model, output_path: str, tokenizer, processor, variant: str = "d
     os.makedirs(output_path, exist_ok=True)
     if not hasattr(model.config, "auto_map"):
         model.config.auto_map = {}
-    model.config.auto_map.update({"AutoConfig": spec["auto_config"], "AutoModelForCausalLM": spec["auto_model"]})
+    # AutoModel intentionally maps to ForConditionalGeneration: the bare
+    # LlavaOnevision2Model class has a different param layout and silently
+    # re-initializes the vision tower when loading these checkpoints.
+    model.config.auto_map.update({
+        "AutoConfig": spec["auto_config"],
+        "AutoModel": spec["auto_model"],
+        "AutoModelForCausalLM": spec["auto_model"],
+        "AutoModelForImageTextToText": spec["auto_model"],
+    })
 
     tokenizer.save_pretrained(output_path)
     processor.save_pretrained(output_path)
