@@ -891,7 +891,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         cu_seqlens, max_seqlen = self._build_cu_seqlens(
             grid_thw=grid_thw,
             total_patches=total_patches,
-            fixed_t=getattr(self.config, "frame_windows_size", 4),
+            fixed_t=getattr(self.config, "frame_windows_size", 1),
             device=hidden_states.device,
         )
 
@@ -1011,7 +1011,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         cu_seqlens, max_seqlen = self._build_cu_seqlens(
             grid_thw=grid_thw,
             total_patches=total_patches,
-            fixed_t=getattr(self.config, "frame_windows_size", 4),
+            fixed_t=getattr(self.config, "frame_windows_size", 1),
             device=hidden_states.device,
         )
 
