@@ -53,7 +53,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/date0805_qwen35_2b_s2final_mcore_tp2pp1"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/date0805_qwen35_2b_s2_iter10000_mcore_tp2pp1"}  # vit+adapter run ended EARLY at ckpt 10000/41667 (external kill + planned stop)
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
