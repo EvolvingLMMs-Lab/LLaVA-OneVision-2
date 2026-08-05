@@ -167,6 +167,7 @@ python $CUSTOM/merge_huggingface.py \
 mkdir -p "$SAVE"
 for f in config.json configuration_llava_onevision2.py modeling_llava_onevision2.py \
          processing_llava_onevision2.py video_processing_llava_onevision2.py \
+         codec_video_processing_llava_onevision2.py video_preprocessor_config.json \
          generation_config.json processor_config.json preprocessor_config.json \
          tokenizer_config.json tokenizer.json tokenizer.model vocab.json merges.txt \
          chat_template.jinja special_tokens_map.json added_tokens.json; do

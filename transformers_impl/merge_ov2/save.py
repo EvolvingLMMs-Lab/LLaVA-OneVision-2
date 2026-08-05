@@ -14,7 +14,9 @@ _VARIANT_SPEC = {
         "auto_config": "configuration_llava_onevision2.LlavaOnevision2Config",
         "auto_model": "modeling_llava_onevision2.LlavaOnevision2ForConditionalGeneration",
         "files": ("configuration_llava_onevision2.py", "modeling_llava_onevision2.py",
-                  "processing_llava_onevision2.py", "video_processing_llava_onevision2.py"),
+                  "processing_llava_onevision2.py", "video_processing_llava_onevision2.py",
+                  "codec_video_processing_llava_onevision2.py",
+                  "processor_config.json", "preprocessor_config.json", "video_preprocessor_config.json"),
     },
     "moe": {
         "config_cls_path": ("llavaonevision2.configuration_llava_onevision2_moe", "LlavaOnevision2MoeConfig"),
@@ -53,6 +55,8 @@ def save_merged(model, output_path: str, tokenizer, processor, variant: str = "d
         "AutoModel": spec["auto_model"],
         "AutoModelForCausalLM": spec["auto_model"],
         "AutoModelForImageTextToText": spec["auto_model"],
+        "AutoProcessor": "processing_llava_onevision2.LlavaOnevision2Processor",
+        "AutoVideoProcessor": "video_processing_llava_onevision2.LlavaOnevision2VideoProcessor",
     })
 
     tokenizer.save_pretrained(output_path)
