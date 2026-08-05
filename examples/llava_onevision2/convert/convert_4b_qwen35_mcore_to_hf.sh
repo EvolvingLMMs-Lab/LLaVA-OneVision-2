@@ -47,7 +47,7 @@ PP=${4:-1}
 #      right REFERENCE (config/modeling source) and NUM_LAYERS are chosen even when
 #      arg5/NUM_LAYERS are omitted. 2048 -> Qwen3.5-2B, 2560 -> Qwen3.5-4B. ---------
 _probe_rel="$LOAD"; [[ -d "$LOAD/release" ]] && _probe_rel="$LOAD/release"
-_HID=$(python - "$_probe_rel/mp_rank_00/model_optim_rng.pt" <<PYEOF
+_HID=$(PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH" python - "$_probe_rel/mp_rank_00/model_optim_rng.pt" <<PYEOF
 import sys, torch
 d = torch.load(sys.argv[1], map_location="cpu", weights_only=False)
 m = d.get("model", d)
