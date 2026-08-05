@@ -42,11 +42,32 @@ LOAD=$1
 SAVE=$2
 TP=${3:-1}
 PP=${4:-1}
-REFERENCE=${5:-/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3}
 
-# Qwen3.5-4B hybrid stack: 32 decoder layers; full-attention every 4th layer.
-NUM_LAYERS=${NUM_LAYERS:-32}
+# ---- auto-detect model size from the ckpt (hidden_size of the embedding) so the
+#      right REFERENCE (config/modeling source) and NUM_LAYERS are chosen even when
+#      arg5/NUM_LAYERS are omitted. 2048 -> Qwen3.5-2B, 2560 -> Qwen3.5-4B. ---------
+_probe_rel="$LOAD"; [[ -d "$LOAD/release" ]] && _probe_rel="$LOAD/release"
+_HID=$(python - "$_probe_rel/mp_rank_00/model_optim_rng.pt" <<PYEOF
+import sys, torch
+d = torch.load(sys.argv[1], map_location="cpu", weights_only=False)
+m = d.get("model", d)
+for k, v in m.items():
+    if k.endswith("embedding.word_embeddings.weight"):
+        print(v.shape[1]); break
+PYEOF
+)
+if [[ "$_HID" == "2048" ]]; then
+    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_2b_qwen35_p16m3; _DEF_LAYERS=24
+elif [[ "$_HID" == "2560" ]]; then
+    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+else
+    echo "[wrapper] WARNING: unknown hidden_size=$_HID; falling back to 4B defaults"
+    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+fi
+REFERENCE=${5:-$_DEF_REF}
+NUM_LAYERS=${NUM_LAYERS:-$_DEF_LAYERS}
 FULL_ATTENTION_INTERVAL=${FULL_ATTENTION_INTERVAL:-4}
+echo "[wrapper] detected hidden=$_HID -> REFERENCE=$REFERENCE NUM_LAYERS=$NUM_LAYERS"
 
 export PYTHONPATH="$AIAK_MAGATRON_PATH:$CONVERT_CHECKPOINT_PATH:$AIAK_TRAINING_PATH:$CONVERT_CHECKPOINT_PATH/..:$PYTHONPATH"
 
