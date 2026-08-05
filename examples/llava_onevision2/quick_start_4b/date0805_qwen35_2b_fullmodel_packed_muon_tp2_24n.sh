@@ -3,7 +3,7 @@
 # FULL-MODEL continue-training / 2B-Qwen3.5 / PACKED / Muon / TP2+SP / no-recompute
 # Loads the TP2-resharded weights of the vit+adapter stage final ckpt (--finetune:
 # weights only, fresh muon; LLM now trainable). Data & GBS(192; DP96 x 2mb) unchanged.
-# lr 1e-5 per the official full-model stage recipe.
+# lr 2e-5 (user-specified).
 #
 # Resumes from the COMPLETED Qwen3.5 stage-1 adapter-only alignment checkpoint
 # (iter_0002181) and continues training with adapter + vision_model trainable
@@ -153,7 +153,7 @@ TRAINING_ARGS=(
     --init-method-std 0.02
     --micro-batch-size "${MBS}"
     --global-batch-size "${GBS}"
-    --lr 1.0e-5
+    --lr 2.0e-5
     --min-lr 1.0e-6
     --clip-grad 1.0
     --weight-decay 0
