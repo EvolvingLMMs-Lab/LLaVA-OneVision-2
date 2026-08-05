@@ -1220,6 +1220,7 @@ class LlavaOnevision2Model(LlavaOnevision2PreTrainedModel):
         video_grid_thw: Optional[torch.LongTensor] = None,
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
+        mm_token_type_ids: torch.Tensor | None = None,  # emitted by Qwen2.5-VL-style processors; accepted and ignored
         **kwargs: Unpack[TransformersKwargs],
     ) -> Union[tuple, LlavaOnevision2ModelOutputWithPast]:
         r"""
@@ -1377,6 +1378,7 @@ class LlavaOnevision2ForConditionalGeneration(LlavaOnevision2PreTrainedModel, Ge
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
         logits_to_keep: Union[int, torch.Tensor] = 0,
+        mm_token_type_ids: torch.Tensor | None = None,  # emitted by Qwen2.5-VL-style processors; accepted and ignored
         **kwargs: Unpack[TransformersKwargs],
     ) -> Union[tuple, LlavaOnevision2CausalLMOutputWithPast]:
         r"""
