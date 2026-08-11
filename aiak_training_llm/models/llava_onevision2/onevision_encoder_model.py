@@ -16,6 +16,7 @@ from megatron.core.transformer.utils import make_sharded_object_for_checkpoint
 from aiak_training_llm.models.llava_onevision2.llava_onevision2_config import (
     VisionConfig,
 )
+from aiak_training_llm.models.llava_onevision2.llava_onevision2_layer_spec import _ROPE_CACHE
 from aiak_training_llm.models.llava_onevision2.vision_transformer_block import TransformerBlock
 
 import os
@@ -882,6 +883,11 @@ class OneVisionEncoderModel(VisionModule):
         # Record original token count before any padding/scatter.
         total_tokens = x.shape[0]
         sp_pad_size = 0
+
+        # Invalidate the per-step ViT RoPE cos/sin cache: the encoder
+        # rebuilds rotary_pos_emb each step and CUDA allocator reuses freed
+        # memory, so the data_ptr alone is not a safe cross-step key.
+        _ROPE_CACHE.clear()
 
         if _SCATTER_BEFORE_PATCH_EMBED:
             # ── Optimized path ──────────────────────────────────────────
