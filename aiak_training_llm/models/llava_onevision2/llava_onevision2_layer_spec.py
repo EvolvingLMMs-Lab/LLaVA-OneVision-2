@@ -35,6 +35,15 @@ def rotate_half(x):
     return torch.stack((-x_odd, x_even), dim=-1).flatten(-2)
 
 
+# Cos/sin cache for ViT RoPE. The freqs tensor is the same Python object across
+# all 24 ViT layers and both forward/backward calls within a single encoder
+# step, so a cache hit skips ~96 redundant cos/sin/repeat computations per
+# step. Keyed by (data_ptr, shape, cu_seqlens, t.dtype) to be robust against
+# pointer reuse after free; bounded to one entry by clearing before insert so
+# no encoder-side cleanup is required.
+_ROPE_CACHE = {}
+
+
 def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interleaved=False):
     """
     Apply rotary position embedding to vision tokens.
@@ -49,17 +58,21 @@ def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interl
     Returns:
         torch.Tensor: Tensor with rotary position embedding applied.
     """
-    orig_dtype = t.dtype
-    t = t.float()
-    if cu_seqlens is not None:
-        freqs = freqs.squeeze(1)
-        cos_ = freqs.cos().float().repeat(1, 1, 2)
-        sin_ = freqs.sin().float().repeat(1, 1, 2)
-    else:
-        cos_ = freqs.cos().float().repeat(1, 1, 1, 2)
-        sin_ = freqs.sin().float().repeat(1, 1, 1, 2)
-    t = (t * cos_) + (rotate_half(t) * sin_)
-    return t.to(orig_dtype)
+    key = (freqs.data_ptr(), tuple(freqs.shape), cu_seqlens is not None, t.dtype)
+    cs = _ROPE_CACHE.get(key)
+    if cs is None:
+        f = freqs.squeeze(1) if cu_seqlens is not None else freqs
+        rep = (1, 1, 2) if cu_seqlens is not None else (1, 1, 1, 2)
+        # Match t.dtype for cos/sin (bf16) instead of fp32: saves the
+        # bf16<->fp32 autocast round-trip per call. End-result quantization
+        # error is bf16 either way (the original code also cast back to bf16).
+        cos_ = f.cos().to(t.dtype).repeat(*rep)
+        sin_ = f.sin().to(t.dtype).repeat(*rep)
+        _ROPE_CACHE.clear()
+        _ROPE_CACHE[key] = (cos_, sin_)
+        cs = (cos_, sin_)
+    cos_, sin_ = cs
+    return (t * cos_) + (rotate_half(t) * sin_)
 
 
 def get_vision_layer_with_spec() -> ModuleSpec:
