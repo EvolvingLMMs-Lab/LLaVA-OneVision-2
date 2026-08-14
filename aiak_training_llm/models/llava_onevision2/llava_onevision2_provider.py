@@ -44,7 +44,7 @@ def apply_qwen35_language_config(language_config, src):
     ported mcore modules and Qwen35RotaryEmbedding read them via getattr.
 
     Mirrors the proven full-model parity recipe: rotary_interleaved=False,
-    apply_rope_fusion=False, multi_latent_attention=False.
+    apply_rope_fusion=True, multi_latent_attention=False.
     """
     for k in _QWEN35_EXTRA_FIELDS:
         v = getattr(src, k, None)
@@ -52,7 +52,7 @@ def apply_qwen35_language_config(language_config, src):
             setattr(language_config, k, v)
     language_config.language_model_type = "qwen3_5"
     language_config.rotary_interleaved = False
-    language_config.apply_rope_fusion = False
+    language_config.apply_rope_fusion = True
     language_config.multi_latent_attention = False
     # num_moe_experts absent -> dense MLP path in the layer spec.
     if getattr(language_config, "num_moe_experts", None) is None:
