@@ -28,7 +28,7 @@ TP="${1:-1}"
 PP="${2:-1}"
 SEQ_LEN="${3:-32000}"
 MBS="${4:-1}"
-GBS="${5:-48}"   # 6 nodes x8 = DP48 @ TP1 (1 microbatch/DP)
+GBS="${5:-8}"   # 6 nodes x8 = DP48 @ TP1 (1 microbatch/DP)
 TRAINABLE="${TRAINABLE:-adapter vision_model}"
 # Activation recompute: none | full | block:<N>. Measured on 6xA800 GBS48:
 # none OOMs (GatedDeltaNet qkvz/chunk intermediates too big even with frozen
@@ -43,10 +43,11 @@ TOTAL_SAMPLES="${TOTAL_SAMPLES:-8000000}"
 EPOCHS="${EPOCHS:-1}"
 NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2/}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
+# OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
+OUTPUT_DIR="${OUTPUT_DIR:-output}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
@@ -60,7 +61,8 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    declare -a list_ip=( "192.0.2.12" "192.0.2.14" "192.0.2.17" "192.0.2.27" "192.0.2.40" "192.0.2.43" )
+    # declare -a list_ip=( "192.0.2.12" "192.0.2.14" "192.0.2.17" "192.0.2.27" "192.0.2.40" "192.0.2.43" )
+    declare -a list_ip=(localhost)
 fi
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')
@@ -181,6 +183,8 @@ MODEL_PARALLEL_ARGS=(
     --pipeline-model-parallel-size "${PP}"
     --tensor-model-parallel-size "${TP}"
     --use-distributed-optimizer
+    # --overlap-grad-reduce
+    # --overlap-param-gather
     --distributed-backend nccl
     --distributed-timeout-minutes 30   # monster packed bins can stall a rank >10min (NCCL default) -> died at it11427; 30min tolerates NFS spikes
 )
