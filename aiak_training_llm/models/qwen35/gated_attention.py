@@ -14,7 +14,24 @@ from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.transformer.transformer_config import TransformerConfig
 from megatron.core.transformer.attention import SelfAttention, SelfAttentionSubmodules
 from megatron.core.transformer.spec_utils import build_module
-from megatron.core.models.common.embeddings.rope_utils import apply_rotary_pos_emb
+import os
+from megatron.core.models.common.embeddings.rope_utils import (
+    apply_rotary_pos_emb,
+    _apply_rotary_pos_emb_bshd,
+)
+
+# BUGFIX(packed M-RoPE) gate: Qwen35RotaryEmbedding emits a PER-TOKEN freqs
+# table (row i = token i; per-segment position restarts are already encoded
+# by get_rope_index_packed). The stock thd rope path (mcore unfused AND the
+# TE fused kernel) re-slices freqs[:seg_len] for EVERY segment, so in a
+# packed bin only the first sample gets correct rope — all later samples get
+# the first sample's frequency rows. The fix applies the per-token table
+# elementwise over the whole packed row (same semantics as
+# apply_rotary_pos_emb_vision in the vision tower). Enable with
+# MROPE_PACKED_FIX=1; default OFF so long-running experiments keep their
+# launch-time semantics across auto-restarts.
+_MROPE_PACKED_FIX = os.environ.get("MROPE_PACKED_FIX", "0") == "1"
+_MROPE_FIX_LOGGED = False
 
 try:
     from einops import rearrange
@@ -167,8 +184,30 @@ class Qwen3NextSelfAttention(SelfAttention):
             # ADAPTATION: use the spec-provided apply_rotary_fn when present (our
             # SelfAttention path), otherwise fall back to the standard mcore fn.
             rotary_fn = self.apply_rotary_fn if self.apply_rotary_fn is not None else apply_rotary_pos_emb
-            query = rotary_fn(query, q_pos_emb, config=self.config, cu_seqlens=cu_seqlens_q)
-            key = rotary_fn(key, k_pos_emb, config=self.config, cu_seqlens=cu_seqlens_kv)
+            if (
+                _MROPE_PACKED_FIX
+                and cu_seqlens_q is not None
+                and q_pos_emb is not None
+                and q_pos_emb.shape[0] == query.shape[0]
+                and k_pos_emb.shape[0] == key.shape[0]
+            ):
+                # per-token table -> elementwise over the whole packed row
+                global _MROPE_FIX_LOGGED
+                if not _MROPE_FIX_LOGGED:
+                    import sys as _sys
+                    _sys.stderr.write("[MROPE-PACKED-FIX] elementwise per-token rope ACTIVE (packed thd)\n")
+                    _MROPE_FIX_LOGGED = True
+                query = _apply_rotary_pos_emb_bshd(
+                    query.unsqueeze(1), q_pos_emb,
+                    rotary_interleaved=self.config.rotary_interleaved,
+                ).squeeze(1)
+                key = _apply_rotary_pos_emb_bshd(
+                    key.unsqueeze(1), k_pos_emb,
+                    rotary_interleaved=self.config.rotary_interleaved,
+                ).squeeze(1)
+            else:
+                query = rotary_fn(query, q_pos_emb, config=self.config, cu_seqlens=cu_seqlens_q)
+                key = rotary_fn(key, k_pos_emb, config=self.config, cu_seqlens=cu_seqlens_kv)
 
         # ==================================
         # core attention computation
