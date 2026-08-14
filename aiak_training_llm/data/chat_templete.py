@@ -437,6 +437,21 @@ _register_chat_template(
 )
 
 _register_chat_template(
+    # Official Qwen3 non-thinking convention: an EMPTY think block sits at the head
+    # of the assistant turn as part of the PROMPT (masked from loss). Keeps the SFT
+    # prompt distribution aligned with the qwen3.5 base pretraining instead of
+    # fighting its thinking prior. (s1-fork ablation, 2026-08-13)
+    name="qwen35-vl-think",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+_register_chat_template(
     name="qwen2-vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
