@@ -1401,7 +1401,12 @@ except ImportError:
     get_cpu_offload_context = None  # type: ignore[assignment, misc]
 
 try:
-    from transformer_engine.pytorch.attention import FusedRoPEFunc
+    try:
+        from transformer_engine.pytorch.attention import FusedRoPEFunc
+    except ImportError:
+        # TE >= ~2.0 moved FusedRoPEFunc out of `transformer_engine.pytorch.attention`
+        # into `transformer_engine.pytorch.dot_product_attention.rope`.
+        from transformer_engine.pytorch.dot_product_attention.rope import FusedRoPEFunc
     def fused_apply_rotary_pos_emb(
         t: torch.Tensor, freqs: torch.Tensor, transpose_output_memory: bool = False
     ) -> torch.Tensor:
