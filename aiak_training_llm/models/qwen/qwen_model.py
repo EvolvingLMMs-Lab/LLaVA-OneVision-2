@@ -133,7 +133,7 @@ class QwenModel(LanguageModule):
         if self.use_qwen35_mrope:
             # Proven parity recipe flags (idempotent if provider already set them).
             config.rotary_interleaved = False
-            config.apply_rope_fusion = False
+            # config.apply_rope_fusion = False
             config.multi_latent_attention = False
 
         if self.position_embedding_type == 'rope' and not self.config.multi_latent_attention:
