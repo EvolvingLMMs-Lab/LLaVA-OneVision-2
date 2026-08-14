@@ -242,6 +242,14 @@ class QwenModel(LanguageModule):
             runtime_gather_output (bool): Gather output at runtime. Default None means
                 `parallel_output` arg in the constructor will be used.
         """
+        # Invalidate the per-step Qwen3.5 LLM RoPE cos/sin cache. The freqs
+        # tensor is rebuilt every step and the CUDA allocator reuses freed
+        # memory, so the data_ptr alone is not a safe cross-step key.
+        # Mirrors the ViT-side `_ROPE_CACHE.clear()` in commit 1b9d69b
+        # (OneVisionEncoderModel.forward).
+        from aiak_training_llm.models.qwen35.qwen35_rope import clear_llm_rope_cache
+        clear_llm_rope_cache()
+
         # If decoder_input is provided (not None), then input_ids and position_ids are ignored.
         # Otherwise, apply embedding layer on input_ids and position_ids to get decoder_input.
 
