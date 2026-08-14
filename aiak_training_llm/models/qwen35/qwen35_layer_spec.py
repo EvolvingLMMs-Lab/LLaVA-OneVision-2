@@ -27,6 +27,7 @@ from megatron.core.models.gpt.moe_module_specs import get_moe_module_spec
 from .rmsnorm import Qwen3NextRMSNorm
 from .gated_deltanet import GatedDeltaNet
 from .gated_attention import Qwen3NextSelfAttention
+from .qwen35_rope import apply_rotary_pos_emb_qwen35_llm
 
 try:
     import transformer_engine  # pylint: disable=unused-import
@@ -132,6 +133,15 @@ def get_qwen3_5_transformer_layer_spec(config, vp_stage=None):
             layer_spec.submodules.self_attention.submodules.linear_qkv = TEColumnParallelLinear
             layer_spec.submodules.self_attention.module = Qwen3NextSelfAttention
             layer_spec.submodules.self_attention.params = {"attn_mask_type": AttnMaskType.causal}
+            # Cos/sin-cached RoPE wrapper for the unfused path. When
+            # apply_rope_fusion=True (default for Qwen3.5 LLM backbone),
+            # the wrapper just delegates to the mcore fused kernel; when
+            # False, it caches cos/sin across the 2 * num_full_attention
+            # layer calls per step. Mirrors the ViT-side pattern in commit
+            # 1b9d69b.
+            layer_spec.submodules.self_attention.submodules.apply_rotary_fn = (
+                apply_rotary_pos_emb_qwen35_llm
+            )
 
         # Replace all layernorms with Qwen3NextRMSNorm (zero-centered)
         layer_spec.submodules.input_layernorm = layer_norm_impl
