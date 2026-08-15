@@ -85,7 +85,9 @@ else
 fi
 echo "--- ${NNODES} node(s) | master ${MASTER_ADDR} | rank ${NODE_RANK} | ip ${CURRENT_IP} ---"
 
-SAVE_CKPT_PATH=$OUTPUT_DIR/$(basename "$0" .sh)
+# RESUME lineage: save/load the ORIGINAL s1 run dir (script-name-derived path
+# would create an empty dir and silently random-init — burned 3k iters on 08-15).
+SAVE_CKPT_PATH=$OUTPUT_DIR/date0802_qwen35_2b_stage_vit_adapter_packed_muon_24n
 TENSORBOARD_PATH="${SAVE_CKPT_PATH}/tensorboard"
 mkdir -p "$SAVE_CKPT_PATH" "$TENSORBOARD_PATH" "$SAVE_CKPT_PATH/dataloader"
 cp "$0" "${SAVE_CKPT_PATH}/$(basename "$0")"
