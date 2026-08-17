@@ -1,3 +1,5 @@
+import logging
+import os
 from contextlib import nullcontext
 
 import torch
@@ -15,8 +17,59 @@ except ImportError:
     pass
 
 
+logger = logging.getLogger(__name__)
+
+_TORCH_COMPILE_LAYERS = os.environ.get("TORCH_COMPILE_LAYERS", "0") == "1"
+_TORCH_COMPILE_MODE = os.environ.get("TORCH_COMPILE_MODE", "default")
+_TORCH_COMPILE_DYNAMIC = os.environ.get("TORCH_COMPILE_DYNAMIC", "1") == "1"
+
+
 class TransformerBlock(MegatronTransformerBlock):
     """Transformer class."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Compiled-layer cache. MUST stay a plain dict (not an nn.Module /
+        # Parameter) so nn.Module.__setattr__ routes it into instance __dict__
+        # rather than self._modules. As a result state_dict() / load_state_dict
+        # enumerate `self.layers` only (not the wrapped OptimizedModule's
+        # `_orig_mod` subtree), keeping checkpoint keys identical to the
+        # uncompiled path. The OptimizedModule anyway shares the original
+        # layer's Parameter objects, so grad/optimizer state flow unchanged.
+        self._compiled_layer_cache: dict[int, torch.nn.Module] = {}
+
+    def _get_forward_layer(self, i: int):
+        """Return the i-th layer, lazily wrapped in torch.compile when enabled."""
+        layer = self.layers[i]
+        if not _TORCH_COMPILE_LAYERS:
+            return layer
+
+        compiled = self._compiled_layer_cache.get(i)
+        if compiled is None:
+            if self.config.recompute_granularity is not None and _TORCH_COMPILE_MODE == "reduce-overhead":
+                logger.warning(
+                    "TORCH_COMPILE_MODE=reduce-overhead (CUDA graphs) is incompatible with "
+                    "activation recompute (recompute_granularity=%r); falling back to mode='default'. "
+                    "Set TORCH_COMPILE_MODE=default or disable recompute to use reduce-overhead.",
+                    self.config.recompute_granularity,
+                )
+                compile_mode = "default"
+            else:
+                compile_mode = _TORCH_COMPILE_MODE
+
+            compiled = torch.compile(
+                layer,
+                dynamic=_TORCH_COMPILE_DYNAMIC,
+                mode=compile_mode,
+            )
+            self._compiled_layer_cache[i] = compiled
+            logger.info(
+                "TransformerBlock: torch.compiled layer %d (mode=%s, dynamic=%s).",
+                i,
+                compile_mode,
+                _TORCH_COMPILE_DYNAMIC,
+            )
+        return compiled
 
     def forward(
         self,
@@ -106,7 +159,8 @@ class TransformerBlock(MegatronTransformerBlock):
                     **kwargs,
                 )
             else:
-                for l_no, layer in enumerate(self.layers):
+                for l_no in range(len(self.layers)):
+                    layer = self._get_forward_layer(l_no)
                     with self.offload_context:
                         if (len(self.cuda_graphs) == 0) or (not self.training):
                             hidden_states, context = layer(
@@ -232,7 +286,8 @@ class TransformerBlock(MegatronTransformerBlock):
         layer_outputs = {}
 
         with rng_context and fp8_context:
-            for l_no, layer in enumerate(self.layers):
+            for l_no in range(len(self.layers)):
+                layer = self._get_forward_layer(l_no)
                 # Save input to this layer
                 layer_outputs[f"layer_{l_no}_input"] = hidden_states.clone()
 
@@ -304,7 +359,7 @@ class TransformerBlock(MegatronTransformerBlock):
                     attn_mask_type = AttnMaskType(attn_mask_type.item())
 
                 for index in range(start, end):
-                    layer = self._get_layer(index)
+                    layer = self._get_forward_layer(index)
                     hidden_states, context = layer(
                         hidden_states=hidden_states,
                         attention_mask=attention_mask,

@@ -16,6 +16,7 @@ from megatron.core.transformer.utils import make_sharded_object_for_checkpoint
 from aiak_training_llm.models.llava_onevision2.llava_onevision2_config import (
     VisionConfig,
 )
+from aiak_training_llm.models.llava_onevision2.llava_onevision2_layer_spec import _ROPE_CACHE
 from aiak_training_llm.models.llava_onevision2.vision_transformer_block import TransformerBlock
 
 import os
@@ -561,17 +562,21 @@ class VideoRotaryEmbeddingSplit466(torch.nn.Module):
         inv_h = self.inv_freq_h.to(device=device)
         inv_w = self.inv_freq_w.to(device=device)
 
-        # Compute frequency tables
-        ft = torch.outer(torch.arange(t, device=device, dtype=torch.float32), inv_t)
-        fh = torch.outer(torch.arange(h, device=device, dtype=torch.float32), inv_h)
-        fw = torch.outer(torch.arange(w, device=device, dtype=torch.float32), inv_w)
+        # arange once in fp32 (used by outer); cast to int32 for indexing.
+        # int32 is safe: max id <= max(h, w) <= ~64 patches for typical ViT,
+        # and PyTorch >=1.5 supports int32 fancy indexing.
+        t_idx = torch.arange(t, device=device, dtype=torch.float32)
+        h_idx = torch.arange(h, device=device, dtype=torch.float32)
+        w_idx = torch.arange(w, device=device, dtype=torch.float32)
 
-        # Build position indices for this sample
-        t_ids = torch.arange(t, device=device).repeat_interleave(h * w)
-        h_ids = torch.arange(h, device=device).repeat_interleave(w).repeat(t)
-        w_ids = torch.arange(w, device=device).repeat(h).repeat(t)
+        ft = torch.outer(t_idx, inv_t)
+        fh = torch.outer(h_idx, inv_h)
+        fw = torch.outer(w_idx, inv_w)
 
-        # Concatenate frequencies: [seq_len, half]
+        t_ids = t_idx.to(torch.int32).repeat_interleave(h * w)
+        h_ids = h_idx.to(torch.int32).repeat_interleave(w).repeat(t)
+        w_ids = w_idx.to(torch.int32).repeat(h).repeat(t)
+
         sample_freqs = torch.cat([ft[t_ids], fh[h_ids], fw[w_ids]], dim=-1)
         return sample_freqs
 
@@ -882,6 +887,11 @@ class OneVisionEncoderModel(VisionModule):
         # Record original token count before any padding/scatter.
         total_tokens = x.shape[0]
         sp_pad_size = 0
+
+        # Invalidate the per-step ViT RoPE cos/sin cache: the encoder
+        # rebuilds rotary_pos_emb each step and CUDA allocator reuses freed
+        # memory, so the data_ptr alone is not a safe cross-step key.
+        _ROPE_CACHE.clear()
 
         if _SCATTER_BEFORE_PATCH_EMBED:
             # ── Optimized path ──────────────────────────────────────────

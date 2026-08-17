@@ -1,0 +1,17 @@
+{
+  "video_processor_type": "LlavaOnevision2VideoProcessor",
+  "processor_class": "LlavaOnevision2Processor",
+  "max_frames": 768,
+  "fixed_num_frames": null,
+  "target_fps": null,
+  "min_pixels": 3136,
+  "max_pixels": 12845056,
+  "patch_size": 16,
+  "spatial_merge_size": 3,
+  "temporal_patch_size": 1,
+  "resize_frames": true,
+  "auto_map": {
+    "AutoProcessor": "processing_llava_onevision2.LlavaOnevision2Processor",
+    "AutoVideoProcessor": "video_processing_llava_onevision2.LlavaOnevision2VideoProcessor"
+  }
+}

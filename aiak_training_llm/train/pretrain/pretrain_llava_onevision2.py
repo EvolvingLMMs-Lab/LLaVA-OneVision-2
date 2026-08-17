@@ -112,8 +112,16 @@ def get_batch(data_iterator):
     cu_lengths = tensor_parallel.broadcast_data(["cu_lengths"], data, torch.int32)["cu_lengths"]
     max_lengths = tensor_parallel.broadcast_data(["max_lengths"], data, torch.int32)["max_lengths"]
 
-    has_video = video_token_id in tokens
-    has_image = image_token_id in tokens
+    # Vision token ids depend on the LLM tokenizer. Qwen3.5 uses 248056/248057;
+    # Qwen3/OV1.5 use the module-level 151655/151656. Using the wrong id makes
+    # has_image False -> imgs never broadcast -> images=None in the model forward
+    # -> the adapter is skipped -> grad norm 0 (adapter never trains).
+    if getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35"):
+        _img_tok, _vid_tok = 248056, 248057
+    else:
+        _img_tok, _vid_tok = image_token_id, video_token_id
+    has_video = _vid_tok in tokens
+    has_image = _img_tok in tokens
     thw = None
     video_grid_thw = None
     imgs = None
@@ -168,6 +176,30 @@ def get_batch(data_iterator):
             max_seqlen_kv=max_lengths[0].item(),
         )
 
+        # Cover the packing-pad tail under Sequence Parallel / Context Parallel.
+        # The offline packer can leave cu_seqlens[-1] < tokens.shape[1] (a few
+        # trailing pad tokens that belong to no attention segment). This is
+        # tolerated without SP/CP, but under SP/CP the sequence is scattered
+        # across ranks then gathered for attention; a physical-width vs
+        # logical-cu_seqlens mismatch corrupts the gather and produces NaN
+        # gradients in linear_fc2 backward at iteration 1. Adding the tail as its
+        # own self-attending, loss-masked segment makes cu_seqlens[-1] == width
+        # without altering real-token attention or loss.
+        if args.sequence_parallel or args.context_parallel_size > 1:
+            _phys_len = tokens.shape[1]
+            _last_boundary = int(packed_seq_params.cu_seqlens_q[-1].item())
+            if _last_boundary < _phys_len:
+                _tail_len = _phys_len - _last_boundary
+                _tail_end = packed_seq_params.cu_seqlens_q[-1:] + _tail_len
+                packed_seq_params = PackedSeqParams(
+                    qkv_format="thd",
+                    cu_seqlens_q=torch.cat([packed_seq_params.cu_seqlens_q, _tail_end]),
+                    cu_seqlens_kv=torch.cat([packed_seq_params.cu_seqlens_kv, _tail_end]),
+                    max_seqlen_q=max(packed_seq_params.max_seqlen_q, _tail_len),
+                    max_seqlen_kv=max(packed_seq_params.max_seqlen_kv, _tail_len),
+                )
+                loss_mask[:, -_tail_len:] = 0
+
     # Pad sequence for Sequence Parallelism (SP) divisibility.
     # SP requires sequence length to be divisible by TP size;
     # when combined with CP, it must be divisible by TP * CP * 2.
@@ -210,6 +242,12 @@ def get_batch(data_iterator):
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
 
+    if __import__('os').environ.get('MFU_DBG','0')=='1' and locals().get('packed_seq_params') is not None:
+        _cs=packed_seq_params.cu_seqlens_q.to('cpu')
+        _d=(_cs[1:]-_cs[:-1]).tolist()
+        _sumsq=sum(x*x for x in _d)
+        if (not __import__('torch').distributed.is_initialized()) or __import__('torch').distributed.get_rank()==0:
+            print('[MFU_DBG] width=%d nseg=%d sumsq=%d maxseg=%d' % (tokens.shape[1], len(_d), _sumsq, max(_d) if _d else 0), flush=True)
     # TODO
     attn_mask_type = AttnMaskType.causal
     attn_mask = None

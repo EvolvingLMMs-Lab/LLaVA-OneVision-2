@@ -4,10 +4,16 @@
 # ============================================================================
 #
 # Stages:
-#   1. Split JSONL to per-sample files     (s1_split_json_to_samples.py)
-#   2. Compute token lengths               (s2_compute_token_lengths.py)
-#   3. Bin packing                         (s3_bin_packing.py)
-#   4. Direct bins -> WebDataset           (s4_bins_to_webdataset.py)
+#   1. Build lightweight manifest.jsonl     (s1_build_manifest.py)
+#   2. Compute token lengths                (s2_compute_token_lengths.py)
+#   3. Bin packing                          (s3_bin_packing.py)
+#   4. Bins -> WebDataset                   (s4_bins_to_webdataset.py)
+#
+# The new step-1 no longer splits the input JSONL into per-sample files and
+# no longer copies images / .npy files. Instead, it produces a single
+# manifest.jsonl whose entries carry absolute source paths and the raw
+# sample payload. Steps 2 and 4 read directly from those absolute paths,
+# halving disk usage and removing the redundant copy/read cycle.
 #
 # Resume is supported via status files in ${OUTPUT_BASE}/.status/.
 #
@@ -64,6 +70,80 @@ export PYTHONUNBUFFERED=1
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ============================================================================
+# Stage-2 optimal defaults (validated on 47M SFT run, May 2026)
+# ----------------------------------------------------------------------------
+# These env vars are read by s2_compute_token_lengths.py. They produce ~24x
+# speedup and 44x lower per-worker RSS vs the legacy fork+AutoProcessor path:
+#
+#   Worker RSS:     12 GB  -> 0.27 GB
+#   Real Mem Used:  79-99% -> ~10%
+#   s2 throughput:  3 chunks/min -> 40-90 chunks/min
+#
+# Layer 1: glibc / BLAS memory hygiene
+#   - MALLOC_ARENA_MAX=2 caps per-thread arenas (avoids RSS growth from many
+#     small mallocs landing in distinct arenas).
+#   - MALLOC_TRIM_THRESHOLD_ lowers the threshold above which free() returns
+#     pages to the kernel; combined with explicit malloc_trim() in the worker
+#     loop, keeps RSS flat across long runs.
+#   - OMP/OPENBLAS/MKL=1: numerical libs default to oversubscribe; capping
+#     them prevents 64-thread BLAS blowups under our own multiprocessing.
+#
+# Layer 2: spawn context (S2_USE_SPAWN=1)
+#   - Default fork inherits parent's ~10 GB RSS via copy-on-write; on the
+#     first write each worker's pages become private, ballooning effective
+#     usage to 5-6 GB/worker. Spawn workers start fresh (~700 MB) and stay
+#     small. Required when running >16 workers on a ~256 GB box.
+#
+# Layer 3: FAST_TOKENIZER=1
+#   - Skip AutoProcessor (which materializes input_ids tensor + attention
+#     mask per call). Use tokenizer.encode() directly. Byte-equal output
+#     verified on 100/100 A/B samples.
+#
+# Layer 4: FAST_IMG_META=1
+#   - Read W/H from JPEG/PNG header instead of decoding pixels. With
+#     Qwen2-VL smart_resize replica we compute exact patch counts without
+#     ever materializing an RGB array. ~5-50x faster per image.
+#
+# Override any of these by exporting before running this script.
+# ============================================================================
+export MALLOC_TRIM_THRESHOLD_=${MALLOC_TRIM_THRESHOLD_:-131072}
+export MALLOC_ARENA_MAX=${MALLOC_ARENA_MAX:-2}
+export PYTHONMALLOC=${PYTHONMALLOC:-malloc}
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+export OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-1}
+export MKL_NUM_THREADS=${MKL_NUM_THREADS:-1}
+
+export S2_USE_SPAWN=${S2_USE_SPAWN:-1}
+export FAST_TOKENIZER=${FAST_TOKENIZER:-1}
+export FAST_IMG_META=${FAST_IMG_META:-1}
+
+# Concurrency caps. Tuned for ~128-core / 256 GB nodes. The script also
+# auto-scales down based on system load. Override per-host as needed.
+#
+# Sizing rationale (post FAST_TOKENIZER + spawn):
+#   Worker RSS settles around 270 MB → memory is NOT the bottleneck.
+#   CPU is. Each worker spends ~95% of its time in tokenizer.encode() +
+#   Jinja2 render, both of which HOLD the GIL. Threads inside a process
+#   only help during file-header syscalls (smart_resize is pure math).
+#   So real parallelism ≈ # processes, not # processes × # threads.
+#
+#   At 24 procs we observed ~25% CPU on 128 cores; bumping to 64 procs
+#   targets 60-70% CPU and 2.5-3x more throughput. Memory budget:
+#     64 × 0.3 GB ≈ 20 GB / 256 GB ≈ 8%   (plenty of headroom)
+#
+#   THREADS_PER_PROC dropped from 8→4: more threads just fight for the
+#   GIL once we already have enough procs to saturate cores.
+#
+#   MAXTASKS_PER_CHILD raised from 3→10: with FAST_TOKENIZER, worker RSS
+#   no longer grows monotonically, so the spawn-restart cost (~3-5s per
+#   worker for transformers import) no longer pays for itself every 3
+#   chunks. 10 chunks/child = ~1 restart every 5000 samples per worker.
+export S2_MAX_PROCESSES=${S2_MAX_PROCESSES:-64}
+export S2_MAX_THREADS_PER_PROC=${S2_MAX_THREADS_PER_PROC:-4}
+export S2_MEM_PER_PROC_GB=${S2_MEM_PER_PROC_GB:-2}
+export S2_MAXTASKS_PER_CHILD=${S2_MAXTASKS_PER_CHILD:-10}
+
 usage() {
     echo "Usage: $0 -i INPUT_JSONL -r IMAGE_ROOT -o OUTPUT_BASE -L MAX_TOKEN_LEN [OPTIONS]"
     echo ""
@@ -94,7 +174,7 @@ usage() {
 
 INPUT_JSONL=""
 IMAGE_ROOT=""
-MODEL_PATH="Qwen/Qwen2.5-VL-3B-Instruct"
+MODEL_PATH="/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33"
 OUTPUT_BASE=""
 FORCE_RUN=false
 SHOW_STATUS=false
@@ -110,6 +190,12 @@ MAX_SAMPLES_PER_SHARD=10000
 MAX_SHARD_SIZE=3000000000
 RESUME_DIRECT=false
 OVERRIDE_MAX_PIXELS=""
+LONGEST_EDGE=3072
+JPEG_QUALITY=92
+NO_PREPROCESS=false
+MAX_PATCHES_PER_BIN=0
+MIN_PATCHES_PER_BIN=0
+PATCH_SLACK=0
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -135,6 +221,12 @@ while [[ $# -gt 0 ]]; do
         --max-shard-size)     MAX_SHARD_SIZE="$2"; shift 2 ;;
         --no-npy)             NO_NPY_MODE=true; shift ;;
         --resume-direct)      RESUME_DIRECT=true; shift ;;
+        --longest-edge)       LONGEST_EDGE="$2"; shift 2 ;;
+        --jpeg-quality)       JPEG_QUALITY="$2"; shift 2 ;;
+        --no-preprocess)      NO_PREPROCESS=true; shift ;;
+        --max-patches-per-bin) MAX_PATCHES_PER_BIN="$2"; shift 2 ;;
+        --min-patches-per-bin) MIN_PATCHES_PER_BIN="$2"; shift 2 ;;
+        --patch-slack)        PATCH_SLACK="$2"; shift 2 ;;
         -f|--force)           FORCE_RUN=true; shift ;;
         -s|--status)          SHOW_STATUS=true; shift ;;
         -h|--help)            usage ;;
@@ -168,7 +260,7 @@ TIMEOUT=180
 TASK_TYPE="sft"
 
 # Derived paths
-S1_OUTPUT="${OUTPUT_BASE}/s1_split_json2samples"
+MANIFEST_FILE="${OUTPUT_BASE}/manifest.jsonl"
 TOKEN_INFO="${OUTPUT_BASE}/token_info.txt"
 BINS_FILE="${OUTPUT_BASE}/bins_${MAX_TOKEN_LEN//000/k}len.pkl"
 BINS_LOG_FILE="${OUTPUT_BASE}/bins_${MAX_TOKEN_LEN//000/k}len_packing.log"
@@ -261,8 +353,8 @@ show_status() {
     echo "    - Shard prefix:        ${SHARD_PREFIX}"
     echo ""
 
-    local steps=("Split JSONL to samples" "Compute token lengths" "Bin packing" "Direct pack -> WebDataset")
-    local outputs=("${S1_OUTPUT}" "${TOKEN_INFO}" "${BINS_FILE}" "${WEBDATASET_OUTPUT}")
+    local steps=("Build manifest.jsonl" "Compute token lengths" "Bin packing" "Bins -> WebDataset")
+    local outputs=("${MANIFEST_FILE}" "${TOKEN_INFO}" "${BINS_FILE}" "${WEBDATASET_OUTPUT}")
 
     for i in 1 2 3 4; do
         local sf
@@ -321,41 +413,39 @@ mkdir -p "${STATUS_DIR}"
 show_status
 
 # ----------------------------------------------------------------------------
-# Step 1: Split JSONL -> per-sample files
+# Step 1: Build manifest.jsonl from raw JSONL/JSON input
 # ----------------------------------------------------------------------------
 if is_step_done 1 && [[ "${FORCE_RUN}" != "true" ]]; then
     log_info "Skipping Step 1 (already completed)"
 else
-    log_step 1 "Split JSONL to individual sample files"
+    log_step 1 "Build lightweight manifest.jsonl"
 
     check_file_exists "${INPUT_JSONL}"
     check_dir_exists "${IMAGE_ROOT}"
 
-    python "${SCRIPT_DIR}/s1_split_json_to_samples.py" \
+    python "${SCRIPT_DIR}/s1_build_manifest.py" \
         -i "${INPUT_JSONL}" \
         --image-root "${IMAGE_ROOT}" \
-        -o "${S1_OUTPUT}" \
-        --chunk-size "${CHUNK_SIZE}" \
-        -m 4 \
+        -o "${MANIFEST_FILE}" \
         --overwrite
 
     mark_step_done 1
-    log_info "Step 1 complete. Output: ${S1_OUTPUT}"
+    log_info "Step 1 complete. Output: ${MANIFEST_FILE}"
 fi
 
 # ----------------------------------------------------------------------------
-# Step 2: Compute token lengths
+# Step 2: Compute token lengths (manifest-driven)
 # ----------------------------------------------------------------------------
 if is_step_done 2 && [[ "${FORCE_RUN}" != "true" ]]; then
     log_info "Skipping Step 2 (already completed)"
 else
     log_step 2 "Compute token lengths for each sample"
 
-    check_dir_exists "${S1_OUTPUT}"
+    check_file_exists "${MANIFEST_FILE}"
     check_dir_exists "${MODEL_PATH}"
 
     S2_CMD=(python "${SCRIPT_DIR}/s2_compute_token_lengths.py"
-        --data-dir "${S1_OUTPUT}"
+        --manifest "${MANIFEST_FILE}"
         --output "${TOKEN_INFO}"
         --model-path "${MODEL_PATH}"
         --max-len "${MAX_TOKEN_LEN}"
@@ -398,6 +488,9 @@ else
         --capacity "${MAX_TOKEN_LEN}" \
         --max-samples "${MAX_SAMPLES_PER_BIN}" \
         --algorithm "${PACKING_ALGORITHM}" \
+        --max-patches-per-bin "${MAX_PATCHES_PER_BIN}" \
+        --min-patches-per-bin "${MIN_PATCHES_PER_BIN}" \
+        --patch-slack "${PATCH_SLACK}" \
         2>&1 | tee "${BINS_LOG_FILE}"
 
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -418,15 +511,15 @@ else
     log_step 4 "Bins -> WebDataset"
 
     check_file_exists "${BINS_FILE}"
-    check_dir_exists "${S1_OUTPUT}"
+    check_file_exists "${MANIFEST_FILE}"
 
     log_info "timestamp_decimal policy:"
-    log_info "  - Read from each source JSON; missing/None falls back to 1."
+    log_info "  - Read from manifest 'raw' field; missing/None falls back to 1."
     log_info "  - Every bin payload in the tar will contain 'timestamp_decimal'."
 
     DIRECT_CMD=(python "${SCRIPT_DIR}/s4_bins_to_webdataset.py"
         --bins-file "${BINS_FILE}"
-        --source-dir "${S1_OUTPUT}"
+        --manifest "${MANIFEST_FILE}"
         --output-dir "${WEBDATASET_OUTPUT}"
         --workers "${DIRECT_WORKERS}"
         --max-samples-per-shard "${MAX_SAMPLES_PER_SHARD}"
@@ -436,6 +529,11 @@ else
 
     if [[ "${RESUME_DIRECT}" == "true" ]]; then
         DIRECT_CMD+=(--resume)
+    fi
+
+    DIRECT_CMD+=(--longest-edge "${LONGEST_EDGE}" --jpeg-quality "${JPEG_QUALITY}")
+    if [[ "${NO_PREPROCESS}" == "true" ]]; then
+        DIRECT_CMD+=(--no-preprocess)
     fi
 
     "${DIRECT_CMD[@]}"
@@ -453,7 +551,7 @@ echo "  Pipeline Complete!"
 echo "============================================================================"
 echo ""
 echo "  Outputs:"
-echo "    - Split samples:  ${S1_OUTPUT}"
+echo "    - Manifest:       ${MANIFEST_FILE}"
 echo "    - Token info:     ${TOKEN_INFO}"
 echo "    - Bins file:      ${BINS_FILE}"
 echo "    - Packing log:    ${BINS_LOG_FILE}"
