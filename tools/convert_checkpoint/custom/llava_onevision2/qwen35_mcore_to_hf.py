@@ -39,6 +39,7 @@ import argparse
 import os
 import sys
 
+import re
 import torch
 from safetensors.torch import save_file
 
@@ -71,22 +72,42 @@ _ROW_DIM1 = (
 _FC1 = ("mlp.linear_fc1.weight",)
 
 
-def load_language_shards(load_path, tp):
-    """Load the `tp` per-rank mcore shards (PP=1, 1D mp_rank_{t:02d} layout) and
-    return a list of `tp` flat dicts of language_model.* -> tensor (weights only,
-    _extra_state dropped)."""
+def load_language_shards(load_path, tp, pp=1):
+    """Load the mcore language shards and return a list of tp flat dicts of
+    language_model.* -> tensor (weights only, _extra_state dropped).
+
+    PP=1: 1D mp_rank_{t:02d} layout. PP>1: 2D mp_rank_{t:02d}_{p:03d} layout --
+    pipeline stages are merged per TP rank: each stage stores decoder.layers.N
+    with LOCAL indices, so stage p's layers are renumbered by the cumulative
+    layer count of the preceding stages; the non-first stages' tied
+    language_model.output_layer.weight duplicate is dropped (PP1/HF share the
+    embedding, cf. reshard_pp2.py which materializes it on the last stage).
+    """
+    layer_re = re.compile(r"(language_model\.decoder\.layers\.)(\d+)(\..*)$")
     shards = []
     for t in range(tp):
-        sub = f"mp_rank_{t:02d}"
-        ckpt_path = os.path.join(load_path, sub, "model_optim_rng.pt")
-        if not os.path.isfile(ckpt_path):
-            raise FileNotFoundError(f"missing shard: {ckpt_path}")
-        model = torch.load(ckpt_path, map_location="cpu", weights_only=False)["model"]
-        lang = {
-            k: v for k, v in model.items()
-            if k.startswith(MC_LM + ".") and not k.endswith("_extra_state")
-        }
-        assert lang, f"no language_model.* weights in {ckpt_path}"
+        lang = {}
+        offset = 0
+        for pstage in range(pp):
+            sub = f"mp_rank_{t:02d}" if pp == 1 else f"mp_rank_{t:02d}_{pstage:03d}"
+            ckpt_path = os.path.join(load_path, sub, "model_optim_rng.pt")
+            if not os.path.isfile(ckpt_path):
+                raise FileNotFoundError(f"missing shard: {ckpt_path}")
+            model = torch.load(ckpt_path, map_location="cpu", weights_only=False)["model"]
+            stage_layers = set()
+            for k, v in model.items():
+                if not k.startswith(MC_LM + ".") or k.endswith("_extra_state"):
+                    continue
+                lm = layer_re.match(k)
+                if lm:
+                    stage_layers.add(int(lm.group(2)))
+                    lang[f"{lm.group(1)}{int(lm.group(2)) + offset}{lm.group(3)}"] = v
+                elif pstage > 0 and k == MC_LM + ".output_layer.weight":
+                    continue
+                else:
+                    lang[k] = v
+            offset += (max(stage_layers) + 1) if stage_layers else 0
+        assert lang, f"no language_model.* weights under {load_path} (tp{t})"
         shards.append(lang)
     return shards
 
@@ -166,6 +187,7 @@ def main():
     ap.add_argument("--num_layers", type=int, default=32)
     ap.add_argument("--full_attention_interval", type=int, default=4)
     ap.add_argument("--tensor_model_parallel_size", type=int, default=1)
+    ap.add_argument("--pipeline_model_parallel_size", type=int, default=1)
     ap.add_argument("--hf_config_path", type=str, default=None,
                     help="HF model dir whose config.json provides hybrid-attn dims "
                          "(e.g. the reference merged model); default = Qwen3.5-4B dims")
@@ -177,7 +199,7 @@ def main():
     assert tp >= 1
 
     print(f"[qwen35_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
-    shards = load_language_shards(args.load_ckpt_path, tp)
+    shards = load_language_shards(args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size)
     lang = unshard_language(shards, tp)
     from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
     dims = dims_from_hf_config(args.hf_config_path) if args.hf_config_path else None
