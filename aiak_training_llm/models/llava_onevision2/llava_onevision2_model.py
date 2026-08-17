@@ -16,6 +16,446 @@ from aiak_training_llm.models.llava_onevision2.adapter import Adapter
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
 
 
+def get_rope_index(
+    input_ids,
+    image_grid_thw=None,
+    video_grid_thw=None,
+    spatial_merge_size=2,
+    image_token_id=151655,
+    video_token_id=151656,
+    vision_start_token_id=151652,
+    tokens_per_second=2,
+    second_per_grid_ts=None,
+    attention_mask=None,
+):
+    """Compute Qwen 3D multimodal M-RoPE position ids.
+
+    Ported from HuggingFace ``Qwen2_5_VLForConditionalGeneration.get_rope_index``
+    (HF-standard mask convention: 1 = valid, 0 = padding). For single-frame
+    images this is bit-identical to the Qwen3.5 ``get_rope_index`` (verified on
+    toy inputs); the two only diverge on multi-frame video temporal handling
+    (Qwen3.5 uses per-frame timestamps, which this OV2 data pipeline does not
+    emit), where this falls back to the Qwen2.5-VL ``second_per_grid`` scheme.
+
+    Args:
+        input_ids: LongTensor [batch, seq_len].
+        image_grid_thw: LongTensor [num_images, 3] or None.
+        video_grid_thw: LongTensor [num_videos, 3] or None.
+        spatial_merge_size: vision spatial merge factor (H/W divided by this in LLM).
+        image_token_id / video_token_id / vision_start_token_id: special token ids.
+        tokens_per_second: temporal-index scaling for video frames.
+        second_per_grid_ts: optional [num_videos] seconds-per-temporal-grid.
+        attention_mask: [batch, seq_len] with 1 = valid, 0 = pad (None -> all valid).
+
+    Returns:
+        position_ids: LongTensor [3, batch, seq_len] (T, H, W rows).
+        mrope_position_deltas: LongTensor [batch, 1].
+    """
+    mrope_position_deltas = []
+    if image_grid_thw is None and video_grid_thw is None:
+        # Pure text: T == H == W == arange (caller normally handles this fallback).
+        if attention_mask is not None:
+            position_ids = (
+                attention_mask.long().cumsum(-1) - 1
+            )
+            position_ids.masked_fill_(attention_mask == 0, 1)
+            position_ids = position_ids.unsqueeze(0).expand(3, -1, -1).to(input_ids.device)
+            max_position_ids = position_ids.max(0, keepdim=False)[0].max(-1, keepdim=True)[0]
+            mrope_position_deltas = max_position_ids + 1 - attention_mask.shape[-1]
+        else:
+            s = input_ids.shape[1]
+            position_ids = (
+                torch.arange(s, device=input_ids.device)
+                .view(1, 1, -1)
+                .expand(3, input_ids.shape[0], -1)
+            )
+            mrope_position_deltas = torch.zeros(
+                [input_ids.shape[0], 1], device=input_ids.device, dtype=input_ids.dtype
+            )
+        return position_ids, mrope_position_deltas
+
+    total_input_ids = input_ids
+    if attention_mask is None:
+        attention_mask = torch.ones_like(total_input_ids)
+    position_ids = torch.ones(
+        3,
+        input_ids.shape[0],
+        input_ids.shape[1],
+        dtype=input_ids.dtype,
+        device=input_ids.device,
+    )
+    image_index, video_index = 0, 0
+    attention_mask = attention_mask.to(total_input_ids.device)
+    for i, cur_ids in enumerate(total_input_ids):
+        cur_ids = cur_ids[attention_mask[i] == 1]
+        vision_start_indices = torch.argwhere(cur_ids == vision_start_token_id).squeeze(1)
+        vision_tokens = cur_ids[vision_start_indices + 1]
+        image_nums = (vision_tokens == image_token_id).sum()
+        video_nums = (vision_tokens == video_token_id).sum()
+        input_tokens = cur_ids.tolist()
+        llm_pos_ids_list = []
+        st = 0
+        remain_images, remain_videos = image_nums, video_nums
+        for _ in range(image_nums + video_nums):
+            if image_token_id in input_tokens and remain_images > 0:
+                ed_image = input_tokens.index(image_token_id, st)
+            else:
+                ed_image = len(input_tokens) + 1
+            if video_token_id in input_tokens and remain_videos > 0:
+                ed_video = input_tokens.index(video_token_id, st)
+            else:
+                ed_video = len(input_tokens) + 1
+            if ed_image < ed_video:
+                t, h, w = (
+                    image_grid_thw[image_index][0],
+                    image_grid_thw[image_index][1],
+                    image_grid_thw[image_index][2],
+                )
+                second_per_grid_t = 0
+                image_index += 1
+                remain_images -= 1
+                ed = ed_image
+            else:
+                t, h, w = (
+                    video_grid_thw[video_index][0],
+                    video_grid_thw[video_index][1],
+                    video_grid_thw[video_index][2],
+                )
+                if second_per_grid_ts is not None:
+                    second_per_grid_t = second_per_grid_ts[video_index]
+                else:
+                    second_per_grid_t = 1.0
+                video_index += 1
+                remain_videos -= 1
+                ed = ed_video
+            llm_grid_t, llm_grid_h, llm_grid_w = (
+                t.item(),
+                h.item() // spatial_merge_size,
+                w.item() // spatial_merge_size,
+            )
+            text_len = ed - st
+
+            st_idx = llm_pos_ids_list[-1].max() + 1 if len(llm_pos_ids_list) > 0 else 0
+            llm_pos_ids_list.append(torch.arange(text_len).view(1, -1).expand(3, -1) + st_idx)
+
+            range_tensor = torch.arange(llm_grid_t).view(-1, 1)
+            expanded_range = range_tensor.expand(-1, llm_grid_h * llm_grid_w)
+            time_tensor = expanded_range * second_per_grid_t * tokens_per_second
+            time_tensor_long = time_tensor.long()
+            t_index = time_tensor_long.flatten()
+
+            h_index = torch.arange(llm_grid_h).view(1, -1, 1).expand(llm_grid_t, -1, llm_grid_w).flatten()
+            w_index = torch.arange(llm_grid_w).view(1, 1, -1).expand(llm_grid_t, llm_grid_h, -1).flatten()
+            llm_pos_ids_list.append(torch.stack([t_index, h_index, w_index]) + text_len + st_idx)
+            st = ed + llm_grid_t * llm_grid_h * llm_grid_w
+
+        if st < len(input_tokens):
+            st_idx = llm_pos_ids_list[-1].max() + 1 if len(llm_pos_ids_list) > 0 else 0
+            text_len = len(input_tokens) - st
+            llm_pos_ids_list.append(torch.arange(text_len).view(1, -1).expand(3, -1) + st_idx)
+
+        llm_positions = torch.cat(llm_pos_ids_list, dim=1).reshape(3, -1)
+        position_ids[..., i, attention_mask[i] == 1] = llm_positions.to(position_ids.device)
+        mrope_position_deltas.append(llm_positions.max() + 1 - len(total_input_ids[i]))
+    mrope_position_deltas = torch.tensor(mrope_position_deltas, device=input_ids.device).unsqueeze(1)
+    return position_ids, mrope_position_deltas
+
+
+_MROPE_A_LOGGED = False
+_MROPE_FB_LOGGED = False
+
+
+def _rope_from_patch_positions(
+    ids, cu, patch_positions, merge, image_token_id, video_token_id, device, total_len
+):
+    """Build packed 3D M-RoPE positions from real per-patch positions.
+
+    patch_positions arrives BLOCK-LAYOUT + PATCH-LEVEL (the task encoder already
+    ran convert_positions_to_block_layout): every ``merge*merge`` consecutive
+    patches form one merged vision token, in the same order as the <image_pad>/
+    <video_pad> tokens appear in the packed sequence. We reduce it to one
+    (t, h//merge, w//merge) per merged token, then walk the sequence:
+
+      * text token          -> running scalar position (cur, cur, cur)
+      * vision token         -> (base + frame_order, base + h_m, base + w_m)
+                                where base is captured at the visual start and
+                                frame_order is the dense rank of the real t
+                                within that visual (0,30,60 -> 0,1,2).
+
+    A new visual is detected when a block start (h_m==0 and w_m==0) has t that
+    did NOT advance past the visual's first t (image after image, or a new video
+    whose t restarts). Returns [3, 1, S] LongTensor, or None to signal the
+    caller to fall back to the grid path.
+    """
+    pp = patch_positions
+    if isinstance(pp, (list, tuple)):
+        pp = [p for p in pp if p is not None and (p.numel() if torch.is_tensor(p) else len(p)) > 0]
+        if not pp:
+            return None
+        pp = torch.cat([p if torch.is_tensor(p) else torch.as_tensor(p) for p in pp], dim=0)
+    if pp is None or (torch.is_tensor(pp) and pp.numel() == 0):
+        return None
+    pp = pp.detach().to("cpu").long()
+    if pp.dim() != 2 or pp.shape[1] != 3:
+        return None
+    m2 = merge * merge
+    if pp.shape[0] % m2 != 0:
+        return None
+    # representative patch of each merge*merge block; assert intra-block consistency
+    rep = pp[::m2]
+    if merge > 1:
+        blk = pp[: (pp.shape[0] // m2) * m2].view(-1, m2, 3)
+        bt = blk[:, :, 0]
+        bh = blk[:, :, 1] // merge
+        bw = blk[:, :, 2] // merge
+        same = (
+            (bt == bt[:, :1]).all()
+            and (bh == bh[:, :1]).all()
+            and (bw == bw[:, :1]).all()
+        )
+        if not same:
+            # layout is not the expected 3x3 block order -> do not trust it
+            return None
+    merged_t = rep[:, 0].tolist()
+    merged_h = (rep[:, 1] // merge).tolist()
+    merged_w = (rep[:, 2] // merge).tolist()
+    n_tok = len(merged_t)
+
+    vp = 0  # global cursor into merged vision tokens (sequence order)
+    pos_chunks = []
+    n_vision_tokens_seen = 0
+    for k in range(len(cu) - 1):
+        s0, s1 = cu[k], cu[k + 1]
+        if s1 <= s0:
+            continue
+        seg = ids[s0:s1].tolist()
+        n = len(seg)
+        t_row = [0] * n
+        h_row = [0] * n
+        w_row = [0] * n
+        cur = 0
+        vis_base = None      # baseline captured at the current visual's start
+        vis_first_t = None   # t of the current visual's first frame
+        vis_rank = {}        # real_t -> dense frame order within current visual
+        vis_max = 0          # max offset used inside the current visual
+        for i in range(n):
+            tok = seg[i]
+            if tok == image_token_id or tok == video_token_id:
+                if vp < n_tok:
+                    tt, hh, ww = merged_t[vp], merged_h[vp], merged_w[vp]
+                    vp += 1
+                else:
+                    tt, hh, ww = (vis_first_t or 0), 0, 0
+                n_vision_tokens_seen += 1
+                block_start = (hh == 0 and ww == 0)
+                new_visual = (
+                    vis_base is None
+                    or (block_start and vis_first_t is not None and tt <= vis_first_t)
+                )
+                if new_visual:
+                    if vis_base is not None:
+                        cur = max(cur, vis_base + vis_max + 1)
+                    vis_base = cur
+                    vis_first_t = tt
+                    vis_rank = {}
+                    vis_max = 0
+                if tt not in vis_rank:
+                    vis_rank[tt] = len(vis_rank)
+                f = vis_rank[tt]
+                t_row[i] = vis_base + f
+                h_row[i] = vis_base + hh
+                w_row[i] = vis_base + ww
+                if f > vis_max:
+                    vis_max = f
+                if hh > vis_max:
+                    vis_max = hh
+                if ww > vis_max:
+                    vis_max = ww
+            else:
+                # text token (includes <X.X seconds>, vision_start/end, newlines)
+                t_row[i] = cur
+                h_row[i] = cur
+                w_row[i] = cur
+                cur += 1
+        pos_chunks.append(torch.tensor([t_row, h_row, w_row], device=device))
+
+    # if the sequence had no vision tokens at all, this path adds nothing
+    if n_vision_tokens_seen == 0:
+        return None
+    if not pos_chunks:
+        return None
+    positions = torch.cat(pos_chunks, dim=1)
+    if positions.shape[1] < total_len:
+        pad = total_len - positions.shape[1]
+        extra = torch.arange(pad, device=device).view(1, -1).expand(3, -1)
+        positions = torch.cat([positions, extra], dim=1)
+    global _MROPE_A_LOGGED
+    if not _MROPE_A_LOGGED:
+        import sys as _sys
+        _sys.stderr.write("[MROPE-A] real patch_positions path ACTIVE (merged_tok=%d, vision_tok_seen=%d)\n" % (n_tok, n_vision_tokens_seen))
+        _MROPE_A_LOGGED = True
+    return positions.unsqueeze(1).contiguous()
+
+
+def get_rope_index_packed(
+    input_ids,
+    cu_seqlens,
+    image_grid_thw=None,
+    video_grid_thw=None,
+    spatial_merge_size=2,
+    image_token_id=151655,
+    video_token_id=151656,
+    vision_start_token_id=151652,
+    tokens_per_second=2,
+    second_per_grid_ts=None,
+    patch_positions=None,
+):
+    """Packed-mode Qwen 3D M-RoPE position ids.
+
+    In packed (thd) mode the microbatch holds a single [1, S] row that is the
+    concatenation of many independent samples; ``cu_seqlens`` gives the segment
+    boundaries. Each segment is an independent sample: its (T, H, W) positions
+    must RESTART at 0 and its image/video spans must get the 2D H/W grid layout.
+    Image / video grids are laid out in sequence order across ALL segments, so
+    we walk segments left-to-right and consume ``image_grid_thw`` /
+    ``video_grid_thw`` rows with running cursors.
+
+    Args:
+        input_ids: LongTensor [1, S] or [S] (the full packed sequence).
+        cu_seqlens: 1D LongTensor [nseg + 1] of segment boundaries (cu_seqlens_q).
+        image_grid_thw / video_grid_thw: [num_*, 3] grids across all segments.
+        (other args identical to get_rope_index)
+
+    Returns:
+        position_ids: LongTensor [3, 1, S] (T, H, W rows), positions restart per
+        segment; image/video spans carry the 2D grid layout.
+    """
+    # Packing requires micro-batch-size == 1 (single packed row), matching the
+    # data-side guard in get_batch (`cu_lengths.shape[0] == 1`) and LoongForge.
+    if input_ids.dim() == 2:
+        assert input_ids.shape[0] == 1, (
+            "packed 3D M-RoPE requires micro-batch-size == 1 (got batch "
+            + str(input_ids.shape[0]) + ")"
+        )
+    ids = input_ids[0] if input_ids.dim() == 2 else input_ids
+    device = ids.device
+    total_len = ids.shape[0]
+    cu = cu_seqlens.detach().to("cpu").long().tolist()
+
+    # ----------------------------------------------------------------------
+    # Preferred path: real per-patch (t, h, w) from patch_positions.npy.
+    # Qwen3.5 M-RoPE temporal is the FRAME ORDER (arange), spatial is the
+    # merged (h//merge, w//merge) grid; absolute timing is carried separately
+    # by the <X.X seconds> timestamp TEXT tokens (not by M-RoPE). We therefore
+    # use patch_positions only to recover, per merged vision token in sequence
+    # order, its (frame_order, h//merge, w//merge). Real absolute frame numbers
+    # (e.g. 0,30,60) are dense-ranked to 0,1,2 per visual.
+    _pp_pos = _rope_from_patch_positions(
+        ids, cu, patch_positions, spatial_merge_size,
+        image_token_id, video_token_id, device, total_len,
+    )
+    if _pp_pos is not None:
+        return _pp_pos
+    global _MROPE_FB_LOGGED
+    if not _MROPE_FB_LOGGED:
+        import sys as _sys
+        _sys.stderr.write("[MROPE-A] FELL BACK to grid path (patch_positions absent/unusable)\n")
+        _MROPE_FB_LOGGED = True
+    # Fallback (no usable patch_positions): reconstruct from grid_thw.
+
+    # OV2 gives EACH frame/tile of a visual its own <vision_start> token, while
+    # image_grid_thw / video_grid_thw store ONE row [t, h, w] per visual (t =
+    # number of frames/tiles). Qwen get_rope_index assumes 1 <vision_start> <->
+    # 1 grid row <-> 1 contiguous token run, so expand every [t, h, w] row into t
+    # rows of [1, h, w]: then the per-segment <vision_start> count equals the grid
+    # row count and each image/video run is contiguous, restoring that invariant.
+    def _expand_grid(grid, spgts):
+        if grid is None or grid.numel() == 0:
+            return grid, spgts
+        rows, sp = [], []
+        for r in range(grid.shape[0]):
+            t = int(grid[r, 0].item())
+            one = grid[r:r + 1].clone()
+            one[0, 0] = 1
+            for _ in range(max(t, 1)):
+                rows.append(one)
+                if spgts is not None:
+                    sp.append(spgts[r:r + 1])
+        g = torch.cat(rows, dim=0) if rows else grid
+        s = torch.cat(sp, dim=0) if (spgts is not None and sp) else spgts
+        return g, s
+    image_grid_thw, _ = _expand_grid(image_grid_thw, None)
+    video_grid_thw, second_per_grid_ts = _expand_grid(video_grid_thw, second_per_grid_ts)
+
+    pos_chunks = []
+    img_cursor, vid_cursor = 0, 0
+    for k in range(len(cu) - 1):
+        s0, s1 = cu[k], cu[k + 1]
+        if s1 <= s0:
+            continue
+        seg = ids[s0:s1]
+        # After the expansion above, each <vision_start> maps to exactly one grid row.
+        vstart = torch.argwhere(seg == vision_start_token_id).squeeze(1)
+        n_img, n_vid = 0, 0
+        if vstart.numel() > 0:
+            nxt = (vstart + 1).clamp(max=seg.shape[0] - 1)
+            vtok = seg[nxt]
+            n_img = int((vtok == image_token_id).sum().item())
+            n_vid = int((vtok == video_token_id).sum().item())
+        seg_img = None
+        seg_vid = None
+        seg_spgts = None
+        if n_img > 0 and image_grid_thw is not None:
+            seg_img = image_grid_thw[img_cursor:img_cursor + n_img]
+        if n_vid > 0 and video_grid_thw is not None:
+            seg_vid = video_grid_thw[vid_cursor:vid_cursor + n_vid]
+            if second_per_grid_ts is not None:
+                seg_spgts = second_per_grid_ts[vid_cursor:vid_cursor + n_vid]
+        try:
+            seg_pos, _ = get_rope_index(
+                input_ids=seg.unsqueeze(0),
+                image_grid_thw=seg_img,
+                video_grid_thw=seg_vid,
+                spatial_merge_size=spatial_merge_size,
+                image_token_id=image_token_id,
+                video_token_id=video_token_id,
+                vision_start_token_id=vision_start_token_id,
+                tokens_per_second=tokens_per_second,
+                second_per_grid_ts=seg_spgts,
+                attention_mask=None,
+            )
+            seg_chunk = seg_pos[:, 0, :].to(device)
+        except Exception as _e:
+            # Safety net: a malformed segment must not kill a long run. Fall back
+            # to a plain arange for this segment; cursors still advance by the
+            # per-segment vision counts so later segments stay grid-aligned.
+            import sys
+            sys.stderr.write(
+                "[MROPE] segment k=%d fell back to arange (n_img=%d n_vid=%d): %s\n"
+                % (k, n_img, n_vid, repr(_e))
+            )
+            seg_len = int(seg.shape[0])
+            seg_chunk = (
+                torch.arange(seg_len, device=device).view(1, -1).expand(3, -1).contiguous()
+            )
+        pos_chunks.append(seg_chunk)  # [3, seg_len]
+        img_cursor += n_img
+        vid_cursor += n_vid
+
+    if len(pos_chunks) == 0:
+        return (
+            torch.arange(total_len, device=device).view(1, 1, -1).expand(3, 1, -1).contiguous()
+        )
+    positions = torch.cat(pos_chunks, dim=1)  # [3, covered_len]
+    # Safety: if cu_seqlens does not cover the full physical width (shouldn't
+    # happen after the get_batch tail fix), pad the remainder with a local arange.
+    if positions.shape[1] < total_len:
+        pad_len = total_len - positions.shape[1]
+        extra = torch.arange(pad_len, device=device).view(1, -1).expand(3, -1)
+        positions = torch.cat([positions, extra], dim=1)
+    return positions.unsqueeze(1).contiguous()  # [3, 1, S]
+
+
 class LlavaOnevision2(MegatronModule):
     """
     Args:
@@ -223,10 +663,17 @@ class LlavaOnevision2(MegatronModule):
             image_embeddings = None
         elif self.add_encoder:
             if images is not None:
+                _prof = __import__('os').environ.get('PROF_TAGS') == '1'
+                if _prof:
+                    torch.cuda.synchronize(); _vt0 = __import__('time').perf_counter()
                 image_embeddings = self.vision_model(
                     images, grid_thw=image_grid_thw, patch_positions=patch_positions
                 )  # [img_len, h_vision]
                 image_embeddings = self.adapter(image_embeddings)
+                if _prof:
+                    torch.cuda.synchronize()
+                    if (not torch.distributed.is_initialized()) or torch.distributed.get_rank() == 0:
+                        print('[PROF_TAGS] vision+adapter fwd: %.1f ms' % ((__import__('time').perf_counter() - _vt0) * 1000), flush=True)
 
                 n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
@@ -309,6 +756,61 @@ class LlavaOnevision2(MegatronModule):
         else:
             combined_embeddings = None
             input_tensor = self.language_model.decoder.input_tensor
+
+        # Qwen3.5 interleaved 3D M-RoPE: compute per-sample (T, H, W) position ids from
+        # the image/video grids + input_ids and stash them on the language model, so
+        # QwenModel builds the correct rotary embedding (replacing the text-path
+        # arange placeholder). Text-only samples fall back to arange (handled in
+        # QwenModel). SP now runs get_rope_index too: input_ids here is full-length
+        # and unsharded (SP scatter touches only combined_embeddings), so it yields
+        # unpadded full-length positions and QwenModel pads them up to the SP-gathered
+        # length. Packed uses get_rope_index_packed; CP still uses the placeholder +
+        # qwen35_rope CP-slice.
+        if self.add_decoder and getattr(self.language_model, "use_qwen35_mrope", False):
+            _mrope_pos = None
+            _has_vision = (image_grid_thw is not None) or (video_grid_thw is not None)
+            _is_packed = (
+                packed_seq_params is not None
+                and getattr(packed_seq_params, "qkv_format", None) == "thd"
+            )
+            # Non-packed / non-CP "simple" full-length path (now includes SP).
+            _simple = (
+                not _is_packed
+                and getattr(self.config, "context_parallel_size", 1) == 1
+            )
+            if _has_vision and _is_packed and input_ids is not None:
+                # Packed multimodal: per-segment 3D positions (restart at 0 each
+                # segment; image/video spans get the 2D H/W grid layout). Full
+                # sequence length, matching the placeholder convention QwenModel
+                # / Qwen35RotaryEmbedding expect (SP gathers, CP-slice skipped in
+                # packed rope).
+                _mrope_pos = get_rope_index_packed(
+                    input_ids=input_ids,
+                    cu_seqlens=packed_seq_params.cu_seqlens_q,
+                    image_grid_thw=image_grid_thw,
+                    video_grid_thw=video_grid_thw,
+                    spatial_merge_size=getattr(self.config, "spatial_merge_size", 2),
+                    image_token_id=self.config.image_token_id,
+                    video_token_id=self.config.video_token_id,
+                    vision_start_token_id=getattr(self.config, "vision_start_token_id", 151652),
+                    tokens_per_second=getattr(self.config, "tokens_per_second", 2),
+                    patch_positions=patch_positions,
+                )
+                _mrope_pos = _mrope_pos.to(input_ids.device)
+            elif _has_vision and _simple and input_ids is not None:
+                _mrope_pos, _ = get_rope_index(
+                    input_ids=input_ids,
+                    image_grid_thw=image_grid_thw,
+                    video_grid_thw=video_grid_thw,
+                    spatial_merge_size=getattr(self.config, "spatial_merge_size", 2),
+                    image_token_id=self.config.image_token_id,
+                    video_token_id=self.config.video_token_id,
+                    vision_start_token_id=getattr(self.config, "vision_start_token_id", 151652),
+                    tokens_per_second=getattr(self.config, "tokens_per_second", 2),
+                    attention_mask=None,
+                )
+                _mrope_pos = _mrope_pos.to(input_ids.device)
+            self.language_model._mrope_position_ids = _mrope_pos
 
         output = self.language_model(
             input_ids=None,
