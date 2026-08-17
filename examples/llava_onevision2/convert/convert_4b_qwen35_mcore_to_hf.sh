@@ -21,7 +21,7 @@
 #              dir that directly contains mp_rank_* .
 #   SAVE       output merged HuggingFace dir.
 #   TP         tensor-parallel size (default 1)   -- TP in {1,2,4}
-#   PP         pipeline-parallel size (default 1) -- PP=1 supported
+#   PP         pipeline-parallel size (default 1) -- PP=1/PP=2 supported (2D mp_rank_{t}_{p} merged in the LLM loader)
 #   REFERENCE  merged HF model to copy config/modeling/tokenizer from
 #              (default /models/llava_onevision2_4b_qwen35_p16m3)
 #
@@ -47,7 +47,7 @@ PP=${4:-1}
 #      right REFERENCE (config/modeling source) and NUM_LAYERS are chosen even when
 #      arg5/NUM_LAYERS are omitted. 2048 -> Qwen3.5-2B, 2560 -> Qwen3.5-4B. ---------
 _probe_rel="$LOAD"; [[ -d "$LOAD/release" ]] && _probe_rel="$LOAD/release"
-_HID=$(PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH" python - "$_probe_rel/mp_rank_00/model_optim_rng.pt" <<PYEOF
+_HID=$(PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH" python - "$(ls -d $_probe_rel/mp_rank_00 $_probe_rel/mp_rank_00_000 2>/dev/null | head -1)/model_optim_rng.pt" <<PYEOF
 import sys, torch
 d = torch.load(sys.argv[1], map_location="cpu", weights_only=False)
 m = d.get("model", d)
@@ -90,7 +90,7 @@ SAVE_PATCH=./tmp/patch-hf
 #      is missing, synthesize args from a throwaway forward vision conversion of
 #      the reference model (identical arch) and copy the checkpoint into a working
 #      dir with args injected (originals are never mutated). --------------------
-HAS_ARGS=$(python -c "import torch;d=torch.load('$LOAD_REL/mp_rank_00/model_optim_rng.pt',map_location='cpu',weights_only=False);print('args' in d)")
+HAS_ARGS=$(python -c "import torch;d=torch.load('$(ls -d $LOAD_REL/mp_rank_00 $LOAD_REL/mp_rank_00_000 2>/dev/null | head -1)/model_optim_rng.pt',map_location='cpu',weights_only=False);print('args' in d)")
 if [ "$HAS_ARGS" != "True" ]; then
     echo "[wrapper] checkpoint has no megatron args -> synthesizing for vision reverse"
     TMP_VIS_ARGS=./tmp/vis-args-mcore
@@ -116,6 +116,7 @@ python $CUSTOM/qwen35_mcore_to_hf.py \
     --num_layers=$NUM_LAYERS \
     --full_attention_interval=$FULL_ATTENTION_INTERVAL \
     --tensor_model_parallel_size=$TP \
+    --pipeline_model_parallel_size=$PP \
     --hf_config_path=$REFERENCE
 
 # ---- vit (reuse validated mcore->hf converter) ------------------------------
