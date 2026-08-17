@@ -16,7 +16,7 @@ _VARIANT_SPEC = {
         "files": ("configuration_llava_onevision2.py", "modeling_llava_onevision2.py",
                   "processing_llava_onevision2.py", "video_processing_llava_onevision2.py",
                   "codec_video_processing_llava_onevision2.py",
-                  "processor_config.json", "preprocessor_config.json", "video_preprocessor_config.json"),
+                  "processor_config.json", "preprocessor_config.json", "video_preprocessor_config.json", "chat_template.jinja"),
     },
     "moe": {
         "config_cls_path": ("llavaonevision2.configuration_llava_onevision2_moe", "LlavaOnevision2MoeConfig"),
