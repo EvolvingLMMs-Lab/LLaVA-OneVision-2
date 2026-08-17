@@ -329,34 +329,54 @@ class QwenModel(LanguageModule):
         if self.share_embeddings_and_output_weights:
             output_weight = self.shared_embedding_or_output_weight()
 
-        logits, _ = self.output_layer(
-            hidden_states, weight=output_weight, runtime_gather_output=runtime_gather_output
-        )
+        # Chunked output projection + cross-entropy (env CE_SEQ_CHUNKS, default 1 = off).
+        # At long context the full [s, b, vocab/tp] logits OOM (25GB bf16 + fp32 CE). For the
+        # training path we gather the SP-sharded hidden ONCE, then loop over sequence chunks
+        # doing a plain F.linear projection + per-chunk CE, concatenating per-token losses.
+        # Plain matmul yields a partial (per-vocab-shard) input grad that the gather's
+        # reduce-scatter backward sums exactly ONCE -- identical to the unchunked output_layer
+        # (using the SP=False module path instead would insert a second all-reduce and double
+        # the grad). Full logits are never materialized. Verified fwd+grad identical.
+        _ce_chunks = int(__import__('os').environ.get('CE_SEQ_CHUNKS', '1'))
+        _chunked = labels is not None and _ce_chunks > 1
 
-        if has_config_logger_enabled(self.config):
-            payload = OrderedDict(
-                {
-                    'input_ids': input_ids,
-                    'position_ids': position_ids,
-                    'attention_mask': attention_mask,
-                    'decoder_input': decoder_input,
-                    'logits': logits,
-                }
+        if not _chunked:
+            logits, _ = self.output_layer(
+                hidden_states, weight=output_weight, runtime_gather_output=runtime_gather_output
             )
-            log_config_to_disk(self.config, payload, prefix='input_and_logits')
 
-        if labels is None:
-            # [s b h] => [b s h]
-            return logits.transpose(0, 1).contiguous()
+            if has_config_logger_enabled(self.config):
+                payload = OrderedDict(
+                    {
+                        'input_ids': input_ids,
+                        'position_ids': position_ids,
+                        'attention_mask': attention_mask,
+                        'decoder_input': decoder_input,
+                        'logits': logits,
+                    }
+                )
+                log_config_to_disk(self.config, payload, prefix='input_and_logits')
 
-        _prof = __import__('os').environ.get('PROF_TAGS') == '1'
-        if _prof:
-            __import__('torch').cuda.synchronize(); _ct0 = __import__('time').perf_counter()
-        loss = self.compute_language_model_loss(labels, logits)
-        if _prof:
-            __import__('torch').cuda.synchronize()
-            if (not __import__('torch').distributed.is_initialized()) or __import__('torch').distributed.get_rank() == 0:
-                print('[PROF_TAGS] cross_entropy fwd: %.1f ms' % ((__import__('time').perf_counter() - _ct0) * 1000), flush=True)
+            if labels is None:
+                # [s b h] => [b s h]
+                return logits.transpose(0, 1).contiguous()
+
+            loss = self.compute_language_model_loss(labels, logits)
+        else:
+            import torch.nn.functional as _F
+            from megatron.core.tensor_parallel.mappings import (
+                gather_from_sequence_parallel_region as _gather_sp,
+            )
+            _w = output_weight if output_weight is not None else self.output_layer.weight
+            _hs = _gather_sp(hidden_states) if self.config.sequence_parallel else hidden_states
+            _s = _hs.shape[0]
+            _c = (_s + _ce_chunks - 1) // _ce_chunks
+            _parts = []
+            for _st in range(0, _s, _c):
+                _en = min(_st + _c, _s)
+                _lg = _F.linear(_hs[_st:_en], _w)
+                _parts.append(self.compute_language_model_loss(labels[:, _st:_en], _lg))
+            loss = __import__('torch').cat(_parts, dim=1)
 
         return loss
 
