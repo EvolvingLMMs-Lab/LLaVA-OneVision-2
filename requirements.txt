@@ -8,7 +8,7 @@ megatron-energon==5.0.0
 mdformat==1.0.0
 mdformat-gfm==1.0.0
 mdformat-pyproject==0.1.1
-nltk==3.9.1
+nltk==3.10.3
 omegaconf==2.3.0
 pandarallel==1.6.5
 pre-commit==3.2.2
