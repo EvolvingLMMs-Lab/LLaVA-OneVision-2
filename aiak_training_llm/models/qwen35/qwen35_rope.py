@@ -19,12 +19,154 @@ Qwen3.5 specifics added on top of the Qwen2-VL 3D-rope base:
 import torch
 
 from megatron.core import parallel_state
-from megatron.core.models.common.embeddings.rope_utils import get_pos_emb_on_this_cp_rank
+from megatron.core.models.common.embeddings.rope_utils import (
+    _rotate_half,
+    get_pos_emb_on_this_cp_rank,
+)
 
 
-def _rotate_half(x):
-    x1, x2 = torch.chunk(x, 2, dim=-1)
-    return torch.cat((-x2, x1), dim=-1)
+# Cos/sin cache for Qwen3.5 LLM RoPE.
+#
+# Mirrors the ViT pattern (commit 1b9d69b). The freqs tensor built by
+# Qwen35RotaryEmbedding.forward is the same Python object across every
+# full_attention LLM layer in a single forward, and (q, k) at each layer both
+# receive the same freqs, so the cos/sin computation in the unfused bshd/thd
+# path is duplicated 2 * num_full_attention_layers times per step. Caching
+# keyed by the (sliced) freqs identity lets every call after the first hit
+# the cache.
+#
+# Only triggers when apply_rope_fusion=False (the unfused path). When fused,
+# the upstream FusedRoPEFunc.apply -> tex.fused_rope_thd_forward / backward
+# kernel handles cos/sin on the CUDA side and Python-side caching is moot.
+#
+# Bounded by clearing at the model-forward entry (qwen_model.py::forward)
+# so a freed-then-reallocated freqs tensor (same data_ptr, different content
+# via the CUDA caching allocator) cannot return stale cos/sin on the next
+# step. Within a single forward we keep all per-segment entries (thd path
+# can produce several) instead of single-entry evict-on-insert so segments
+# other than the last one still hit on subsequent layer calls.
+_LLM_ROPE_CACHE = {}
+
+
+def _cached_apply_rotary_pos_emb_bshd(
+    t: torch.Tensor,
+    freqs: torch.Tensor,
+    rotary_interleaved: bool,
+    multi_latent_attention: bool,
+    mscale: float,
+) -> torch.Tensor:
+    """Cached cos/sin + apply rotation, mirroring mcore's
+    ``_apply_rotary_pos_emb_bshd`` so parity is preserved exactly.
+    """
+    rot_dim = freqs.shape[-1]
+
+    # ideally t_pass is empty so rotary pos embedding is applied to all tensor t
+    t_rot, t_pass = t[..., :rot_dim], t[..., rot_dim:]
+
+    if multi_latent_attention:
+        x1 = t_rot[..., 0::2]
+        x2 = t_rot[..., 1::2]
+        t_rot = torch.cat((x1, x2), dim=-1)
+
+    # first part is cosine component
+    # second part is sine component, need to change signs with _rotate_half method
+    key = (freqs.data_ptr(), tuple(freqs.shape), t.dtype)
+    cs = _LLM_ROPE_CACHE.get(key)
+    if cs is None:
+        cos_ = (torch.cos(freqs) * mscale).to(t.dtype)
+        sin_ = (torch.sin(freqs) * mscale).to(t.dtype)
+        _LLM_ROPE_CACHE[key] = (cos_, sin_)
+    else:
+        cos_, sin_ = cs
+
+    t_rot = (t_rot * cos_) + (_rotate_half(t_rot, rotary_interleaved) * sin_)
+    return torch.cat((t_rot, t_pass), dim=-1)
+
+
+def apply_rotary_pos_emb_qwen35_llm(
+    t: torch.Tensor,
+    freqs: torch.Tensor,
+    config,
+    cu_seqlens=None,
+    mscale: float = 1.0,
+):
+    """Qwen3.5 LLM RoPE wrapper that caches the unfused-path cos/sin.
+
+    Signature matches ``megatron.core.models.common.embeddings.rope_utils.
+    apply_rotary_pos_emb`` so it can be plugged into the Qwen3.5 LLM layer
+    spec as ``submodules.self_attention.submodules.apply_rotary_fn``.
+
+    Behaviour:
+
+    * ``config.apply_rope_fusion=True``: delegates to the mcore fused
+      dispatcher (the CUDA-side FusedRoPEFunc handles cos/sin itself, so
+      Python-side caching is moot and we don't shadow it).
+    * ``config.apply_rope_fusion=False``: re-implements the unfused thd /
+      bshd split (CP-aware per-segment slicing + rotation) with the
+      cos/sin computation replaced by a cache lookup keyed on the
+      per-segment freqs identity.
+
+    For Qwen3.5 the typical config is ``rotary_interleaved=False``,
+    ``multi_latent_attention=False``, ``mscale=1.0``; those flow through
+    the same code path as mcore's bshd/thd reference.
+    """
+    if config.apply_rope_fusion:
+        from megatron.core.models.common.embeddings.rope_utils import (
+            apply_rotary_pos_emb as _mcore_apply_rotary_pos_emb,
+        )
+        return _mcore_apply_rotary_pos_emb(
+            t, freqs, config, cu_seqlens=cu_seqlens, mscale=mscale
+        )
+
+    rotary_interleaved = getattr(config, "rotary_interleaved", False)
+    multi_latent_attention = getattr(config, "multi_latent_attention", False)
+
+    if cu_seqlens is None:
+        return _cached_apply_rotary_pos_emb_bshd(
+            t, freqs, rotary_interleaved, multi_latent_attention, mscale
+        )
+
+    # thd path: split t by cu_seqlens, slice freqs per segment (mirrors
+    # mcore _apply_rotary_pos_emb_thd for the CP=1 case; for CP>1 we
+    # replicate the two-stripe slice pattern from
+    # _get_thd_freqs_on_this_cp_rank to avoid touching that private helper).
+    cp_size = parallel_state.get_context_parallel_world_size()
+    cp_rank = parallel_state.get_context_parallel_rank()
+    cu_seqlens_local = cu_seqlens // cp_size
+    seqlens = (cu_seqlens_local[1:] - cu_seqlens_local[:-1]).tolist()
+
+    segments_out = []
+    for x in torch.split(t, seqlens):
+        if cp_size > 1:
+            cp_seg = x.size(0) // 2
+            full_seqlen = cp_size * x.size(0)
+            sliced_freqs = torch.cat(
+                [
+                    freqs[cp_rank * cp_seg : (cp_rank + 1) * cp_seg],
+                    freqs[
+                        full_seqlen - (cp_rank + 1) * cp_seg : full_seqlen - cp_rank * cp_seg
+                    ],
+                ]
+            )
+        else:
+            sliced_freqs = freqs[: x.size(0)]
+        out = _cached_apply_rotary_pos_emb_bshd(
+            x.unsqueeze(1),
+            sliced_freqs,
+            rotary_interleaved,
+            multi_latent_attention,
+            mscale,
+        ).squeeze(1)
+        segments_out.append(out)
+    return torch.cat(segments_out)
+
+
+def clear_llm_rope_cache():
+    """Clear the cos/sin cache. Called at the start of every LLM forward so
+    a CUDA-allocator-reused freqs data_ptr cannot return stale cos/sin on
+    the next step.
+    """
+    _LLM_ROPE_CACHE.clear()
 
 
 class Qwen35RotaryEmbedding(torch.nn.Module):
