@@ -238,6 +238,13 @@ def get_batch(data_iterator):
                     max_seqlen_kv=max_seqlen_kv,
                 )
 
+    if packed_seq_params is not None:
+        # One CPU copy of the final (post tail-fix/SP-pad) cu_seqlens per step,
+        # instead of gated_deltanet.py doing `.detach().to("cpu")` once per GDN
+        # layer (24 layers x fwd+recompute = 48x/step). GDN already prefers this
+        # field via getattr() if present (gated_deltanet.py:277-280).
+        packed_seq_params.cu_seqlens_cpu = packed_seq_params.cu_seqlens_q.detach().to("cpu")
+
     if args.context_parallel_size > 1:
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
