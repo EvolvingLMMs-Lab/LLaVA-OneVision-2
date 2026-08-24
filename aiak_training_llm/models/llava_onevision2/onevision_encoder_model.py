@@ -1010,17 +1010,27 @@ class OneVisionEncoderModel(VisionModule):
         # need for any cross-rank communication here.
         x = self.pre_layernorm(x)
 
-        # Pass through transformer with packed sequence parameters
+        # Pass through transformer with packed sequence parameters.
+        # max_seqlen is derived here from host-side ints (tokens_per_sample,
+        # sp_pad_size) that are already available without any GPU sync, and the
+        # same PackedSeqParams object is reused for all layers. Without this,
+        # TE's fused attention recomputes `seqlens.max().item()` per layer
+        # (24 layers x fwd+recompute = 96 D2H syncs/step) to fill in the
+        # max_seqlen it wasn't given.
+        _max_seqlen = max(tokens_per_sample) if tokens_per_sample else 0
+        if sp_pad_size > 0:
+            _max_seqlen = max(_max_seqlen, sp_pad_size)
+        _max_seqlen = int((_max_seqlen + 63) // 64 * 64)  # mirror TE's own round-up
+        _psp = PackedSeqParams(
+            qkv_format="thd",  # (total_tokens, num_heads, head_dim) format
+            cu_seqlens_q=cu_seqlens,
+            cu_seqlens_kv=cu_seqlens,
+            max_seqlen_q=_max_seqlen,
+            max_seqlen_kv=_max_seqlen,
+        )
         x = self.decoder(
             x,
-            packed_seq_params=[
-                PackedSeqParams(
-                    qkv_format="thd",  # (total_tokens, num_heads, head_dim) format
-                    cu_seqlens_q=cu_seqlens,
-                    cu_seqlens_kv=cu_seqlens,
-                )
-                for i in range(self.config.num_layers)
-            ],
+            packed_seq_params=[_psp] * self.config.num_layers,
             rotary_pos_emb=rotary_pos_emb.unsqueeze(1).unsqueeze(2),
             attention_mask=None,
             attn_mask_type=AttnMaskType.no_mask,
@@ -1205,16 +1215,21 @@ class OneVisionEncoderModel(VisionModule):
 
         # Pass through decoder with layer-by-layer capture
         # Use forward_debug to capture layer-by-layer outputs
+        # (mirrors the max_seqlen fix in forward() above)
+        _max_seqlen = max(tokens_per_sample) if tokens_per_sample else 0
+        if sp_pad_size > 0:
+            _max_seqlen = max(_max_seqlen, sp_pad_size)
+        _max_seqlen = int((_max_seqlen + 63) // 64 * 64)
+        _psp = PackedSeqParams(
+            qkv_format="thd",
+            cu_seqlens_q=cu_seqlens,
+            cu_seqlens_kv=cu_seqlens,
+            max_seqlen_q=_max_seqlen,
+            max_seqlen_kv=_max_seqlen,
+        )
         decoder_debug_output = self.decoder.forward_debug(
             x,
-            packed_seq_params=[
-                PackedSeqParams(
-                    qkv_format="thd",
-                    cu_seqlens_q=cu_seqlens,
-                    cu_seqlens_kv=cu_seqlens,
-                )
-                for i in range(self.config.num_layers)
-            ],
+            packed_seq_params=[_psp] * self.config.num_layers,
             rotary_pos_emb=rotary_pos_emb.unsqueeze(1).unsqueeze(2),
             attention_mask=None,
             attn_mask_type=AttnMaskType.no_mask,
