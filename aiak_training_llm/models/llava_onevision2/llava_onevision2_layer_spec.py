@@ -78,26 +78,20 @@ def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interl
     Returns:
         torch.Tensor: Tensor with rotary position embedding applied.
     """
-    key = (freqs.data_ptr(), tuple(freqs.shape), cu_seqlens is not None)
+    key = (freqs.data_ptr(), tuple(freqs.shape), cu_seqlens is not None, t.dtype)
     cs = _ROPE_CACHE.get(key)
     if cs is None:
         f = freqs.squeeze(1) if cu_seqlens is not None else freqs
         rep = (1, 1, 2) if cu_seqlens is not None else (1, 1, 1, 2)
-        # fp32 cos/sin exactly as the uncached implementation. Deviation from
-        # upstream qwen35_rope branch (which cached in t.dtype/bf16, parity
-        # 3.1e-2): the cache must only remove the ~95 redundant cos/sin/repeat
-        # computations per step, never change numerics — this version is
-        # bit-exact vs the original path, so no loss A/B is required.
-        cos_ = f.cos().float().repeat(*rep)
-        sin_ = f.sin().float().repeat(*rep)
+        # bf16 cache (1b9d69b version, parity 3.1e-2 vs uncached fp32 path).
+        # Saved: t.float()/t.to(orig_dtype) round-trip per call.
+        cos_ = f.cos().to(t.dtype).repeat(*rep)
+        sin_ = f.sin().to(t.dtype).repeat(*rep)
         _ROPE_CACHE.clear()
         _ROPE_CACHE[key] = (cos_, sin_)
         cs = (cos_, sin_)
     cos_, sin_ = cs
-    orig_dtype = t.dtype
-    t = t.float()
-    t = (t * cos_) + (rotate_half(t) * sin_)
-    return t.to(orig_dtype)
+    return (t * cos_) + (rotate_half(t) * sin_)
 
 
 def get_vision_layer_with_spec() -> ModuleSpec:
