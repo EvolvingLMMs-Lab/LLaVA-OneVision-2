@@ -1,28 +1,28 @@
 # dynamic_budget_default.yaml  —  Scheme D (2026-07-23)
-# 长视频打包的"动态视觉 token 预算"默认配置。
-# 每个样本:按权重随机采 (分辨率, fps)  ->  frames = round(fps * 时长),再被 budget 封顶。
-# 不是"按时长硬映射"——随机采样(带可复现种子)提供多样性。47m topup 填剩余 slack。
-# 预期(batch2 10-15min 估计): 帧数 200->846, p50~499, >=512 ~34%, 47m ~29%。
+# Default "dynamic visual-token budget" config for long-video packing.
+# Per sample: draw (resolution, fps) at random by weight  ->  frames = round(fps * duration), then capped by budget.
+# NOT a hard duration->frames mapping — weighted random sampling (with a reproducible seed) gives diversity. 47m topup fills the leftover slack.
+# Expected (batch2 10-15min estimate): frames 200->846, p50~499, >=512 ~34%, 47m ~29%.
 mode: dynamic
 
-resolution:                                  # min_pixels = max_pixels,按权重采
+resolution:                                  # min_pixels = max_pixels, sampled by weight
   values:  [150000, 200000, 250000, 300000]
   weights: [0.30, 0.30, 0.25, 0.15]
 
-fps:                                         # 上限 1.0(与 master 1fps 一致),往下几档
+fps:                                         # cap 1.0 (matches master 1fps), a few steps below
   values:  [1.0, 0.7, 0.5, 0.33]
   weights: [0.40, 0.30, 0.20, 0.10]
 
-budget_tokens: 55000        # 单样本视频视觉 token 上限(64k bin,留 slack 给 47m + text)
-min_frames: 200             # 帧数下限
-max_frames: 960             # 帧数硬上限(通常预算先封顶,极少触发)
+budget_tokens: 55000        # per-sample video visual-token cap (64k bin, leaves slack for 47m + text)
+min_frames: 200             # frame-count floor
+max_frames: 960             # frame-count hard cap (budget usually caps first; rarely hit)
 patch_size: 16
-factor_multiplier: 3        # tok/帧 = MP / (patch^2 * factor^2) = MP / 2304
-min_pixels_floor: 3136      # 56*56, smart_resize 下限
-temporal_grid: 2            # 帧数取 temporal_grid 的倍数(偶数)
-seed: 20260723              # 基种子;每样本 RNG = f(seed, 样本id) -> 随机但可复现
+factor_multiplier: 3        # tok/frame = MP / (patch^2 * factor^2) = MP / 2304
+min_pixels_floor: 3136      # 56*56, smart_resize floor
+temporal_grid: 2            # frame count rounded to a multiple of temporal_grid (even)
+seed: 20260723              # base seed; per-sample RNG = f(seed, sample_id) -> random but reproducible
 
-# ---- 文本感知预算(2026-07-23 修正:避免长 caption 冲破 64k 被 s2 丢弃)----
-hard_total_tokens: 64000    # bin 硬上限;视觉预算 = 64000 - 文本估计 - reserve(再被 budget_tokens 封顶)
-topup_safety_reserve: 2000  # 留给 47m topup + 安全余量
-chars_per_token_est: 3.0    # 文本 token ≈ ceil(字符数/3.0);保守(实测 chars/token min=3.26),绝不低估
+# ---- text-aware budget (2026-07-23 fix: keep long captions from busting 64k and being dropped by s2) ----
+hard_total_tokens: 64000    # bin hard cap; visual budget = 64000 - text_estimate - reserve (then capped by budget_tokens)
+topup_safety_reserve: 2000  # reserved for 47m topup + safety margin
+chars_per_token_est: 3.0    # text tokens ~= ceil(chars / 3.0); conservative (measured chars/token min=3.26), never underestimate
