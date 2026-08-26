@@ -1408,6 +1408,35 @@ def process_chunk(args: tuple) -> Optional[str]:
                         text_tokens = _count_text_tokens(txt_input)
 
                         token_len = text_tokens - n_image_placeholders + patch_tokens
+                        # --- TS-FIX: training (_rewrap_vision_by_frame) rewrites video to per-frame
+                        # "<t seconds> VS PAD*k VE \n"; s2's per-canvas template misses the per-frame
+                        # timestamp + vision_start + vision_end + newline. Add that so the pack budget
+                        # matches real training tokens (else long-video bins overflow the CAP ~10%).
+                        # measured token cost of "<D.d seconds>" = 5 + int_digits(D); +VS+VE+\n = +3;
+                        # minus the 1 VS+VE the template already counted for the whole visual.
+                        if npy_data.ndim == 2 and npy_data.shape[1] >= 3:
+                            _fidx = np.unique(npy_data[:, 0])
+                            if _fidx.size > 1:
+                                # NATIVE-fps timestamps: npy col0 = native frame numbers; training uses
+                                # timestamp_sec = frame_idx / native_fps, native_fps = max(frame_idx)/dur_s
+                                # => timestamp_sec = col0 * dur_s / max(col0). (dur_s from dyn.) The /fpsN/
+                                # path value is the master SAMPLING fps (not native) -> do NOT use it.
+                                _dur = None
+                                _dyn = json_data.get("dyn")
+                                if isinstance(_dyn, list) and _dyn:
+                                    _dur = _dyn[0].get("dur_s")
+                                elif isinstance(_dyn, dict):
+                                    _dur = _dyn.get("dur_s")
+                                _maxc = float(_fidx.max())
+                                _extra = 0
+                                for _fi in _fidx.tolist():
+                                    if _dur and _maxc > 0:
+                                        _sec = float(_fi) * float(_dur) / _maxc
+                                        _ts_tok = 5 + len(str(int(_sec)))
+                                    else:
+                                        _ts_tok = 8  # fallback if dur_s missing (typical mid-length video)
+                                    _extra += _ts_tok + 3
+                                token_len += _extra - 2
                         # patch_count for ViT load balancing = raw patches (before spatial merge)
                         patch_count = int(npy_first_dim)
 

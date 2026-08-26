@@ -1,0 +1,20 @@
+# dynamic_budget_128k.yaml — Scheme D for LONG videos (128k bin). 2026-07-27
+# 长视频专用:bin 128k,视觉预算大幅提升,fps 梯度对长视频重新生效。
+mode: dynamic
+resolution:
+  values:  [150000, 200000, 250000, 300000]
+  weights: [0.30, 0.30, 0.25, 0.15]
+fps:
+  values:  [1.0, 0.7, 0.5, 0.33]
+  weights: [0.40, 0.30, 0.20, 0.10]
+budget_tokens: 110000       # 单视频视觉 token 上限(128k bin,留 ~18k 给 text+47m)
+min_frames: 200
+max_frames: 1536            # 放宽(128k 下长视频可到 ~900-1300 帧)
+patch_size: 16
+factor_multiplier: 3
+min_pixels_floor: 3136
+temporal_grid: 2
+seed: 20260727
+hard_total_tokens: 128000   # bin 硬上限
+topup_safety_reserve: 2000
+chars_per_token_est: 3.0
