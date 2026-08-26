@@ -1,148 +1,148 @@
-# 动态打包流程 (scheme-D dynamic budget)
+# Dynamic packing pipeline (scheme-D dynamic budget)
 
-> 面向长视频 master 帧库的离线打包:per-sample 动态分配视觉 token 预算,让每个视频尽量吃满一个 bin,并用 47m 单图精确填缝,最终产出 energon 格式的 webdataset。
+> Offline packing for a long-video master frame store: allocate a per-sample visual-token budget dynamically so each video fills a bin as tightly as possible, precisely fill the leftover slack with 47m single images, and finally emit an energon-format webdataset.
 
-- **驱动脚本**: `run_pack_master_47m.sh`
-- **配置**: `dynamic_budget_default.yaml`(64k) / `dynamic_budget_128k.yaml`(长视频 128k)
-- **核心脚本**: `s0_resample_from_master.py`
-- **目录**: `offline_packing/` (本目录)
-
----
-
-## 0. 核心思想
-
-与"每条固定分辨率 / 固定帧数"的静态打包不同,scheme-D **按可复现随机种子为每个视频动态采一组 (分辨率, fps)**,据此决定抽多少帧、每帧多大,使单个视频的视觉 token 尽量逼近 bin 容量;同时**文本感知 (text-aware)** 地为 caption 预留 token,并用 47m 单图填满剩余空间。
-
-关键量:
-- `CAP`  : bin 序列长度(默认 `64000`;长视频用 `128000`)
-- `MAXP` : bin 的 patch 数上限 = `608822 * CAP / 64000`
+- **Driver script**: `run_pack_master_47m.sh`
+- **Configs**: `dynamic_budget_default.yaml` (64k) / `dynamic_budget_128k.yaml` (long-video 128k)
+- **Core script**: `s0_resample_from_master.py`
+- **Directory**: `offline_packing/` (this directory)
 
 ---
 
-## 1. 前置:decode-once 1fps master 帧库
+## 0. Core idea
 
-所有视频**只解码一次**,按 `master_fps=1` 抽全部帧,存成 content-md5 寻址的帧库
-(`<root>/fps1/<md5[:2]>/<md5[2:4]>/<md5>/frame_XXXXXX.jpg + master_meta.json`)。
-`master_meta.json` 含 `native_fps`(真实视频 fps)、`num_frames`(=时长秒数,因 1fps)等。
-动态打包在此基础上"重采样",不重新解码视频。
+Unlike static packing ("fixed resolution / fixed frame count per sample"), scheme-D **draws one (resolution, fps) pair per video using a reproducible random seed**, then decides how many frames to sample and how large each frame is, so a single video's visual tokens approach the bin capacity. It is also **text-aware**: it reserves tokens for the caption and fills the remaining space with 47m single images.
+
+Key quantities:
+- `CAP`  : bin sequence length (default `64000`; `128000` for long videos)
+- `MAXP` : bin patch-count cap = `608822 * CAP / 64000`
 
 ---
 
-## 2. 阶段链(7 步,顺序执行)
+## 1. Prerequisite: decode-once 1fps master frame store
 
-### s0 — 动态重采样  ★核心 (`s0_resample_from_master.py`)
-对每个视频:
-1. **加权随机采样** (RNG = f(seed, 样本id) → 随机但可复现):
-   - 分辨率 ∈ {150k, 200k, 250k, 300k} px,权重 {.30, .30, .25, .15}
-   - fps ∈ {1.0, 0.7, 0.5, 0.33},权重 {.40, .30, .20, .10}(上限 1.0 = master fps)
-2. **文本预算**: `text_tok ≈ ceil(caption字符数 / chars_per_token_est=3.0)`(保守,绝不低估)
-3. **视觉预算 (text-aware)**:
+Every video is **decoded only once**, sampled at `master_fps=1` for all frames, and stored in a content-md5-addressed frame store
+(`<root>/fps1/<md5[:2]>/<md5[2:4]>/<md5>/frame_XXXXXX.jpg + master_meta.json`).
+`master_meta.json` holds `native_fps` (the real video fps), `num_frames` (= duration in seconds, since 1fps), etc.
+Dynamic packing "resamples" on top of this store; it never re-decodes the video.
+
+---
+
+## 2. Stage chain (7 steps, run in order)
+
+### s0 — dynamic resample  ★core (`s0_resample_from_master.py`)
+For each video:
+1. **Weighted random sampling** (RNG = f(seed, sample_id) → random but reproducible):
+   - resolution ∈ {150k, 200k, 250k, 300k} px, weights {.30, .30, .25, .15}
+   - fps ∈ {1.0, 0.7, 0.5, 0.33}, weights {.40, .30, .20, .10} (cap 1.0 = master fps)
+2. **Text budget**: `text_tok ≈ ceil(caption_chars / chars_per_token_est=3.0)` (conservative, never underestimates)
+3. **Visual budget (text-aware)**:
    ```
    visual_budget = min( budget_tokens=55000,
                         hard_total=64000 − text_tok − reserve=2000 )
    ```
-   → 长 caption 自动压缩视觉预算,避免 视觉+文本 冲破 64k(否则 s2 会丢样本)
-4. **帧数**: `frames = round(fps × 时长)`,被 visual_budget 封顶
-   (每帧 token = 分辨率 / (patch_size² × factor²) = 分辨率 / 2304),
-   夹在 `[min_frames=200, max_frames=960]`,取 `temporal_grid=2` 的偶数倍
-5. 从 master 帧**等距抽 N 帧**;首个 user turn 的 `<video>` 展开为 `<image>×N`;
-   写出真实 `fps`(native_fps,供训练注入时间戳)、`patch_positions` 等
-- 输出: `s0_expanded.jsonl`(每视频帧数/分辨率已定死)
+   → a long caption automatically shrinks the visual budget, so visual+text never busts 64k (otherwise s2 would drop the sample)
+4. **Frame count**: `frames = round(fps × duration)`, capped by visual_budget
+   (tokens/frame = resolution / (patch_size² × factor²) = resolution / 2304),
+   clamped to `[min_frames=200, max_frames=960]`, rounded to an even multiple of `temporal_grid=2`
+5. **Sample N frames evenly** from the master store; expand the `<video>` in the first user turn into `<image>×N`;
+   write the real `fps` (native_fps, so training can inject timestamps), `patch_positions`, etc.
+- Output: `s0_expanded.jsonl` (frame count / resolution fixed per video)
 
-### s1 — 建 manifest (`s1_build_manifest.py`)
-转轻量清单(路径 + 对话 + patch),并归一化对话 schema(`from/value → role/content`)。
-- 输出: `manifest.jsonl`
+### s1 — build manifest (`s1_build_manifest.py`)
+Convert to a lightweight manifest (paths + conversation + patches) and normalize the conversation schema (`from/value → role/content`).
+- Output: `manifest.jsonl`
 
-### s2 — 算 token 长度 (`s2_compute_token_lengths.py`)
-用 OV2 processor 精确计算每条 token 数(图 + 文)。
-- 输出: `token_info.txt`(`name:tokens:patches`)
+### s2 — compute token lengths (`s2_compute_token_lengths.py`)
+Use the OV2 processor to compute the exact token count per sample (image + text).
+- Output: `token_info.txt` (`name:tokens:patches`)
 
-### s3 — 装箱 (`s3_bin_packing.py`, BFD, 1 视频/bin)
+### s3 — bin packing (`s3_bin_packing.py`, BFD, 1 video/bin)
 `--max-samples 1 --algorithm bfd --capacity $CAP`:
-每个 bin 只放 **1 个视频**(单视频已 ~55k,接近 64k),BFD 装箱并**故意留 slack**(~9k)给下一步。
-- 输出: `bins_64klen.pkl`
+each bin holds only **1 video** (a single video is already ~55k, close to 64k), BFD-packed and **deliberately leaving slack** (~9k) for the next step.
+- Output: `bins_64klen.pkl`
 
-### s3b — 47m 填缝  ★ (`s3b_topup_with_47m.py`)
-往每个 bin 剩余空间随机塞 **47m 单图**至 `CAP`:
-- 池: `<47m_pool>/47m_part*/token_info.txt` (单图池, 由 --pool-tokeninfo-glob 指定)
-- `--pool-shard-index/--pool-shard-count`: **disjoint 分片**,多机/多批打包各取不相交子集,防 47m 重复
-- `--pool-blocklist`: 跨批去重;`--image-only`;`--max-patches $MAXP`;`--max-samples 200`
-- 输出: `bins_topup.pkl`(视频 + 47m 混合)
+### s3b — 47m topup  ★ (`s3b_topup_with_47m.py`)
+Randomly fill each bin's leftover space with **47m single images** up to `CAP`:
+- pool: `<47m_pool>/47m_part*/token_info.txt` (single-image pool, given by `--pool-tokeninfo-glob`)
+- `--pool-shard-index/--pool-shard-count`: **disjoint sharding** — multi-host / multi-batch packing takes non-overlapping subsets, preventing 47m duplication
+- `--pool-blocklist`: cross-batch dedup; `--image-only`; `--max-patches $MAXP`; `--max-samples 200`
+- Output: `bins_topup.pkl` (video + 47m mix)
 
-### combine — 合并 manifest (`tools/build_combined_manifest.py`)
-视频 manifest + 选中的 47m manifest → 一份合并清单,供 s4 取字节。
-- 输出: `manifest_combined.jsonl`
+### combine — merge manifests (`tools/build_combined_manifest.py`)
+Video manifest + selected 47m manifest → one combined manifest for s4 to read bytes from.
+- Output: `manifest_combined.jsonl`
 
-### s4 — 生成 webdataset  ★ (容器内, `s4_bins_to_webdataset.py`)
-`docker run llava_megatron:26.05` **在容器里**执行:
-- 按 bin 读帧/图字节 → B 模式降采样(`--longest-edge 3072`)→ 写 tar
-- **容器内 energon** 生成 `.tar.idx` + `.info.yaml`(energon 训练加载必需)
-- docker 挂载必须含 `<data_root>`(含帧库与单图源盘; docker -v 按需挂载)
-- 输出: `webdataset/`(`*.tar` + `*.tar.idx` + `.nv-meta/{.info.yaml, split.yaml, dataset.yaml, sample_loader.py}`)
+### s4 — build webdataset  ★ (in container, `s4_bins_to_webdataset.py`)
+`docker run llava_megatron:26.05` runs **inside the container**:
+- read frame/image bytes per bin → B-mode downscale (`--longest-edge 3072`) → write tar
+- **in-container energon** generates `.tar.idx` + `.info.yaml` (required for energon training loading)
+- docker mounts must include `<data_root>` (frame store + single-image source disk; mount with docker -v as needed)
+- Output: `webdataset/` (`*.tar` + `*.tar.idx` + `.nv-meta/{.info.yaml, split.yaml, dataset.yaml, sample_loader.py}`)
 
 ---
 
-## 3. 配置参考 (`dynamic_budget_default.yaml`, 64k)
+## 3. Config reference (`dynamic_budget_default.yaml`, 64k)
 
 ```yaml
 mode: dynamic
-resolution:                 # min_pixels = max_pixels,按权重采
+resolution:                 # min_pixels = max_pixels, sampled by weight
   values:  [150000, 200000, 250000, 300000]
   weights: [0.30, 0.30, 0.25, 0.15]
-fps:                        # 上限 1.0(与 master 1fps 一致)
+fps:                        # cap 1.0 (matches master 1fps)
   values:  [1.0, 0.7, 0.5, 0.33]
   weights: [0.40, 0.30, 0.20, 0.10]
-budget_tokens: 55000        # 单视频视觉 token 上限(留 slack 给 47m + text)
-min_frames: 200             # 帧数下限
-max_frames: 960             # 帧数硬上限(通常预算先封顶)
+budget_tokens: 55000        # per-video visual-token cap (leaves slack for 47m + text)
+min_frames: 200             # frame-count floor
+max_frames: 960             # frame-count hard cap (budget usually caps first)
 patch_size: 16
-factor_multiplier: 3        # tok/帧 = 分辨率 / (patch² × factor²) = 分辨率 / 2304
-min_pixels_floor: 3136      # 56×56,smart_resize 下限
-temporal_grid: 2            # 帧数取偶数(temporal_grid 的倍数)
-seed: 20260723              # 基种子;每样本 RNG = f(seed, 样本id) → 随机可复现
-hard_total_tokens: 64000    # bin 硬上限
-topup_safety_reserve: 2000  # 留给 47m topup + 安全余量
-chars_per_token_est: 3.0    # 文本 token ≈ ceil(字符数/3.0),保守
+factor_multiplier: 3        # tok/frame = resolution / (patch² × factor²) = resolution / 2304
+min_pixels_floor: 3136      # 56×56, smart_resize floor
+temporal_grid: 2            # frame count rounded to an even multiple of temporal_grid
+seed: 20260723              # base seed; per-sample RNG = f(seed, sample_id) → random & reproducible
+hard_total_tokens: 64000    # bin hard cap
+topup_safety_reserve: 2000  # reserved for 47m topup + safety margin
+chars_per_token_est: 3.0    # text tokens ≈ ceil(chars / 3.0), conservative
 ```
-> 128k 长视频用 `dynamic_budget_128k.yaml`:`budget_tokens=110000`, `hard_total=128000`, `max_frames=1536`。
+> For 128k long video use `dynamic_budget_128k.yaml`: `budget_tokens=110000`, `hard_total=128000`, `max_frames=1536`.
 
 ---
 
-## 4. 调用方式
+## 4. How to call
 
 ```bash
 bash run_pack_master_47m.sh <input_master_jsonl> <output_base> \
      dynamic_budget_default.yaml <shard_idx> <shard_cnt>
 ```
-环境旋钮:
-- `CAP`         : bin 长(默认 64000;长视频 128000)
-- `S2_WORKERS`  / `S4_WORKERS` / `S4_CPUS` : 各阶段并行度(借用训练机时调低)
-- `BLOCKLIST`   : 47m 跨批去重名单
-- `<shard_idx> <shard_cnt>` : 47m 池 disjoint 分片(多机/多批打包时各机不同)
+Environment knobs:
+- `CAP`         : bin length (default 64000; 128000 for long videos)
+- `S2_WORKERS`  / `S4_WORKERS` / `S4_CPUS` : per-stage parallelism (lower when borrowing training hosts)
+- `BLOCKLIST`   : 47m cross-batch dedup list
+- `<shard_idx> <shard_cnt>` : 47m pool disjoint shard (differs per host for multi-host / multi-batch packing)
 
 ---
 
-## 5. 与单图链 (auto_pipe.sh) 的区别
+## 5. Difference vs the single-image chain (auto_pipe.sh)
 
-| | 动态链 (scheme-D) | auto_pipe(单图) |
+| | dynamic chain (scheme-D) | auto_pipe (single-image) |
 |---|---|---|
-| s0 重采样 | ✅ 动态帧/分辨率 | ❌ 无(单图无需) |
-| 装箱 | 1 视频/bin + 47m 填缝 | 多样本/bin |
-| s4 | **容器内**,出 `.tar.idx` | 裸跑,**无 idx**(需事后 `energon prepare` 补) |
-| 适用 | 长视频 master | 单图 SFT / caption |
+| s0 resample | ✅ dynamic frames/resolution | ❌ none (not needed for single image) |
+| bin packing | 1 video/bin + 47m fill | multiple samples/bin |
+| s4 | **in container**, emits `.tar.idx` | bare run, **no idx** (needs a later `energon prepare`) |
+| use case | long-video master | single-image SFT / caption |
 
 ---
 
-## 6. 一句话流程
+## 6. One-line flow
 
 ```
 decode-once 1fps master
-  → s0  动态重采样 (text-aware 定帧数/分辨率,可复现随机)
+  → s0  dynamic resample (text-aware frame count/resolution, reproducible random)
   → s1  manifest
-  → s2  token 长度
-  → s3  BFD 每视频独占 bin(留缝)
-  → s3b 47m 不相交填缝
-  → combine 合并清单
-  → s4  容器内编码 + energon 索引
+  → s2  token lengths
+  → s3  BFD one video per bin (leave slack)
+  → s3b 47m disjoint fill
+  → combine merge manifests
+  → s4  in-container encode + energon index
   → 64k webdataset (tar + idx + nv-meta)
 ```
