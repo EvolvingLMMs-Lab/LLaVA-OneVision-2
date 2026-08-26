@@ -666,9 +666,15 @@ class LlavaOnevision2(MegatronModule):
                 _prof = __import__('os').environ.get('PROF_TAGS') == '1'
                 if _prof:
                     torch.cuda.synchronize(); _vt0 = __import__('time').perf_counter()
-                image_embeddings = self.vision_model(
-                    images, grid_thw=image_grid_thw, patch_positions=patch_positions
-                )  # [img_len, h_vision]
+                if __import__('os').environ.get('VISION_RECOMPUTE') == '1' and self.training:
+                    from megatron.core import tensor_parallel as _mpu_tp
+                    def _vis_ckpt_fwd(_imgs):
+                        return self.vision_model(_imgs, grid_thw=image_grid_thw, patch_positions=patch_positions)
+                    image_embeddings = _mpu_tp.checkpoint(_vis_ckpt_fwd, False, images)  # VISION_RECOMPUTE: main_grad-aware megatron ckpt
+                else:
+                    image_embeddings = self.vision_model(
+                        images, grid_thw=image_grid_thw, patch_positions=patch_positions
+                    )  # [img_len, h_vision]
                 image_embeddings = self.adapter(image_embeddings)
                 if _prof:
                     torch.cuda.synchronize()
@@ -723,6 +729,37 @@ class LlavaOnevision2(MegatronModule):
             # earlier for this sample.
             if use_inference_kv_cache or (images is None and pixel_values_videos is None):
                 combined_embeddings = language_embeddings
+                if (
+                    self.training
+                    and self.add_encoder
+                    and images is None
+                    and not use_inference_kv_cache
+                    and __import__('os').environ.get('DUMMY_VISION') == '1'
+                ):
+                    # DUMMY_VISION: text-only microbatch -- run a minimal dummy image
+                    # through vision_model + adapter so this DP rank still produces
+                    # grads for every vision/adapter param (keeps DDP overlap grad
+                    # allreduce consistent across DP ranks). Numerically a no-op.
+                    _vm = self.vision_model
+                    _p = _vm.patch_size
+                    _sms = _vm.spatial_merge_size
+                    _in_ch = getattr(_vm.patch_embed, 'in_channels', 3)
+                    _ref = next(_vm.parameters())
+                    _dummy_imgs = torch.zeros(
+                        _sms * _sms, _in_ch * _p * _p, dtype=_ref.dtype, device=_ref.device
+                    )
+                    _dummy_thw = torch.tensor(
+                        [[1, _sms, _sms]], dtype=torch.int64, device=_ref.device
+                    )
+                    _dummy_out = self.adapter(
+                        _vm(_dummy_imgs, grid_thw=_dummy_thw, patch_positions=None)
+                    )
+                    combined_embeddings = combined_embeddings + 0.0 * _dummy_out.sum().to(
+                        combined_embeddings.dtype
+                    )
+                    if not getattr(self, '_dummy_vision_logged', False):
+                        self._dummy_vision_logged = True
+                        print('[DUMMY_VISION] dummy vision forward active for text-only microbatch', flush=True)
             else:
                 if images is not None and self.config.image_token_id in input_ids:
                     image_token_id = self.config.image_token_id
@@ -810,6 +847,12 @@ class LlavaOnevision2(MegatronModule):
                     attention_mask=None,
                 )
                 _mrope_pos = _mrope_pos.to(input_ids.device)
+            if __import__('os').environ.get('PP2_DIAG') == '1':
+                _ps = __import__('megatron.core', fromlist=['parallel_state']).parallel_state
+                print(f"[PP2_DIAG vlm] pp_rank={_ps.get_pipeline_model_parallel_rank()} "
+                      f"add_enc={self.add_encoder} add_dec={self.add_decoder} "
+                      f"input_ids={input_ids is not None} img_grid={image_grid_thw is not None} "
+                      f"vid_grid={video_grid_thw is not None} mrope_pos={_mrope_pos is not None}", flush=True)
             self.language_model._mrope_position_ids = _mrope_pos
 
         output = self.language_model(
