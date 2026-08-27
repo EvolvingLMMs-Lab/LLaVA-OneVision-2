@@ -5,9 +5,9 @@ with 47m image samples (sft cleaned 64k pool).
 
 Usage:
     python s3b_topup_with_47m.py \
-        --bins-in /data/pandas70m_gt10min_packed_64k_fix/pandas70m_part0/bins_64klen.pkl \
-        --bins-out /data/pandas70m_gt10min_packed_64k_fix_with47m/pandas70m_part0/bins_topup.pkl \
-        --pool-tokeninfo-glob '/data/47m_sft_packed_64k/47m_part*/token_info.txt' \
+        --bins-in /path/to/bins_in.pkl \
+        --bins-out /path/to/bins_out.pkl \
+        --pool-tokeninfo-glob '/path/to/47m_packed/*/token_info.txt' \
         --pool-blocklist /tmp/47m_used_global.txt \
         --image-only \
         --capacity 64000 \
@@ -63,7 +63,7 @@ def main():
     ap.add_argument("--bins-in", required=True)
     ap.add_argument("--bins-out", required=True)
     ap.add_argument("--pool-tokeninfo-glob", required=True,
-        help="glob to gather pool token_info files, e.g. /data/47m_sft_packed_64k/47m_part*/token_info.txt")
+        help="glob to gather pool token_info files, e.g. /path/to/47m_packed/*/token_info.txt")
     ap.add_argument("--pool-blocklist", default="",
         help="optional file listing already-consumed names (one per line)")
     ap.add_argument("--selected-out", default="",
@@ -74,6 +74,15 @@ def main():
     ap.add_argument("--max-patches", type=int, default=608822)
     ap.add_argument("--topup-budget-samples", type=int, default=350000,
         help="upper bound on number of 47m samples to load (random subset)")
+    ap.add_argument("--selection-mode", choices=["fdd","random","shortest"], default="random",
+        help="pool ordering for placement: fdd=largest-first (old, length-biased); random=keep shuffled order -> natural short-heavy 47m distribution (recommended); shortest=short-first (max short coverage)")
+    ap.add_argument("--pool-shard-index", type=int, default=0,
+        help="this part's shard index for DISJOINT pool slicing")
+    ap.add_argument("--pool-shard-count", type=int, default=1,
+        help="total shards; pool is sliced pool[index::count] after a FIXED shuffle so shards are "
+             "disjoint across parts -> zero cross-part duplication")
+    ap.add_argument("--pool-shard-seed", type=int, default=12345,
+        help="FIXED shuffle seed used BEFORE slicing; MUST be identical across all parts")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
@@ -112,14 +121,28 @@ def main():
         print(f"[topup]   loaded {len(chunk):,} from {os.path.basename(pp)} (cum={len(pool):,})")
     print(f"[topup] pool ready: {len(pool):,} samples in {time.time()-t0:.1f}s")
 
-    # 4) random shuffle + clip to budget
-    rng.shuffle(pool)
+    # 4) shard pool into DISJOINT slices (zero cross-part dup) or plain shuffle; then clip to budget.
+    if args.pool_shard_count > 1:
+        random.Random(args.pool_shard_seed).shuffle(pool)   # identical order across all parts
+        pool = pool[args.pool_shard_index :: args.pool_shard_count]
+        print(f"[topup] pool sharded: index={args.pool_shard_index}/{args.pool_shard_count} "
+              f"-> {len(pool):,} disjoint candidates (seed={args.pool_shard_seed})")
+    else:
+        rng.shuffle(pool)
     if len(pool) > args.topup_budget_samples:
         pool = pool[: args.topup_budget_samples]
         print(f"[topup] clipped pool to budget={args.topup_budget_samples:,}")
 
-    # 5) sort pool by token DESC for first-fit-decreasing top-up
-    pool.sort(key=lambda x: x[1], reverse=True)
+    # 5) ordering strategy for placement.
+    #    default "random" KEEPS the shuffled order from step 4 -> the placed set follows the
+    #    pool's natural (short-heavy) length distribution, so many short 47m single-image
+    #    samples enter the slack (approximating dense-47m capability). "fdd" is the old
+    #    largest-first behaviour (length-biased); "shortest" maximises short-sample coverage.
+    if args.selection_mode == "fdd":
+        pool.sort(key=lambda x: x[1], reverse=True)
+    elif args.selection_mode == "shortest":
+        pool.sort(key=lambda x: x[1])
+    print(f"[topup] selection-mode={args.selection_mode} (pool order set)")
 
     # 6) greedy top-up: for each pool sample, find the bin with smallest remaining
     #    token slack that can still fit (BFD-like). To keep it O(n log m), use

@@ -1,0 +1,26 @@
+# dynamic_budget_bin110k_video.yaml — pure-video maximization, bin total length 110k (no 47m single-image topup)
+# bin=110000 total length; visual budget = min(budget_tokens=95000, 110000 - text_tok_est - reserve0)
+#   long_expand captions are very long (text_tok_est p50~15k, p90~27k), so visual yields to text automatically.
+# Companion driver: run_pack_master.sh (no s3b / no 47m).
+mode: dynamic
+
+resolution:
+  values:  [150000, 200000, 250000, 300000]
+  weights: [0.30, 0.30, 0.25, 0.15]
+
+fps:
+  values:  [1.0, 0.7, 0.5, 0.33]
+  weights: [0.40, 0.30, 0.20, 0.10]
+
+budget_tokens: 95000         # visual hard cap (short-text videos reach ~95k visual)
+min_frames: 200
+max_frames: 1536
+patch_size: 16
+factor_multiplier: 3         # tok/frame = resolution / 2304
+min_pixels_floor: 3136
+temporal_grid: 2
+seed: 20260727
+
+hard_total_tokens: 110000    # bin total-length cap (the 110k you specified)
+topup_safety_reserve: 0      # pure video, no reserve for 47m
+chars_per_token_est: 3.0     # text-aware: visual = min(95000, 110000 - text_est - 0)

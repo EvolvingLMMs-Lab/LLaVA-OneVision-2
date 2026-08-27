@@ -30,10 +30,10 @@
 #
 # 2) Full invocation with common overrides:
 #    bash auto_pipe.sh \
-#        -i /vlm/data/sft/mix_v1.jsonl \
-#        -r /vlm/data/images \
-#        -m /vlm/pretrain_models/Qwen/Qwen2.5-VL-3B-Instruct \
-#        -o /vlm/cache/packed/mix_v1 \
+#        -i /path/to/input.jsonl \
+#        -r /path/to/image_root \
+#        -m /path/to/tokenizer_or_model \
+#        -o /path/to/output_dir \
 #        -L 64000 \
 #        -M 200 \
 #        -w 32 \
@@ -54,7 +54,7 @@
 #    bash auto_pipe.sh -i ... -r ... -o ... -L 64000 -f
 #
 # 6) Show pipeline status and exit:
-#    bash auto_pipe.sh -o /vlm/cache/packed/mix_v1 -L 64000 -s
+#    bash auto_pipe.sh -o /path/to/output_dir -L 64000 -s
 #
 # 7) Disable NPY mode (let s2 do image processing instead):
 #    bash auto_pipe.sh -i ... -r ... -o ... -L 64000 --no-npy
@@ -174,7 +174,7 @@ usage() {
 
 INPUT_JSONL=""
 IMAGE_ROOT=""
-MODEL_PATH="/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33"
+MODEL_PATH="${MODEL_PATH:-${MODEL:-}}"   # default model dir: set via -m flag or MODEL/MODEL_PATH env
 OUTPUT_BASE=""
 FORCE_RUN=false
 SHOW_STATUS=false
