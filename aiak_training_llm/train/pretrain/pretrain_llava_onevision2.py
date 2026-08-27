@@ -151,9 +151,6 @@ def get_batch(data_iterator):
         video_grid_thw = tensor_parallel.broadcast_data(["video_grid_thw"], data, torch.int32)["video_grid_thw"]
 
     packed_seq_params = None
-    is_video = video_token_id in tokens
-
-    attn_mask_type = AttnMaskType.padding_causal if attn_mask.any() else AttnMaskType.causal
 
     labels = torch.roll(labels, shifts=-1, dims=1)
     loss_mask = (labels != -100).long()
@@ -307,21 +304,25 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         )
 
     # Reduce loss for logging.
-    reporting_loss = loss.clone().detach()
-    torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
-
     local_num_tokens = loss[1].clone().detach().to(torch.int)
 
-    loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
+    is_log_step = ((args.curr_iteration + 1) % args.log_interval == 0)
 
-    if args.variable_seq_lengths:
-        # for variable seq length, we need to calculate the number of tokens on fly
-        # model output tensor shape is [B, S, H]
-        num_input_tokens = output_tensor.shape[0] * output_tensor.shape[1]
-        input_tokens = torch.tensor(num_input_tokens, dtype=torch.int, device=output_tensor.device)
-        # sum across all dp ranks
-        torch.distributed.all_reduce(input_tokens, group=mpu.get_data_parallel_group())
-        loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
+    if is_log_step:
+        reporting_loss = loss.clone().detach()
+        torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
+        loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
+
+        if args.variable_seq_lengths:
+            # for variable seq length, we need to calculate the number of tokens on fly
+            # model output tensor shape is [B, S, H]
+            num_input_tokens = output_tensor.shape[0] * output_tensor.shape[1]
+            input_tokens = torch.tensor(num_input_tokens, dtype=torch.int, device=output_tensor.device)
+            # sum across all dp ranks
+            torch.distributed.all_reduce(input_tokens, group=mpu.get_data_parallel_group())
+            loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
+    else:
+        loss_reduced_dict = {"lm loss": (loss[0].detach(), local_num_tokens)}
 
     return (loss[0] * args.context_parallel_size, local_num_tokens, loss_reduced_dict)
 
