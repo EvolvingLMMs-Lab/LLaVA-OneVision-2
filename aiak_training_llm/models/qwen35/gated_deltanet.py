@@ -190,6 +190,24 @@ class GatedDeltaNet(HuggingFaceModule):
 
         self.out_proj = TE_Linear(self.v_dim, self.hidden_size, bias=False)
 
+        # SP-FIX (2026-08-26): these params are REPLICATED across TP but consume
+        # TP-rank-local token shards under sequence-parallel (TP0 first half of each
+        # sequence, TP1 second half), so their grads MUST be summed across the TP
+        # group. Mark them sequence_parallel so finalize_model_grads'
+        # _allreduce_layernorm_grads picks them up (the old
+        # average_gradients_across_tp_domain flag has no consumer anywhere).
+        # Verified missing-reduce via /workspace/spgrad_cert (TP0vsTP1 rel 0.2-2.9).
+        for _p in (
+            self.in_proj_qkvz.weight,
+            self.in_proj_ba.weight,
+            self.out_proj.weight,
+            self.dt_bias,
+            self.A_log,
+            self.out_norm.weight,
+            *self.conv1d.parameters(),  # SP-FIX2: conv1d was missed initially (defined earlier in __init__)
+        ):
+            setattr(_p, "sequence_parallel", self.config.sequence_parallel)
+
     def fix_query_key_value_ordering(self, mixed_qkvz, mixed_ba):
         """
         Derives `query`, `key` and `value` tensors from `mixed_qkvz` and `mixed_ba`.
