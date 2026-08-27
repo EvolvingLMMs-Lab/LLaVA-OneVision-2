@@ -304,29 +304,35 @@ class GatedDeltaNet(HuggingFaceModule):
         )
         query, key, value = (x.reshape(x.shape[0], x.shape[1], -1) for x in (query, key, value))
 
-        qkv = torch.cat((query, key, value), dim=-1)
+        _conv_w = self.conv1d.weight.squeeze(1)  # [conv_dim, kernel_dim]
+        _conv_b = self.conv1d.bias                # None when conv_bias=False
 
         nvtx_range_push(suffix="conv1d")
-        qkv = causal_conv1d(
-            x=qkv,
-            weight=self.conv1d.weight.squeeze(1),  # d, 1, w -> d, w
-            bias=self.conv1d.bias,
+        query = causal_conv1d(
+            x=query,
+            weight=_conv_w[:self.qk_dim],
+            bias=_conv_b[:self.qk_dim] if _conv_b is not None else None,
+            activation=self.activation,
+            cu_seqlens=cu_seqlens,
+            cu_seqlens_cpu=cu_seqlens_cpu,
+        )[0]
+        key = causal_conv1d(
+            x=key,
+            weight=_conv_w[self.qk_dim:self.qk_dim * 2],
+            bias=_conv_b[self.qk_dim:self.qk_dim * 2] if _conv_b is not None else None,
+            activation=self.activation,
+            cu_seqlens=cu_seqlens,
+            cu_seqlens_cpu=cu_seqlens_cpu,
+        )[0]
+        value = causal_conv1d(
+            x=value,
+            weight=_conv_w[self.qk_dim * 2:],
+            bias=_conv_b[self.qk_dim * 2:] if _conv_b is not None else None,
             activation=self.activation,
             cu_seqlens=cu_seqlens,
             cu_seqlens_cpu=cu_seqlens_cpu,
         )[0]
         nvtx_range_pop(suffix="conv1d")
-
-        # Split qkv into query, key, and value
-        query, key, value = torch.split(
-            qkv,
-            [
-                self.qk_dim,
-                self.qk_dim,
-                self.v_dim,
-            ],
-            dim=-1,
-        )
         query = query.reshape(query.shape[0], query.shape[1], -1, self.key_head_dim)
         key = key.reshape(key.shape[0], key.shape[1], -1, self.key_head_dim)
         value = value.reshape(value.shape[0], value.shape[1], -1, self.value_head_dim)
