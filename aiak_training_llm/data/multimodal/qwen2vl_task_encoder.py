@@ -36,6 +36,11 @@ from aiak_training_llm.data.multimodal.packed_sort_dataset import PackedSeparate
 from aiak_training_llm.utils import constants, get_chat_template
 from transformers import AutoProcessor
 
+from .canvas_timestamp_schema import (
+    CanvasTimestampError,
+    rewrite_existing_canvas_wrappers,
+    summarize_canvases,
+)
 from .task_encoder import ImageTaskBatchPacked, ImageTaskSample, ImageTaskSamplePacked, TaskEncoder
 
 
@@ -54,6 +59,7 @@ VISION_TAGS = ["<|vision_start|>", "<|vision_end|>"]
 IMAGE_TOKEN_WITH_TAGS = VISION_TAGS[0] + IMAGE_TOKEN + VISION_TAGS[1]
 VIDEO_TOKEN_WITH_TAGS = VISION_TAGS[0] + VIDEO_TOKEN + VISION_TAGS[1]
 SKIP_LOG_LIMIT = 5
+SKIP_LOG_INTERVAL = 1000
 _SKIP_LOG_COUNTS: dict[str, int] = {}
 
 
@@ -61,11 +67,12 @@ def skip_malformed_multimodal_sample(sample_key: str, signature: str, detail: st
     count = _SKIP_LOG_COUNTS.get(signature, 0) + 1
     _SKIP_LOG_COUNTS[signature] = count
 
-    if count <= SKIP_LOG_LIMIT:
+    if count <= SKIP_LOG_LIMIT or count % SKIP_LOG_INTERVAL == 0:
         print(f"Skipping malformed multimodal sample {sample_key}: {detail}", file=sys.stderr)
         if count == SKIP_LOG_LIMIT:
             print(
-                f"Further '{signature}' skip logs will be suppressed for this worker.",
+                f"Further '{signature}' skip logs will be reported every "
+                f"{SKIP_LOG_INTERVAL} samples for this worker.",
                 file=sys.stderr,
             )
 
@@ -359,6 +366,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
         video_grid_thw = None
         pixel_values_videos = []
         image_grid_thw = None
+        serializer_image_grid_thw = None
         pixel_values_images = []
         video = []
         image = []
@@ -369,9 +377,14 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             image = raw_image
 
         if raw_patch_positions is not None:
-            for i in raw_patch_positions:
-                if i is not None:
-                    patch_positions.append(torch.tensor(i, dtype=torch.int64))
+            try:
+                for item in raw_patch_positions:
+                    if item is not None:
+                        patch_positions.append(torch.tensor(item, dtype=torch.int64))
+            except (TypeError, ValueError, RuntimeError) as exc:
+                raise CanvasTimestampError(
+                    "raw patch positions cannot be converted to tensors"
+                ) from exc
 
         messages, mm_inputs = self.chat_template.mm_plugin.process_messages(
             messages,
@@ -388,6 +401,9 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 f"- mm_input_keys: {list(mm_inputs.keys())}\n"
                 f"- has_image_placeholder: {any('<image>' in msg.get('content', '') for msg in messages)}"
             )
+            # Keep the processor's per-canvas rows. The legacy path below may
+            # collapse them into one temporal grid for model position IDs.
+            serializer_image_grid_thw = image_grid_thw.clone()
             # get image patch num:
             num_patches = 0
             for img_idx in range(len(image_grid_thw)):
@@ -439,22 +455,68 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 f"- image_sizes: {[img.size for img in image]}"
             )
 
-        # Compute timestamps and rewrite vision blocks by frame in the message text.
-        # This rewrites mm_plugin's per-canvas wrapping (VS PAD*N VE \n VS PAD*M VE \n ...)
-        # into per-frame wrapping with timestamps (<ts> VS PAD*K VE \n ...) at the STRING
-        # level, before tokenization — no token-level merge/split needed.
-        timestamp_strings = None
-        if kwargs is not None and "fps" in kwargs and len(patch_positions) > 0:
-            fps = kwargs["fps"][0] if isinstance(kwargs["fps"], list) else kwargs["fps"]
-            if fps is not None and fps > 0:
-                td = kwargs.get("timestamp_decimal", 1) or 1
-                pt_patch_position = torch.cat(patch_positions)
-                timestamps = self.compute_frame_timestamps(patch_positions, pt_patch_position, fps)
-                timestamps = [round(t, td) for t in timestamps]
-                timestamp_strings = [f"<{t:.{td}f} seconds>" for t in timestamps]
+        raw_timed_positions = (
+            [item for item in raw_patch_positions if item is not None]
+            if raw_patch_positions is not None
+            else []
+        )
+        has_explicit_fps = kwargs.get("fps") is not None
+        if serializer_image_grid_thw is not None and has_explicit_fps:
+            if not raw_timed_positions:
+                raise CanvasTimestampError(
+                    "timed canvas sample has fps but no explicit raw patch positions"
+                )
+            fps = kwargs["fps"]
+            if isinstance(fps, list):
+                if len(fps) != 1:
+                    raise CanvasTimestampError(
+                        f"timed canvas sample requires exactly one fps, got {fps!r}"
+                    )
+                fps = fps[0]
+            try:
+                flat_raw = np.concatenate(
+                    [np.asarray(item) for item in raw_timed_positions],
+                    axis=0,
+                )
+            except ValueError as exc:
+                raise CanvasTimestampError(
+                    "raw patch-position arrays cannot be concatenated"
+                ) from exc
+            summaries = summarize_canvases(
+                flat_raw,
+                serializer_image_grid_thw,
+                fps=fps,
+                spatial_merge_size=getattr(self.processor.image_processor, "merge_size", 2),
+            )
+            vision_messages = [
+                message
+                for message in messages
+                if isinstance(message.get("content", ""), str)
+                and VISION_TAGS[0] in message["content"]
+            ]
+            if len(vision_messages) != 1:
+                raise CanvasTimestampError(
+                    f"timed canvas sample requires one unambiguous vision message, got {len(vision_messages)}"
+                )
+            vision_messages[0]["content"], _ = rewrite_existing_canvas_wrappers(
+                vision_messages[0]["content"],
+                summaries,
+                decimals=kwargs.get("timestamp_decimal", 1),
+            )
+        else:
+            # Frozen fallback for samples without explicit per-canvas timing.
+            timestamp_strings = None
+            if kwargs is not None and "fps" in kwargs and len(patch_positions) > 0:
+                fps = kwargs["fps"][0] if isinstance(kwargs["fps"], list) else kwargs["fps"]
+                if fps is not None and fps > 0:
+                    td = kwargs.get("timestamp_decimal", 1) or 1
+                    pt_patch_position = torch.cat(patch_positions)
+                    timestamps = self.compute_frame_timestamps(patch_positions, pt_patch_position, fps)
+                    timestamps = [round(t, td) for t in timestamps]
+                    timestamp_strings = [f"<{t:.{td}f} seconds>" for t in timestamps]
 
-        if timestamp_strings is not None and len(timestamp_strings) > 0 and len(patch_positions) > 0:
-            messages = self._rewrap_vision_by_frame(messages, patch_positions, timestamp_strings)
+            if timestamp_strings is not None and len(timestamp_strings) > 0 and len(patch_positions) > 0:
+                messages = self._rewrap_vision_by_frame(messages, patch_positions, timestamp_strings)
         encode_pairs = self.chat_template.encode_multiturn(
             tokenizer=self.tokenizer,
             messages=messages,
@@ -601,23 +663,30 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             current_patch_positions = sample.patch_positions
 
             while True:
-                (
-                    input_ids,
-                    target,
-                    attn_mask,
-                    imgs,
-                    image_grid_thw,
-                    pixel_values_videos,
-                    video_grid_thw,
-                    patch_positions,
-                ) = self.process_sft_qa(
-                    current_messages,
-                    sample.system,
-                    current_video,
-                    current_image,
-                    current_patch_positions,
-                    **kwargs,
-                )
+                try:
+                    (
+                        input_ids,
+                        target,
+                        attn_mask,
+                        imgs,
+                        image_grid_thw,
+                        pixel_values_videos,
+                        video_grid_thw,
+                        patch_positions,
+                    ) = self.process_sft_qa(
+                        current_messages,
+                        sample.system,
+                        current_video,
+                        current_image,
+                        current_patch_positions,
+                        **kwargs,
+                    )
+                except CanvasTimestampError as exc:
+                    skip_malformed_multimodal_sample(
+                        sample.__key__,
+                        "invalid_canvas_timing",
+                        str(exc),
+                    )
 
                 if len(input_ids) <= self.args.seq_length:
                     break
