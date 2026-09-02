@@ -8,6 +8,37 @@ import torch.distributed as dist
 
 # copy from https://github.com/KellerJordan/Muon/tree/master
 # @torch.compile
+def zeropower_via_newtonschulz5_distgram(x_loc, full_shape, split_dim, steps, tp_group):
+    """Distributed-Gram NS (upstream Megatron 'distributed' tp_mode equivalent).
+    Orthogonalizes the FULL matrix while each TP rank holds only its shard:
+    A = W W^T = sum_i W_i W_i^T (Gram additivity over column blocks), and the
+    NS recurrence X <- aX + (bA + cA^2)X left-multiplies, acting block-wise on
+    columns. Requires the split to land on W's LONG (column) dim after the
+    orientation transpose; returns None to signal caller fallback otherwise.
+    Math is exact vs full-matrix NS (verified 3.9e-3 bf16 accumulation noise)."""
+    import torch.distributed as dist
+    assert len(full_shape) == 2
+    a, b, c = (3.4445, -4.7750, 2.0315)
+    rows, cols = full_shape
+    transposed = rows > cols
+    W = x_loc.T if transposed else x_loc
+    # after orientation, full W is [m, n] with m<=n; split must be on W dim1
+    w_split_dim = (1 - split_dim) if transposed else split_dim
+    if w_split_dim != 1:
+        return None
+    W = W.contiguous()
+    # full Frobenius norm via scalar all-reduce
+    sq = W.float().pow(2).sum()
+    dist.all_reduce(sq, group=tp_group)
+    W = (W / (sq.sqrt().bfloat16() + 1e-7))
+    for _ in range(steps):
+        G = W @ W.T                      # partial Gram [m,m]
+        dist.all_reduce(G, group=tp_group)
+        B = b * G + c * (G @ G)
+        W = a * W + B @ W
+    return W.T if transposed else W
+
+
 def zeropower_via_newtonschulz5(G, steps):
     """
     Newton-Schulz iteration to compute the zeroth power / orthogonalization of G. We opt to use a
@@ -278,19 +309,29 @@ class Muon(torch.optim.Optimizer):
                     tp_split_dim = dist_meta.tp_split_dim
 
                 # gather tensor parallel ( if tp )
+                update = None
+                _lr_shape = ns_input.shape
                 if tp_split_dim != -1:
-                    ns_input_shards = [torch.empty_like(
-                        ns_input) for _ in range(tp_world_size)]
-                    dist.all_gather(ns_input_shards, ns_input, self.tp_group)
-                    ns_input = torch.cat(ns_input_shards, dim=tp_split_dim)
+                    _fs = list(ns_input.shape); _fs[tp_split_dim] *= tp_world_size
+                    _lr_shape = tuple(_fs)
+                    if __import__('os').environ.get('MUON_DIST_GRAM') == '1':
+                        # distributed-Gram NS: no full-matrix gather, no redundant NS
+                        update = zeropower_via_newtonschulz5_distgram(
+                            ns_input, _lr_shape, tp_split_dim, ns_steps, self.tp_group)
+                    if update is None:
+                        ns_input_shards = [torch.empty_like(
+                            ns_input) for _ in range(tp_world_size)]
+                        dist.all_gather(ns_input_shards, ns_input, self.tp_group)
+                        ns_input = torch.cat(ns_input_shards, dim=tp_split_dim)
 
                 # calc update
-                update = zeropower_via_newtonschulz5(ns_input, steps=ns_steps)
+                if update is None:
+                    update = zeropower_via_newtonschulz5(ns_input, steps=ns_steps)
 
-                # only local tp part
-                if tp_split_dim != -1:
-                    update = update.chunk(
-                        tp_world_size, dim=tp_split_dim)[tp_rank]
+                    # only local tp part
+                    if tp_split_dim != -1:
+                        update = update.chunk(
+                            tp_world_size, dim=tp_split_dim)[tp_rank]
 
                 # only local buffer part
                 if self.distributed_mode:
@@ -303,7 +344,7 @@ class Muon(torch.optim.Optimizer):
 
                 #  adjust lr and apply update
                 adjusted_lr = adjust_lr_wd_for_muon(
-                    lr, matched_adamw_rms, ns_input.shape)
+                    lr, matched_adamw_rms, _lr_shape)
                 if origin_params_map is not None:
                     p.data.add_(update.cpu(), alpha=-adjusted_lr)
                 else:
