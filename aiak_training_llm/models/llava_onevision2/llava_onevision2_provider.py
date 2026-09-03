@@ -141,6 +141,11 @@ def llavaov_2_model_provider(
         # likewise inherited: when TP=1 the value has no effect because TE's SP
         # logic is gated on tp_size > 1.
         vision_config.first_pipeline_num_layers = vision_config.last_pipeline_num_layers = None
+        vision_config.num_layers_in_first_pipeline_stage = None  # FIX: actual mcore field (old name above is dead)
+        vision_config.recompute_method = "uniform"  # FIX: pin vision to full recompute; do not inherit LLM block:N (13 stored ViT layers @102k blew 81G)
+        vision_config.recompute_granularity = "full"  # FIX: not inherit selective either (ViT would store all MLP activations)
+        vision_config.recompute_num_layers = 1
+        vision_config.num_layers_in_last_pipeline_stage = None
         vision_config.tp_comm_overlap = False
         vision_config.context_parallel_size = 1
         vision_config.context_parallel_ulysses_degree = 1
@@ -156,6 +161,11 @@ def llavaov_2_model_provider(
 
         # Make sure the vision model does not inherit first and last pipeline num layers from the language model.
         vision_config.first_pipeline_num_layers = vision_config.last_pipeline_num_layers = None
+        vision_config.num_layers_in_first_pipeline_stage = None  # FIX: actual mcore field (old name above is dead)
+        vision_config.recompute_method = "uniform"  # FIX: pin vision to full recompute; do not inherit LLM block:N (13 stored ViT layers @102k blew 81G)
+        vision_config.recompute_granularity = "full"  # FIX: not inherit selective either (ViT would store all MLP activations)
+        vision_config.recompute_num_layers = 1
+        vision_config.num_layers_in_last_pipeline_stage = None
 
         # Context parallel is not yet supported for the vision encoder.
         # Sequence parallel is supported when the encoder TP size > 1; the
