@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from dataclasses import asdict
 
@@ -141,6 +142,43 @@ def llavaov_2_model_provider(
         # likewise inherited: when TP=1 the value has no effect because TE's SP
         # logic is gated on tp_size > 1.
         vision_config.first_pipeline_num_layers = vision_config.last_pipeline_num_layers = None
+        vision_config.num_layers_in_first_pipeline_stage = None  # FIX: actual mcore field (old name above is dead)
+        vision_config.num_layers_in_last_pipeline_stage = None
+        # Vision recompute policy: follow the LLM where that is safe, pin to plain
+        # full recompute where inheriting would be dangerous. Rules:
+        #   LLM none          -> ViT none  (short-context runs keep full speed)
+        #   LLM full/uniform  -> ViT full/uniform (status quo)
+        #   LLM full/block:N or selective -> ViT pinned to full/uniform (inheriting
+        #       would store multi-GB ViT activations per layer / truncate recompute)
+        # VISION_RECOMPUTE_MODE env (expert knob) overrides: "none" | "block:N".
+        _llm_gran = getattr(vision_config, "recompute_granularity", None)  # inherited = LLM value
+        _llm_method = getattr(vision_config, "recompute_method", None)
+        _vrm = os.environ.get("VISION_RECOMPUTE_MODE", "")
+        if _vrm == "none":
+            vision_config.recompute_granularity = None
+        elif _vrm.startswith("block:"):
+            vision_config.recompute_granularity = "full"
+            vision_config.recompute_method = "block"
+            vision_config.recompute_num_layers = int(_vrm.split(":", 1)[1])
+        elif _llm_gran is None:
+            vision_config.recompute_granularity = None
+        elif _llm_gran == "full" and _llm_method == "uniform":
+            pass  # inherit as-is
+        else:
+            vision_config.recompute_granularity = "full"
+            vision_config.recompute_method = "uniform"
+            vision_config.recompute_num_layers = 1
+        try:
+            from megatron.training import print_rank_0 as _pr0
+            _pr0(
+                f"[vision-recompute] granularity={vision_config.recompute_granularity} "
+                f"method={getattr(vision_config, 'recompute_method', None)} "
+                f"num_layers={getattr(vision_config, 'recompute_num_layers', None)} "
+                f"(LLM: granularity={_llm_gran} method={_llm_method}; "
+                f"VISION_RECOMPUTE_MODE={_vrm or 'unset'})"
+            )
+        except Exception:
+            pass
         vision_config.tp_comm_overlap = False
         vision_config.context_parallel_size = 1
         vision_config.context_parallel_ulysses_degree = 1
@@ -156,6 +194,43 @@ def llavaov_2_model_provider(
 
         # Make sure the vision model does not inherit first and last pipeline num layers from the language model.
         vision_config.first_pipeline_num_layers = vision_config.last_pipeline_num_layers = None
+        vision_config.num_layers_in_first_pipeline_stage = None  # FIX: actual mcore field (old name above is dead)
+        vision_config.num_layers_in_last_pipeline_stage = None
+        # Vision recompute policy: follow the LLM where that is safe, pin to plain
+        # full recompute where inheriting would be dangerous. Rules:
+        #   LLM none          -> ViT none  (short-context runs keep full speed)
+        #   LLM full/uniform  -> ViT full/uniform (status quo)
+        #   LLM full/block:N or selective -> ViT pinned to full/uniform (inheriting
+        #       would store multi-GB ViT activations per layer / truncate recompute)
+        # VISION_RECOMPUTE_MODE env (expert knob) overrides: "none" | "block:N".
+        _llm_gran = getattr(vision_config, "recompute_granularity", None)  # inherited = LLM value
+        _llm_method = getattr(vision_config, "recompute_method", None)
+        _vrm = os.environ.get("VISION_RECOMPUTE_MODE", "")
+        if _vrm == "none":
+            vision_config.recompute_granularity = None
+        elif _vrm.startswith("block:"):
+            vision_config.recompute_granularity = "full"
+            vision_config.recompute_method = "block"
+            vision_config.recompute_num_layers = int(_vrm.split(":", 1)[1])
+        elif _llm_gran is None:
+            vision_config.recompute_granularity = None
+        elif _llm_gran == "full" and _llm_method == "uniform":
+            pass  # inherit as-is
+        else:
+            vision_config.recompute_granularity = "full"
+            vision_config.recompute_method = "uniform"
+            vision_config.recompute_num_layers = 1
+        try:
+            from megatron.training import print_rank_0 as _pr0
+            _pr0(
+                f"[vision-recompute] granularity={vision_config.recompute_granularity} "
+                f"method={getattr(vision_config, 'recompute_method', None)} "
+                f"num_layers={getattr(vision_config, 'recompute_num_layers', None)} "
+                f"(LLM: granularity={_llm_gran} method={_llm_method}; "
+                f"VISION_RECOMPUTE_MODE={_vrm or 'unset'})"
+            )
+        except Exception:
+            pass
 
         # Context parallel is not yet supported for the vision encoder.
         # Sequence parallel is supported when the encoder TP size > 1; the
