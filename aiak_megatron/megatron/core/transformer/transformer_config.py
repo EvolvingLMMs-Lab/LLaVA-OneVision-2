@@ -1078,7 +1078,10 @@ class MLATransformerConfig(TransformerConfig):
     """Rotary scaling factor for the rotary embeddings, used by yarn."""
 
     max_position_embeddings: int = 4096
-    """Maximum position embeddings for the original model, used by yarn."""
+    """This arg is not used, will be deprecated."""
+
+    original_max_position_embeddings: int = 4096
+    """Original maximum position embeddings for the original model, used by yarn."""
 
     beta_fast: float = 32
     """Beta fast for YaRN RoPE, used by yarn."""
@@ -1086,8 +1089,13 @@ class MLATransformerConfig(TransformerConfig):
     beta_slow: float = 1
     """Beta slow for YaRN RoPE, used by yarn."""
 
-    mscale: float = 0.707
+    mscale: float = 1.0
     """Mscale for YaRN RoPE in Multi-Latent Attention, used by yarn."""
 
-    mscale_all_dim: float = 0.707
+    mscale_all_dim: float = 0.0
     """Mscale all dimensions for YaRN RoPE in Multi-Latent Attention, used by yarn."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.multi_latent_attention and self.apply_rope_fusion and self.rope_type != "yarn":
+            raise ValueError("apply_rope_fusion for MLA only works with YARN RoPE.")
