@@ -12,7 +12,7 @@ from typing import Any, Optional
 import webdataset as wds
 from tqdm import tqdm
 
-from s4_pack_samples import PackSamplesConfig, SamplePacker
+from s4_pack_samples import PackSamplesConfig, SamplePacker, check_turn_pairing
 from s5_convert_to_webdataset import WebDatasetConfig, WebDatasetConverter
 from image_preprocess import ImagePolicy
 
@@ -101,6 +101,7 @@ def build_direct_sample_from_manifest(
         images, prompts, responses, patch_positions, fps, timestamp_decimal = (
             _extract_bmr_from_manifest_entry(entry)
         )
+        check_turn_pairing(prompts, responses, raw_name)
 
         sample_image_names: list[str] = []
         sample_patch_position_names: list[str] = []
@@ -177,6 +178,7 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
             json_path,
             image_base_dir=sample_source_dir,
         )
+        check_turn_pairing(prompts, responses, raw_sample_name)
 
         sample_image_names: list[str] = []
         sample_patch_position_names: list[str] = []

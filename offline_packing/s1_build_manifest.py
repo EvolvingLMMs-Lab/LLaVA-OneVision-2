@@ -202,9 +202,48 @@ def _normalize_conversations(item: dict[str, Any]) -> None:
             item[key] = new_conv
 
 
+_PAIRING_ROLES = {"human": "u", "user": "u", "gpt": "a", "assistant": "a", "system": "s"}
+
+
+def _validate_conversation_pairing(item: dict[str, Any]) -> Optional[str]:
+    """Return why the conversation cannot be packed, or None if it can.
+
+    s4 flattens a conversation into a prompts list (user turns) and a responses
+    list (assistant turns) and pairs them by index. That is only correct for a
+    strictly alternating user/assistant/.../assistant dialog: two consecutive
+    user turns, a missing final answer, or an unknown role silently shift every
+    later prompt onto the wrong answer. Uses the same message key and role
+    names as s4; system turns are skipped, as s4 skips them.
+    """
+    conv = item.get("messages") or item.get("conversations") or []
+    seq = []
+    for turn in conv:
+        if not isinstance(turn, dict):
+            return "non-dict turn"
+        r = _PAIRING_ROLES.get(turn.get("role", ""))
+        if r is None:
+            return f"unknown role {turn.get('role')!r}"
+        if r != "s":
+            seq.append(r)
+    if len(seq) < 2:
+        return "fewer than 2 user/assistant turns"
+    if seq[0] != "u":
+        return "does not start with user"
+    if seq[-1] != "a":
+        return "does not end with assistant"
+    if any(a == b for a, b in zip(seq, seq[1:])):
+        return "consecutive same-role turns (non-alternating)"
+    return None
+
+
 def _process_one(item: dict[str, Any], orig_index: int, ctx: ResolveContext) -> Optional[dict[str, Any]]:
     """Resolve image/npy paths and build one manifest entry. Returns None to drop the sample."""
     _normalize_conversations(item)
+    pairing_err = _validate_conversation_pairing(item)
+    if pairing_err is not None:
+        logger.warning("Skipping sample %s: conversation pairing invalid (%s)",
+                       item.get("id", orig_index), pairing_err)
+        return None
     images_raw = _extract_image_list(item)
     images_abs = [_resolve_image_path(p, ctx.base_dir, ctx.image_root, ctx.rel_img) for p in images_raw]
 
