@@ -196,7 +196,8 @@ class GatedDeltaNet(HuggingFaceModule):
         # group. Mark them sequence_parallel so finalize_model_grads'
         # _allreduce_layernorm_grads picks them up (the old
         # average_gradients_across_tp_domain flag has no consumer anywhere).
-        # Verified missing-reduce via /vlm/yinxie/spgrad_cert (TP0vsTP1 rel 0.2-2.9).
+        # Verified missing-reduce by comparing TP0 vs TP1 grads (rel diff 0.2-2.9); for old checkpoints
+        # see tools/convert_checkpoint/custom/llava_onevision2/qwen35_tp_consistency.py.
         for _p in (
             self.in_proj_qkvz.weight,
             self.in_proj_ba.weight,
