@@ -235,6 +235,23 @@ class PackingStats:
 # =============================================================================
 
 
+
+def check_turn_pairing(prompts: list[str], responses: list[str], sample_name: str) -> None:
+    """Fail loudly if a flattened conversation cannot be paired by index.
+
+    Prompts and responses are paired positionally downstream; unequal counts mean
+    the source conversation was not strictly alternating user/assistant and every
+    later turn would be packed with the wrong answer. s1_build_manifest drops such
+    samples; this guards manifests/sample dirs built without that check.
+    """
+    if len(prompts) != len(responses):
+        raise ValueError(
+            f"prompt/response turn mismatch ({len(prompts)} vs {len(responses)}) for sample "
+            f"{sample_name}: conversation is not strictly alternating user/assistant. "
+            "Fix the source data (s1_build_manifest drops these samples)."
+        )
+
+
 class SamplePacker:
     """
     Pack samples into final training format.
@@ -598,6 +615,7 @@ class SamplePacker:
                 images, prompts, responses, patch_positions, fps, timestamp_decimal = self._extract_bmr_content(
                     json_path, image_base_dir=sample_image_base
                 )
+                check_turn_pairing(prompts, responses, json_path)
 
                 if not images:
                     # Text-only sample
