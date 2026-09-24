@@ -371,6 +371,92 @@ def llava_onevision2_2b_qwen35():
     )
 
 
+@register_model_config(
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-9b-qwen35"
+)
+def llava_onevision2_9b_qwen35():
+    """llava-onevision2-9b with the Qwen3.5-9B hybrid-attention LLM backbone.
+
+    Dims from the Qwen3.5-9B HF text_config: 32 hybrid layers (same count as
+    4B, widened), hidden 4096, ffn 12288, 16 heads / 4 KV groups (head_dim
+    256). GDN dims identical to 4B (16 key / 32 value heads, head_dim 128,
+    conv 4, full attention every 4th layer). Embeddings are UNTIED: the source
+    checkpoint ships a separate lm_head.weight that differs bitwise from
+    embed_tokens. rope/mrope identical to 2B/4B (theta 1e7, mrope [11,11,10]
+    interleaved, partial rotary 0.25).
+    """
+    return LlavaOnevision2Config(
+        num_layers=32,
+        hidden_size=4096,
+        ffn_hidden_size=12288,
+        num_attention_heads=16,
+        group_query_attention=True,
+        num_query_groups=4,
+        kv_channels=256,
+        vocab_size_in_config_file=248320,
+        make_vocab_size_divisible_by=128,
+        qk_layernorm=True,
+        add_qkv_bias=False,
+        swiglu=True,
+        rotary_base=10000000,
+        untie_embeddings_and_output_weights=True,  # tie_word_embeddings=False (9B ships separate lm_head)
+        norm_epsilon=1e-06,
+        # Qwen3.5 hybrid-attention extras
+        language_model_type="qwen3_5",
+        linear_key_head_dim=128,
+        linear_value_head_dim=128,
+        linear_num_key_heads=16,
+        linear_num_value_heads=32,
+        linear_conv_kernel_dim=4,
+        full_attention_interval=4,
+        mrope_section=[11, 11, 10],
+        mrope_interleaved=True,
+        partial_rotary_factor=0.25,
+    )
+
+
+@register_model_config(
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-27b-qwen35"
+)
+def llava_onevision2_27b_qwen35():
+    """llava-onevision2-27b with the Qwen3.8-27B hybrid-attention LLM backbone.
+
+    Dims from the Qwen3.8-27B HF text_config (model_type qwen3_5_text, dense):
+    64 hybrid layers, hidden 5120, ffn 17408, 24 heads / 4 KV groups (head_dim
+    256). GDN: 16 key / 48 value heads (head_dim 128), conv 4, full attention
+    every 4th layer. Embeddings UNTIED (separate lm_head, verified at
+    extraction). rope/mrope identical to 2B/4B/9B. TP must divide 4 (KV groups).
+    """
+    return LlavaOnevision2Config(
+        num_layers=64,
+        hidden_size=5120,
+        ffn_hidden_size=17408,
+        num_attention_heads=24,
+        group_query_attention=True,
+        num_query_groups=4,
+        kv_channels=256,
+        vocab_size_in_config_file=248320,
+        make_vocab_size_divisible_by=128,
+        qk_layernorm=True,
+        add_qkv_bias=False,
+        swiglu=True,
+        rotary_base=10000000,
+        untie_embeddings_and_output_weights=True,  # tie_word_embeddings=False
+        norm_epsilon=1e-06,
+        # Qwen3.5 hybrid-attention extras
+        language_model_type="qwen3_5",
+        linear_key_head_dim=128,
+        linear_value_head_dim=128,
+        linear_num_key_heads=16,
+        linear_num_value_heads=48,
+        linear_conv_kernel_dim=4,
+        full_attention_interval=4,
+        mrope_section=[11, 11, 10],
+        mrope_interleaved=True,
+        partial_rotary_factor=0.25,
+    )
+
+
 @dataclass
 class VisionConfig:
     """configuration for vision model

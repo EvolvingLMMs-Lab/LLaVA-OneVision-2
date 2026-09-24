@@ -13,7 +13,8 @@ This is the exact inverse of ``qwen35_hf_to_mcore.py``:
 
 TP UN-SHARD (inverse of shard_language), applied per parameter suffix:
   * COLUMN-PARALLEL (was chunk dim0)  -> torch.cat(shards, dim=0):
-        embedding.word_embeddings.weight, self_attention.linear_qkv.weight
+        embedding.word_embeddings.weight, output_layer.weight (untied only),
+        self_attention.linear_qkv.weight
   * ROW-PARALLEL (was chunk dim1)     -> torch.cat(shards, dim=1):
         self_attention.linear_proj.weight, mlp.linear_fc2.weight
   * SwiGLU mlp.linear_fc1.weight      -> cat(shards, dim=0) then
@@ -30,7 +31,8 @@ HF names emitted (prefix ``model.language_model.``):
     layers.{i}.mlp.gate_proj.weight / up_proj.weight  <- split(mlp.linear_fc1.weight)
     layers.{i}.mlp.down_proj.weight              <- mlp.linear_fc2.weight
     layers.{i}.linear_attn.* / self_attn.*       <- mcore_to_hf_{linear,full}_attn_layer(...)
-Plus tied ``lm_head.weight`` = embed_tokens.weight.
+Plus ``lm_head.weight``: the un-sharded ``output_layer.weight`` for untied models
+(9B/27B), otherwise a copy of embed_tokens.weight (tied 2B/4B).
 
 Layer type rule (matches forward): (i+1) % full_attention_interval == 0 -> full-attn.
 Primary target: PP=1 (1D mp_rank_{t:02d} layout), TP in {1,2,4}.
@@ -63,6 +65,7 @@ def transpose_shape0(param, m, n):
 # Suffix rules -- MUST mirror qwen35_hf_to_mcore.shard_language.
 _COL_DIM0 = (
     "embedding.word_embeddings.weight",
+    "output_layer.weight",                # untied models only (vocab dim0)
     "self_attention.linear_qkv.weight",
 )
 _ROW_DIM1 = (
@@ -72,19 +75,26 @@ _ROW_DIM1 = (
 _FC1 = ("mlp.linear_fc1.weight",)
 
 
-def load_language_shards(load_path, tp, pp=1):
+def load_language_shards(load_path, tp, pp=1, return_untie_flag=False):
     """Load the mcore language shards and return a list of tp flat dicts of
     language_model.* -> tensor (weights only, _extra_state dropped).
+
+    With return_untie_flag=True also return the checkpoint's saved
+    ``args.untie_embeddings_and_output_weights`` (None if the checkpoint carries
+    no megatron args, e.g. a converted ``release``).
 
     PP=1: 1D mp_rank_{t:02d} layout. PP>1: 2D mp_rank_{t:02d}_{p:03d} layout --
     pipeline stages are merged per TP rank: each stage stores decoder.layers.N
     with LOCAL indices, so stage p's layers are renumbered by the cumulative
-    layer count of the preceding stages; the non-first stages' tied
-    language_model.output_layer.weight duplicate is dropped (PP1/HF share the
-    embedding, cf. reshard_pp2.py which materializes it on the last stage).
+    layer count of the preceding stages. language_model.output_layer.weight
+    lives on the last stage: for untied models it is the real lm_head; for tied
+    models it is only a synced copy of the embedding (cf. reshard_pp2.py, which
+    materializes it there). It is kept either way; convert_language_mcore_to_hf
+    decides whether it is used.
     """
     layer_re = re.compile(r"(language_model\.decoder\.layers\.)(\d+)(\..*)$")
     shards = []
+    untie_flag = None
     for t in range(tp):
         lang = {}
         offset = 0
@@ -93,7 +103,11 @@ def load_language_shards(load_path, tp, pp=1):
             ckpt_path = os.path.join(load_path, sub, "model_optim_rng.pt")
             if not os.path.isfile(ckpt_path):
                 raise FileNotFoundError(f"missing shard: {ckpt_path}")
-            model = torch.load(ckpt_path, map_location="cpu", weights_only=False)["model"]
+            state = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+            if t == 0 and pstage == 0 and state.get("args") is not None:
+                untie_flag = getattr(state["args"], "untie_embeddings_and_output_weights", None)
+            model = state["model"]
+            del state
             stage_layers = set()
             for k, v in model.items():
                 if not k.startswith(MC_LM + ".") or k.endswith("_extra_state"):
@@ -102,13 +116,13 @@ def load_language_shards(load_path, tp, pp=1):
                 if lm:
                     stage_layers.add(int(lm.group(2)))
                     lang[f"{lm.group(1)}{int(lm.group(2)) + offset}{lm.group(3)}"] = v
-                elif pstage > 0 and k == MC_LM + ".output_layer.weight":
-                    continue
                 else:
                     lang[k] = v
             offset += (max(stage_layers) + 1) if stage_layers else 0
         assert lang, f"no language_model.* weights under {load_path} (tp{t})"
         shards.append(lang)
+    if return_untie_flag:
+        return shards, untie_flag
     return shards
 
 
@@ -135,8 +149,20 @@ def unshard_language(shards, tp):
 
 
 def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
-                                 orig_vocab_size=None, dims=None):
-    """Full TP1 mcore language dict -> HF ``model.language_model.*`` (+ lm_head)."""
+                                 orig_vocab_size=None, dims=None, ckpt_untie_flag=None):
+    """Full TP1 mcore language dict -> HF ``model.language_model.*`` (+ lm_head).
+
+    lm_head is decided from the weights themselves: the model is untied iff an
+    ``output_layer.weight`` exists and differs from the embedding.
+      * tied, PP=1  -> no output_layer                       -> lm_head = embed copy
+      * tied, PP>1  -> last stage holds a bit-identical copy -> lm_head = embed copy
+      * untied      -> distinct output_layer                 -> lm_head = output_layer
+    Neither the merged HF config (which may say tie_word_embeddings=False even for
+    tied models) nor megatron args (the wrapper injects synthesized args into
+    arg-less checkpoints) are trusted for this. ``ckpt_untie_flag`` (the saved
+    ``args.untie_embeddings_and_output_weights``) is only used to fail loudly when
+    an untied checkpoint is missing its output_layer.
+    """
     out = {}
 
     embed = lang_sd[f"{MC_LM}.embedding.word_embeddings.weight"]
@@ -144,7 +170,21 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
         embed = embed[:orig_vocab_size, :]
     out[f"{HF_LM}.embed_tokens.weight"] = embed.clone().contiguous()
     out[f"{HF_LM}.norm.weight"] = lang_sd[f"{MC_LM}.decoder.final_layernorm.weight"].clone()
-    out["lm_head.weight"] = embed.clone().contiguous()  # tied
+
+    output_w = lang_sd.get(f"{MC_LM}.output_layer.weight")
+    if output_w is not None and orig_vocab_size is not None and output_w.shape[0] > orig_vocab_size:
+        output_w = output_w[:orig_vocab_size, :]
+    if ckpt_untie_flag and output_w is None:
+        raise ValueError(
+            "checkpoint args say untie_embeddings_and_output_weights=True but there is "
+            f"no {MC_LM}.output_layer.weight; refusing to write lm_head = embedding"
+        )
+    untied = output_w is not None and not torch.equal(output_w, embed)
+    if untied:
+        out["lm_head.weight"] = output_w.clone().contiguous()
+    else:
+        out["lm_head.weight"] = embed.clone().contiguous()  # tied
+    print(f"[qwen35_mcore_to_hf] lm_head: {'untied (output_layer)' if untied else 'tied (embed copy)'}")
 
     n_full, n_lin = 0, 0
     for i in range(num_layers):
@@ -199,13 +239,16 @@ def main():
     assert tp >= 1
 
     print(f"[qwen35_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
-    shards = load_language_shards(args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size)
+    shards, untie_flag = load_language_shards(
+        args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size, return_untie_flag=True)
     lang = unshard_language(shards, tp)
     from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
     dims = dims_from_hf_config(args.hf_config_path) if args.hf_config_path else None
     print(f"[qwen35_mcore_to_hf] dims: {dims or 'default (4B)'}")
+    print(f"[qwen35_mcore_to_hf] ckpt args untie_embeddings_and_output_weights={untie_flag}")
     hf = convert_language_mcore_to_hf(lang, args.num_layers, args.full_attention_interval,
-                                      orig_vocab_size=args.orig_vocab_size, dims=dims)
+                                      orig_vocab_size=args.orig_vocab_size, dims=dims,
+                                      ckpt_untie_flag=untie_flag)
 
     os.makedirs(args.save_ckpt_path, exist_ok=True)
     out_path = os.path.join(args.save_ckpt_path, "model.safetensors")

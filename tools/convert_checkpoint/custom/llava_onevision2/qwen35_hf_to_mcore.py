@@ -49,15 +49,18 @@ padded vocab). Applied to the full TP1 language state dict to emit tp shards:
     non-parallel TE_Linear / ignore_tp; SP reduce_scatter corrects the replication),
     ALL norms (input_layernorm, pre_mlp_layernorm, final_layernorm, full-attn
     q_layernorm/k_layernorm), and all _extra_state blobs.
-  * output_layer: tied -> not emitted.
+  * output_layer: tied -> not emitted; untied -> COLUMN-PARALLEL (chunk dim0).
 
 Notes:
   * The Qwen3.5 spec uses a SEPARATE (non-fused) ``input_layernorm`` for every
     decoder layer of BOTH types -- it is NOT the TE-fused
     ``self_attention.linear_qkv.layer_norm_weight`` used by the vision tower.
-  * Embeddings are tied (lm_head is bit-identical to embed_tokens); the built model
-    has ``share_embeddings_and_output_weights=True`` so ``output_layer`` carries no
-    weight -- we therefore do NOT emit ``language_model.output_layer.weight``.
+  * Tied models (2B/4B: lm_head absent or bit-identical to embed_tokens) are built
+    with ``share_embeddings_and_output_weights=True`` so ``output_layer`` carries no
+    weight -- we do NOT emit ``language_model.output_layer.weight``.
+  * Untied models (9B/27B ship a separate lm_head) are built with
+    ``share_embeddings_and_output_weights=False`` and NEED
+    ``language_model.output_layer.weight``; it is emitted from ``lm_head.weight``.
   * TE ``_extra_state`` entries are intentionally omitted (loaded with strict=False).
 
 Layer type rule (matches HF ``text_config.layer_types`` / full_attention_interval):
@@ -100,9 +103,12 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
     """
     out = {}
 
-    # ---- embeddings + final norm (output_layer tied -> not emitted) ----------
+    # ---- embeddings + final norm (+ output_layer only when untied) -----------
     out[f"{MC_LM}.embedding.word_embeddings.weight"] = hf_sd[f"{HF_LM}.embed_tokens.weight"].clone()
     out[f"{MC_LM}.decoder.final_layernorm.weight"] = hf_sd[f"{HF_LM}.norm.weight"].clone()
+    lm_head = hf_sd.get("lm_head.weight")
+    if lm_head is not None and not torch.equal(lm_head, hf_sd[f"{HF_LM}.embed_tokens.weight"]):
+        out[f"{MC_LM}.output_layer.weight"] = lm_head.clone()
 
     # ---- decoder layers ------------------------------------------------------
     n_full, n_lin = 0, 0
@@ -178,6 +184,7 @@ def transpose_shape0(param, m, n):
 # Suffixes that are TENSOR-PARALLEL sharded. Everything else is REPLICATED.
 _COL_DIM0 = (
     "embedding.word_embeddings.weight",
+    "output_layer.weight",                # untied models only (vocab dim0)
     "self_attention.linear_qkv.weight",   # full-attn layers only
 )
 _ROW_DIM1 = (
