@@ -267,21 +267,34 @@ class QwenModel(LanguageModule):
             if self.use_qwen35_mrope:
                 # Qwen3.5 interleaved 3D M-RoPE. Derive (seq_len, batch) from whichever
                 # input is present (decoder_input is [S, B, H]; input_ids is [B, S]).
+                # sp_scattered: the tensor S was read from is the SP-scattered hidden
+                # state [S/tp, B, H] (decoder_input on the first stage, the received
+                # input_tensor on later stages), so S must be up-scaled under SP.
+                sp_scattered = False
                 if decoder_input is not None:
                     S, B = decoder_input.shape[0], decoder_input.shape[1]
                     dev = decoder_input.device
+                    sp_scattered = True
                 elif input_ids is not None:
                     B, S = input_ids.shape[0], input_ids.shape[1]
                     dev = input_ids.device
+                elif getattr(self.decoder, 'input_tensor', None) is not None:
+                    # Non-first pipeline stage: LlavaOnevision2 calls the language model
+                    # with input_ids=None / position_ids=None and no decoder_input; the
+                    # hidden state arrives through set_input_tensor().
+                    pp_input = self.decoder.input_tensor
+                    S, B = pp_input.shape[0], pp_input.shape[1]
+                    dev = pp_input.device
+                    sp_scattered = True
                 else:
                     S, B, dev = position_ids.shape[-1], position_ids.shape[0], position_ids.device
                 # Under sequence-parallel, decoder_input is the SP-scattered [S/tp, B, H];
                 # rope must be built at the FULL gathered length because attention's
                 # SP->TP all-gather restores the full sequence before rope is applied.
                 # Mirror the standard get_rotary_seq_len up-scale (rotary_pos_embedding.py).
-                # Guard on decoder_input so full-length input_ids/position_ids fallbacks
-                # are not double-scaled.
-                if decoder_input is not None and self.config.sequence_parallel:
+                # Only up-scale SP-scattered sources so full-length input_ids/position_ids
+                # fallbacks are not double-scaled.
+                if sp_scattered and self.config.sequence_parallel:
                     S = S * self.config.tensor_model_parallel_size
                 mrope_position_ids = getattr(self, '_mrope_position_ids', None)
                 if mrope_position_ids is None:
