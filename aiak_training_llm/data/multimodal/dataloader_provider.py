@@ -8,11 +8,14 @@ from megatron import energon
 from megatron.core import parallel_state
 from megatron.training import get_args
 from megatron.training.checkpointing import get_checkpoint_name
+from .energon_patches import apply_energon_patches
 from .task_encoder import print_error_handler
 
 
 def get_train_dataset(task_encoder):
     """Get the training dataset"""
+    # Must run before the loader forks its workers (they inherit the patch).
+    apply_energon_patches()
     args = get_args()
     worker_config = energon.WorkerConfig(
         rank=parallel_state.get_data_parallel_rank(),
