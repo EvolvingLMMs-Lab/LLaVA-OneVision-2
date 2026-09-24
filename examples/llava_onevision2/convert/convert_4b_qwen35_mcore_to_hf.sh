@@ -60,6 +60,10 @@ if [[ "$_HID" == "2048" ]]; then
     _DEF_REF=/models/llava_onevision2_2b_qwen35_p16m3; _DEF_LAYERS=24
 elif [[ "$_HID" == "2560" ]]; then
     _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+elif [[ "$_HID" == "4096" ]]; then
+    _DEF_REF=/models/llava_onevision2_9b_qwen35_p16m3_v0904; _DEF_LAYERS=32
+elif [[ "$_HID" == "5120" ]]; then
+    _DEF_REF=/models/llava_onevision2_27b_qwen38_p16m3_v0923; _DEF_LAYERS=64
 else
     echo "[wrapper] WARNING: unknown hidden_size=$_HID; falling back to 4B defaults"
     _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
