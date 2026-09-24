@@ -27,7 +27,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from transformer_engine.pytorch import Linear as TE_Linear
 
-from megatron.core import parallel_state
+from megatron.core import parallel_state, tensor_parallel
 from megatron.core.fp8_utils import get_fp8_align_size
 from megatron.core.models.huggingface import HuggingFaceModule
 from megatron.core.packed_seq_params import PackedSeqParams
@@ -250,72 +250,11 @@ class GatedDeltaNet(HuggingFaceModule):
 
         return hidden_states
 
-    def forward(
-        self,
-        hidden_states: Tensor,
-        attention_mask: Tensor,
-        attn_mask_type=None,  # accepted & ignored: base TransformerLayer always passes it
-        key_value_states: Optional[Tensor] = None,
-        inference_context: Optional[Any] = None,
-        rotary_pos_emb: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None,
-        rotary_pos_cos: Optional[Tensor] = None,
-        rotary_pos_sin: Optional[Tensor] = None,
-        rotary_pos_cos_sin: Optional[Tensor] = None,
-        attention_bias: Optional[Tensor] = None,
-        packed_seq_params: Optional[PackedSeqParams] = None,
-        sequence_len_offset: Optional[int] = None,
-        *,
-        inference_params: Optional[Any] = None,
-    ):
+    def _gdn_core(self, projected_states_qkvz, projected_states_ba, cu_seqlens, cu_seqlens_cpu):
+        """Projections -> gated-norm output: conv1d, gated delta rule, gated RMSNorm.
+
+        Split out of forward() so it can be activation-checkpointed as one unit.
         """
-        Perform a forward pass through the GDN module.
-        Args:
-            hidden_states (Tensor): Hidden states.
-            attention_mask (Tensor): Attention mask.
-            key_value_states (Optional[Tensor]): Key/value states (for cross attention).
-            inference_context (Optional[Any]): Inference context that manages KV cache.
-            rotary_pos_emb (Optional[Union[Tensor, Tuple[Tensor, Tensor]]]): Rotary
-                embedding tensor(s).
-            rotary_pos_cos (Optional[Tensor]): Rotary embedding cosine.
-            rotary_pos_sin (Optional[Tensor]): Rotary embedding sine.
-            attention_bias (Optional[Tensor]): Attention bias.
-            packed_seq_params (Optional[PackedSeqparams]): Parameters used for THD format.
-            sequence_len_offset (Optional[int]): Sequence length offset used for
-                inference CUDA graphs.
-        Return:
-            (Tuple[Tensor, Tensor]) GDN output and bias.
-        """
-        inference_context = deprecate_inference_params(inference_context, inference_params)
-        if self.sequence_parallel and self.tp_size > 1:
-            hidden_states = gather_from_sequence_parallel_region(hidden_states, group=None)
-
-        cu_seqlens = None if packed_seq_params is None else packed_seq_params.cu_seqlens_q
-        # PackedSeqParams (aiak mcore 0.12) has no cu_seqlens_cpu field; fla needs a CPU
-        # copy of the segment boundaries for its varlen chunk math. Derive it from
-        # cu_seqlens when the field is absent/None.
-        cu_seqlens_cpu = getattr(packed_seq_params, "cu_seqlens_cpu", None) if packed_seq_params is not None else None
-        if cu_seqlens_cpu is None and cu_seqlens is not None:
-            cu_seqlens_cpu = cu_seqlens.detach().to("cpu")
-        hidden_states = hidden_states.transpose(0, 1).contiguous() # [S, B, D] -> [B, S, D]
-        if attention_mask is not None:
-            if attention_mask.dim() >= 3 and attention_mask.shape[2] > 1: # [B, 1, S, S]
-                attention_mask = (~attention_mask).sum(dim=(1, 2)) > 0 # [B, S]
-            else:
-                attention_mask = ~(attention_mask.squeeze(1).squeeze(1)) # [B, S]
-        hidden_states = self.apply_mask_to_padding_states(hidden_states, attention_mask)
-
-        if inference_context is not None:
-            assert (
-                inference_context.is_static_batching()
-            ), "GDN does not currently support dynamic inference batching."
-            assert not self.config.sequence_parallel
-            # TODO: support inference
-            raise NotImplementedError("GDN does not support inference for now.")
-
-        # Input projection
-        projected_states_qkvz = self.in_proj_qkvz(hidden_states)
-        projected_states_ba = self.in_proj_ba(hidden_states)
-
         query, key, value, z, beta, alpha = self.fix_query_key_value_ordering(
             projected_states_qkvz,
             projected_states_ba
@@ -390,6 +329,87 @@ class GatedDeltaNet(HuggingFaceModule):
 
         norm_out = norm_out.reshape(z_shape_og)
         norm_out = norm_out.reshape(norm_out.shape[0], norm_out.shape[1], -1)
+        return norm_out
+
+    def forward(
+        self,
+        hidden_states: Tensor,
+        attention_mask: Tensor,
+        attn_mask_type=None,  # accepted & ignored: base TransformerLayer always passes it
+        key_value_states: Optional[Tensor] = None,
+        inference_context: Optional[Any] = None,
+        rotary_pos_emb: Optional[Union[Tensor, Tuple[Tensor, Tensor]]] = None,
+        rotary_pos_cos: Optional[Tensor] = None,
+        rotary_pos_sin: Optional[Tensor] = None,
+        rotary_pos_cos_sin: Optional[Tensor] = None,
+        attention_bias: Optional[Tensor] = None,
+        packed_seq_params: Optional[PackedSeqParams] = None,
+        sequence_len_offset: Optional[int] = None,
+        *,
+        inference_params: Optional[Any] = None,
+    ):
+        """
+        Perform a forward pass through the GDN module.
+        Args:
+            hidden_states (Tensor): Hidden states.
+            attention_mask (Tensor): Attention mask.
+            key_value_states (Optional[Tensor]): Key/value states (for cross attention).
+            inference_context (Optional[Any]): Inference context that manages KV cache.
+            rotary_pos_emb (Optional[Union[Tensor, Tuple[Tensor, Tensor]]]): Rotary
+                embedding tensor(s).
+            rotary_pos_cos (Optional[Tensor]): Rotary embedding cosine.
+            rotary_pos_sin (Optional[Tensor]): Rotary embedding sine.
+            attention_bias (Optional[Tensor]): Attention bias.
+            packed_seq_params (Optional[PackedSeqparams]): Parameters used for THD format.
+            sequence_len_offset (Optional[int]): Sequence length offset used for
+                inference CUDA graphs.
+        Return:
+            (Tuple[Tensor, Tensor]) GDN output and bias.
+        """
+        inference_context = deprecate_inference_params(inference_context, inference_params)
+        if self.sequence_parallel and self.tp_size > 1:
+            hidden_states = gather_from_sequence_parallel_region(hidden_states, group=None)
+
+        cu_seqlens = None if packed_seq_params is None else packed_seq_params.cu_seqlens_q
+        # PackedSeqParams (aiak mcore 0.12) has no cu_seqlens_cpu field; fla needs a CPU
+        # copy of the segment boundaries for its varlen chunk math. Derive it from
+        # cu_seqlens when the field is absent/None.
+        cu_seqlens_cpu = getattr(packed_seq_params, "cu_seqlens_cpu", None) if packed_seq_params is not None else None
+        if cu_seqlens_cpu is None and cu_seqlens is not None:
+            cu_seqlens_cpu = cu_seqlens.detach().to("cpu")
+        hidden_states = hidden_states.transpose(0, 1).contiguous() # [S, B, D] -> [B, S, D]
+        if attention_mask is not None:
+            if attention_mask.dim() >= 3 and attention_mask.shape[2] > 1: # [B, 1, S, S]
+                attention_mask = (~attention_mask).sum(dim=(1, 2)) > 0 # [B, S]
+            else:
+                attention_mask = ~(attention_mask.squeeze(1).squeeze(1)) # [B, S]
+        hidden_states = self.apply_mask_to_padding_states(hidden_states, attention_mask)
+
+        if inference_context is not None:
+            assert (
+                inference_context.is_static_batching()
+            ), "GDN does not currently support dynamic inference batching."
+            assert not self.config.sequence_parallel
+            # TODO: support inference
+            raise NotImplementedError("GDN does not support inference for now.")
+
+        # Input projection
+        projected_states_qkvz = self.in_proj_qkvz(hidden_states)
+        projected_states_ba = self.in_proj_ba(hidden_states)
+
+        # GDN selective activation checkpointing: with recompute_granularity=selective,
+        # keep only the two projection outputs and recompute conv / delta rule / gated
+        # norm in backward. Uses the megatron checkpoint (main_grad-aware);
+        # torch.utils.checkpoint breaks main_grad accumulation here.
+        if getattr(self.config, "recompute_granularity", None) == "selective" and self.training:
+            norm_out = tensor_parallel.checkpoint(
+                self._gdn_core, False,
+                projected_states_qkvz, projected_states_ba, cu_seqlens, cu_seqlens_cpu,
+            )
+        else:
+            norm_out = self._gdn_core(
+                projected_states_qkvz, projected_states_ba, cu_seqlens, cu_seqlens_cpu
+            )
 
         # Output projection
         nvtx_range_push(suffix="out_proj")
