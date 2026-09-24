@@ -114,6 +114,19 @@ def search_for_fit(numbers: List[int], capacity: int) -> int:
     return -1 if index == 0 else (index - 1)
 
 
+def _vision_numel(sample) -> int:
+    """Number of pixel-value elements (images + video frames) carried by a sample."""
+    n = 0
+    for attr in ("imgs", "pixel_values_videos"):
+        v = getattr(sample, attr, None)
+        if v is None:
+            continue
+        for t in v if isinstance(v, (list, tuple)) else [v]:
+            if isinstance(t, torch.Tensor):
+                n += t.numel()
+    return n
+
+
 # Based on https://github.com/hiyouga/LLaMA-Factory/
 #          blob/641d0dab08d96a93c34657742213d8994d9ed476/src/llamafactory/data/processors/processor_utils.py#L27
 def greedy_knapsack(item_sizes: List[int], samples: List, max_capacity: int) -> List:
@@ -189,6 +202,20 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
             # print(sample)
             # print(f"-------------PackedCaptioningSample---------------")
             n_orig_sample = len(sample.images)
+            if self._bin_blocked(sample.__key__):
+                print(f"[BLOCKLIST_BIN_DROP] key={sample.__key__}", flush=True)
+                return
+            # A pre-packed bin whose sub-samples have unequal prompt/caption turn counts was
+            # built from non-alternating conversations: the packer paired turns by index, so
+            # the whole bin's prompt/caption streams are shifted, including sub-samples whose
+            # counts happen to match. Drop the entire bin (s1/s4 now reject such data at pack time).
+            n_bad = sum(
+                (1 if isinstance(p, str) else len(p)) != (1 if isinstance(c, str) else len(c))
+                for p, c in zip(sample.prompts or [], sample.captions)
+            )
+            if n_bad:
+                print(f"[BAD_BIN_DROP] key={sample.__key__} turn-mismatched={n_bad}/{n_orig_sample}", flush=True)
+                return
             l_Qwen2VLImageTaskSample = []
             for idx in range(n_orig_sample):
                 if int(os.environ.get("OFFLINE_PACKING_BMR", 0)) == 1:
@@ -275,10 +302,29 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                     )
                     l_Qwen2VLImageTaskSample.append(self.encode_captioning(cur_capsample))
             l_sample_packed = self.pack_selected_samples(l_Qwen2VLImageTaskSample)
+            vmax = int(os.environ.get("VISION_MAXNUMEL", "0"))
+            if vmax > 0 and (vnum := _vision_numel(l_sample_packed)) > vmax:
+                print(f"[VIS_DROP] key={sample.__key__} vision_numel={vnum} > VISION_MAXNUMEL={vmax}", flush=True)
+                return
             yield l_sample_packed
             pass
         else:
             raise NotImplementedError("Sample format not supported", sample)
+
+    def _bin_blocked(self, key: str) -> bool:
+        """True if ``key`` contains an entry of BMR_BIN_BLOCKLIST (file, one key substring per line).
+
+        Escape hatch for known-bad pre-packed bins (e.g. a deterministic NaN or hang) without
+        repacking the dataset.
+        """
+        path = os.environ.get("BMR_BIN_BLOCKLIST")
+        if not path:
+            return False
+        if getattr(self, "_bin_blocklist_path", None) != path:
+            with open(path) as f:  # a missing/unreadable blocklist is a config error: fail loudly
+                self._bin_blocklist = [line.strip() for line in f if line.strip()]
+            self._bin_blocklist_path = path
+        return any(b in key for b in self._bin_blocklist)
 
     # @abstractmethod
     # def encode_captioning(self, sample: CaptioningSample) -> ImageTaskSample:
@@ -395,6 +441,15 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
         NOTE: Energon dataloader calls this method internally if packing is used.
         Please see https://nvidia.github.io/Megatron-Energon/packing.html
         """
+        vmax = int(os.environ.get("VISION_MAXNUMEL", "0"))
+        if vmax > 0:
+            kept = []
+            for x in samples:
+                if (vnum := _vision_numel(x)) > vmax:
+                    print(f"[VIS_DROP] key={x.__key__} vision_numel={vnum} > VISION_MAXNUMEL={vmax}", flush=True)
+                else:
+                    kept.append(x)
+            samples = kept
         lengths = [sample.total_len for sample in samples]
 
         packed_samples = greedy_knapsack(lengths, samples, self.args.seq_length)
@@ -417,6 +472,29 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
         """
 
         packing_seq_len = self.args.seq_length
+
+        # Sub-samples of a pre-packed bin can overflow seq_length (bin packed for a longer
+        # context) or be tiny fragments (BMR_MIN_SUBSAMPLE_TOKENS, off by default; very short
+        # varlen segments are a suspected GDN/varlen-kernel hazard). Skip those sub-samples
+        # instead of failing the whole run; all packed fields below use the kept list.
+        min_len = int(os.environ.get("BMR_MIN_SUBSAMPLE_TOKENS", "0"))
+        kept, total = [], 0
+        for s in samples:
+            if min_len and s.total_len < min_len:
+                print(f"[SHORT_SUBSAMPLE_SKIP] key={s.__key__} len={s.total_len} < {min_len}", flush=True)
+                continue
+            if total + s.total_len > packing_seq_len:
+                print(f"[OVERLONG_SUBSAMPLE_SKIP] key={s.__key__} len={s.total_len}: "
+                      f"{total + s.total_len} > seq_length {packing_seq_len}", flush=True)
+                continue
+            kept.append(s)
+            total += s.total_len
+        if not kept:
+            raise ValueError(
+                f"No sub-sample fits seq_length {packing_seq_len}: "
+                f"{[(s.__key__, s.total_len) for s in samples]}"
+            )
+        samples = kept
 
         packed_tokens = []
         packed_labels = []
