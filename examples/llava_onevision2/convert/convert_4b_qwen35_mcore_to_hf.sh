@@ -82,6 +82,14 @@ else
     LOAD_REL="$LOAD"
 fi
 
+# ---- refuse checkpoints whose replicated GDN params drifted across TP ranks (pre SP-FIX
+#      training): the converter reads TP rank 0 only and would export a rank-0-only model.
+#      Repair with `qwen35_tp_consistency.py resync <src> <dst>` and convert <dst>.
+#      Set SKIP_TP_CHECK=1 to bypass. ----------------------------------------------------
+if [[ "${SKIP_TP_CHECK:-0}" != "1" ]]; then
+    python $CUSTOM/qwen35_tp_consistency.py check "$LOAD_REL" || exit 1
+fi
+
 mkdir -p ./tmp/
 SAVE_LANGUAGE_MODEL=./tmp/language-hf-qwen35
 SAVE_VISION_MODEL=./tmp/vision-model-hf
