@@ -174,7 +174,7 @@ LOGGING_ARGS=(
 TM=$(date "+%Y-%m-%d_%H:%M:%S")
 logfile="${SAVE_CKPT_PATH}/run_${TM}_tp${TP}_pp${PP}_seq${SEQ_LEN}_gbs${GBS}_${NSTEP}steps.log"
 
-PYTHONPATH="/vlm/yinxie/pyshim:$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
+PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/aiak_training_llm/train.py" \
     "${MODEL_ARGS[@]}" \
