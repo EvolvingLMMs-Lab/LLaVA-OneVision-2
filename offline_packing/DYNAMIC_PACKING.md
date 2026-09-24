@@ -47,6 +47,10 @@ For each video:
    clamped to `[min_frames=200, max_frames=960]`, rounded to an even multiple of `temporal_grid=2`
 5. **Sample N frames evenly** from the master store; expand the `<video>` in the first user turn into `<image>×N`;
    write the real `fps` (native_fps, so training can inject timestamps), `patch_positions`, etc.
+6. **Per-frame target size**: `resize_hw` = one `[h, w]` per frame (smart_resize of the master frame size to the
+   sampled resolution, aligned to patch_size × factor = 48). `patch_positions` are built for exactly this size.
+   Master frames stay at master resolution on disk; s4 downscales each frame to its `resize_hw` on read
+   (`ImagePolicy.apply_to_bytes_exact`), independent of `--no-preprocess`.
 - Output: `s0_expanded.jsonl` (frame count / resolution fixed per video)
 
 ### s1 — build manifest (`s1_build_manifest.py`)
