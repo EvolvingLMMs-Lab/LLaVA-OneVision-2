@@ -41,14 +41,17 @@ def load_manifest_index(manifest_path: str) -> dict[str, dict[str, Any]]:
 
 
 def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
-    list[str], list[str], list[str], list[Optional[str]], Any, int
+    list[str], list[str], list[str], list[Optional[str]], Any, int, Optional[list]
 ]:
     """Mirror of ``SamplePacker._extract_bmr_content`` but for a manifest entry.
 
     Returns:
-        (images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal)
+        (images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw)
+        ``resize_hw`` is the per-image [h, w] target written by s0 for master-frame
+        samples, or None.
     """
     raw = entry.get("raw", {}) or {}
+    resize_hw = raw.get("resize_hw")
     images_abs = list(entry.get("images_abs") or [])
     patch_pos_abs = list(entry.get("patch_pos_abs") or [])
 
@@ -70,7 +73,7 @@ def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
         elif role in ("gpt", "assistant"):
             responses.append(content)
 
-    return images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal
+    return images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw
 
 
 def build_direct_sample_from_manifest(
@@ -98,10 +101,14 @@ def build_direct_sample_from_manifest(
         if entry is None:
             raise FileNotFoundError(f"Sample {raw_name} not found in manifest")
 
-        images, prompts, responses, patch_positions, fps, timestamp_decimal = (
+        images, prompts, responses, patch_positions, fps, timestamp_decimal, resize_hw = (
             _extract_bmr_from_manifest_entry(entry)
         )
         check_turn_pairing(prompts, responses, raw_name)
+        if resize_hw is not None and len(resize_hw) != len(images):
+            raise ValueError(
+                f"resize_hw has {len(resize_hw)} entries but sample {raw_name} has {len(images)} images"
+            )
 
         sample_image_names: list[str] = []
         sample_patch_position_names: list[str] = []
@@ -115,7 +122,13 @@ def build_direct_sample_from_manifest(
 
             with open(img_src, "rb") as f:
                 img_bytes = f.read()
-            if image_policy is not None and image_policy.enabled:
+            if resize_hw is not None and resize_hw[img_idx]:
+                # Master frame: downscale to the exact size s0 built patch_positions for.
+                th, tw = int(resize_hw[img_idx][0]), int(resize_hw[img_idx][1])
+                img_bytes, _info = (image_policy or ImagePolicy()).apply_to_bytes_exact(
+                    img_bytes, tw, th, src_name=img_src
+                )
+            elif image_policy is not None and image_policy.enabled:
                 img_bytes, _info = image_policy.apply_to_bytes(img_bytes, src_name=img_src)
             sample[f"img{sample_idx}_{img_idx}.jpg"] = img_bytes
 
