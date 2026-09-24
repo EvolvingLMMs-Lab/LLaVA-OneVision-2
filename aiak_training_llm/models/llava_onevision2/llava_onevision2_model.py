@@ -1,4 +1,5 @@
 import logging
+import os
 from collections import namedtuple
 from functools import partial
 
@@ -620,6 +621,57 @@ class LlavaOnevision2(MegatronModule):
             for param in module.parameters():
                 param.requires_grad = False
 
+    def _vision_chunk_patches(self, images, image_grid_thw, patch_positions):
+        """Patch budget per vision chunk (VISION_CHUNK_PATCHES), or 0 to run unchunked.
+
+        Chunking is only used when the flat patch tensor is exactly the concatenation
+        of the images described by image_grid_thw (and patch_positions matches it), so
+        chunks can be cut at image boundaries.
+        """
+        max_patches = int(os.environ.get("VISION_CHUNK_PATCHES", "0"))
+        if max_patches <= 0 or image_grid_thw is None or image_grid_thw.shape[0] <= 1:
+            return 0
+        n_patches = int((image_grid_thw[:, 0] * image_grid_thw[:, 1] * image_grid_thw[:, 2]).sum())
+        if n_patches != images.shape[0]:
+            return 0
+        if patch_positions is not None and patch_positions.shape[0] != images.shape[0]:
+            return 0
+        return max_patches
+
+    def _encode_images_chunked(self, images, image_grid_thw, patch_positions, max_patches):
+        """Run vision tower + adapter over image-aligned chunks of <= max_patches patches.
+
+        Packed bins with hundreds of images/frames (100k+ patches) crash the varlen
+        vision kernels in a single call. Vision attention never crosses an image, and
+        the adapter is per token, so cutting at image boundaries gives every image the
+        same inputs as the unchunked call; the chunk outputs are concatenated in order.
+        An image larger than max_patches gets a chunk of its own.
+        """
+        sizes = (image_grid_thw[:, 0] * image_grid_thw[:, 1] * image_grid_thw[:, 2]).tolist()
+        merge = self.vision_model.spatial_merge_size ** 2
+        outs = []
+        img_start, patch_start = 0, 0
+        while img_start < len(sizes):
+            img_end, n_patches = img_start, 0
+            while img_end < len(sizes) and (n_patches == 0 or n_patches + sizes[img_end] <= max_patches):
+                n_patches += int(sizes[img_end])
+                img_end += 1
+            if n_patches <= 0:  # zero-patch grid row: nothing to encode
+                img_start = img_end
+                continue
+            emb = self.vision_model(
+                images[patch_start:patch_start + n_patches],
+                grid_thw=image_grid_thw[img_start:img_end],
+                patch_positions=(
+                    patch_positions[patch_start:patch_start + n_patches]
+                    if patch_positions is not None else None
+                ),
+            )
+            emb = self.adapter(emb)
+            outs.append(emb[: n_patches // merge])  # drop per-chunk SP padding, if any
+            img_start, patch_start = img_end, patch_start + n_patches
+        return torch.cat(outs, dim=0)
+
     def forward(
         self,
         images: torch.Tensor,
@@ -671,11 +723,17 @@ class LlavaOnevision2(MegatronModule):
                     def _vis_ckpt_fwd(_imgs):
                         return self.vision_model(_imgs, grid_thw=image_grid_thw, patch_positions=patch_positions)
                     image_embeddings = _mpu_tp.checkpoint(_vis_ckpt_fwd, False, images)  # VISION_RECOMPUTE: main_grad-aware megatron ckpt
+                    image_embeddings = self.adapter(image_embeddings)
+                elif (vision_chunk := self._vision_chunk_patches(images, image_grid_thw, patch_positions)):
+                    # VISION_CHUNK_PATCHES: vision tower + adapter in image-aligned chunks.
+                    image_embeddings = self._encode_images_chunked(
+                        images, image_grid_thw, patch_positions, vision_chunk
+                    )
                 else:
                     image_embeddings = self.vision_model(
                         images, grid_thw=image_grid_thw, patch_positions=patch_positions
                     )  # [img_len, h_vision]
-                image_embeddings = self.adapter(image_embeddings)
+                    image_embeddings = self.adapter(image_embeddings)
                 if _prof:
                     torch.cuda.synchronize()
                     if (not torch.distributed.is_initialized()) or torch.distributed.get_rank() == 0:
