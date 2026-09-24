@@ -119,6 +119,32 @@ class ImagePolicy:
             info["error"] = str(exc)
             return data, info
 
+    def apply_to_bytes_exact(self, data: bytes, target_w: int, target_h: int,
+                             src_name: str = "") -> tuple[bytes, dict]:
+        """Resize to exactly (target_w, target_h) and JPEG-encode.
+
+        Used by s4 for master-frame samples: s0 already chose the per-video target
+        size (smart_resize, patch*merge aligned) and built patch_positions for it,
+        so the packed image must have exactly that size. Unlike apply_to_bytes this
+        ignores ``enabled``/longest_edge and raises instead of keeping the original
+        bytes on failure, since a wrong-sized frame would not match its
+        patch_positions.
+        """
+        info = {"action": "resize_exact", "src_bytes": len(data), "orig_size": None,
+                "new_size": (target_w, target_h)}
+        with Image.open(io.BytesIO(data)) as im:
+            im.load()
+            if self.exif_transpose:
+                im = ImageOps.exif_transpose(im)
+            info["orig_size"] = im.size
+            if im.mode not in ("RGB", "L"):
+                im = im.convert("RGB")
+            if im.size != (target_w, target_h):
+                im = im.resize((target_w, target_h), Image.BICUBIC)
+            out = io.BytesIO()
+            im.save(out, format="JPEG", quality=self.jpeg_quality, optimize=False, progressive=False)
+            return out.getvalue(), info
+
 
 def policy_from_args(args, default_enabled: bool = True) -> ImagePolicy:
     """Build a policy from argparse Namespace with attributes:
