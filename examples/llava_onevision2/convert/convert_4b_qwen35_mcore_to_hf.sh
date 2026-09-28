@@ -86,6 +86,15 @@ fi
 #      training): the converter reads TP rank 0 only and would export a rank-0-only model.
 #      Repair with `qwen35_tp_consistency.py resync <src> <dst>` and convert <dst>.
 #      Set SKIP_TP_CHECK=1 to bypass. ----------------------------------------------------
+# ---- a --gdn-head-parallel checkpoint holds per-rank GDN head shards: rebuild the replicated
+#      layout (weights only) first; everything below reads replicated GDN tensors. ------------
+if [[ "$(python $CUSTOM/qwen35_gdn_head_tp.py detect "$LOAD_REL")" == "head_parallel" ]]; then
+    echo "[wrapper] GDN head-parallel checkpoint -> unsharding to replicated layout"
+    rm -rf ./tmp/gdn-unsharded
+    python $CUSTOM/qwen35_gdn_head_tp.py unshard "$LOAD_REL" ./tmp/gdn-unsharded || exit 1
+    LOAD_REL=./tmp/gdn-unsharded
+fi
+
 if [[ "${SKIP_TP_CHECK:-0}" != "1" ]]; then
     python $CUSTOM/qwen35_tp_consistency.py check "$LOAD_REL" || exit 1
 fi

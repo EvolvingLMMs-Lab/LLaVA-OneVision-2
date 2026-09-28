@@ -32,7 +32,9 @@ from megatron.core.fp8_utils import get_fp8_align_size
 from megatron.core.models.huggingface import HuggingFaceModule
 from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.tensor_parallel import (
+    copy_to_tensor_model_parallel_region,
     gather_from_sequence_parallel_region,
+    reduce_from_tensor_model_parallel_region,
     reduce_scatter_to_sequence_parallel_region,
 )
 from megatron.core.transformer import TransformerConfig
@@ -136,6 +138,17 @@ class GatedDeltaNet(HuggingFaceModule):
         self.value_head_dim = getattr(config, "linear_value_head_dim", 128)
         self.num_key_heads = getattr(config, "linear_num_key_heads", 16)
         self.num_value_heads = getattr(config, "linear_num_value_heads", 32)
+        # Head-parallel TP (--gdn-head-parallel): each TP rank owns num_key_heads/tp key heads (and
+        # their value heads) instead of a full replica. in_proj_qkvz/in_proj_ba are laid out
+        # key-head-major, so a contiguous row split hands every rank whole heads. All per-head
+        # sizes below become rank-local; the core math is unchanged.
+        self.head_tp = bool(getattr(config, "gdn_head_parallel", False)) and self.tp_size > 1
+        if self.head_tp:
+            assert self.num_key_heads % self.tp_size == 0 and self.num_value_heads % self.tp_size == 0, (
+                f"--gdn-head-parallel needs linear heads ({self.num_key_heads} key / "
+                f"{self.num_value_heads} value) divisible by TP={self.tp_size}")
+            self.num_key_heads //= self.tp_size
+            self.num_value_heads //= self.tp_size
         self.qk_dim = self.key_head_dim * self.num_key_heads
         self.v_dim = self.value_head_dim * self.num_value_heads
 
@@ -164,6 +177,8 @@ class GatedDeltaNet(HuggingFaceModule):
                 "For FP8, the innermost dimension of the GDN layer "
                 f"in_proj_ba output tensor ({self.in_proj_ba_dim}) must be a multiple of {fp8_align_size}."
             )
+        # In head-TP mode these are plain local linears holding this rank's rows (dims above are
+        # already rank-local); the TP communication is explicit in _forward_head_tp.
         self.in_proj_qkvz = TE_Linear(self.hidden_size, self.in_proj_qkvz_dim, bias=False)
         self.in_proj_ba = TE_Linear(self.hidden_size, self.in_proj_ba_dim, bias=False)
 
@@ -198,6 +213,21 @@ class GatedDeltaNet(HuggingFaceModule):
         # average_gradients_across_tp_domain flag has no consumer anywhere).
         # Verified missing-reduce by comparing TP0 vs TP1 grads (rel diff 0.2-2.9); for old checkpoints
         # see tools/convert_checkpoint/custom/llava_onevision2/qwen35_tp_consistency.py.
+        if self.head_tp:
+            # Everything is head-sharded except out_norm (one [value_head_dim] weight shared by
+            # all heads): each rank's grad covers only its own heads, so it must be summed over TP.
+            # finalize_model_grads reduces `sequence_parallel` params when SP or qk_layernorm is on.
+            assert self.config.sequence_parallel or getattr(self.config, "qk_layernorm", False), (
+                "--gdn-head-parallel: out_norm grads are TP-reduced only with sequence_parallel or qk_layernorm")
+            setattr(self.out_norm.weight, "sequence_parallel", True)
+            # Sharded params must carry TP attributes, otherwise grad-norm/clipping treats them
+            # as TP duplicates and counts only rank 0's shard.
+            # (TE's local Linear already tags its weight tensor_model_parallel=False; overwrite.)
+            for _p, _dim in ((self.in_proj_qkvz.weight, 0), (self.in_proj_ba.weight, 0),
+                             (self.out_proj.weight, 1), (self.dt_bias, 0), (self.A_log, 0),
+                             *((_q, 0) for _q in self.conv1d.parameters())):
+                _p.tensor_model_parallel, _p.partition_dim, _p.partition_stride = True, _dim, 1
+            return
         for _p in (
             self.in_proj_qkvz.weight,
             self.in_proj_ba.weight,
@@ -368,6 +398,8 @@ class GatedDeltaNet(HuggingFaceModule):
             (Tuple[Tensor, Tensor]) GDN output and bias.
         """
         inference_context = deprecate_inference_params(inference_context, inference_params)
+        if self.head_tp:
+            return self._forward_head_tp(hidden_states, attention_mask, packed_seq_params)
         if self.sequence_parallel and self.tp_size > 1:
             hidden_states = gather_from_sequence_parallel_region(hidden_states, group=None)
 
@@ -421,6 +453,46 @@ class GatedDeltaNet(HuggingFaceModule):
 
         if self.sequence_parallel and self.tp_size > 1:
             out = reduce_scatter_to_sequence_parallel_region(out, group=None) / self.tp_size
+        return out, None
+
+    def _forward_head_tp(self, hidden_states, attention_mask, packed_seq_params):
+        """Head-parallel forward: [s(/tp), b, h] -> [s(/tp), b, h], this rank's heads only.
+
+        Same communication as the replicated path (one all-gather in, one reduce-scatter out
+        under SP; one all-reduce without SP), but the projections, conv and delta rule run on
+        num_heads/tp heads instead of all of them.
+        """
+        if self.sequence_parallel:
+            hidden_states = gather_from_sequence_parallel_region(hidden_states, group=None)  # [S, B, D]
+        else:
+            hidden_states = copy_to_tensor_model_parallel_region(hidden_states)  # bwd: all-reduce dgrad
+        cu_seqlens = None if packed_seq_params is None else packed_seq_params.cu_seqlens_q
+        cu_seqlens_cpu = getattr(packed_seq_params, "cu_seqlens_cpu", None) if packed_seq_params is not None else None
+        if cu_seqlens_cpu is None and cu_seqlens is not None:
+            cu_seqlens_cpu = cu_seqlens.detach().to("cpu")
+
+        qkvz = self.in_proj_qkvz(hidden_states)  # [S, B, local heads]
+        ba = self.in_proj_ba(hidden_states)
+        qkvz, ba = qkvz.transpose(0, 1), ba.transpose(0, 1)  # [B, S, local]
+        if attention_mask is not None:
+            # Zeroing padded input rows == zeroing their projections (bias-free linears).
+            if attention_mask.dim() >= 3 and attention_mask.shape[2] > 1:
+                attention_mask = (~attention_mask).sum(dim=(1, 2)) > 0
+            else:
+                attention_mask = ~(attention_mask.squeeze(1).squeeze(1))
+            qkvz = self.apply_mask_to_padding_states(qkvz, attention_mask)
+            ba = self.apply_mask_to_padding_states(ba, attention_mask)
+
+        if getattr(self.config, "recompute_granularity", None) == "selective" and self.training:
+            norm_out = tensor_parallel.checkpoint(self._gdn_core, False, qkvz, ba, cu_seqlens, cu_seqlens_cpu)
+        else:
+            norm_out = self._gdn_core(qkvz, ba, cu_seqlens, cu_seqlens_cpu)
+
+        out = self.out_proj(norm_out.transpose(0, 1))  # partial sums over this rank's heads
+        if self.sequence_parallel:
+            out = reduce_scatter_to_sequence_parallel_region(out, group=None)
+        else:
+            out = reduce_from_tensor_model_parallel_region(out)
         return out, None
 
     def backward_dw(self):

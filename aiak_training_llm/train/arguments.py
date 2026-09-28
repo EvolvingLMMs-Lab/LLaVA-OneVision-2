@@ -457,6 +457,11 @@ def _add_extra_qwen35_args(parser):
                        help='Use interleaved M-RoPE section layout (Qwen3.5).')
     group.add_argument('--partial-rotary-factor', type=float, default=1.0,
                        help='Fraction of head_dim that gets rotary embedding (Qwen3.5).')
+    group.add_argument('--gdn-head-parallel', action='store_true', default=False,
+                       help='Shard gated delta-net layers across TP by head instead of replicating '
+                            'them on every TP rank (Qwen3.5). Changes the checkpoint layout of the '
+                            'GDN params: convert existing checkpoints with '
+                            'tools/convert_checkpoint/custom/llava_onevision2/qwen35_gdn_head_tp.py.')
     return parser
 
 

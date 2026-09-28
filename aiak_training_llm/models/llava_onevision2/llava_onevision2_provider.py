@@ -32,6 +32,7 @@ _QWEN35_EXTRA_FIELDS = (
     "mrope_section",
     "mrope_interleaved",
     "partial_rotary_factor",
+    "gdn_head_parallel",
 )
 
 
