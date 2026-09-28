@@ -20,7 +20,8 @@ Usage
   resync <src_dir> <dst_dir>    write a copy with those tensors replaced by the TP-rank mean
 
 <ckpt_dir> is the directory that directly contains mp_rank_* (an iter_XXXXXXX dir or
-release/). TP-sharded tensors and everything outside language_model are left untouched.
+release/). TP-sharded tensors and everything outside language_model are left untouched. For a
+--gdn-head-parallel checkpoint only out_norm is replicated, so only it is checked/resynced.
 """
 import argparse
 import os
@@ -31,6 +32,7 @@ from collections import defaultdict
 import torch
 
 REPLICATED = re.compile(r"(in_proj_qkvz|in_proj_ba|out_proj|out_norm|A_log|dt_bias|conv1d)")
+HEAD_PARALLEL_REPLICATED = re.compile(r"out_norm")
 RANK_DIR = re.compile(r"^mp_rank_(\d{2})(?:_(\d{3}))?$")
 
 
@@ -50,9 +52,15 @@ def _load(ckpt_dir, d):
     return torch.load(os.path.join(ckpt_dir, d, "model_optim_rng.pt"), map_location="cpu", weights_only=False)
 
 
-def _replicated_keys(model, others):
+def _replicated_pattern(ckpt):
+    """With --gdn-head-parallel only out_norm stays replicated; the other GDN params are shards."""
+    return HEAD_PARALLEL_REPLICATED if getattr(ckpt.get("args"), "gdn_head_parallel", False) else REPLICATED
+
+
+def _replicated_keys(model, others, pattern=None):
+    pattern = pattern or REPLICATED
     for k, v in model.items():
-        if ("language_model" in k and REPLICATED.search(k) and torch.is_tensor(v)
+        if ("language_model" in k and pattern.search(k) and torch.is_tensor(v)
                 and all(k in o and torch.is_tensor(o[k]) and o[k].shape == v.shape for o in others)):
             yield k
 
@@ -64,8 +72,9 @@ def check(ckpt_dir):
         return 0
     n_checked, bad = 0, []
     for pp, dirs in stages.items():
-        models = [_load(ckpt_dir, d)["model"] for d in dirs]
-        for k in _replicated_keys(models[0], models[1:]):
+        cks = [_load(ckpt_dir, d) for d in dirs]
+        models = [c["model"] for c in cks]
+        for k in _replicated_keys(models[0], models[1:], _replicated_pattern(cks[0])):
             n_checked += 1
             for t, m in enumerate(models[1:], 1):
                 if not torch.equal(models[0][k], m[k]):
@@ -93,7 +102,7 @@ def resync(src, dst):
         models = [c["model"] for c in ckpts]
         n = 0
         if len(models) > 1:
-            for k in list(_replicated_keys(models[0], models[1:])):
+            for k in list(_replicated_keys(models[0], models[1:], _replicated_pattern(ckpts[0]))):
                 mean = (sum(m[k].float() for m in models) / len(models)).to(models[0][k].dtype)
                 for m in models:
                     m[k] = mean.clone()
