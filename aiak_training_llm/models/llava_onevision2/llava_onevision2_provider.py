@@ -177,6 +177,7 @@ def llavaov_2_model_provider(
         setattr(language_config, "vision_start_token_id", 151652)
     setattr(language_config, "spatial_merge_size", getattr(vision_config, "spatial_merge_size", 2))
     setattr(language_config, "tokens_per_second", 2)
+    setattr(language_config, "vision_dp_balance", bool(getattr(args, "vision_dp_balance", False)))
 
     # FIXME: fix this if model_type is encoder_and_decoder
     if args.encoder_pipeline_model_parallel_size in [0, None]:

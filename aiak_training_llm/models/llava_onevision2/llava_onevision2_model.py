@@ -14,8 +14,15 @@ from megatron.core.utils import make_viewless_tensor
 from aiak_training_llm.models.llava_onevision2.onevision_encoder_model import OneVisionEncoderModel
 from aiak_training_llm.models.qwen import QwenModel
 from aiak_training_llm.models.llava_onevision2.adapter import Adapter
+from aiak_training_llm.models.llava_onevision2 import vision_balance
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
 
+
+def vision_balance_group():
+    """DP group over which --vision-dp-balance spreads vision work (same TP/PP rank), or None if DP == 1."""
+    if parallel_state.get_data_parallel_world_size() <= 1:
+        return None
+    return parallel_state.get_data_parallel_group()
 
 def get_rope_index(
     input_ids,
@@ -672,6 +679,14 @@ class LlavaOnevision2(MegatronModule):
             img_start, patch_start = img_end, patch_start + n_patches
         return torch.cat(outs, dim=0)
 
+    def _encode_local(self, images, image_grid_thw, patch_positions):
+        """Vision tower + adapter on these images -> exactly n_patches // merge embeddings."""
+        vision_chunk = self._vision_chunk_patches(images, image_grid_thw, patch_positions)
+        if vision_chunk:
+            return self._encode_images_chunked(images, image_grid_thw, patch_positions, vision_chunk)
+        emb = self.adapter(self.vision_model(images, grid_thw=image_grid_thw, patch_positions=patch_positions))
+        return emb[: images.shape[0] // self.vision_model.spatial_merge_size ** 2]
+
     def forward(
         self,
         images: torch.Tensor,
@@ -711,8 +726,30 @@ class LlavaOnevision2(MegatronModule):
         )
         # If running inference, we can skip image token computation if they were computed already
         # earlier for this sample.
+        balance_anchor = None  # --vision-dp-balance: keeps text-only ranks in the backward all_to_all
         if use_inference_kv_cache:
             image_embeddings = None
+        elif (self.add_encoder and self.training and getattr(self.config, "vision_dp_balance", False)
+              and vision_balance_group() is not None):
+            # --vision-dp-balance: vision tower + adapter work spread evenly over the DP group. Every DP
+            # rank takes this branch for every microbatch, with or without images.
+            _vm = self.vision_model
+            _imgs = images if images is not None else torch.zeros(
+                (0, _vm.patch_embed.proj.weight.shape[1]), dtype=next(_vm.parameters()).dtype,
+                device=next(_vm.parameters()).device)
+            _grid = image_grid_thw if images is not None else torch.zeros((0, 3), dtype=torch.int64, device=_imgs.device)
+            _pp = patch_positions if images is not None else None
+            image_embeddings = vision_balance.balance(
+                _imgs, _grid, _pp, self._encode_local,
+                merge=_vm.spatial_merge_size ** 2, out_dim=self.config.hidden_size,
+                group=vision_balance_group(),
+            )
+            if images is None:
+                balance_anchor, image_embeddings = image_embeddings, None
+            else:
+                n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
+                if image_embeddings.shape[0] != n_image_tokens:
+                    raise ValueError(f"Image features {image_embeddings.shape[0]} != image tokens {n_image_tokens}")
         elif self.add_encoder:
             if images is not None:
                 _prof = __import__('os').environ.get('PROF_TAGS') == '1'
@@ -787,6 +824,8 @@ class LlavaOnevision2(MegatronModule):
             # earlier for this sample.
             if use_inference_kv_cache or (images is None and pixel_values_videos is None):
                 combined_embeddings = language_embeddings
+                if balance_anchor is not None:  # numerically a no-op; keeps this rank in the backward all_to_all
+                    combined_embeddings = combined_embeddings + 0.0 * balance_anchor.sum().to(combined_embeddings.dtype)
                 if (
                     self.training
                     and self.add_encoder
