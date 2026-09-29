@@ -473,6 +473,11 @@ def _add_extra_parallel_args(parser):
     # --context-parallel-ulysses-degree temporarily retained.
     group.add_argument('--context-parallel-ulysses-degree', type=int, default=1,
                        help='Degree of context parallelism in ulysses attention.')
+    group.add_argument('--vision-dp-balance', action=argparse.BooleanOptionalAction, default=True,
+                       help='Spread vision tower + adapter work evenly over the data-parallel ranks '
+                            'every microbatch (training only; LLaVA-OneVision2). Same math, only which '
+                            'GPU encodes which image changes. On by default; turned off automatically '
+                            'with --overlap-grad-reduce. Disable with --no-vision-dp-balance.')
 
     return parser
 
@@ -619,6 +624,11 @@ def _validata_extra_video_args(args):
 
 def _validata_extra_parallel_args(args):
     """Validate parallel arguments"""
+    if getattr(args, "vision_dp_balance", False) and args.overlap_grad_reduce:
+        # Its backward all_to_all runs on the DP group and must not interleave with bucketed async
+        # DP grad reductions on the same group.
+        args.vision_dp_balance = False
+        print_rank_0("WARNING: --vision-dp-balance turned off because --overlap-grad-reduce is on", args.rank)
     # check cp, NOTE: maybe removed in the future
     if args.context_parallel_size > 1:
         if args.context_parallel_ulysses_degree is None or args.context_parallel_ulysses_degree < 1:
