@@ -3,6 +3,8 @@
 """Input/output checkpointing."""
 
 import contextlib
+import copy
+import multiprocessing as mp
 import os
 import random
 import shutil
@@ -27,7 +29,8 @@ from megatron.core.dist_checkpointing.strategies.fully_parallel import (
 from megatron.core.num_microbatches_calculator import update_num_microbatches
 from megatron.core.fp8_utils import is_float8tensor, dequantize_fp8_tensor
 from megatron.core.rerun_state_machine import get_rerun_state_machine
-from .async_utils import schedule_async_save, is_empty_async_queue
+from megatron.core.dist_checkpointing.strategies.async_utils import AsyncRequest
+from .async_utils import schedule_async_save, is_empty_async_queue, maybe_finalize_async_save
 from .global_vars import get_args, get_one_logger
 from .utils import unwrap_model, print_rank_0, append_to_progress_log, is_last_rank
 from ..core.dist_checkpointing.serialization import get_default_save_sharded_strategy
@@ -116,6 +119,71 @@ def ensure_directory_exists(filename, check_parent=True):
     """Build filename's path if it does not already exists."""
     dirname = os.path.dirname(filename) if check_parent else filename
     os.makedirs(dirname, exist_ok=True)
+
+
+# ---- Async save for legacy (torch format) checkpoints --------------------------------------------
+# With --async-save, a legacy save collects every torch.save(obj, path) of the checkpoint (dataloader
+# state, distributed-optimizer state, model state) instead of writing it. GPU tensors are copied to
+# host, then a forked process writes all files while training continues (TemporalAsyncCaller). The
+# tracker file (latest_checkpointed_iteration.txt) is written only after every rank's writer
+# finished successfully, so a failed or interrupted write never becomes the checkpoint to resume from.
+
+
+def _stage_to_cpu(obj, memo):
+    """Copy of `obj` with every CUDA tensor copied to host. Tensors that shared a storage still
+    share one host storage (so torch.save writes the same data); everything else is kept as is,
+    since the forked writer gets a snapshot of host memory anyway."""
+    if isinstance(obj, torch.Tensor):
+        if not obj.is_cuda:
+            return obj
+        st = obj.untyped_storage()
+        host = memo.get(st.data_ptr())
+        if host is None:
+            host = memo[st.data_ptr()] = st.cpu()
+        return torch.empty(0, dtype=obj.dtype).set_(host, obj.storage_offset(), obj.size(), obj.stride())
+    if isinstance(obj, dict):
+        out = copy.copy(obj)  # keeps the type and attributes such as state_dict()._metadata
+        for k, v in obj.items():
+            out[k] = _stage_to_cpu(v, memo)
+        return out
+    if isinstance(obj, list):
+        return [_stage_to_cpu(v, memo) for v in obj]
+    if isinstance(obj, tuple) and not hasattr(obj, "_fields"):
+        return tuple(_stage_to_cpu(v, memo) for v in obj)
+    return obj
+
+
+def _write_legacy_files(writes, ok):
+    """Runs in the forked writer: ok.value = 1 only if every file was written."""
+    try:
+        for obj, path in writes:
+            ensure_directory_exists(path)
+            torch.save(obj, path)
+        ok.value = 1
+    except BaseException:  # the parent sees ok.value == 0 and does not finalize the checkpoint
+        import traceback
+        traceback.print_exc()
+        sys.stderr.flush()
+        raise
+
+
+def _legacy_async_request(writes, status):
+    """AsyncRequest that writes `writes` [(obj, path)] in a forked process. Must run on all ranks.
+    Its finalize step (all ranks) sets status["ok"] to whether all ranks' writes succeeded."""
+    memo = {}
+    staged = [(_stage_to_cpu(obj, memo), path) for obj, path in writes]
+    torch.cuda.synchronize()
+    ok = mp.get_context("fork").Value("i", 0 if staged else 1)
+
+    def check_all_written():
+        t = torch.tensor([ok.value], dtype=torch.int, device=torch.cuda.current_device())
+        torch.distributed.all_reduce(t, op=torch.distributed.ReduceOp.MIN)
+        status["ok"] = bool(t.item())
+        if not status["ok"]:
+            print_rank_0("ERROR: async checkpoint write failed on at least one rank; "
+                         "the tracker file is NOT updated for this checkpoint")
+
+    return AsyncRequest(_write_legacy_files if staged else None, (staged, ok), [check_all_written])
 
 
 def get_checkpoint_name(
@@ -414,6 +482,16 @@ def save_checkpoint(
                 f"Please use local or global non-persistent checkpoints (got: {args.non_persistent_ckpt_type})"
             )
 
+    # Async legacy save: collect the file writes, run them in a forked process (see _legacy_async_request).
+    legacy_async = bool(args.async_save) and ckpt_type == CheckpointType.LEGACY
+    legacy_writes, legacy_status = [], {"ok": True}
+    save_fn = (lambda obj, path: legacy_writes.append((obj, path))) if legacy_async else None
+    if legacy_async:
+        if args.use_persistent_ckpt_worker:
+            raise NotImplementedError("--async-save with legacy checkpoints does not support --use-persistent-ckpt-worker")
+        # One legacy save in flight at a time (bounds host memory; the previous one is long done normally).
+        maybe_finalize_async_save(blocking=True)
+
     ckpt_format = args.ckpt_format if ckpt_type == CheckpointType.GLOBAL else "torch"
     print_rank_0("saving checkpoint at iteration {:7d} to {} in {} format".format(iteration, save_dir, ckpt_format))
 
@@ -441,7 +519,7 @@ def save_checkpoint(
     )
 
     # Save dataloader state if the dataloader supports it (currently only Megatron Energon).
-    maybe_save_dataloader_state(train_data_iterator, iteration, getattr(args, "dataloader_save", None))
+    maybe_save_dataloader_state(train_data_iterator, iteration, getattr(args, "dataloader_save", None), save_fn=save_fn)
 
     # Save distributed optimizer's custom parameter state.
     if (
@@ -451,15 +529,14 @@ def save_checkpoint(
         and ckpt_type == CheckpointType.LEGACY
     ):
         optim_checkpoint_name = get_distributed_optimizer_checkpoint_name(checkpoint_name)
-        ensure_directory_exists(optim_checkpoint_name)
+        if not legacy_async:
+            ensure_directory_exists(optim_checkpoint_name)
         if not optimizer.is_stub_optimizer:
-            optimizer.save_parameter_state(optim_checkpoint_name)
+            optimizer.save_parameter_state(optim_checkpoint_name, save_fn=save_fn)
 
     async_save_request = None
     if args.async_save:
-        if ckpt_type == CheckpointType.LEGACY:
-            raise NotImplementedError("Async checkpoint save not implemented for legacy checkpoints")
-        elif ckpt_type == CheckpointType.GLOBAL and args.ckpt_format != "torch_dist":
+        if ckpt_type == CheckpointType.GLOBAL and args.ckpt_format != "torch_dist":
             raise NotImplementedError(
                 f"Async checkpoint save not implemented for {args.ckpt_format} distributed checkpoint format"
             )
@@ -573,8 +650,14 @@ def save_checkpoint(
             else:
                 assert ckpt_type == CheckpointType.LEGACY
                 # Save.
-                ensure_directory_exists(checkpoint_name)
-                torch.save(state_dict, checkpoint_name)
+                if legacy_async:
+                    save_fn(state_dict, checkpoint_name)
+                else:
+                    ensure_directory_exists(checkpoint_name)
+                    torch.save(state_dict, checkpoint_name)
+    if legacy_async:
+        async_save_request = _legacy_async_request(legacy_writes, legacy_status)
+        del legacy_writes
     start_misc = time()
     if ckpt_type != CheckpointType.LOCAL:
         if not args.async_save:
@@ -596,6 +679,8 @@ def save_checkpoint(
         else:
 
             def iter_finalize_fn():
+                if not legacy_status["ok"]:
+                    return
                 with open(tracker_filename, "w") as f:
                     f.write(str(iteration))
 
@@ -681,7 +766,7 @@ def cleanup_old_non_persistent_checkpoint(save_dir, leave_ckpt_num=1, do_async=F
         remove_iter_ckpts(rm_iter_ckpts)
 
 
-def maybe_save_dataloader_state(train_iterator, iteration, dataloader_save_path):
+def maybe_save_dataloader_state(train_iterator, iteration, dataloader_save_path, save_fn=None):
     """Saves dataloader state if the dataloader supports it.
 
     Currently, this is only used by Megatron Energon dataloader (multimodal) to store its state at a
@@ -721,13 +806,15 @@ def maybe_save_dataloader_state(train_iterator, iteration, dataloader_save_path)
     # Each saving rank writes its own dataloader state shard path. In PP/EP
     # setups those paths differ by pipeline/expert suffix, so gating directory
     # creation on DP rank 0 leaves other ranks without parent directories.
-    ensure_directory_exists(data_state_save_path)
+    # (With save_fn, the deferred writer creates the directory itself.)
+    if save_fn is None:
+        ensure_directory_exists(data_state_save_path)
 
     torch.distributed.barrier(group=mpu.get_data_parallel_group())
 
     dataloader_save_dict = {}
     dataloader_save_dict["dataloader_state_dict"] = train_dataloader_state_dict
-    torch.save(dataloader_save_dict, data_state_save_path)
+    (save_fn or torch.save)(dataloader_save_dict, data_state_save_path)
 
 
 def generate_state_dict(
