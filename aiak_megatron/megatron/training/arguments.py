@@ -1968,8 +1968,9 @@ def _add_checkpointing_args(parser):
                             ' might decrease the number of files in the checkpoint.'
                             ' Makes DistributedOptimizer checkpoint non-reshardable.')
     group.add_argument('--async-save', action='store_true', default=None,
-                       help='Apply async checkpointing save. Currently works only with'
-                            '`torch_dist` distributed checkpoint format.')
+                       help='Apply async checkpointing save. Works with the `torch_dist` distributed '
+                            'checkpoint format and with legacy `torch` checkpoints (files written by a '
+                            'forked process; the tracker file is updated once all ranks finished).')
     group.add_argument('--ckpt-fully-parallel-load', action='store_true',
                        help='Apply full load parallelization across DP for'
                             ' distributed checkpoints.')

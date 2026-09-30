@@ -1065,10 +1065,12 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
             for dtype, gbuf_range_map_for_all_buckets in gbuf_range_maps.items():
                 buffer_numel_unpadded = self.buffers[gbuf_idx].numel_unpadded
                 # Create coalesced tensors for all state related to parameters in this buffer.
+                # No zero-fill: the buckets' unpadded ranges are gathered straight into them below
+                # (any uncovered tail is zeroed at the end).
                 world_tensors = {}
                 if data_parallel_rank == 0:
                     world_tensors = {
-                        key: torch.zeros(
+                        key: torch.empty(
                             (buffer_numel_unpadded,), dtype=torch.float32, device="cpu"
                         )
                         for key in ("param", "exp_avg", "exp_avg_sq")
@@ -1087,36 +1089,37 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                     )
                     assert gbuf_world_numel_unpadded <= gbuf_world_numel
 
-                    local_shards = {
-                        key: torch.zeros((gbuf_local_numel,), dtype=torch.float32, device="cpu")
-                        for key in ("param", "exp_avg", "exp_avg_sq")
-                    }
+                    param_states = [
+                        (param_range_map["gbuf_local"], self._get_main_param_and_optimizer_states(model_param))
+                        for model_param, param_range_map in gbuf_range_map["param_map"].items()
+                    ]
+                    for key in ("param", "exp_avg", "exp_avg_sq"):
+                        # Build this DP rank's contiguous shard on the GPU (padding stays zero),
+                        # then copy it to host once (instead of one synchronous copy per param).
+                        local_shard = torch.zeros(
+                            (gbuf_local_numel,), dtype=torch.float32, device=torch.cuda.current_device()
+                        )
+                        for gbuf_local, tensors in param_states:
+                            local_shard[gbuf_local.start:gbuf_local.end].copy_(tensors[key].detach())
+                        send_tensor = local_shard.cpu()
+                        del local_shard
 
-                    # Build contiguous DP rank shards (for param + optim states).
-                    for model_param, param_range_map in gbuf_range_map["param_map"].items():
-                        tensors = self._get_main_param_and_optimizer_states(model_param)
-
-                        # Copy states into contiguous shard.
-                        gbuf_local_start = param_range_map["gbuf_local"].start
-                        gbuf_local_end = param_range_map["gbuf_local"].end
-                        for key in local_shards:
-                            local_shards[key][gbuf_local_start:gbuf_local_end].data.copy_(
-                                tensors[key].detach().cpu()
-                            )
-
-                    # Gather contiguous shards on DP rank 0.
-                    for key, send_tensor in local_shards.items():
-
-                        # Gather tensor list.
+                        # Gather contiguous shards on DP rank 0, straight into their place in the
+                        # buffer's world tensor; only a shard reaching into the bucket's padding goes
+                        # through a temporary (the world tensor has no padding between buckets).
+                        recv_tensors = None
                         if data_parallel_rank == 0:
-                            recv_tensors = [
-                                torch.zeros((gbuf_local_numel,), dtype=torch.float32, device="cpu")
-                                for _ in range(data_parallel_world_size)
-                            ]
-                        else:
-                            recv_tensors = None
+                            start = offset_in_world_tensors
+                            recv_tensors = []
+                            for i in range(data_parallel_world_size):
+                                lo, hi = i * gbuf_local_numel, (i + 1) * gbuf_local_numel
+                                if hi <= gbuf_world_numel_unpadded:
+                                    recv_tensors.append(world_tensors[key][start + lo : start + hi])
+                                else:
+                                    recv_tensors.append(
+                                        torch.empty((gbuf_local_numel,), dtype=torch.float32, device="cpu")
+                                    )
 
-                        # Gather.
                         torch.distributed.gather(
                             send_tensor,
                             recv_tensors,
@@ -1124,19 +1127,20 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                             data_parallel_group_gloo,
                         )
 
-                        # Concatenate.
                         if data_parallel_rank == 0:
-                            recv_tensors_concatenated = torch.cat(recv_tensors)
-                            # Copy this bucket's collected all-gather tensors into the right place
-                            # in the tensor for the buffer. The tensor for the buffer gets rid of
-                            # the padding between buckets.
-                            start = offset_in_world_tensors
-                            end = offset_in_world_tensors + gbuf_world_numel_unpadded
-                            world_tensors[key][start:end].copy_(
-                                recv_tensors_concatenated[:gbuf_world_numel_unpadded]
-                            )
+                            for i, recv in enumerate(recv_tensors):
+                                lo, hi = i * gbuf_local_numel, (i + 1) * gbuf_local_numel
+                                if lo < gbuf_world_numel_unpadded < hi:
+                                    world_tensors[key][start + lo : start + gbuf_world_numel_unpadded].copy_(
+                                        recv[: gbuf_world_numel_unpadded - lo]
+                                    )
 
+                    del param_states
                     offset_in_world_tensors += gbuf_world_numel_unpadded
+
+                if data_parallel_rank == 0 and offset_in_world_tensors < buffer_numel_unpadded:
+                    for key in ("param", "exp_avg", "exp_avg_sq"):
+                        world_tensors[key][offset_in_world_tensors:].zero_()
 
                 # Collect world state.
                 dtype_state[dtype] = world_tensors
@@ -1144,16 +1148,18 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
 
         return state
 
-    def save_parameter_state(self, filename: str):
+    def save_parameter_state(self, filename: str, save_fn=None):
         """Save the distributed parameter state on DP rank 0.
 
         Args:
             filename (str): path to save parameter state to.
+            save_fn (callable, optional): called as save_fn(obj, filename) instead of torch.save
+                (used by async legacy checkpointing to defer the write).
         """
 
         state_dict = self.get_parameter_state_dp_zero()
         if torch.distributed.get_rank(self.data_parallel_group) == 0:
-            torch.save(state_dict, filename)
+            (save_fn or torch.save)(state_dict, filename)
 
     def sharded_state_dict(
         self,
