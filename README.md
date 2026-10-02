@@ -546,11 +546,11 @@ If you find LLaVA-OneVision-2 useful in your research, please cite the following
 }
 
 @article{li2025llavaonevisioneasyvisualtasktransfer,
-  title   = {LLaVA-OneVision: Easy Visual Task Transfer},
-  author  = {Bo Li and Yuanhan Zhang and Dong Guo and Renrui Zhang and Feng Li and Hao Zhang and Kaichen Zhang and Peiyuan Zhang and Yanwei Li and Ziwei Liu and Chunyuan Li},
-  journal = {Transactions on Machine Learning Research},
-  year    = {2025},
-  url     = {https://openreview.net/forum?id=zKv8qULV6n}
+  title         = {LLaVA-OneVision: Easy Visual Task Transfer},
+  author        = {Bo Li and Yuanhan Zhang and Dong Guo and Renrui Zhang and Feng Li and Hao Zhang and Kaichen Zhang and Peiyuan Zhang and Yanwei Li and Ziwei Liu and Chunyuan Li},
+  journal       = {Transactions on Machine Learning Research},
+  year          = {2025},
+  url           = {https://openreview.net/forum?id=zKv8qULV6n}
 }
 ```
 

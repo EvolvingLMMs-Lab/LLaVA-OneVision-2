@@ -273,6 +273,48 @@
         animation: titleShimmer 3s ease-in-out infinite alternate;
       }
       h2 { font-size: clamp(1.7rem, 3vw, 2.2rem); letter-spacing: -0.02em; }
+      .header.project-header { padding: 34px 0 30px; }
+      .project-heading { margin-bottom: 22px; }
+      .project-header .project-title {
+        margin: 0;
+        font-size: clamp(1.875rem, calc(6vw + .625rem), 4.75rem);
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: -.045em;
+        color: var(--text-heading);
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        filter: none;
+        animation: none;
+      }
+      .project-subtitle {
+        max-width: 46rem;
+        margin: 16px auto 0;
+        font-size: clamp(1.15rem, 2.5vw, 2rem);
+        font-weight: 400;
+        line-height: 1.35;
+        letter-spacing: -.015em;
+        text-wrap: balance;
+        color: var(--text-secondary);
+      }
+      .project-byline {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: baseline;
+        gap: 4px 16px;
+        font-size: .9rem;
+        font-weight: 400;
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+      .project-byline > span { white-space: nowrap; }
+      @media (max-width: 759px) {
+        .header.project-header { padding: 24px 12px 26px; }
+        .project-heading { margin-bottom: 18px; }
+        .project-subtitle { margin-top: 12px; }
+        .project-byline { gap: 2px 12px; font-size: .8125rem; }
+      }
       h3 { font-size: clamp(1.25rem, 2.2vw, 1.55rem); }
       h4 { font-size: 1.08rem; }
       p { margin: 0 0 1rem; }
@@ -407,7 +449,59 @@
       .link-row a:hover svg { color: var(--bg); }
       .link-row a svg { width: 18px; height: 18px; fill: currentColor; }
       .link-row a svg[stroke] { fill: none; }
-      /* Disabled / coming-soon CTA */
+
+      /* All homepage resources stay visible, with a light, compact treatment. */
+      .project-header .link-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        margin-top: 20px;
+        padding: 0;
+      }
+      .project-header .link-row a,
+      .project-header .link-row a:first-child {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        gap: 5px;
+        width: auto;
+        min-height: 30px;
+        padding: 3px 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: .8125rem;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: nowrap;
+      }
+      .project-header .link-row a svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+      .project-header .link-row a:hover,
+      .project-header .link-row a:first-child:hover {
+        background: transparent;
+        color: var(--accent-dark);
+        box-shadow: none;
+        transform: none;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .project-header .link-row a:hover svg { color: currentColor; }
+      .project-header .link-row a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 3px;
+      }
+      @media (max-width: 759px) {
+        .project-header .link-row { gap: 2px 14px; margin-top: 18px; }
+      }
+
       .link-row a[href="#"], .resource-item[href="#"] {
         opacity: .55; cursor: not-allowed;
         position: relative;
@@ -2498,6 +2592,27 @@
   font-size: 0.92rem;
   color: var(--muted, #64748b);
   line-height: 1.5;
+}
+
+.launch-film {
+  width: 100%;
+  padding-top: 8px;
+}
+.launch-film-figure {
+  margin: 0;
+}
+.launch-film-player {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #000;
+}
+.launch-film-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .codec-demo-spotlight {
