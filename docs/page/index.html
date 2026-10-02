@@ -6,21 +6,22 @@
     <meta name="description" content="LLaVA-OneVision-2 — fully-open multimodal training. Recipes, models, and benchmarks for the next generation of vision-language models." />
     <meta name="theme-color" content="#2563eb" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="LLaVA-OneVision-2 — Open Multimodal Training" />
+    <meta property="og:title" content="LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence" />
     <meta property="og:description" content="Fully-open recipes, models, and benchmarks for next-generation vision-language models." />
     <meta property="og:site_name" content="LLaVA-OneVision-2" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="LLaVA-OneVision-2 — Open Multimodal Training" />
+    <meta name="twitter:title" content="LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence" />
     <meta name="twitter:description" content="Fully-open recipes, models, and benchmarks for next-generation vision-language models." />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-    <title>LLaVA-OneVision-2 — Open Multimodal Training</title>
+    <title>LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="assets/styles.css?v=4" />
+    <link rel="stylesheet" href="assets/styles.css?v=20" />
+    <link rel="stylesheet" href="assets/token-budget.css?v=6" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
@@ -60,7 +61,6 @@
               </span>
               <ul class="toc-sublist">
                 <li><a href="#overview"><span class="i18n" data-lang="en">Highlights</span><span class="i18n" data-lang="zh">核心要点</span></a></li>
-                <li><a href="#roadmap"><span class="i18n" data-lang="en">Roadmap</span><span class="i18n" data-lang="zh">路线图</span></a></li>
                 <li><a href="#benchmarks"><span class="i18n" data-lang="en">Benchmarks</span><span class="i18n" data-lang="zh">基准测试</span></a></li>
               </ul>
             </li>
@@ -119,58 +119,69 @@
       </aside>
 
       <div class="page">
-        <header class="header section">
-          <div class="eyebrow"><span class="i18n" data-lang="en">Open Multimodal Training</span><span class="i18n" data-lang="zh">开放多模态训练</span></div>
-          <h1>LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence</h1>
-          <div class="meta-row">
-            <span class="updated-stamp">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span class="i18n" data-lang="en">Updated Apr 2026</span><span class="i18n" data-lang="zh">2026 年 4 月更新</span>
-            </span>
+        <header class="header section project-header">
+          <div class="project-heading">
+            <h1 class="project-title">LLaVA-OneVision-2</h1>
+            <p class="project-subtitle">Towards Next-Generation Perceptual Intelligence</p>
           </div>
-          <div class="affiliations">
+          <div class="project-byline">
             <span>Lmms-Lab</span><span>Glint-Lab</span><span>AIM for Health Lab</span><span>MVP-Lab</span>
+            <span><span class="i18n" data-lang="en">&amp; contributors</span><span class="i18n" data-lang="zh">及贡献者</span></span>
           </div>
-          <div class="authors"><span class="i18n" data-lang="en">LLaVA-OneVision-2 Contributors</span><span class="i18n" data-lang="zh">LLaVA-OneVision-2 贡献者</span></div>
-          <p class="lede i18n" data-lang="en">
-            The next generation of fully-open multimodal training — pushing the boundary of recipe transparency, native-resolution understanding, and end-to-end reproducibility.
-          </p>
-          <p class="lede i18n" data-lang="zh">
-            全开放多模态训练的新一代——在配方透明度、原生分辨率理解和端到端可复现性方面持续突破。
-          </p>
           <div class="link-row">
             <a href="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
-              <span class="i18n" data-lang="en">Code</span><span class="i18n" data-lang="zh">代码</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            <span class="i18n" data-lang="en">Code</span><span class="i18n" data-lang="zh">代码</span>
+            </a>
+            <a href="https://www.youtube.com/watch?v=Lnt5V_ryPhA" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z"></path></svg>
+            <span class="i18n" data-lang="en">Watch on YouTube</span><span class="i18n" data-lang="zh">在 YouTube 上观看</span>
             </a>
             <a href="https://arxiv.org/abs/2605.25979" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-              <span class="i18n" data-lang="en">Technical Report</span><span class="i18n" data-lang="zh">技术报告</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span class="i18n" data-lang="en">Technical Report</span><span class="i18n" data-lang="zh">技术报告</span>
             </a>
             <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-              <span class="i18n" data-lang="en">Models</span><span class="i18n" data-lang="zh">模型</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span class="i18n" data-lang="en">Models</span><span class="i18n" data-lang="zh">模型</span>
             </a>
             <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"></ellipse><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"></path><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>
-              <span class="i18n" data-lang="en">Datasets</span><span class="i18n" data-lang="zh">数据集</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"></ellipse><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"></path><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>
+            <span class="i18n" data-lang="en">Datasets</span><span class="i18n" data-lang="zh">数据集</span>
             </a>
             <a href="https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path><circle cx="7" cy="6" r="1" fill="currentColor" stroke="none"></circle><circle cx="7" cy="12" r="1" fill="currentColor" stroke="none"></circle><circle cx="7" cy="18" r="1" fill="currentColor" stroke="none"></circle></svg>
-              vLLM
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path><circle cx="7" cy="6" r="1" fill="currentColor" stroke="none"></circle><circle cx="7" cy="12" r="1" fill="currentColor" stroke="none"></circle><circle cx="7" cy="18" r="1" fill="currentColor" stroke="none"></circle></svg>
+            vLLM
             </a>
             <a href="https://discord.gg/PmdGHMFNP" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              Discord
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            Discord
             </a>
             <a href="assets/xiaohongshu_group.jpeg" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="6" height="6"></rect><rect x="15" y="3" width="6" height="6"></rect><rect x="3" y="15" width="6" height="6"></rect><path d="M15 15h2v2h-2zM19 15h2v6h-2zM15 19h2v2h-2z"></path>
-              </svg>
-              <span class="i18n" data-lang="en">Xiaohongshu Group</span><span class="i18n" data-lang="zh">小红书群</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="6" height="6"></rect><rect x="15" y="3" width="6" height="6"></rect><rect x="3" y="15" width="6" height="6"></rect><path d="M15 15h2v2h-2zM19 15h2v6h-2zM15 19h2v2h-2z"></path>
+            </svg>
+            <span class="i18n" data-lang="en">Xiaohongshu Group</span><span class="i18n" data-lang="zh">小红书群</span>
             </a>
           </div>
         </header>
+
+        <section class="section launch-film" id="launch-film" aria-label="LLaVA-OneVision-2 video">
+          <figure class="launch-film-figure">
+            <div class="launch-film-player">
+              <iframe
+                src="https://www.youtube.com/embed/Lnt5V_ryPhA?autoplay=1&amp;mute=1&amp;playsinline=1&amp;loop=1&amp;playlist=Lnt5V_ryPhA&amp;rel=0"
+                title="LLaVA-OneVision-2 video"
+                width="1280"
+                height="720"
+                loading="eager"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </figure>
+        </section>
 
         <section class="section codec-demo-spotlight" id="codec-demo-spotlight">
           <div class="codec-demo-spotlight-copy">
@@ -206,7 +217,6 @@
                 <span class="i18n" data-lang="en">Overview</span><span class="i18n" data-lang="zh">概览</span>
               </li>
               <li><a href="#overview"><span class="i18n" data-lang="en">Highlights</span><span class="i18n" data-lang="zh">核心要点</span></a></li>
-              <li><a href="#roadmap"><span class="i18n" data-lang="en">Roadmap</span><span class="i18n" data-lang="zh">路线图</span></a></li>
               <li><a href="#benchmarks"><span class="i18n" data-lang="en">Benchmarks</span><span class="i18n" data-lang="zh">基准测试</span></a></li>
 
               <li class="mobile-toc-group-label">
@@ -291,24 +301,6 @@
           </div>
         </section>
 
-        <section class="section alt" id="roadmap-section">
-          <h3 class="toc-heading" id="roadmap">
-            <span class="i18n" data-lang="en">Roadmap</span><span class="i18n" data-lang="zh">路线图</span>
-          </h3>
-          <p class="i18n" data-lang="en" style="margin-top:-2px;color:#475569;">
-            The release plan for LLaVA-OneVision-2 — capabilities, data, models, and tooling across upcoming stages.
-          </p>
-          <p class="i18n" data-lang="zh" style="margin-top:-2px;color:#475569;">
-            LLaVA-OneVision-2 的发布规划——后续阶段的能力、数据、模型与工具链。
-          </p>
-          <figure class="method-figure">
-            <img src="./assets/roadmap.png" alt="LLaVA-OneVision-2 roadmap" style="width:100%;height:auto;display:block;">
-            <figcaption class="figure-caption">
-              <span class="i18n" data-lang="en"><strong>Figure 2.</strong> Roadmap of video understanding from token compression to codec-aligned perceptual intelligence. The roadmap traces the evolution from early frame/clip sampling and hand-crafted visual features, to heuristic token compression, learned token selection, and the 2026 codec-aligned paradigm represented by LLaVA-OneVision-2.</span>
-              <span class="i18n" data-lang="zh"><strong>图 2.</strong> 视频理解的路线图：从 token 压缩到 codec 对齐的感知智能。路线图勾勒出从早期的帧/片段采样与手工视觉特征，到启发式 token 压缩、可学习的 token 选择，再到由 LLaVA-OneVision-2 代表的 2026 codec 对齐范式的演进过程。</span>
-            </figcaption>
-          </figure>
-        </section>
 
         <section class="section" id="method-figures-section">
           <h3 class="toc-heading" id="method-figures">
@@ -321,242 +313,27 @@
             LLaVA-OneVision-2 长视频与多模态统一能力背后的两个核心设计，图示如下。
           </p>
 
-          <figure class="method-figure">
-            <div class="method-figure-svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif">
-  <defs>
-    <style>
-      .fig-label   { font-size: 11px; font-weight: 600; fill: #64748b; }
-      .fig-title   { font-size: 17px; font-weight: 700; fill: #0f172a; }
-      .fig-sub     { font-size: 12px; font-weight: 400; fill: #475569; }
-      .panel-title { font-size: 13px; font-weight: 600; fill: #0f172a; }
-      .panel-sub   { font-size: 11px; font-weight: 400; fill: #64748b; }
-      .stat-num    { font-size: 18px; font-weight: 700; fill: #0f172a; }
-      .stat-num-a  { font-size: 18px; font-weight: 700; fill: #2563eb; }
-      .stat-label  { font-size: 9px;  font-weight: 500; fill: #64748b; letter-spacing: 0.04em; }
-      .frame-label { font-size: 9px;  font-weight: 600; fill: #475569; text-anchor: middle; }
-      .legend-text { font-size: 10px; font-weight: 500; fill: #334155; }
-      .divider     { stroke: #e2e8f0; stroke-width: 1; }
-      .frame-border  { fill: none; stroke: #cbd5e1; stroke-width: 1.2; }
-      .iframe-border { fill: none; stroke: #2563eb; stroke-width: 1.5; }
-      .pframe-border { fill: none; stroke: #94a3b8; stroke-width: 0.9; stroke-dasharray: 2.5 2; }
-    </style>
-  </defs>
-
-  <rect width="1080" height="480" fill="#ffffff"/>
-
-  <!-- ===== Header ===== -->
-  <text x="60" y="44" class="fig-label">Figure 3</text>
-  <text x="60" y="72" class="fig-title">Codec-aligned patch selection</text>
-  <text x="60" y="94" class="fig-sub">Same 54-token budget. Codec-aligned selection covers 3&#215; the temporal range by keeping I-frames dense and P-frames sparse.</text>
-  <line x1="60" y1="114" x2="1020" y2="114" class="divider"/>
-
-  <!-- ============================================================ -->
-  <!-- LAYOUT PLAN (strict grid):                                  -->
-  <!-- Each panel is exactly 440 wide, starting at x=60 / x=580    -->
-  <!-- Vertical line at x=540 (mid-gutter)                          -->
-  <!-- Both panels have identical inner structure with same y rows: -->
-  <!--   y=146  panel-title                                         -->
-  <!--   y=164  panel-sub                                           -->
-  <!--   y=200  frames row (top of frames)                          -->
-  <!--          frames are 36 high  -> bottom y=236                 -->
-  <!--   y=252  frame-labels (f1.. or I/P)                          -->
-  <!--   y=288  GOP brackets (right panel only)                     -->
-  <!--   y=302  GOP labels (right panel only)                       -->
-  <!--   y=332  time-arrow line                                     -->
-  <!--   y=350  time-arrow caption                                  -->
-  <!--   y=396  stat numbers                                        -->
-  <!--   y=414  stat labels                                         -->
-  <!-- Legend at y=460                                              -->
-  <!-- ============================================================ -->
-
-  <!-- ====================== LEFT PANEL ====================== -->
-  <g transform="translate(60, 0)">
-    <text x="0" y="146" class="panel-title">Uniform sampling</text>
-    <text x="0" y="164" class="panel-sub">6 frames, every patch kept</text>
-
-    <!-- 6 frames, each 36x36 (3x3 patches of 10x10), gap 18 -->
-    <!-- Total: 6*36 + 5*18 = 306. Centered in 440-wide panel -> left offset = (440-306)/2 = 67 -->
-    <g transform="translate(67, 200)">
-      <!-- helper macro inlined 6 times -->
-      <g transform="translate(0,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8321;</text>
-      </g>
-      <g transform="translate(54,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8322;</text>
-      </g>
-      <g transform="translate(108,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8323;</text>
-      </g>
-      <g transform="translate(162,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8324;</text>
-      </g>
-      <g transform="translate(216,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8325;</text>
-      </g>
-      <g transform="translate(270,0)">
-        <rect width="36" height="36" class="frame-border" rx="2"/>
-        <g fill="#3b82f6" opacity="0.85">
-          <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-          <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-          <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-        </g>
-        <text x="18" y="52" class="frame-label">f&#8326;</text>
-      </g>
-    </g>
-
-    <!-- Time arrow row (y=332). Span = same as frames row: 306, starts at x=67 -->
-    <line x1="67" y1="332" x2="373" y2="332" stroke="#94a3b8" stroke-width="1.2"/>
-    <polygon points="373,332 367,328.5 367,335.5" fill="#94a3b8"/>
-    <text x="220" y="350" class="frame-label" fill="#64748b">time &#183; 6 frames</text>
-
-    <!-- Stats row (y=396 number, y=414 label). 3 stats centered over 306 wide area starting at x=67 -->
-    <!-- Place at x=67, x=187, x=307 (gap ~120) -->
-    <text x="67"  y="396" class="stat-num">54</text>
-    <text x="67"  y="414" class="stat-label">tokens</text>
-    <text x="167" y="396" class="stat-num">6</text>
-    <text x="167" y="414" class="stat-label">frames</text>
-    <text x="247" y="396" class="stat-num">9</text>
-    <text x="247" y="414" class="stat-label">patches / frame</text>
-  </g>
-
-  <!-- Vertical divider at x=540 -->
-  <line x1="540" y1="146" x2="540" y2="430" class="divider"/>
-
-  <!-- ====================== RIGHT PANEL ====================== -->
-  <g transform="translate(580, 0)">
-    <text x="0" y="146" class="panel-title">Codec-aligned selection</text>
-    <text x="0" y="164" class="panel-sub">3 GOPs &#183; I-frames dense, P-frames keep motion patches only</text>
-
-    <!-- 3 GOPs. Each GOP = I(36w) + 5 P(8w each) with intra-gap 3.
-         GOP block width = 36 + 3 + 5*8 + 4*3 = 91. 3 GOPs with inter-gap 16 = 3*91 + 2*16 = 305. (~306 same as left)
-         Centered in 440 -> left offset = (440-305)/2 = 67.5 -> 68 -->
-    <g transform="translate(68, 200)">
-      <!-- GOP 1 -->
-      <g transform="translate(0,0)">
-        <g transform="translate(0,0)">
-          <rect width="36" height="36" class="iframe-border" rx="2"/>
-          <g fill="#2563eb" opacity="0.9">
-            <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-            <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-            <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-          </g>
-          <text x="18" y="52" class="frame-label" fill="#2563eb">I</text>
-        </g>
-        <g transform="translate(39,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="2"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(50,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="9"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(61,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="15" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><rect x="1" y="22" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(72,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="22" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(83,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="28" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <!-- GOP bracket below frame-labels: y=72 for bracket line, y=88 for label -->
-        <line x1="0" y1="72" x2="91" y2="72" stroke="#cbd5e1" stroke-width="1"/>
-        <text x="45.5" y="88" class="frame-label" fill="#64748b">GOP&#8321;</text>
-      </g>
-
-      <!-- GOP 2 (offset 107) -->
-      <g transform="translate(107,0)">
-        <g transform="translate(0,0)">
-          <rect width="36" height="36" class="iframe-border" rx="2"/>
-          <g fill="#2563eb" opacity="0.9">
-            <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-            <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-            <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-          </g>
-          <text x="18" y="52" class="frame-label" fill="#2563eb">I</text>
-        </g>
-        <g transform="translate(39,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="5"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(50,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="12" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(61,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="18" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><rect x="1" y="25" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(72,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="25" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(83,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="2"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <line x1="0" y1="72" x2="91" y2="72" stroke="#cbd5e1" stroke-width="1"/>
-        <text x="45.5" y="88" class="frame-label" fill="#64748b">GOP&#8322;</text>
-      </g>
-
-      <!-- GOP 3 (offset 214) -->
-      <g transform="translate(214,0)">
-        <g transform="translate(0,0)">
-          <rect width="36" height="36" class="iframe-border" rx="2"/>
-          <g fill="#2563eb" opacity="0.9">
-            <rect x="2"  y="2"  width="10" height="10" rx="1"/><rect x="13" y="2"  width="10" height="10" rx="1"/><rect x="24" y="2"  width="10" height="10" rx="1"/>
-            <rect x="2"  y="13" width="10" height="10" rx="1"/><rect x="13" y="13" width="10" height="10" rx="1"/><rect x="24" y="13" width="10" height="10" rx="1"/>
-            <rect x="2"  y="24" width="10" height="10" rx="1"/><rect x="13" y="24" width="10" height="10" rx="1"/><rect x="24" y="24" width="10" height="10" rx="1"/>
-          </g>
-          <text x="18" y="52" class="frame-label" fill="#2563eb">I</text>
-        </g>
-        <g transform="translate(39,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="9"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(50,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="15" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><rect x="1" y="22" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(61,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="22" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(72,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="28" width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <g transform="translate(83,0)"><rect width="8" height="36" class="pframe-border" rx="1.5"/><rect x="1" y="2"  width="6" height="6" rx="0.5" fill="#f59e0b" opacity="0.95"/><text x="4" y="52" class="frame-label">P</text></g>
-        <line x1="0" y1="72" x2="91" y2="72" stroke="#cbd5e1" stroke-width="1"/>
-        <text x="45.5" y="88" class="frame-label" fill="#64748b">GOP&#8323;</text>
-      </g>
-    </g>
-
-    <!-- Time arrow row (y=332). Span 305 starts at x=68 -->
-    <line x1="68" y1="332" x2="373" y2="332" stroke="#94a3b8" stroke-width="1.2"/>
-    <polygon points="373,332 367,328.5 367,335.5" fill="#94a3b8"/>
-    <text x="220" y="350" class="frame-label" fill="#64748b">time &#183; 18 frames (3&#215; longer)</text>
-
-    <!-- Stats row -->
-    <text x="68"  y="396" class="stat-num">54</text>
-    <text x="68"  y="414" class="stat-label">tokens</text>
-    <text x="168" y="396" class="stat-num-a">18</text>
-    <text x="168" y="414" class="stat-label">frames</text>
-    <text x="248" y="396" class="stat-num-a">3&#215;</text>
-    <text x="248" y="414" class="stat-label">temporal range</text>
-  </g>
-
-  <!-- ===== Legend (evenly spaced, 4 items across 960 width) ===== -->
-  <g transform="translate(60, 460)">
-    <!-- 4 items, spacing = 240 -->
-    <rect x="0"   y="-9" width="12" height="12" rx="1.5" fill="#3b82f6" opacity="0.85"/>
-    <text x="18"  y="0"  class="legend-text">Uniform-frame patch</text>
-
-    <rect x="240" y="-9" width="12" height="12" rx="1.5" fill="#2563eb" opacity="0.9"/>
-    <text x="258" y="0"  class="legend-text">I-frame patch (dense)</text>
-
-    <rect x="480" y="-9" width="12" height="12" rx="1.5" fill="#f59e0b" opacity="0.95"/>
-    <text x="498" y="0"  class="legend-text">P-frame motion patch</text>
-
-    <rect x="720" y="-9" width="12" height="12" rx="1.5" fill="none" stroke="#94a3b8" stroke-width="0.9" stroke-dasharray="2.5 2"/>
-    <text x="738" y="0"  class="legend-text">P-frame (mostly skipped)</text>
-  </g>
-</svg></div>
-            <figcaption class="figure-caption">
-              <span class="i18n" data-lang="en"><strong>Figure 3.</strong> Codec-style patch selection. Same 54-token budget as uniform sampling, but spans 3× the temporal range by keeping I-frames dense and skimming only motion-rich patches from P-frames.</span>
-              <span class="i18n" data-lang="zh"><strong>图 3.</strong> Codec 风格的 patch 选择。与均匀采样使用同样的 54 token 预算，但通过保留 I 帧密集采样、仅从 P 帧抽取运动相关 patch，可覆盖 3 倍的时间范围。</span>
-            </figcaption>
+          <figure class="method-figure budget-demo" id="token-budget-demo" aria-labelledby="budget-title">
+ <div class="budget-heading"><div><div class="budget-eyebrow"><span class="i18n" data-lang="en">Figure 2 · An interactive explanation</span><span class="i18n" data-lang="zh">图 2 · 交互式方法图解</span></div>
+ <h3 id="budget-title"><span class="i18n" data-lang="en">Same budget. More time.</span><span class="i18n" data-lang="zh">相同预算，看得更久。</span></h3>
+ <p><span class="i18n" data-lang="en">Watch where 54 visual tokens go.</span><span class="i18n" data-lang="zh">看看 54 个视觉 token 如何分配。</span></p></div><span class="budget-schematic"><span class="i18n" data-lang="en">Schematic</span><span class="i18n" data-lang="zh">原理示意</span></span></div>
+ <div class="budget-stage-scroll" tabindex="0" role="region" aria-label="Token allocation diagram"><div class="budget-stage">
+ <section class="budget-lane budget-uniform" aria-label="Uniform sampling">
+ <div class="budget-lane-heading"><div><h4><span class="i18n" data-lang="en">Uniform sampling</span><span class="i18n" data-lang="zh">均匀采样</span></h4><p><span class="i18n" data-lang="en">Every patch, in every sampled frame.</span><span class="i18n" data-lang="zh">每个采样帧，保留全部 patch。</span></p></div>
+ <div class="budget-meter"><div><strong data-tokens="uniform">0</strong><span> / 54 tokens</span></div><div class="budget-meter-track"><i data-meter="uniform"></i></div></div></div>
+ <div class="budget-frames" data-frames="uniform" aria-hidden="true"></div>
+ <div class="budget-coverage"><div class="budget-coverage-track"><i data-coverage="uniform"></i></div><span><b data-count="uniform">0</b> / 18 <span class="i18n" data-lang="en">frames</span><span class="i18n" data-lang="zh">帧</span></span></div>
+ </section><section class="budget-lane budget-codec" aria-label="Codec-aligned selection">
+ <div class="budget-lane-heading"><div><h4><span class="i18n" data-lang="en">Codec-aligned selection</span><span class="i18n" data-lang="zh">Codec 对齐选择</span></h4><p><span class="i18n" data-lang="en">Dense I-frames. Only motion patches from P-frames.</span><span class="i18n" data-lang="zh">I 帧保留完整上下文，P 帧只保留运动 patch。</span></p></div>
+ <div class="budget-meter"><div><strong data-tokens="codec">0</strong><span> / 54 tokens</span></div><div class="budget-meter-track"><i data-meter="codec"></i></div></div></div>
+ <div class="budget-frames" data-frames="codec" aria-hidden="true"></div>
+ <div class="budget-coverage"><div class="budget-coverage-track"><i data-coverage="codec"></i></div><span><b data-count="codec">0</b> / 18 <span class="i18n" data-lang="en">frames</span><span class="i18n" data-lang="zh">帧</span></span></div>
+ </section>
+ <div class="budget-axis" aria-hidden="true"><span><span class="i18n" data-lang="en">Source-frame sequence →</span><span class="i18n" data-lang="zh">源视频帧序列 →</span></span><span>1</span><span>6</span><span>12</span><span>18</span></div>
+ </div></div>
+ <div class="budget-legend"><span><i class="budget-key-blue"></i><span class="i18n" data-lang="en">Full-frame context</span><span class="i18n" data-lang="zh">完整帧上下文</span></span><span><i class="budget-key-gold"></i><span class="i18n" data-lang="en">Selected motion patches</span><span class="i18n" data-lang="zh">选中的运动 patch</span></span><span><i class="budget-key-empty"></i><span class="i18n" data-lang="en">Unselected / not yet reached</span><span class="i18n" data-lang="zh">未选择 / 尚未处理</span></span></div>
+ <div class="budget-takeaway" aria-live="polite"><span class="budget-step" data-step>01 / 03</span><p data-budget-message></p><strong class="budget-result" data-result hidden>3×</strong></div>
+ <noscript><p>54 tokens: 6 full frames, or 18 codec-aligned frames (3 GOPs × 18 tokens). / 54 个 token：6 个完整帧，或 18 个 Codec 对齐帧。</p></noscript>
           </figure>
 
           <figure class="method-figure">
@@ -570,17 +347,17 @@
       .stat-num { font-size: 18px; font-weight: 700; }
       .stat-label { font-size: 9px; font-weight: 500; fill: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
       .pos-label { font-size: 10px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
-      .pos-num { font-size: 9px; font-weight: 500; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
-      .legend-text { font-size: 10px; font-weight: 500; fill: #334155; }
+      .pos-num { font-size: 10px; font-weight: 500; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+      .legend-text { font-size: 11px; font-weight: 500; fill: #334155; }
       .divider { stroke: #e2e8f0; stroke-width: 1; }
 
       @keyframes fig2-token-shimmer {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50%      { opacity: 0.25; transform: scale(0.7); }
+        50%      { opacity: 0.7; transform: scale(0.97); }
       }
       @keyframes fig2-bar-pulse {
-        0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
-        50%      { opacity: 1;   transform: scaleY(1.15); }
+        0%, 100% { opacity: 0.65; transform: scaleY(0.94); }
+        50%      { opacity: 1;   transform: scaleY(1.04); }
       }
       @keyframes fig2-arrow-flow {
         0%   { opacity: 0.2; transform: translateY(-6px); }
@@ -590,12 +367,12 @@
       rect[fill="#f59e0b"][width="16"][height="16"] {
         transform-box: fill-box;
         transform-origin: center;
-        animation: fig2-token-shimmer 1.8s ease-in-out infinite;
+        animation: fig2-token-shimmer 4.8s ease-in-out infinite;
       }
       rect[fill="#2563eb"][width="16"][height="16"] {
         transform-box: fill-box;
         transform-origin: center;
-        animation: fig2-token-shimmer 1.8s ease-in-out infinite;
+        animation: fig2-token-shimmer 4.8s ease-in-out infinite;
         animation-delay: 0.9s;
       }
       rect[width="3"][height="94"][fill="#f59e0b"],
@@ -603,14 +380,14 @@
       rect[width="3"][height="94"][fill="#0d9488"] {
         transform-box: fill-box;
         transform-origin: center;
-        animation: fig2-bar-pulse 1.4s ease-in-out infinite;
+        animation: fig2-bar-pulse 3.6s ease-in-out infinite;
       }
       rect[width="3"][height="94"][fill="#2563eb"] { animation-delay: 0.25s; }
       rect[width="3"][height="94"][fill="#0d9488"] { animation-delay: 0.5s; }
       polygon[points="536,112 544,112 540,118"] {
         transform-box: fill-box;
         transform-origin: center;
-        animation: fig2-arrow-flow 1s ease-in-out infinite;
+        animation: fig2-arrow-flow 2.8s ease-in-out infinite;
       }
       @media (prefers-reduced-motion: reduce) {
         rect[fill="#f59e0b"][width="16"][height="16"],
@@ -623,7 +400,7 @@
     </style>
   </defs>
   <rect width="1080" height="466" fill="#ffffff"/>
-  <text x="60" y="22" class="subtitle">Figure 4 · One Encoder, Every Modality</text>
+  <text x="60" y="22" class="subtitle">Figure 3 · One Encoder, Every Modality</text>
   <text x="60" y="42" class="title">OneVision-Encoder · three input types, same token grid.</text>
   <text x="60" y="58" class="panel-sub">All three input types flow through the <tspan font-weight="700" fill="#2563eb">same OneVision-Encoder</tspan> under shared <tspan font-weight="700" fill="#0f172a" font-family="'SF Mono', 'Menlo', monospace">(t,&#8239;h,&#8239;w)</tspan> positions.</text>
   <line x1="60" y1="68" x2="1020" y2="68" class="divider"/>
@@ -1006,8 +783,8 @@
   </g>
 </svg></div>
             <figcaption class="figure-caption">
-              <span class="i18n" data-lang="en"><strong>Figure 4.</strong> One encoder, three input modalities. Image, uniform-frame video, and codec-aligned video all flow through the same OneVision-Encoder under shared <code>(t, h, w)</code> positions.</span>
-              <span class="i18n" data-lang="zh"><strong>图 4.</strong> 单一编码器统一处理三种模态输入。图像、均匀帧视频与 codec 对齐视频均通过同一 OneVision-Encoder，并共享 <code>(t, h, w)</code> 位置编码。</span>
+              <span class="i18n" data-lang="en"><strong>Figure 3.</strong> One encoder, three input modalities. Image, uniform-frame video, and codec-aligned video all flow through the same OneVision-Encoder under shared <code>(t, h, w)</code> positions.</span>
+              <span class="i18n" data-lang="zh"><strong>图 3.</strong> 单一编码器统一处理三种模态输入。图像、均匀帧视频与 codec 对齐视频均通过同一 OneVision-Encoder，并共享 <code>(t, h, w)</code> 位置编码。</span>
             </figcaption>
           </figure>
         </section>
@@ -2446,8 +2223,8 @@
           <figure class="method-figure">
             <div class="method-figure-svg" id="codec-vs-frame-chart"></div>
             <figcaption class="figure-caption">
-              <span class="i18n" data-lang="en"><strong>Figure 5.</strong> Codec-stream input vs uniform frame sampling across seven video and temporal grounding benchmarks, using the shared codec-vs-frame data source. Gains are largest when the frame budget is tight, including the expanded JumpScore setting up to 128 frames.</span>
-              <span class="i18n" data-lang="zh"><strong>图 5.</strong> 七个视频与时序定位基准上 codec 流式输入与均匀帧采样的对比，数据来自同一个 codec-vs-frame 数据源。帧预算较紧时提升最明显，其中 JumpScore 扩展到 128 帧设定。</span>
+              <span class="i18n" data-lang="en"><strong>Figure 4.</strong> Codec-stream input vs uniform frame sampling across seven video and temporal grounding benchmarks, using the shared codec-vs-frame data source. Gains are largest when the frame budget is tight, including the expanded JumpScore setting up to 128 frames.</span>
+              <span class="i18n" data-lang="zh"><strong>图 4.</strong> 七个视频与时序定位基准上 codec 流式输入与均匀帧采样的对比，数据来自同一个 codec-vs-frame 数据源。帧预算较紧时提升最明显，其中 JumpScore 扩展到 128 帧设定。</span>
             </figcaption>
           </figure>
 
@@ -2768,16 +2545,16 @@
             <span class="i18n" data-lang="en">Visual Encoder Pretraining (OneVision-Encoder)</span><span class="i18n" data-lang="zh">视觉编码器预训练（OneVision-Encoder）</span>
           </h3>
           <p class="i18n" data-lang="en">
-            <strong>OneVision-Encoder</strong> extends native-resolution training to longer aspect ratios and pushes context capacity for high-density documents and frame-rich video. See the architecture overview below.
+            <a href="https://github.com/EvolvingLMMs-Lab/OneVision-Encoder" target="_blank" rel="noopener noreferrer"><strong>OneVision-Encoder</strong></a> extends native-resolution training to longer aspect ratios and pushes context capacity for high-density documents and frame-rich video. See the architecture overview below.
           </p>
           <p class="i18n" data-lang="zh">
-            <strong>OneVision-Encoder</strong> 将原生分辨率训练扩展至更长宽高比，并提升长文档和高帧率视频场景的上下文容量。完整架构示意见下方。
+            <a href="https://github.com/EvolvingLMMs-Lab/OneVision-Encoder" target="_blank" rel="noopener noreferrer"><strong>OneVision-Encoder</strong></a> 将原生分辨率训练扩展至更长宽高比，并提升长文档和高帧率视频场景的上下文容量。完整架构示意见下方。
           </p>
           <div class="image-frame">
             <img src="./assets/arch.png" alt="OneVision-Encoder architecture overview" style="display:block;width:80%;max-width:880px;height:auto;margin:0 auto;">
             <div class="figure-caption">
-              <span class="i18n" data-lang="en">Figure 6. OneVision-Encoder architecture overview.</span>
-              <span class="i18n" data-lang="zh">图 6. OneVision-Encoder 架构概览。</span>
+              <span class="i18n" data-lang="en">Figure 5. OneVision-Encoder architecture overview.</span>
+              <span class="i18n" data-lang="zh">图 5. OneVision-Encoder 架构概览。</span>
             </div>
           </div>
         </section>
@@ -3544,32 +3321,42 @@ print(processor.batch_decode(out, skip_special_tokens=True)[0])
           <h3 class="toc-heading" id="citation">
             <span class="i18n" data-lang="en">Citation</span><span class="i18n" data-lang="zh">引用</span>
           </h3>
-          <div class="citation-block" id="citation-bibtex">@inproceedings{LLaVA-OneVision-2,
-  title={LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence},
-  author={An, Xiang and Xie, Yin and Tang, Feilong and Yan, Yunyao and Tan, Huajie and Zhu, Didi and Chen, Changrui and Zhao, Xiuwei and Qin, Bin and Yang, Kaicheng and Shen, Yifei and Zhang, Yuanhan and Zhang, Kaichen and Zhang, Wenkang and Cheng, Zheng and Zhang, Nansen and Wu, Chunsheng and Ge, Chunjiang and Ran, Zimin and Song, Dehua and Li, Chunyuan and Feng, Shikun and Hu, Ming and Chen, Zhangquan and Niu, Junbo and Li, Bo and Feng, Ziyong and Liu, Ziwei and Ge, Zongyuan and Deng, Jiankang},
-  booktitle={arXiv},
-  year={2026}
+          <div class="citation-block" id="citation-bibtex">@misc{an2026llavaonevision2nextgenerationperceptualintelligence,
+  title         = {LLaVA-OneVision-2: Towards Next-Generation Perceptual Intelligence},
+  author        = {Xiang An and Yin Xie and Feilong Tang and Yunyao Yan and Huajie Tan and Didi Zhu and Changrui Chen and Xiuwei Zhao and Bin Qin and Kaicheng Yang and Yifei Shen and Yuanhan Zhang and Kaichen Zhang and Wenkang Zhang and Zheng Cheng and Nansen Zhang and Chunsheng Wu and Chunjiang Ge and Zimin Ran and Dehua Song and Chunyuan Li and Shikun Feng and Ming Hu and Zhangquan Chen and Junbo Niu and Bo Li and Ziyong Feng and Ziwei Liu and Zongyuan Ge and Jiankang Deng},
+  year          = {2026},
+  eprint        = {2605.25979},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2605.25979}
 }
 
-@inproceedings{LLaVA-OneVision-1.5,
-  title={LLaVA-OneVision-1.5: Fully Open Framework for Democratized Multimodal Training},
-  author={An, Xiang and Xie, Yin and Yang, Kaicheng and Zhang, Wenkang and Zhao, Xiuwei and Cheng, Zheng and Wang, Yirui and Xu, Songcen and Chen, Changrui and Wu, Chunsheng and Tan, Huajie and Li, Chunyuan and Yang, Jing and Yu, Jie and Wang, Xiyao and Qin, Bin and Wang, Yumeng and Yan, Zizhen and Feng, Ziyong and Liu, Ziwei and Li, Bo and Deng, Jiankang},
-  booktitle={arXiv},
-  year={2025}
+@misc{an2025llavaonevision15fullyopenframework,
+  title         = {LLaVA-OneVision-1.5: Fully Open Framework for Democratized Multimodal Training},
+  author        = {Xiang An and Yin Xie and Kaicheng Yang and Wenkang Zhang and Xiuwei Zhao and Zheng Cheng and Yirui Wang and Songcen Xu and Changrui Chen and Didi Zhu and Chunsheng Wu and Huajie Tan and Chunyuan Li and Jing Yang and Jie Yu and Xiyao Wang and Bin Qin and Yumeng Wang and Zizhen Yan and Ziyong Feng and Ziwei Liu and Bo Li and Jiankang Deng},
+  year          = {2025},
+  eprint        = {2509.23661},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2509.23661}
 }
 
-@article{tang2026onevisionencoder,
-  title={OneVision-Encoder: Codec-Aligned Sparsity as a Foundational Principle for Multimodal Intelligence},
-  author={Tang, Feilong and An, Xiang and Yan, Yunyao and Xie, Yin and Qin, Bin and Yang, Kaicheng and Shen, Yifei and Zhang, Yuanhan and Li, Chunyuan and Feng, Shikun and Chen, Changrui and Tan, Huajie and Hu, Ming and Zhang, Manyuan and Li, Bo and Feng, Ziyong and Liu, Ziwei and Ge, Zongyuan and Deng, Jiankang},
-  journal={arXiv preprint arXiv:2602.08683},
-  year={2026}
+@misc{tang2026onevisionencodercodecalignedsparsityfoundational,
+  title         = {OneVision-Encoder: Codec-Aligned Sparsity as a Foundational Principle for Multimodal Intelligence},
+  author        = {Feilong Tang and Xiang An and Yunyao Yan and Yin Xie and Bin Qin and Kaicheng Yang and Yifei Shen and Yuanhan Zhang and Chunyuan Li and Shikun Feng and Changrui Chen and Huajie Tan and Ming Hu and Manyuan Zhang and Bo Li and Ziyong Feng and Ziwei Liu and Zongyuan Ge and Jiankang Deng},
+  year          = {2026},
+  eprint        = {2602.08683},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2602.08683}
 }
 
-@article{lillava,
-  title={LLaVA-OneVision: Easy Visual Task Transfer},
-  author={Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan},
-  journal={Transactions on Machine Learning Research},
-  year={2024}
+@article{li2025llavaonevisioneasyvisualtasktransfer,
+  title         = {LLaVA-OneVision: Easy Visual Task Transfer},
+  author        = {Bo Li and Yuanhan Zhang and Dong Guo and Renrui Zhang and Feng Li and Hao Zhang and Kaichen Zhang and Peiyuan Zhang and Yanwei Li and Ziwei Liu and Chunyuan Li},
+  journal       = {Transactions on Machine Learning Research},
+  year          = {2025},
+  url           = {https://openreview.net/forum?id=zKv8qULV6n}
 }</div>
           <div style="margin-top:10px">
             <button class="copy-btn" data-copy-target="citation-bibtex">Copy BibTeX</button>
@@ -3580,7 +3367,7 @@ print(processor.batch_decode(out, skip_special_tokens=True)[0])
         <section class="references" id="references">
           <h2><span class="i18n" data-lang="en">References</span><span class="i18n" data-lang="zh">参考文献</span></h2>
           <ol class="ref-list">
-            <li id="ref-1"><span class="ref-title">LLaVA-OneVision: Easy Visual Task Transfer</span><span class="ref-authors">Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, &amp; Chunyuan Li</span><span class="ref-venue">TMLR</span>, <span class="ref-year">2024</span>. <a class="ref-link" href="https://arxiv.org/abs/2408.03326" target="_blank" rel="noopener">arXiv:2408.03326</a></li>
+            <li id="ref-1"><span class="ref-title">LLaVA-OneVision: Easy Visual Task Transfer</span><span class="ref-authors">Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, &amp; Chunyuan Li</span><span class="ref-venue">TMLR</span>, <span class="ref-year">2025</span>. <a class="ref-link" href="https://arxiv.org/abs/2408.03326" target="_blank" rel="noopener">arXiv:2408.03326</a></li>
             <li id="ref-2"><span class="ref-title">LLaVA-OneVision-1.5: Fully Open Framework for Democratized Multimodal Training</span><span class="ref-authors">Xiang An, Yin Xie, Kaicheng Yang, Wenkang Zhang, Xiuwei Zhao, Zheng Cheng, Yirui Wang, Songcen Xu, Changrui Chen, Didi Zhu, Chunsheng Wu, Huajie Tan, Chunyuan Li, Jing Yang, Jie Yu, Xiyao Wang, Bin Qin, Yumeng Wang, Zizhen Yan, Ziyong Feng, Ziwei Liu, Bo Li, &amp; Jiankang Deng</span><span class="ref-venue">arXiv</span>, <span class="ref-year">2025</span>. <a class="ref-link" href="https://arxiv.org/abs/2509.23661" target="_blank" rel="noopener">arXiv:2509.23661</a></li>
             <li id="ref-3"><span class="ref-title">OneVision-Encoder: Codec-Aligned Sparsity as a Foundational Principle for Multimodal Intelligence</span><span class="ref-authors">Feilong Tang, Xiang An, Yunyao Yan, Yin Xie, Bin Qin, Kaicheng Yang, Yifei Shen, Yuanhan Zhang, Chunyuan Li, Shikun Feng, Changrui Chen, Huajie Tan, Ming Hu, Manyuan Zhang, Bo Li, Ziyong Feng, Ziwei Liu, Zongyuan Ge, &amp; Jiankang Deng</span><span class="ref-venue">arXiv</span>, <span class="ref-year">2026</span>. <a class="ref-link" href="https://arxiv.org/abs/2602.08683" target="_blank" rel="noopener">arXiv:2602.08683</a></li>
             <li id="ref-4"><span class="ref-title">Visual Instruction Tuning</span><span class="ref-authors">Haotian Liu, Chunyuan Li, Qingyang Wu, &amp; Yong Jae Lee</span><span class="ref-venue">NeurIPS</span>, <span class="ref-year">2023</span>. <a class="ref-link" href="https://arxiv.org/abs/2304.08485" target="_blank" rel="noopener">arXiv:2304.08485</a></li>
@@ -3594,7 +3381,8 @@ print(processor.batch_decode(out, skip_special_tokens=True)[0])
     </div>
     </div>
 
-<script src="assets/main.js"></script>
+<script src="assets/main.js?v=3"></script>
+<script src="assets/token-budget.js?v=7"></script>
 <script src="assets/results-table.js"></script>
 <script>
   (function () {

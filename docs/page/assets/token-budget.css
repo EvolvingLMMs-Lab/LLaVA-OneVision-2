@@ -1,0 +1,75 @@
+/* Figure 3: scoped styles; blue = context, amber = selected motion. */
+.budget-demo { --budget-blue:#3b82f6; --budget-gold:#d99a20; border:1px solid var(--border); border-radius:18px; background:var(--card-bg); overflow:hidden; }
+.budget-heading { padding:28px 30px 22px; display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+.budget-eyebrow { color:var(--accent-dark); font-size:12px; font-weight:700; letter-spacing:.045em; margin-bottom:10px; }
+.budget-heading h3 { font-size:clamp(24px,3.5vw,34px); letter-spacing:-.035em; margin:0 0 6px; }
+.budget-heading p,.budget-lane-heading p { margin:0; color:var(--text-secondary); font-size:14px; }
+.budget-schematic { padding:4px 10px; border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+.budget-stage-scroll { overflow-x:auto; padding:0 30px; scrollbar-width:thin; }
+.budget-stage { min-width:660px; }
+.budget-lane { padding:20px 0 18px; border-top:1px solid var(--border); }
+.budget-lane-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px; }
+.budget-lane-heading h4 { margin:0 0 4px; font-size:17px; }
+.budget-meter { min-width:146px; text-align:right; font-size:12px; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
+.budget-meter strong { font-size:25px; color:var(--text-heading); font-weight:700; }
+.budget-meter-track { height:4px; background:var(--border); border-radius:3px; margin-top:5px; overflow:hidden; }
+.budget-meter-track i { display:block; height:100%; width:100%; transform:scaleX(0); transform-origin:left; background:var(--budget-blue); }
+.budget-codec .budget-meter-track i { background:var(--budget-gold); }
+.budget-frames { display:grid; grid-template-columns:repeat(18,minmax(0,1fr)); gap:7px; }
+.budget-frame { position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; aspect-ratio:1; padding:3px; border:1px solid var(--border); border-radius:4px; }
+.budget-frame.is-i { border-top:2px solid var(--budget-blue); }
+.budget-frame.is-p { border-top:2px solid var(--budget-gold); }
+.budget-frame.is-current { outline:2px solid var(--budget-blue); outline-offset:3px; }
+.budget-frame.is-p.is-current { outline-color:var(--budget-gold); }
+.budget-patch { background:var(--border); border-radius:1px; opacity:.38; }
+.budget-patch.is-kept { background:var(--budget-blue); opacity:1; }
+.budget-frame.is-p .budget-patch.is-kept { background:var(--budget-gold); }
+.budget-frame.is-unavailable { border-style:dashed; opacity:.35; }
+.budget-frame-label { position:absolute; top:calc(100% + 5px); left:0; right:0; font-size:10px; font-weight:600; color:var(--text-secondary); text-align:center; }
+.budget-coverage { display:flex; align-items:center; gap:15px; margin-top:28px; font-size:12px; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
+.budget-coverage-track { height:3px; background:var(--border); flex:1; }
+.budget-coverage-track i { display:block; height:100%; width:100%; transform:scaleX(0); transform-origin:left; background:var(--budget-blue); }
+.budget-codec .budget-coverage-track i { background:var(--budget-gold); }
+.budget-coverage span { width:88px; text-align:right; }
+.budget-axis { position:relative; height:28px; margin:0 0 10px; color:var(--text-secondary); font-size:10px; }
+.budget-axis > span:first-child { position:absolute; left:0; top:12px; }
+.budget-axis > span:not(:first-child) { position:absolute; top:-2px; }
+.budget-axis > span:nth-child(2) { left:1%; }.budget-axis > span:nth-child(3) { left:29%; }.budget-axis > span:nth-child(4) { left:63%; }.budget-axis > span:nth-child(5) { right:1%; }
+.budget-legend { display:flex; flex-wrap:wrap; gap:8px 22px; padding:10px 30px 20px; color:var(--text-secondary); font-size:12px; }
+.budget-legend span { display:inline-flex; align-items:center; gap:6px; }
+.budget-legend i { width:9px; height:9px; border-radius:2px; display:inline-block; }
+.budget-key-blue { background:var(--budget-blue); }.budget-key-gold { background:var(--budget-gold); }.budget-key-empty { border:1px dashed var(--text-secondary); }
+.budget-takeaway { margin:0 30px 24px; padding:16px 18px; background:var(--bg-highlight); border-radius:8px; display:flex; align-items:center; gap:16px; min-height:78px; }
+.budget-step { font:11px 'JetBrains Mono',monospace; color:var(--accent-dark); white-space:nowrap; }
+.budget-takeaway p { margin:0; color:var(--text-heading); font-size:15px; flex:1; }
+.budget-result { font-size:32px; color:var(--accent-dark); line-height:1; }
+.budget-result[hidden] { display:none; }
+.budget-demo :focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+@media(max-width:600px) {
+ .budget-heading { padding:20px 16px 16px; }.budget-stage-scroll { padding:0 16px; }
+ .budget-heading h3 { font-size:26px; }.budget-heading { gap:8px; }.budget-schematic { font-size:10px; }
+ .budget-legend { padding:10px 16px 16px; gap:8px 14px; font-size:11px; }
+ .budget-takeaway { margin:0 16px 20px; padding:14px 12px; gap:10px; min-height:100px; }
+ .budget-takeaway p { font-size:13px; }.budget-result { font-size:26px; }
+}
+
+/* Small readability refinements to the original two-figure layout. */
+#method-figures-section > p.i18n { color: var(--text-secondary) !important; }
+.budget-heading p, .budget-lane-heading p { font-size: 15px; line-height: 1.6; }
+.budget-lane-heading { align-items: flex-start; }
+.budget-lane-heading h4 { font-size: 18px; }
+.budget-frame-label { font-size: 11px; }
+.budget-patch { transition: background-color .18s ease, opacity .18s ease; }
+.budget-legend { font-size: 13px; }
+.budget-takeaway { line-height: 1.6; }
+#method-figures-section > .method-figure > .figure-caption { color: var(--text-secondary); }
+@media (max-width: 600px) {
+  .budget-heading p, .budget-lane-heading p { font-size: 14px; }
+  .budget-heading { flex-wrap: wrap; }
+  .budget-heading h3 { font-size: 25px; }
+  .budget-legend { font-size: 12px; }
+  .budget-takeaway p { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .budget-patch { transition: none; }
+}
