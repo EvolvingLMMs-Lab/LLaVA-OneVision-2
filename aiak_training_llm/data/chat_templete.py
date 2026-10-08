@@ -436,12 +436,22 @@ _register_chat_template(
     replace_eos=True,
 )
 
+# Qwen3.5 thinking switch (prompt-side only; matches official chat_template.jinja):
+#   think-on : generation prompt ends with "<think>\n"  -> response is "reasoning\n</think>\n\nanswer"
+#   think-off: generation prompt ends with "<think>\n\n</think>\n\n" -> response is the answer only
 _register_chat_template(
-    # Official Qwen3 non-thinking convention: an EMPTY think block sits at the head
-    # of the assistant turn as part of the PROMPT (masked from loss). Keeps the SFT
-    # prompt distribution aligned with the qwen3.5 base pretraining instead of
-    # fighting its thinking prior. (s1-fork ablation, 2026-08-13)
-    name="qwen35-vl-think",
+    name="qwen35-vl-think-on",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+_register_chat_template(
+    name="qwen35-vl-think-off",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
@@ -450,6 +460,7 @@ _register_chat_template(
     replace_eos=True,
     mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
+
 
 _register_chat_template(
     name="qwen2-vl",
