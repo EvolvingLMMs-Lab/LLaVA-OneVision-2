@@ -96,6 +96,47 @@ def load_hf_state_dict(load_path):
     return sd
 
 
+def _convert_moe_mlp(layer_sd, mpre, out):
+    """Qwen3.5-MoE layer MLP -> mcore MoELayer (TEGroupedMLP experts + gated SharedExpertMLP).
+
+    HF (transformers qwen3_5_moe):
+      mlp.gate.weight                     [E, H]        router logits
+      mlp.experts.gate_up_proj            [E, 2I, H]    fused (on-disk form of the original release), or
+      mlp.experts.{e}.{gate,up,down}_proj.weight        per-expert (form written by transformers save)
+      mlp.experts.down_proj               [E, H, I]
+      mlp.shared_expert.{gate,up,down}_proj.weight
+      mlp.shared_expert_gate.weight       [1, H]        sigmoid gate on the shared expert
+    mcore:
+      mlp.router.weight                   [E, H]
+      mlp.experts.linear_fc1.weight{e}    [2I, H] = cat[gate_e, up_e]   (HF chunk(2) order: gate first)
+      mlp.experts.linear_fc2.weight{e}    [H, I]
+      mlp.shared_experts.linear_fc1.weight = cat[gate, up], linear_fc2.weight = down
+      mlp.shared_experts.gate_weight      [1, H]
+    Routing math matches without remapping: HF softmax(all)->topk->renorm ==
+    mcore moe_router_pre_softmax=False (topk on logits, softmax over the k).
+    """
+    router = layer_sd["mlp.gate.weight"]
+    n_exp = router.shape[0]
+    out[mpre + "mlp.router.weight"] = router.clone()
+    fused = "mlp.experts.gate_up_proj" in layer_sd
+    for e in range(n_exp):
+        if fused:
+            fc1 = layer_sd["mlp.experts.gate_up_proj"][e]
+            fc2 = layer_sd["mlp.experts.down_proj"][e]
+        else:
+            ep = f"mlp.experts.{e}."
+            fc1 = torch.cat([layer_sd[ep + "gate_proj.weight"], layer_sd[ep + "up_proj.weight"]], dim=0)
+            fc2 = layer_sd[ep + "down_proj.weight"]
+        out[mpre + f"mlp.experts.linear_fc1.weight{e}"] = fc1.clone()
+        out[mpre + f"mlp.experts.linear_fc2.weight{e}"] = fc2.clone()
+    out[mpre + "mlp.shared_experts.linear_fc1.weight"] = torch.cat(
+        [layer_sd["mlp.shared_expert.gate_proj.weight"], layer_sd["mlp.shared_expert.up_proj.weight"]], dim=0
+    ).clone()
+    out[mpre + "mlp.shared_experts.linear_fc2.weight"] = layer_sd["mlp.shared_expert.down_proj.weight"].clone()
+    out[mpre + "mlp.shared_experts.gate_weight"] = layer_sd["mlp.shared_expert_gate.weight"].clone()
+    return n_exp
+
+
 def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state=True, dims=None):
     """Convert the Qwen3.5 language weights from a merged HF state dict to mcore.
 
@@ -112,6 +153,7 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
 
     # ---- decoder layers ------------------------------------------------------
     n_full, n_lin = 0, 0
+    moe_layers = set()
     for i in range(num_layers):
         pre = f"{HF_LM}.layers.{i}."
         layer_sd = {k[len(pre):]: v for k, v in hf_sd.items() if k.startswith(pre)}
@@ -121,10 +163,14 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
         # non-attention: separate input_layernorm + pre_mlp_layernorm + gated MLP
         out[mpre + "input_layernorm.weight"] = layer_sd["input_layernorm.weight"].clone()
         out[mpre + "pre_mlp_layernorm.weight"] = layer_sd["post_attention_layernorm.weight"].clone()
-        out[mpre + "mlp.linear_fc1.weight"] = torch.cat(
-            [layer_sd["mlp.gate_proj.weight"], layer_sd["mlp.up_proj.weight"]], dim=0
-        ).clone()
-        out[mpre + "mlp.linear_fc2.weight"] = layer_sd["mlp.down_proj.weight"].clone()
+        if "mlp.gate.weight" in layer_sd:  # Qwen3.5-MoE layer
+            _convert_moe_mlp(layer_sd, mpre, out)
+            moe_layers.add(i)
+        else:
+            out[mpre + "mlp.linear_fc1.weight"] = torch.cat(
+                [layer_sd["mlp.gate_proj.weight"], layer_sd["mlp.up_proj.weight"]], dim=0
+            ).clone()
+            out[mpre + "mlp.linear_fc2.weight"] = layer_sd["mlp.down_proj.weight"].clone()
 
         # attention: dispatch on layer type
         is_full = ((i + 1) % full_attention_interval == 0)
@@ -137,7 +183,8 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
         for k, v in attn.items():
             out[mpre + "self_attention." + k] = v
 
-    print(f"[qwen35_hf_to_mcore] converted {num_layers} layers: {n_full} full-attn, {n_lin} linear")
+    print(f"[qwen35_hf_to_mcore] converted {num_layers} layers: {n_full} full-attn, {n_lin} linear, "
+          f"{len(moe_layers)} MoE")
 
     if add_extra_state:
         # TE modules carry a serialized ``_extra_state`` blob; emit None-blobs so a
@@ -150,7 +197,14 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
         for i in range(num_layers):
             mpre = f"{MC_LM}.decoder.layers.{i}."
             is_full = ((i + 1) % full_attention_interval == 0)
-            te_suffixes += [mpre + "mlp.linear_fc1._extra_state", mpre + "mlp.linear_fc2._extra_state"]
+            if i in moe_layers:
+                te_suffixes += [
+                    mpre + "mlp.experts.linear_fc1._extra_state", mpre + "mlp.experts.linear_fc2._extra_state",
+                    mpre + "mlp.shared_experts.linear_fc1._extra_state",
+                    mpre + "mlp.shared_experts.linear_fc2._extra_state",
+                ]
+            else:
+                te_suffixes += [mpre + "mlp.linear_fc1._extra_state", mpre + "mlp.linear_fc2._extra_state"]
             if is_full:
                 te_suffixes += [
                     mpre + "self_attention.linear_qkv._extra_state",
