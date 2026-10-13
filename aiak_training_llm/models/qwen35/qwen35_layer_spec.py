@@ -113,6 +113,11 @@ def get_qwen3_5_transformer_layer_spec(config, vp_stage=None):
             moe_grouped_gemm=getattr(config, "moe_grouped_gemm", False),
             moe_use_legacy_grouped_gemm=getattr(config, "moe_use_legacy_grouped_gemm", False),
         )
+        # Qwen3.5-MoE (qwen3_5_moe) scales the shared expert by sigmoid(shared_expert_gate(x)).
+        # The stock mcore spec builds SharedExpertMLP with gate=False; turn it on unless
+        # explicitly disabled with QWEN35_SHARED_EXPERT_GATE=0.
+        if __import__("os").environ.get("QWEN35_SHARED_EXPERT_GATE", "1") != "0":
+            mlp.submodules.shared_experts.params = {"gate": True}
 
     full_attention_interval = getattr(config, "full_attention_interval", 4)
 

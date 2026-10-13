@@ -457,6 +457,51 @@ def llava_onevision2_27b_qwen35():
     )
 
 
+@register_model_config(
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-35b-a3b-qwen35"
+)
+def llava_onevision2_35b_a3b_qwen35():
+    """llava-onevision2 with the Qwen3.6-35B-A3B hybrid-attention MoE LLM backbone.
+
+    Dims from the Qwen3.6-35B-A3B HF text_config (model_type qwen3_5_moe_text):
+    40 hybrid layers (full attention every 4th), hidden 2048, 16 heads / 2 KV
+    groups (head_dim 256). GDN: 16 key / 32 value heads (head_dim 128), conv 4.
+    MoE in EVERY layer: 256 routed experts (top-8, moe_ffn 512) + 1 shared expert
+    (512) with a sigmoid shared-expert gate. Embeddings UNTIED. rope/mrope
+    identical to the dense Qwen3.5 presets. The remaining MoE knobs (router topk,
+    shared-expert size, grouped gemm, dispatcher, aux loss) are passed on the CLI.
+    """
+    return LlavaOnevision2Config(
+        num_layers=40,
+        hidden_size=2048,
+        ffn_hidden_size=512,
+        num_attention_heads=16,
+        group_query_attention=True,
+        num_query_groups=2,
+        kv_channels=256,
+        vocab_size_in_config_file=248320,
+        make_vocab_size_divisible_by=128,
+        qk_layernorm=True,
+        add_qkv_bias=False,
+        swiglu=True,
+        rotary_base=10000000,
+        untie_embeddings_and_output_weights=True,  # tie_word_embeddings=False
+        norm_epsilon=1e-06,
+        num_experts=256,
+        moe_ffn_hidden_size=512,
+        # Qwen3.5 hybrid-attention extras
+        language_model_type="qwen3_5",
+        linear_key_head_dim=128,
+        linear_value_head_dim=128,
+        linear_num_key_heads=16,
+        linear_num_value_heads=32,
+        linear_conv_kernel_dim=4,
+        full_attention_interval=4,
+        mrope_section=[11, 11, 10],
+        mrope_interleaved=True,
+        partial_rotary_factor=0.25,
+    )
+
 @dataclass
 class VisionConfig:
     """configuration for vision model
