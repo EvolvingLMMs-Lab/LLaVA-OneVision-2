@@ -41,12 +41,12 @@ def load_manifest_index(manifest_path: str) -> dict[str, dict[str, Any]]:
 
 
 def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
-    list[str], list[str], list[str], list[Optional[str]], Any, int, Optional[list]
+    list[str], list[str], list[str], list[Optional[str]], Any, int, Optional[list], Optional[str]
 ]:
     """Mirror of ``SamplePacker._extract_bmr_content`` but for a manifest entry.
 
     Returns:
-        (images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw)
+        (images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw, data_type)
         ``resize_hw`` is the per-image [h, w] target written by s0 for master-frame
         samples, or None.
     """
@@ -59,6 +59,7 @@ def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
     timestamp_decimal = raw.get("timestamp_decimal", 1)
     if timestamp_decimal is None:
         timestamp_decimal = 1
+    data_type = raw.get("data_type", None)
 
     messages = raw.get("messages") or raw.get("conversations") or []
     prompts: list[str] = []
@@ -73,7 +74,7 @@ def _extract_bmr_from_manifest_entry(entry: dict[str, Any]) -> tuple[
         elif role in ("gpt", "assistant"):
             responses.append(content)
 
-    return images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw
+    return images_abs, prompts, responses, patch_pos_abs, fps, timestamp_decimal, resize_hw, data_type
 
 
 def build_direct_sample_from_manifest(
@@ -94,6 +95,7 @@ def build_direct_sample_from_manifest(
     packed_patch_positions: list[list[str]] = []
     packed_fps: list[Any] = []
     packed_timestamp_decimals: list[int] = []
+    packed_data_types: list[Optional[str]] = []
 
     for sample_idx, item in enumerate(bin_data):
         raw_name = str(item["name"])
@@ -101,7 +103,7 @@ def build_direct_sample_from_manifest(
         if entry is None:
             raise FileNotFoundError(f"Sample {raw_name} not found in manifest")
 
-        images, prompts, responses, patch_positions, fps, timestamp_decimal, resize_hw = (
+        images, prompts, responses, patch_positions, fps, timestamp_decimal, resize_hw, data_type = (
             _extract_bmr_from_manifest_entry(entry)
         )
         check_turn_pairing(prompts, responses, raw_name)
@@ -148,6 +150,7 @@ def build_direct_sample_from_manifest(
         packed_captions.append(responses if responses else [""])
         packed_fps.append(fps)
         packed_timestamp_decimals.append(timestamp_decimal)
+        packed_data_types.append(data_type)
 
     payload: dict[str, Any] = {
         "images": packed_images,
@@ -159,6 +162,10 @@ def build_direct_sample_from_manifest(
     if any(fps is not None for fps in packed_fps):
         payload["fps"] = packed_fps
     payload["timestamp_decimal"] = packed_timestamp_decimals
+    # Positional, one entry per sub-sample. Only written when the bin actually holds a
+    # marked sample, so bins of ordinary data keep their existing byte-for-byte payload.
+    if any(dt is not None for dt in packed_data_types):
+        payload["data_type"] = packed_data_types
 
     sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     return sample
@@ -179,6 +186,7 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
     packed_patch_positions: list[list[str]] = []
     packed_fps: list[Any] = []
     packed_timestamp_decimals: list[int] = []
+    packed_data_types: list[Optional[str]] = []
 
     sample_names = [str(item["name"]) for item in bin_data]
     for sample_idx, raw_sample_name in enumerate(sample_names):
@@ -187,7 +195,7 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
             raise FileNotFoundError(f"Sample {raw_sample_name} not found in source dirs")
 
         json_path = os.path.join(sample_source_dir, f"{sample_name}.{packer.config.json_extension}")
-        images, prompts, responses, patch_positions, fps, timestamp_decimal = packer._extract_bmr_content(
+        images, prompts, responses, patch_positions, fps, timestamp_decimal, data_type = packer._extract_bmr_content(
             json_path,
             image_base_dir=sample_source_dir,
         )
@@ -225,6 +233,7 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
         packed_captions.append(responses if responses else [""])
         packed_fps.append(fps)
         packed_timestamp_decimals.append(timestamp_decimal)
+        packed_data_types.append(data_type)
 
     payload: dict[str, Any] = {
         "images": packed_images,
@@ -236,6 +245,10 @@ def build_direct_sample(packer: SamplePacker, bin_index: int, bin_data: list[Any
     if any(fps is not None for fps in packed_fps):
         payload["fps"] = packed_fps
     payload["timestamp_decimal"] = packed_timestamp_decimals
+    # Positional, one entry per sub-sample. Only written when the bin actually holds a
+    # marked sample, so bins of ordinary data keep their existing byte-for-byte payload.
+    if any(dt is not None for dt in packed_data_types):
+        payload["data_type"] = packed_data_types
 
     sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     return sample

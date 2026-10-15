@@ -463,7 +463,7 @@ class SamplePacker:
 
     def _extract_bmr_content(
         self, json_path: str, image_base_dir: Optional[str] = None
-    ) -> tuple[list[str], list[str], list[str], list[str], Any, int]:
+    ) -> tuple[list[str], list[str], list[str], list[str], Any, int, Optional[str]]:
         """
         Extract images, prompts, responses, patch_positions, fps, and timestamp precision from BMR JSON.
 
@@ -472,7 +472,7 @@ class SamplePacker:
             image_base_dir: Override for image base directory. If None, uses self.image_base_dir.
 
         Returns:
-            Tuple of (images, prompts, responses, patch_positions, fps, timestamp_decimal).
+            Tuple of (images, prompts, responses, patch_positions, fps, timestamp_decimal, data_type).
             fps is the raw value from the JSON (e.g., [30]) or None if not present.
             timestamp_decimal defaults to 1 when the source sample does not define it.
         """
@@ -508,6 +508,9 @@ class SamplePacker:
             if timestamp_decimal is None:
                 timestamp_decimal = 1
 
+            # Sample-level modality marker; absent on every pre-existing sample.
+            data_type = data.get("data_type", None)
+
             # Handle field mapping: conversations -> messages
             if "conversations" in data and "messages" not in data:
                 data["messages"] = data["conversations"]
@@ -529,11 +532,11 @@ class SamplePacker:
                     elif role in ("gpt", "assistant"):
                         responses.append(content)
 
-            return images, prompts, responses, patch_positions, fps, timestamp_decimal
+            return images, prompts, responses, patch_positions, fps, timestamp_decimal, data_type
 
         except Exception as e:
             print(f"Error extracting BMR content from {json_path}: {e}")
-            return [], [], [], [], None, 1
+            return [], [], [], [], None, 1, None
 
     def _get_random_prompts(self, count: int) -> list[str]:
         """Get random prompts for pretrain data."""
@@ -565,6 +568,7 @@ class SamplePacker:
         packed_patch_positions = []
         packed_fps = []
         packed_timestamp_decimals = []
+        packed_data_types = []
 
         # Get sample names from bin data
         sample_names = [item["name"] for item in bin_data]
@@ -612,7 +616,7 @@ class SamplePacker:
 
             elif task_type == "bmr":
                 # BMR: multi-round dialog with multi-image support
-                images, prompts, responses, patch_positions, fps, timestamp_decimal = self._extract_bmr_content(
+                images, prompts, responses, patch_positions, fps, timestamp_decimal, data_type = self._extract_bmr_content(
                     json_path, image_base_dir=sample_image_base
                 )
                 check_turn_pairing(prompts, responses, json_path)
@@ -666,6 +670,7 @@ class SamplePacker:
                 # Add fps (per-sample, e.g., [30] or None)
                 packed_fps.append(fps)
                 packed_timestamp_decimals.append(timestamp_decimal)
+                packed_data_types.append(data_type)
 
         # Generate random prompts for pretrain task
         if task_type == "pretrain":
@@ -689,6 +694,11 @@ class SamplePacker:
 
         if task_type == "bmr":
             output_data["timestamp_decimal"] = packed_timestamp_decimals
+
+        # Positional, one entry per sub-sample. Omitted entirely when no sub-sample is
+        # marked, so bins of ordinary data keep their existing payload unchanged.
+        if task_type == "bmr" and any(dt is not None for dt in packed_data_types):
+            output_data["data_type"] = packed_data_types
 
         try:
             with open(json_dst, "w", encoding="utf-8") as f:
