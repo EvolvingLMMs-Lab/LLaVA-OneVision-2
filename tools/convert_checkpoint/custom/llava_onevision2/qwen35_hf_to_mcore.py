@@ -257,6 +257,15 @@ def shard_language(lang_sd, tp):
     if tp == 1:
         return [lang_sd]
 
+    # MoE weights (routed experts, shared expert, router, gate) have no TP rule below,
+    # so they would be silently REPLICATED -- wrong for a real TP>1 MoE run. Fail loudly
+    # instead. Qwen3.5-MoE is converted at TP=1; use expert parallelism (qwen35_split_ep.py).
+    if any(".mlp.experts." in k or ".mlp.router." in k or ".mlp.shared_experts." in k
+           for k in lang_sd):
+        raise NotImplementedError(
+            f"MoE language weights cannot be tensor-parallel sharded by this converter "
+            f"(requested tp={tp}). Convert at TP=1 and split experts with qwen35_split_ep.py.")
+
     shards = [dict() for _ in range(tp)]
     for k, v in lang_sd.items():
         # Non-tensors (_extra_state blobs) are replicated verbatim.
