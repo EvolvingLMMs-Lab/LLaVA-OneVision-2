@@ -36,6 +36,14 @@ Plus ``lm_head.weight``: the un-sharded ``output_layer.weight`` for untied model
 
 Layer type rule (matches forward): (i+1) % full_attention_interval == 0 -> full-attn.
 Primary target: PP=1 (1D mp_rank_{t:02d} layout), TP in {1,2,4}.
+
+MoE (Qwen3.5-MoE / qwen3_5_moe, e.g. the 35B-A3B backbone): layers carrying
+``mlp.router.weight`` take the MoE path instead of the dense SwiGLU one, and
+``--expert_model_parallel_size`` un-shards the expert-parallel layout written by
+``qwen35_split_ep.py`` (routed experts are gathered from mp_rank_*_{e:03d} and
+renumbered local->global; everything else is replicated, rank 0 wins).
+MoE is TP=1 only -- qwen35_hf_to_mcore.py does not TP-shard expert weights, so a
+TP>1 MoE checkpoint is rejected rather than silently mis-assembled.
 """
 import argparse
 import os
@@ -74,10 +82,53 @@ _ROW_DIM1 = (
 )
 _FC1 = ("mlp.linear_fc1.weight",)
 
+# Routed-expert weights of a Qwen3.5-MoE layer: mlp.experts.linear_fc{1,2}.weight{expert}
+_EXPERT_RE = re.compile(r"\.mlp\.experts\.linear_fc([12])\.weight(\d+)$")
+# Every MoE parameter that is NOT a routed expert (replicated across EP ranks).
+_MOE_NON_EXPERT = (
+    "mlp.router.weight",
+    "mlp.shared_experts.linear_fc1.weight",
+    "mlp.shared_experts.linear_fc2.weight",
+    "mlp.shared_experts.gate_weight",
+)
 
-def load_language_shards(load_path, tp, pp=1, return_untie_flag=False):
+
+def _count_local_experts(model):
+    """Number of routed experts stored in one EP shard (None if it has no MoE keys)."""
+    ids = {int(m.group(2)) for m in (_EXPERT_RE.search(k) for k in model) if m}
+    return max(ids) + 1 if ids else None
+
+
+def _globalize_expert_key(key, ep_rank, n_local):
+    """mlp.experts.linear_fcX.weight{local} -> ...weight{local + ep_rank * n_local}."""
+    m = _EXPERT_RE.search(key)
+    return key[: m.start()] + f".mlp.experts.linear_fc{m.group(1)}.weight{int(m.group(2)) + ep_rank * n_local}"
+
+
+def _shard_subdir(t, pstage, e, pp, ep):
+    """Megatron checkpoint sub-directory name (get_checkpoint_name, PP/EP aware).
+
+    pp==1, ep==1 -> mp_rank_{t:02d}
+    pp>1,  ep==1 -> mp_rank_{t:02d}_{p:03d}
+    pp==1, ep>1  -> mp_rank_{t:02d}_{e:03d}
+    pp>1,  ep>1  -> mp_rank_{t:02d}_{p:03d}_{e:03d}
+    NOTE the 2-part name is ambiguous between a PP and an EP checkpoint; the
+    caller must say which via --pipeline_model_parallel_size / --expert_model_parallel_size.
+    """
+    name = f"mp_rank_{t:02d}" if pp == 1 else f"mp_rank_{t:02d}_{pstage:03d}"
+    return name if ep == 1 else f"{name}_{e:03d}"
+
+
+def load_language_shards(load_path, tp, pp=1, ep=1, return_untie_flag=False):
     """Load the mcore language shards and return a list of tp flat dicts of
     language_model.* -> tensor (weights only, _extra_state dropped).
+
+    EP UN-SHARD (inverse of qwen35_split_ep.py): routed-expert weights
+    ``mlp.experts.linear_fc{1,2}.weight{local}`` live only on the EP rank that
+    owns them and are numbered LOCALLY (0..num_experts/ep-1); they are gathered
+    and renumbered back to global ids. Every other parameter (router, shared
+    expert, gate, attention, norms) is replicated across EP ranks, so EP rank 0
+    wins.
 
     With return_untie_flag=True also return the checkpoint's saved
     ``args.untie_embeddings_and_output_weights`` (None if the checkpoint carries
@@ -95,29 +146,46 @@ def load_language_shards(load_path, tp, pp=1, return_untie_flag=False):
     layer_re = re.compile(r"(language_model\.decoder\.layers\.)(\d+)(\..*)$")
     shards = []
     untie_flag = None
+    n_local_experts = None
     for t in range(tp):
         lang = {}
         offset = 0
         for pstage in range(pp):
-            sub = f"mp_rank_{t:02d}" if pp == 1 else f"mp_rank_{t:02d}_{pstage:03d}"
-            ckpt_path = os.path.join(load_path, sub, "model_optim_rng.pt")
-            if not os.path.isfile(ckpt_path):
-                raise FileNotFoundError(f"missing shard: {ckpt_path}")
-            state = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-            if t == 0 and pstage == 0 and state.get("args") is not None:
-                untie_flag = getattr(state["args"], "untie_embeddings_and_output_weights", None)
-            model = state["model"]
-            del state
             stage_layers = set()
-            for k, v in model.items():
-                if not k.startswith(MC_LM + ".") or k.endswith("_extra_state"):
-                    continue
-                lm = layer_re.match(k)
-                if lm:
-                    stage_layers.add(int(lm.group(2)))
-                    lang[f"{lm.group(1)}{int(lm.group(2)) + offset}{lm.group(3)}"] = v
-                else:
-                    lang[k] = v
+            for e in range(ep):
+                sub = _shard_subdir(t, pstage, e, pp, ep)
+                ckpt_path = os.path.join(load_path, sub, "model_optim_rng.pt")
+                if not os.path.isfile(ckpt_path):
+                    raise FileNotFoundError(f"missing shard: {ckpt_path}")
+                state = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+                if t == 0 and pstage == 0 and e == 0 and state.get("args") is not None:
+                    untie_flag = getattr(state["args"], "untie_embeddings_and_output_weights", None)
+                model = state["model"]
+                del state
+                if ep > 1:
+                    local = _count_local_experts(model)
+                    if local is not None:
+                        if n_local_experts is None:
+                            n_local_experts = local
+                        elif n_local_experts != local:
+                            raise ValueError(
+                                f"EP rank {e} holds {local} local experts but rank 0 holds "
+                                f"{n_local_experts}; uneven expert sharding is not supported")
+                for k, v in model.items():
+                    if not k.startswith(MC_LM + ".") or k.endswith("_extra_state"):
+                        continue
+                    is_expert = _EXPERT_RE.search(k) is not None
+                    # non-expert params are replicated across EP ranks -> rank 0 wins
+                    if e > 0 and not is_expert:
+                        continue
+                    if is_expert and ep > 1:
+                        k = _globalize_expert_key(k, e, n_local_experts)
+                    lm = layer_re.match(k)
+                    if lm:
+                        stage_layers.add(int(lm.group(2)))
+                        lang[f"{lm.group(1)}{int(lm.group(2)) + offset}{lm.group(3)}"] = v
+                    else:
+                        lang[k] = v
             offset += (max(stage_layers) + 1) if stage_layers else 0
         assert lang, f"no language_model.* weights under {load_path} (tp{t})"
         shards.append(lang)
@@ -130,6 +198,12 @@ def unshard_language(shards, tp):
     """Inverse of shard_language: reconstruct the full TP1 language state dict."""
     if tp == 1:
         return dict(shards[0])
+    if any(_EXPERT_RE.search(k) or k.endswith(_MOE_NON_EXPERT) for k in shards[0]):
+        raise NotImplementedError(
+            "MoE checkpoints are only supported at TP=1 (expert parallelism is handled "
+            "separately via --expert_model_parallel_size). qwen35_hf_to_mcore.py does not "
+            "shard expert/shared-expert weights across TP either, so a TP>1 MoE checkpoint "
+            "produced by it would be wrong; refusing to un-shard one here.")
     full = {}
     for k in shards[0]:
         v0 = shards[0][k]
@@ -148,8 +222,77 @@ def unshard_language(shards, tp):
     return full
 
 
+def _convert_moe_mlp_to_hf(layer_sd, hpre, out, fused_experts=False):
+    """mcore MoELayer -> HF qwen3_5_moe layer MLP. Inverse of
+    qwen35_hf_to_mcore._convert_moe_mlp.
+
+    mcore:
+      mlp.router.weight                    [E, H]
+      mlp.experts.linear_fc1.weight{e}     [2I, H] = cat[gate_e, up_e]
+      mlp.experts.linear_fc2.weight{e}     [H, I]
+      mlp.shared_experts.linear_fc1.weight [2I, H], linear_fc2.weight [H, I]
+      mlp.shared_experts.gate_weight       [1, H]
+    HF:
+      mlp.gate.weight                                  <- router
+      mlp.experts.{e}.{gate,up,down}_proj.weight       (default; what transformers
+                                                        writes on save and what the
+                                                        merged 35B model carries), or
+      mlp.experts.{gate_up_proj,down_proj}             [E, 2I, H] / [E, H, I] when
+                                                        fused_experts=True (the layout
+                                                        of the original Qwen3.5/3.6
+                                                        release). Both reload fine.
+      mlp.shared_expert.{gate,up,down}_proj.weight
+      mlp.shared_expert_gate.weight                    <- shared_experts.gate_weight
+    Returns the number of routed experts converted.
+    """
+    out[hpre + "mlp.gate.weight"] = layer_sd["mlp.router.weight"].clone().contiguous()
+
+    ids = sorted(int(m.group(2)) for m in (_EXPERT_RE.search("." + k) for k in layer_sd) if m
+                 and m.group(1) == "1")
+    assert ids, f"{hpre}: MoE layer without routed experts"
+    assert ids == list(range(len(ids))), (
+        f"{hpre}: routed expert ids are not contiguous from 0: "
+        f"{ids[:4]}..{ids[-4:]} (EP un-shard incomplete? check --expert_model_parallel_size)")
+    n_exp = len(ids)
+
+    gates, ups, downs = [], [], []
+    for e in ids:
+        fc1 = layer_sd[f"mlp.experts.linear_fc1.weight{e}"]
+        fc2 = layer_sd[f"mlp.experts.linear_fc2.weight{e}"]
+        assert fc1.shape[0] % 2 == 0, f"{hpre}: expert {e} fc1 dim0 {fc1.shape[0]} not even"
+        g, u = torch.chunk(fc1, 2, dim=0)
+        if fused_experts:
+            gates.append(fc1)
+            downs.append(fc2)
+        else:
+            ep_pre = hpre + f"mlp.experts.{e}."
+            out[ep_pre + "gate_proj.weight"] = g.clone().contiguous()
+            out[ep_pre + "up_proj.weight"] = u.clone().contiguous()
+            out[ep_pre + "down_proj.weight"] = fc2.clone().contiguous()
+    if fused_experts:
+        out[hpre + "mlp.experts.gate_up_proj"] = torch.stack(gates, dim=0).contiguous()
+        out[hpre + "mlp.experts.down_proj"] = torch.stack(downs, dim=0).contiguous()
+
+    sh_fc1 = layer_sd["mlp.shared_experts.linear_fc1.weight"]
+    assert sh_fc1.shape[0] % 2 == 0, f"{hpre}: shared expert fc1 dim0 {sh_fc1.shape[0]} not even"
+    sg, su = torch.chunk(sh_fc1, 2, dim=0)
+    out[hpre + "mlp.shared_expert.gate_proj.weight"] = sg.clone().contiguous()
+    out[hpre + "mlp.shared_expert.up_proj.weight"] = su.clone().contiguous()
+    out[hpre + "mlp.shared_expert.down_proj.weight"] = \
+        layer_sd["mlp.shared_experts.linear_fc2.weight"].clone().contiguous()
+    gate_w = layer_sd.get("mlp.shared_experts.gate_weight")
+    if gate_w is None:
+        raise KeyError(
+            f"{hpre}: mlp.shared_experts.gate_weight missing. Qwen3.5-MoE scales the shared "
+            "expert by sigmoid(shared_expert_gate(x)); a checkpoint trained with "
+            "QWEN35_SHARED_EXPERT_GATE=0 cannot be exported to the HF layout.")
+    out[hpre + "mlp.shared_expert_gate.weight"] = gate_w.clone().contiguous()
+    return n_exp
+
+
 def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
-                                 orig_vocab_size=None, dims=None, ckpt_untie_flag=None):
+                                 orig_vocab_size=None, dims=None, ckpt_untie_flag=None,
+                                 fused_experts=False):
     """Full TP1 mcore language dict -> HF ``model.language_model.*`` (+ lm_head).
 
     lm_head is decided from the weights themselves: the model is untied iff an
@@ -186,7 +329,7 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
         out["lm_head.weight"] = embed.clone().contiguous()  # tied
     print(f"[qwen35_mcore_to_hf] lm_head: {'untied (output_layer)' if untied else 'tied (embed copy)'}")
 
-    n_full, n_lin = 0, 0
+    n_full, n_lin, n_moe, n_exp = 0, 0, 0, 0
     for i in range(num_layers):
         mpre = f"{MC_LM}.decoder.layers.{i}."
         layer_sd = {k[len(mpre):]: v for k, v in lang_sd.items() if k.startswith(mpre)}
@@ -196,13 +339,17 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
         out[hpre + "input_layernorm.weight"] = layer_sd["input_layernorm.weight"].clone()
         out[hpre + "post_attention_layernorm.weight"] = layer_sd["pre_mlp_layernorm.weight"].clone()
 
-        # SwiGLU: mcore fc1 = cat([gate, up], dim0) -> split back
-        fc1 = layer_sd["mlp.linear_fc1.weight"]
-        assert fc1.shape[0] % 2 == 0, f"layer {i}: fc1 dim0 {fc1.shape[0]} not even"
-        gate, up = torch.chunk(fc1, 2, dim=0)
-        out[hpre + "mlp.gate_proj.weight"] = gate.clone().contiguous()
-        out[hpre + "mlp.up_proj.weight"] = up.clone().contiguous()
-        out[hpre + "mlp.down_proj.weight"] = layer_sd["mlp.linear_fc2.weight"].clone()
+        if "mlp.router.weight" in layer_sd:  # Qwen3.5-MoE layer
+            n_exp = _convert_moe_mlp_to_hf(layer_sd, hpre, out, fused_experts=fused_experts)
+            n_moe += 1
+        else:
+            # SwiGLU: mcore fc1 = cat([gate, up], dim0) -> split back
+            fc1 = layer_sd["mlp.linear_fc1.weight"]
+            assert fc1.shape[0] % 2 == 0, f"layer {i}: fc1 dim0 {fc1.shape[0]} not even"
+            gate, up = torch.chunk(fc1, 2, dim=0)
+            out[hpre + "mlp.gate_proj.weight"] = gate.clone().contiguous()
+            out[hpre + "mlp.up_proj.weight"] = up.clone().contiguous()
+            out[hpre + "mlp.down_proj.weight"] = layer_sd["mlp.linear_fc2.weight"].clone()
 
         is_full = ((i + 1) % full_attention_interval == 0)
         if is_full:
@@ -214,7 +361,10 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
         for k, v in attn.items():
             out[hpre + k] = v
 
-    print(f"[qwen35_mcore_to_hf] converted {num_layers} layers: {n_full} full-attn, {n_lin} linear")
+    moe_note = (f", {n_moe} MoE ({n_exp} routed experts"
+                f"{', fused' if fused_experts else ', per-expert'})" if n_moe else "")
+    print(f"[qwen35_mcore_to_hf] converted {num_layers} layers: "
+          f"{n_full} full-attn, {n_lin} linear{moe_note}")
     return out
 
 
@@ -228,6 +378,13 @@ def main():
     ap.add_argument("--full_attention_interval", type=int, default=4)
     ap.add_argument("--tensor_model_parallel_size", type=int, default=1)
     ap.add_argument("--pipeline_model_parallel_size", type=int, default=1)
+    ap.add_argument("--expert_model_parallel_size", type=int, default=1,
+                    help="EP size of the checkpoint (MoE only). Shards are read from "
+                         "mp_rank_{t:02d}[_{p:03d}]_{e:03d} and routed experts are "
+                         "renumbered back to global ids.")
+    ap.add_argument("--fused_experts", action="store_true",
+                    help="emit packed mlp.experts.{gate_up_proj,down_proj} [E,...] tensors "
+                         "(original Qwen3.5/3.6 release layout) instead of per-expert keys")
     ap.add_argument("--hf_config_path", type=str, default=None,
                     help="HF model dir whose config.json provides hybrid-attn dims "
                          "(e.g. the reference merged model); default = Qwen3.5-4B dims")
@@ -240,7 +397,8 @@ def main():
 
     print(f"[qwen35_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
     shards, untie_flag = load_language_shards(
-        args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size, return_untie_flag=True)
+        args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size,
+        ep=args.expert_model_parallel_size, return_untie_flag=True)
     lang = unshard_language(shards, tp)
     from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
     dims = dims_from_hf_config(args.hf_config_path) if args.hf_config_path else None
@@ -248,7 +406,8 @@ def main():
     print(f"[qwen35_mcore_to_hf] ckpt args untie_embeddings_and_output_weights={untie_flag}")
     hf = convert_language_mcore_to_hf(lang, args.num_layers, args.full_attention_interval,
                                       orig_vocab_size=args.orig_vocab_size, dims=dims,
-                                      ckpt_untie_flag=untie_flag)
+                                      ckpt_untie_flag=untie_flag,
+                                      fused_experts=args.fused_experts)
 
     os.makedirs(args.save_ckpt_path, exist_ok=True)
     out_path = os.path.join(args.save_ckpt_path, "model.safetensors")
