@@ -252,6 +252,42 @@ def rewrite_existing_canvas_wrappers(
     }
 
 
+def rewrite_canvas_messages(
+    messages: list[dict],
+    summaries: Sequence[CanvasTime],
+    *,
+    decimals: object = 1,
+) -> list[dict]:
+    """Prefix canvases in message order, preserving their original turns.
+
+    Images, grids and patch positions follow the same order as mm_plugin's
+    placeholder expansion. Validate every message before changing any text.
+    """
+    cursor = 0
+    replacements = []
+    for message in messages:
+        content = message.get("content", "")
+        if not isinstance(content, str):
+            continue
+        count = content.count(VISION_START)
+        if count != content.count(VISION_END):
+            raise CanvasTimestampError("unbalanced canvas vision wrappers in message")
+        if not count:
+            continue
+        rewritten, _ = rewrite_existing_canvas_wrappers(
+            content, summaries[cursor : cursor + count], decimals=decimals
+        )
+        replacements.append((message, rewritten))
+        cursor += count
+    if cursor != len(summaries):
+        raise CanvasTimestampError(
+            f"message/canvas mismatch: wrappers={cursor} canvases={len(summaries)}"
+        )
+    for message, content in replacements:
+        message["content"] = content
+    return messages
+
+
 def rewrite_for_sample(
     text: str,
     *,

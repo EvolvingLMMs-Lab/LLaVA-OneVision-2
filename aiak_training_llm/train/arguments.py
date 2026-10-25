@@ -3,6 +3,7 @@
 import os
 import argparse
 import importlib
+import math
 from dataclasses import fields
 
 from megatron.core.transformer.enums import AttnBackend
@@ -270,6 +271,36 @@ def _add_extra_sft_args(parser: argparse.ArgumentParser):
                        help="Perform packing in batches, deciding how many samples each batch contains;"
                             "if the --sft-sort-batch option is enabled, the samples will be sorted after packing.")
 
+    group.add_argument(
+        "--streaming-loss-scope",
+        type=str,
+        choices=("all", "last-segment"),
+        default="all",
+        help="Assistant-turn supervision scope. 'last-segment' masks historical "
+             "state, answer and template-end targets while preserving the input context.",
+    )
+
+    group.add_argument(
+        "--state-token-focal-loss",
+        action="store_true",
+        help="Apply focal loss to supervised <silence> and <response> tokens, "
+             "with class alpha computed per original sample.",
+    )
+    group.add_argument(
+        "--state-token-focal-gamma", type=float, default=2.0,
+        help="Focal exponent for state tokens (default: 2.0).",
+    )
+    group.add_argument(
+        "--state-token-focal-captioning", action="store_true",
+        help="Include <captioning> in the speaking state alongside <response> "
+             "when computing per-sample focal alpha.",
+    )
+    group.add_argument(
+        "--state-token-response-alpha-max", type=float, default=None,
+        help="Cap per-sample speaking alpha (<response> and optional <captioning>) at this value (>= 1). "
+             "Default: no cap; <silence> alpha is unchanged.",
+    )
+
     return parser
 
 
@@ -517,6 +548,15 @@ def _validate_extra_tokenizer_args(args):
 
 def _validate_extra_sft_args(args):
     """Validate SFT arguments"""
+    if args.state_token_focal_loss and (
+        not math.isfinite(args.state_token_focal_gamma) or args.state_token_focal_gamma < 0
+    ):
+        raise ValueError("--state-token-focal-gamma must be finite and non-negative")
+    if args.state_token_response_alpha_max is not None and (
+        not math.isfinite(args.state_token_response_alpha_max) or args.state_token_response_alpha_max < 1
+    ):
+        raise ValueError("--state-token-response-alpha-max must be finite and >= 1")
+
     if args.training_phase != constants.TrainingPhase.SFT:
         return
 

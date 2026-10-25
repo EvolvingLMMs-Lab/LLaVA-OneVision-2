@@ -216,6 +216,17 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
             if n_bad:
                 print(f"[BAD_BIN_DROP] key={sample.__key__} turn-mismatched={n_bad}/{n_orig_sample}", flush=True)
                 return
+            # data_type is positional: entry i must describe sub-sample i. A short or long list
+            # means the packer and the payload disagree, which would silently hand the streaming
+            # system prompt to the wrong sub-samples. Drop the bin instead of guessing.
+            bin_data_type = getattr(sample, "data_type", None)
+            if bin_data_type is not None and len(bin_data_type) != n_orig_sample:
+                print(
+                    f"[BAD_BIN_DROP] key={sample.__key__} data_type={len(bin_data_type)}"
+                    f" != sub-samples={n_orig_sample}",
+                    flush=True,
+                )
+                return
             l_Qwen2VLImageTaskSample = []
             for idx in range(n_orig_sample):
                 if int(os.environ.get("OFFLINE_PACKING_BMR", 0)) == 1:
@@ -277,6 +288,8 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                     ):
                         sample_timestamp_decimal = sample.timestamp_decimal[idx]
 
+                    sample_data_type = bin_data_type[idx] if bin_data_type is not None else None
+
                     cur_capsample = MultiMixQASample(
                         __key__=f"{sample.__key__}.img{idx:03d}_jpg",
                         __restore_key__=sample.__restore_key__,
@@ -289,6 +302,7 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                         patch_positions=sample_patch_positions,
                         fps=sample_fps,
                         timestamp_decimal=sample_timestamp_decimal,
+                        data_type=sample_data_type,
                     )
                     l_Qwen2VLImageTaskSample.append(self.encode_multi_mix_qa(cur_capsample))
                 else:
