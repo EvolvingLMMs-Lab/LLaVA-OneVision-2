@@ -468,20 +468,21 @@ _register_chat_template(
 #        re-join as "reasoning\n</think>\n\nanswer"; the user prompt before it ends with "<think>\n"
 #   anything else (no think block, or "<think>" without "</think>")
 #     -> think-off: reply kept as is; the user prompt ends with "<think>\n\n</think>\n\n"
-#   malformed think block (extra "<think>" / "</think>" after the leading one) -> ValueError,
-#     so the sample is skipped by the loader instead of training on a guessed format.
+#   stray think tags left over in the data (e.g. a duplicated "</think>" at the end of the
+#     answer) are dropped: the reasoning ends at the FIRST "</think>". Rejecting such a reply
+#     would make the loader skip its whole packed bin (up to ~110 samples).
 # Each user turn takes the mode of the reply that follows it.
 def _think_auto_reply(content: str) -> Tuple[bool, str]:
     """Returns (is_think_on, normalized_reply)."""
     body = content.lstrip()
     if not body.startswith("<think>") or "</think>" not in body:
         return False, content
-    rest = body[len("<think>"):]
-    if "<think>" in rest or rest.count("</think>") != 1:
-        raise ValueError(f"malformed think block in reply: {content[:120]!r}")
-    reasoning, answer = rest.split("</think>", 1)
+    reasoning, answer = body[len("<think>"):].split("</think>", 1)
+    reasoning = reasoning.replace("<think>", "").strip()
+    if "<think>" in answer or "</think>" in answer:  # stray tags only: drop them and the trailing gap
+        answer = answer.replace("<think>", "").replace("</think>", "").rstrip()
     answer = answer.lstrip("\n")
-    return True, f"{reasoning.strip()}\n</think>\n\n{answer}"
+    return True, f"{reasoning}\n</think>\n\n{answer}"
 
 
 class Qwen35ThinkAutoTemplate(ChatTemplate):
