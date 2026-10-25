@@ -312,6 +312,10 @@ def _initialize_distributed(get_embedding_ranks, get_position_embedding_ranks):
         # Manually set the device ids.
         if device_count > 0:
             torch.cuda.set_device(args.local_rank)
+            # CUDA_MEMORY_FRACTION caps the PyTorch caching allocator so NCCL can still allocate its buffers
+            # lazily (first DP reduce-scatter) after a heavy forward/backward has grown the cache.
+            if os.environ.get('CUDA_MEMORY_FRACTION'):
+                torch.cuda.set_per_process_memory_fraction(float(os.environ['CUDA_MEMORY_FRACTION']), args.local_rank)
             device_id = torch.device(f'cuda:{args.local_rank}')
         else:
             device_id = None

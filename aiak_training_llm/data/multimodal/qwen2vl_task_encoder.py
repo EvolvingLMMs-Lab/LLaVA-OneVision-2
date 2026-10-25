@@ -38,7 +38,7 @@ from transformers import AutoProcessor
 
 from .canvas_timestamp_schema import (
     CanvasTimestampError,
-    rewrite_existing_canvas_wrappers,
+    rewrite_canvas_messages,
     summarize_canvases,
 )
 from .task_encoder import ImageTaskBatchPacked, ImageTaskSample, ImageTaskSamplePacked, TaskEncoder
@@ -58,6 +58,11 @@ VIDEO_TOKEN = "<|video_pad|>"
 VISION_TAGS = ["<|vision_start|>", "<|vision_end|>"]
 IMAGE_TOKEN_WITH_TAGS = VISION_TAGS[0] + IMAGE_TOKEN + VISION_TAGS[1]
 VIDEO_TOKEN_WITH_TAGS = VISION_TAGS[0] + VIDEO_TOKEN + VISION_TAGS[1]
+SEGMENT_MARKERS = ("<response>", "<captioning>")
+DATA_TYPE_STREAMING = "streaming"
+# Streaming samples arrive frame by frame and answer after every frame, which no offline
+# sample does. The marker tokens carry the response protocol, so the prompt only names the mode.
+STREAMING_SYSTEM_PROMPT = "You are a real-time streaming video assistant."
 SKIP_LOG_LIMIT = 5
 SKIP_LOG_INTERVAL = 1000
 _SKIP_LOG_COUNTS: dict[str, int] = {}
@@ -77,6 +82,42 @@ def skip_malformed_multimodal_sample(sample_key: str, signature: str, detail: st
             )
 
     raise SkipSample(f"{sample_key}: {detail}")
+
+
+def resolve_system_prompt(system, data_type):
+    """Pick the system prompt a sample's data type implies.
+
+    An explicit per-sample system always wins, so data can still override the mode
+    default. Streaming samples otherwise get the streaming prompt; everything else
+    returns None and falls through to the chat template's own default_system.
+    """
+    if system:
+        return system
+    if data_type == DATA_TYPE_STREAMING:
+        return STREAMING_SYSTEM_PROMPT
+    return system
+
+
+def _find_last_segment_start(assistant_contents: list[str]) -> int:
+    """Return the first assistant turn index belonging to the latest segment."""
+    if not assistant_contents:
+        return 0
+
+    def has_marker(text: object) -> bool:
+        return isinstance(text, str) and text.strip().startswith(SEGMENT_MARKERS)
+
+    last = assistant_contents[-1]
+    if has_marker(last):
+        search_end = len(assistant_contents) - 2
+    elif isinstance(last, str) and last.strip() == "<silence>":
+        search_end = len(assistant_contents) - 1
+    else:
+        return 0
+
+    for idx in range(search_end, -1, -1):
+        if has_marker(assistant_contents[idx]):
+            return idx + 1
+    return 0
 
 
 def get_stateless(fn: Callable[..., T_sample]) -> bool:
@@ -488,18 +529,8 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                 fps=fps,
                 spatial_merge_size=getattr(self.processor.image_processor, "merge_size", 2),
             )
-            vision_messages = [
-                message
-                for message in messages
-                if isinstance(message.get("content", ""), str)
-                and VISION_TAGS[0] in message["content"]
-            ]
-            if len(vision_messages) != 1:
-                raise CanvasTimestampError(
-                    f"timed canvas sample requires one unambiguous vision message, got {len(vision_messages)}"
-                )
-            vision_messages[0]["content"], _ = rewrite_existing_canvas_wrappers(
-                vision_messages[0]["content"],
+            messages = rewrite_canvas_messages(
+                messages,
                 summaries,
                 decimals=kwargs.get("timestamp_decimal", 1),
             )
@@ -522,10 +553,25 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             messages=messages,
             system=system,
         )
+        start_turn = 0
+        if getattr(self.args, "streaming_loss_scope", "all") == "last-segment":
+            assistant_contents = [
+                message.get("content", "") for message in messages
+                if message.get("role") == constants.DataRoles.ASSISTANT
+            ]
+            if len(assistant_contents) != len(encode_pairs):
+                skip_malformed_multimodal_sample(
+                    kwargs.get("sample_key", "<unknown>"),
+                    "assistant_turn_alignment_mismatch",
+                    "streaming supervision requires one encoded pair per assistant turn",
+                )
+            start_turn = _find_last_segment_start(assistant_contents)
+
         input_ids, target = [], []
         for turn_idx, (source_ids, target_ids) in enumerate(encode_pairs):
             input_ids += source_ids + target_ids
-            target += [IGNORE_INDEX] * len(source_ids) + target_ids
+            masked_target = target_ids if turn_idx >= start_turn else [IGNORE_INDEX] * len(target_ids)
+            target += [IGNORE_INDEX] * len(source_ids) + masked_target
         input_ids = torch.tensor(input_ids)
         target = torch.tensor(target)
         attn_mask = torch.zeros_like(input_ids).bool()
@@ -661,6 +707,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             current_image = sample.image
             current_video = sample.video
             current_patch_positions = sample.patch_positions
+            system = resolve_system_prompt(sample.system, getattr(sample, "data_type", None))
 
             while True:
                 try:
@@ -675,7 +722,7 @@ class Qwen2VLTaskEncoder(TaskEncoder):
                         patch_positions,
                     ) = self.process_sft_qa(
                         current_messages,
-                        sample.system,
+                        system,
                         current_video,
                         current_image,
                         current_patch_positions,
