@@ -1,7 +1,7 @@
 """default pretrain for generative models like GPTS"""
 
 import os
-from functools import partial
+from functools import lru_cache, partial
 
 import torch
 import torch.nn.functional as F
@@ -15,11 +15,12 @@ from megatron.training import get_timers
 from aiak_training_llm.data.multimodal.dataloader_provider import get_train_dataset, get_train_loader
 from aiak_training_llm.data.multimodal.qwen2vl_task_encoder import Qwen2VLTaskEncoder
 from aiak_training_llm.models import get_model_family, get_model_provider
+from aiak_training_llm.data.multimodal.streaming_tokens import STREAMING_STATE_TOKENS
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
 from aiak_training_llm.train.megatron_trainer import MegatronTrainer
 from aiak_training_llm.train.sft.utils import build_sft_data_collator
 from aiak_training_llm.train.trainer_builder import register_model_trainer
-from aiak_training_llm.utils import constants, get_args
+from aiak_training_llm.utils import constants, get_args, get_tokenizer
 from transformers import DataCollatorForSeq2Seq
 
 
@@ -80,6 +81,69 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
     model_provider = get_model_provider(model_family)
     assert model_provider is not None, f"model provider for {args.model_name} not found"
     return model_provider(pre_process, post_process, add_encoder, add_decoder)
+
+
+@lru_cache(maxsize=1)
+def _state_token_ids() -> tuple[int, ...]:
+    """Resolve silence, response, and the optional caption marker."""
+    tokenizer = get_tokenizer()
+    markers = STREAMING_STATE_TOKENS
+    if getattr(get_args(), "state_token_focal_captioning", False):
+        markers += ("<captioning>",)
+    ids = tuple(tokenizer.convert_tokens_to_ids(marker) for marker in markers)
+    for marker, token_id in zip(markers, ids):
+        if not isinstance(token_id, int) or tokenizer.tokenize(marker, add_special_tokens=False) != [token_id]:
+            raise ValueError(f"{marker} must be registered as a single additional special token")
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"State markers {markers} must have distinct token ids")
+    return ids
+
+
+def _sample_state_token_alpha(
+    labels, loss_mask, cu_lengths, state_token_ids, response_alpha_max=None,
+):
+    """Return per-sample state alpha; zero marks ordinary or ignored targets.
+
+    Labels have already shifted left. Use original packing boundaries and
+    compute before SP padding or CP slicing, after the final loss mask.
+    Response and optional caption tokens share the speaking-state count within
+    each original sample; their target IDs remain distinct in cross entropy.
+    """
+    batch_size, width = labels.shape
+    if cu_lengths.shape == (1, 1):
+        num_samples = batch_size
+        sample_ids = torch.arange(batch_size, device=labels.device)[:, None].expand_as(labels)
+    else:
+        boundaries = cu_lengths[0].to(device=labels.device, dtype=torch.long)
+        num_samples = boundaries.numel() - 1
+        sample_ids = torch.bucketize(torch.arange(width, device=labels.device), boundaries[1:], right=True)
+        # The sample ownership must follow the same next-token shift as labels.
+        sample_ids = torch.roll(sample_ids.unsqueeze(0), shifts=-1, dims=1)
+
+    active = (loss_mask > 0) & (labels != -100)
+    safe_ids = sample_ids.clamp(max=num_samples - 1).reshape(-1)
+    silence = (labels == state_token_ids[0]) & active
+    speaking = labels == state_token_ids[1]
+    if len(state_token_ids) == 3:
+        speaking |= labels == state_token_ids[2]
+    speaking &= active
+    state_masks = (silence, speaking)
+    counts = [
+        torch.zeros(num_samples, device=labels.device, dtype=torch.float32).scatter_add_(
+            0, safe_ids, mask.reshape(-1).float()
+        )
+        for mask in state_masks
+    ]
+    both = (counts[0] > 0) & (counts[1] > 0)
+    total = counts[0] + counts[1]
+    alpha = torch.zeros_like(labels, dtype=torch.float32)
+    for state_index, (mask, count) in enumerate(zip(state_masks, counts)):
+        # Inverse frequency when both states occur; otherwise keep alpha = 1.
+        per_sample = torch.where(both, total / (2 * count.clamp_min(1)), torch.ones_like(total))
+        if state_index == 1 and response_alpha_max is not None:
+            per_sample = per_sample.clamp(max=response_alpha_max)
+        alpha = torch.where(mask, per_sample[safe_ids].view_as(labels), alpha)
+    return alpha
 
 
 def get_batch(data_iterator):
@@ -197,6 +261,13 @@ def get_batch(data_iterator):
                 )
                 loss_mask[:, -_tail_len:] = 0
 
+    state_focal_alpha = None
+    if getattr(args, "state_token_focal_loss", False):
+        state_focal_alpha = _sample_state_token_alpha(
+            labels, loss_mask, cu_lengths, _state_token_ids(),
+            response_alpha_max=args.state_token_response_alpha_max,
+        )
+
     # Pad sequence for Sequence Parallelism (SP) divisibility.
     # SP requires sequence length to be divisible by TP size;
     # when combined with CP, it must be divisible by TP * CP * 2.
@@ -217,6 +288,8 @@ def get_batch(data_iterator):
             tokens = F.pad(tokens, (0, pad_size), value=pad_token_id)
             labels = F.pad(labels, (0, pad_size), value=-100)
             loss_mask = F.pad(loss_mask, (0, pad_size))
+            if state_focal_alpha is not None:
+                state_focal_alpha = F.pad(state_focal_alpha, (0, pad_size))
             if packed_seq_params is not None:
                 # Append a dummy sequence entry so the packed-sequence attention
                 # kernel covers every element in the padded tensor.
@@ -245,6 +318,8 @@ def get_batch(data_iterator):
     if args.context_parallel_size > 1:
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
+        if state_focal_alpha is not None:
+            state_focal_alpha = get_inputs_on_this_cp_rank(state_focal_alpha.transpose(0, 1)).transpose(0, 1)
 
     if __import__('os').environ.get('MFU_DBG','0')=='1' and locals().get('packed_seq_params') is not None:
         _cs=packed_seq_params.cu_seqlens_q.to('cpu')
@@ -269,10 +344,11 @@ def get_batch(data_iterator):
         attn_mask_type,
         packed_seq_params,
         patch_positions,
+        state_focal_alpha,
     )
 
 
-def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
+def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor, state_focal_alpha=None):
     """Loss function.
 
     Args:
@@ -288,6 +364,13 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
 
     losses = output_tensor.float()
     loss_mask = loss_mask.view(-1).float()
+
+    if state_focal_alpha is not None:
+        assert state_focal_alpha.shape == losses.shape
+        # Keep gradients through p(target); the floor protects 0 < gamma < 1 at zero CE.
+        p_target = torch.exp(-losses.clamp_min(0))
+        focal = (1 - p_target).clamp(min=1e-8, max=1.0).pow(args.state_token_focal_gamma)
+        losses = losses * torch.where(state_focal_alpha > 0, state_focal_alpha * focal, 1.0)
 
     total_tokens = loss_mask.sum()
     loss = torch.cat([torch.sum(losses.view(-1) * loss_mask).view(1), total_tokens.view(1)])
@@ -354,6 +437,7 @@ def forward_step(data_iterator, model):
             attn_mask_type,
             packed_seq_params,
             patch_positions,
+            state_focal_alpha,
         ) = get_batch(data_iterator)
 
     timers("batch-generator").stop()
@@ -403,7 +487,7 @@ def forward_step(data_iterator, model):
                 flush=True,
             )
 
-    return output_tensor, partial(loss_func, loss_mask)
+    return output_tensor, partial(loss_func, loss_mask, state_focal_alpha=state_focal_alpha)
 
 
 def train_valid_test_dataset_provider(train_val_test_num_samples):
