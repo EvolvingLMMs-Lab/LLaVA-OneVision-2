@@ -666,25 +666,43 @@ class LlavaOnevision2(MegatronModule):
             if n_patches <= 0:  # zero-patch grid row: nothing to encode
                 img_start = img_end
                 continue
-            emb = self.vision_model(
+            emb = self._vision_adapter_maybe_ckpt(
                 images[patch_start:patch_start + n_patches],
-                grid_thw=image_grid_thw[img_start:img_end],
-                patch_positions=(
-                    patch_positions[patch_start:patch_start + n_patches]
-                    if patch_positions is not None else None
-                ),
+                image_grid_thw[img_start:img_end],
+                patch_positions[patch_start:patch_start + n_patches] if patch_positions is not None else None,
             )
-            emb = self.adapter(emb)
             outs.append(emb[: n_patches // merge])  # drop per-chunk SP padding, if any
             img_start, patch_start = img_end, patch_start + n_patches
         return torch.cat(outs, dim=0)
+
+    def _vision_adapter(self, images, image_grid_thw, patch_positions):
+        return self.adapter(self.vision_model(images, grid_thw=image_grid_thw, patch_positions=patch_positions))
+
+    def _vision_adapter_maybe_ckpt(self, images, image_grid_thw, patch_positions):
+        """Vision tower + adapter; with VISION_RECOMPUTE=1 (training) checkpointed as one unit.
+
+        Called per VISION_CHUNK_PATCHES chunk, so each chunk keeps only its pixel input until its
+        backward, and backward recomputes one chunk at a time: the per-layer ViT inputs exist for
+        one chunk at a time instead of for every chunk of every in-flight microbatch (PP stage 0
+        holds several). The pixel input is made to require grad: CheckpointFunction runs the
+        forward under no_grad, so with a grad-free input its output has no grad_fn and the tower
+        would silently receive no gradient.
+        """
+        if (os.environ.get("VISION_RECOMPUTE") == "1" and self.training and torch.is_grad_enabled()
+                and images.shape[0] > 0):
+            from megatron.core import tensor_parallel as _tp
+            return _tp.checkpoint(
+                lambda imgs: self._vision_adapter(imgs, image_grid_thw, patch_positions),
+                False, images.detach().requires_grad_(True),
+            )
+        return self._vision_adapter(images, image_grid_thw, patch_positions)
 
     def _encode_local(self, images, image_grid_thw, patch_positions):
         """Vision tower + adapter on these images -> exactly n_patches // merge embeddings."""
         vision_chunk = self._vision_chunk_patches(images, image_grid_thw, patch_positions)
         if vision_chunk:
             return self._encode_images_chunked(images, image_grid_thw, patch_positions, vision_chunk)
-        emb = self.adapter(self.vision_model(images, grid_thw=image_grid_thw, patch_positions=patch_positions))
+        emb = self._vision_adapter_maybe_ckpt(images, image_grid_thw, patch_positions)
         return emb[: images.shape[0] // self.vision_model.spatial_merge_size ** 2]
 
     def forward(
@@ -756,11 +774,8 @@ class LlavaOnevision2(MegatronModule):
                 if _prof:
                     torch.cuda.synchronize(); _vt0 = __import__('time').perf_counter()
                 if __import__('os').environ.get('VISION_RECOMPUTE') == '1' and self.training:
-                    from megatron.core import tensor_parallel as _mpu_tp
-                    def _vis_ckpt_fwd(_imgs):
-                        return self.vision_model(_imgs, grid_thw=image_grid_thw, patch_positions=patch_positions)
-                    image_embeddings = _mpu_tp.checkpoint(_vis_ckpt_fwd, False, images)  # VISION_RECOMPUTE: main_grad-aware megatron ckpt
-                    image_embeddings = self.adapter(image_embeddings)
+                    # per-chunk checkpointed tower + adapter (see _vision_adapter_maybe_ckpt)
+                    image_embeddings = self._encode_local(images, image_grid_thw, patch_positions)
                 elif (vision_chunk := self._vision_chunk_patches(images, image_grid_thw, patch_positions)):
                     # VISION_CHUNK_PATCHES: vision tower + adapter in image-aligned chunks.
                     image_embeddings = self._encode_images_chunked(
