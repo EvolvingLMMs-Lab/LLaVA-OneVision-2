@@ -23,6 +23,18 @@ unchanged; the save/restore state fields are the same ones energon uses.
 
 The patch re-implements energon internals, so it is only applied to the energon
 version it was written against. Set ``ENERGON_LEAKFIX=0`` to disable it.
+
+BlendDataset restore index (energon 5.0.x)
+-----------------------------------------
+``BlendDataset.__iter__`` drops the datasets this worker has no samples for and
+numbers each sample by its position in that *filtered* list, but
+``restore_sample`` looks the number up in the *full* ``dataset_weights`` list.
+On a blend with many tiny datasets (single-shard codec parts are empty for most
+of 192 workers) the two lists differ by dozens of entries, so restoring an
+in-flight sample after a resume picks the wrong dataset: ``KeyError`` on its
+shard name, or a silently wrong sample when another dataset happens to have a
+shard of the same name. The fix maps the number back through the same filter.
+Saved states need no conversion. Set ``ENERGON_BLEND_RESTORE_FIX=0`` to disable it.
 """
 
 import inspect
@@ -124,6 +136,22 @@ def _make_map_iter(orig_map_iter):
     return _map_iter
 
 
+def _blend_restore_sample(self, index):
+    from megatron.energon.flavors.base_dataset import add_sample_restore_key
+
+    name, ds_idx = index[:2]
+    assert name == type(self).__name__
+    assert isinstance(ds_idx, int)
+    # __iter__ numbers samples by their position among the datasets this worker has
+    # samples for; map that position back to the full dataset_weights list.
+    active = [i for i, (dataset, _) in enumerate(self.dataset_weights) if dataset.worker_has_samples()]
+    return add_sample_restore_key(
+        self.dataset_weights[active[ds_idx]][0].restore_sample(index[2:]),
+        ds_idx,
+        src=self,
+    )
+
+
 def apply_energon_patches():
     """Apply the energon runtime fixes once per process (idempotent).
 
@@ -131,7 +159,7 @@ def apply_energon_patches():
     patched classes.
     """
     global _applied
-    if _applied or os.environ.get("ENERGON_LEAKFIX", "1") == "0":
+    if _applied:
         return
     try:
         version = metadata.version("megatron-energon")
@@ -147,14 +175,23 @@ def apply_energon_patches():
         _applied = True
         return
 
+    from megatron.energon.wrappers import blend_dataset as bd
     from megatron.energon.wrappers import map_dataset as md
     from megatron.energon.wrappers import repeat_dataset as rd
 
-    rd.RepeatDataset.__iter__ = _repeat_iter
-    md.MapDataset.__iter__ = _make_map_iter(md.MapDataset.__iter__)
+    if os.environ.get("ENERGON_LEAKFIX", "1") != "0":
+        rd.RepeatDataset.__iter__ = _repeat_iter
+        md.MapDataset.__iter__ = _make_map_iter(md.MapDataset.__iter__)
+        print(
+            f"[energon_patches] megatron-energon {version}: RepeatDataset/MapDataset "
+            "__iter__ patched (no per-dataset sample retention)",
+            flush=True,
+        )
+    if os.environ.get("ENERGON_BLEND_RESTORE_FIX", "1") != "0":
+        bd.BlendDataset.restore_sample = _blend_restore_sample
+        print(
+            f"[energon_patches] megatron-energon {version}: BlendDataset.restore_sample "
+            "maps the per-worker dataset index back to the full list",
+            flush=True,
+        )
     _applied = True
-    print(
-        f"[energon_patches] megatron-energon {version}: RepeatDataset/MapDataset "
-        "__iter__ patched (no per-dataset sample retention)",
-        flush=True,
-    )
