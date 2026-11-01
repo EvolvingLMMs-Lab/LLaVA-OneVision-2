@@ -453,6 +453,8 @@ bash examples/llava_onevision2/quick_start_4b/quick_start.sh
 
 That's it. Defaults: 8 GPUs, TP=1, PP=1, SEQ_LEN=10192, MBS=1, GBS=16, 1 epoch over 219,907 packed bins. Logs + checkpoints land under `${OUTPUT_DIR}/quick_start/`.
 
+Faster (opt-in): `OV2_PRESET=blackwell` (8-GPU Blackwell node, 3.0× per epoch) or `OV2_PRESET=hopper_80g` (Hopper, 80 GB, 2.2×); see [docs/faster_training.md](docs/faster_training.md).
+
 <details>
 <summary>What the script does, hyperparameter overrides, and env knobs</summary>
 
@@ -489,6 +491,9 @@ Distributed (single-node defaults are fine):
 
 Optional logging:
 - `WANDB_API_KEY` — if set, also logs to W&B (`WANDB_PROJECT` / `WANDB_NAME` honored)
+
+Optional speed-up:
+- `OV2_PRESET` — `blackwell` or `hopper_80g` (or a preset file); see [docs/faster_training.md](docs/faster_training.md)
 
 </details>
 
