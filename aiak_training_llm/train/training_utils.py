@@ -96,6 +96,7 @@ from megatron.training.training import (
 )
 
 from aiak_training_llm.utils import get_args, initialize_aiak_megatron
+from aiak_training_llm.utils import opt_switches
 
 stimer = StragglerDetector()
 
@@ -533,6 +534,13 @@ def save_checkpoint_and_time(iteration, model, ema, optimizer, opt_param_schedul
     timers('interval-time', log_level=0).start(barrier=True)
 
 
+def _flush_deferred_loss_reduce():
+    """Data-parallel loss reductions deferred by the model's loss function (OV2_OPT_DEFER_LOSS_REDUCE)."""
+    if opt_switches.flag('DEFER_LOSS_REDUCE'):
+        from aiak_training_llm.train.pretrain import pretrain_llava_onevision2
+        pretrain_llava_onevision2.flush_deferred_loss_reduce()
+
+
 def train_step(forward_step_func, data_iterator, model, optimizer, opt_param_scheduler, config):
     """Single training step."""
     args = get_args()
@@ -556,6 +564,7 @@ def train_step(forward_step_func, data_iterator, model, optimizer, opt_param_sch
             micro_batch_size=args.micro_batch_size,
             decoder_seq_length=args.decoder_seq_length,
             forward_only=False)
+        _flush_deferred_loss_reduce()
 
     should_checkpoint, should_exit, exit_code = rerun_state_machine.should_checkpoint_and_exit()
     if should_exit:
@@ -959,6 +968,10 @@ def train(forward_step_func, model, ema, optimizer, opt_param_scheduler,
         assert args.manual_gc_interval >= 0, 'Manual garbage collection interval should be laerger than or equal to 0.'
         gc.disable()
         gc.collect()
+        if opt_switches.flag('GC_SYNC'):
+            # Objects alive at the start of training (model, optimizer, datasets, ...) never become garbage;
+            # moving them to the permanent generation keeps the periodic collections below short.
+            gc.freeze()
 
     # Singleton Initialization
     if args.log_straggler:
@@ -1052,6 +1065,11 @@ def train(forward_step_func, model, ema, optimizer, opt_param_scheduler,
 
         if args.log_detail and args.timing_log_level < 1 and (iteration + 1) % args.detail_log_interval == 0:
             timers.set_show_detail_log(True)
+
+        if (args.manual_gc and args.manual_gc_interval != 0 and opt_switches.flag('GC_SYNC')
+                and iteration % args.manual_gc_interval == 0):
+            # the same iteration on every rank: no rank is held up by another rank's collection
+            gc.collect()
 
         args.curr_iteration = iteration
         ft_integration.on_training_step_start()            

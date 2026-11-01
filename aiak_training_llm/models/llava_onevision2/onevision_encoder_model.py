@@ -19,6 +19,7 @@ from aiak_training_llm.models.llava_onevision2.llava_onevision2_config import (
 from aiak_training_llm.models.llava_onevision2.vision_transformer_block import TransformerBlock
 
 import os
+from aiak_training_llm.utils import opt_switches
 TE_EXTRA_STATE_CHECK = int(os.environ.get("TE_EXTRA_STATE_MISSING_CHECK",0))==1
 _SCATTER_BEFORE_PATCH_EMBED = os.environ.get("SCATTER_BEFORE_PATCH_EMBED", "0") == "1"
 if TE_EXTRA_STATE_CHECK:
@@ -859,6 +860,9 @@ class OneVisionEncoderModel(VisionModule):
         Returns:
             torch.Tensor: Output embeddings of shape [total_patches, hidden_size].
         """
+        host_thw = getattr(grid_thw, "_ov2_host", None) if opt_switches.flag("HOST_SYNC_FREE") else None
+        if host_thw is not None and not _SCATTER_BEFORE_PATCH_EMBED and not self.config.sequence_parallel:
+            return self._forward_host_meta(x, host_thw, patch_positions)
         if self.frame_windows_size > 0:
             expanded_grid_thw = []
             for idx in range(len(grid_thw)):
@@ -1022,6 +1026,71 @@ class OneVisionEncoderModel(VisionModule):
         # Remove sequence dimension:  [s, 1, h] -> [s, h]
         x = x[:, 0, :].contiguous()
 
+        return x
+
+    def _forward_host_meta(self, x, host_thw, patch_positions):
+        """forward() with the grid (T, H, W) read from its host copy: the same computation (patch embedding, RoPE,
+        per-window cu_seqlens, pre-layernorm, transformer) without device->host reads. The packed-sequence
+        parameters carry max_seqlen, computed exactly as Transformer Engine computes it when it is missing
+        (rounded up to a multiple of 64), so the attention kernels are launched identically. TP 1 path only (no
+        sequence-parallel padding or scatter)."""
+        grid = [[int(v) for v in row] for row in host_thw.tolist()]
+        if self.frame_windows_size > 0:
+            expanded_grid_thw = []
+            for t_val, h_val, w_val in grid:
+                if t_val > self.frame_windows_size:
+                    num_full_windows = t_val // self.frame_windows_size
+                    remainder = t_val % self.frame_windows_size
+                    expanded_grid_thw.extend([[self.frame_windows_size, h_val, w_val]] * num_full_windows)
+                    if remainder > 0:
+                        expanded_grid_thw.append([remainder, h_val, w_val])
+                else:
+                    expanded_grid_thw.append([t_val, h_val, w_val])
+            grid = expanded_grid_thw
+
+        x = self.patch_embed(x)
+        sms = self.spatial_merge_size
+        tokens_per_sample = [t * h * w for t, h, w in grid]
+
+        if patch_positions is not None:
+            # Row-wise op: one call over the concatenated samples equals the per-sample calls concatenated.
+            num_patches = sum(tokens_per_sample)
+            rotary_pos_emb = self.video_rope.forward_from_positions(patch_positions[:num_patches])
+        else:
+            all_rotary_pos_emb = []
+            for t, h, w in grid:
+                sample_freqs = self.video_rope(t=t, h=h, w=w, device=x.device)
+                sample_freqs = convert_rope_to_block_layout(sample_freqs, t, h, w, sms)
+                all_rotary_pos_emb.append(sample_freqs)
+            rotary_pos_emb = torch.cat(all_rotary_pos_emb, dim=0)
+
+        cu_list = [0]
+        for length in tokens_per_sample:
+            cu_list.append(cu_list[-1] + int(length))
+        cu_seqlens = (
+            torch.tensor(cu_list, dtype=torch.int32).pin_memory().to(x.device, non_blocking=True)
+        )
+        max_seqlen = int((max(tokens_per_sample) + 63) // 64 * 64)
+
+        x = x[:, None, :].contiguous()
+        x = self.pre_layernorm(x)
+        x = self.decoder(
+            x,
+            packed_seq_params=[
+                PackedSeqParams(
+                    qkv_format="thd",
+                    cu_seqlens_q=cu_seqlens,
+                    cu_seqlens_kv=cu_seqlens,
+                    max_seqlen_q=max_seqlen,
+                    max_seqlen_kv=max_seqlen,
+                )
+                for i in range(self.config.num_layers)
+            ],
+            rotary_pos_emb=rotary_pos_emb.unsqueeze(1).unsqueeze(2),
+            attention_mask=None,
+            attn_mask_type=AttnMaskType.no_mask,
+        )
+        x = x[:, 0, :].contiguous()
         return x
 
     def forward_debug(
