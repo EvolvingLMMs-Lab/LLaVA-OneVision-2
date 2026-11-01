@@ -37,6 +37,19 @@ _CP = 3.4492e-3                # per vision patch (vision GEMMs, adapter, memory
 _CW = 0.3459e-6                # per window-length^2 (vision attention)
 _CL = 0.8542e-6                # per sub-sample-length^2 (causal LM attention)
 _HOST_FLOOR = 275.0            # host launch time of one sequence's forward + backward
+_RC = None                     # recompute costs of the OV2_OPT_MEM_BUDGET_GIB planner (ms), if given
+if os.environ.get('OV2_OPT_BALANCE_COSTS'):
+    # OV2_OPT_BALANCE_COSTS=<ms per 8190 tokens>,<ms per patch>,<ms per window-length^2>,<ms per sub-sample-length^2>,
+    # <host floor ms>[,<act LM ms per 8190 tokens>,<act vision ms per patch>,<fc1 vision ms per patch>,<fc1 LM ms per
+    # layer and 8190 tokens>]: the same cost model calibrated on another GPU (on Hopper the GEMM / attention /
+    # host-launch balance differs from Blackwell's), plus, with the per-micro-batch memory planner, the cost of the
+    # recomputation it plans for the sequence. Only the assignment of the iteration's sequences to ranks changes.
+    _c = [float(x) for x in os.environ['OV2_OPT_BALANCE_COSTS'].split(',')]
+    if len(_c) not in (5, 9):
+        raise ValueError('OV2_OPT_BALANCE_COSTS: expected 5 or 9 comma-separated values')
+    _C0, _CP, _CW, _CL, _HOST_FLOOR = _c[0] / 8190, _c[1], _c[2], _c[3], _c[4]
+    if len(_c) == 9:
+        _RC = _c[5:]
 
 
 _ACTIVE = None
@@ -90,6 +103,17 @@ def sequence_cost(d):
                 sq += (t * hw) ** 2
             nv += t * hw
         cost += _CW * sq + _CP * nv
+    if _RC is not None:
+        from aiak_training_llm.models.custom.common import activation_memory
+        if activation_memory.budget_enabled():
+            nv_all = 0
+            for key in ('image_grid_thw', 'video_grid_thw'):
+                g = d.get(key)
+                if isinstance(g, torch.Tensor) and g.numel():
+                    nv_all += sum(t * h * w for t, h, w in g.reshape(-1, 3).tolist())
+            p = activation_memory.plan(n_tok / 1000.0, nv_all / 1000.0)
+            cost += (_RC[0] * n_tok / 8190 * p['act_lm'] + _RC[1] * nv_all * p['act_vision']
+                     + _RC[2] * nv_all * p['fc1_vision'] + _RC[3] * p['fc1_lm'] * n_tok / 8190)
     return max(cost, _HOST_FLOOR)
 
 

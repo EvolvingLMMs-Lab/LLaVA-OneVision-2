@@ -104,6 +104,10 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
     model_family = get_model_family(args.model_name)
     model_provider = get_model_provider(model_family)
     assert model_provider is not None, f"model provider for {args.model_name} not found"
+    from aiak_training_llm.models.custom.common import activation_memory
+    if activation_memory.enabled():
+        # OV2_OPT_MEM_BUDGET_GIB / OV2_OPT_FC1_RECOMPUTE_*: selective recomputation of the MLPs (80 GB GPUs)
+        return activation_memory.mark_model(model_provider(pre_process, post_process, add_encoder, add_decoder))
     return model_provider(pre_process, post_process, add_encoder, add_decoder)
 
 

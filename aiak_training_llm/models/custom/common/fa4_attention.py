@@ -24,6 +24,7 @@ import torch
 
 _CUTE = None
 _INSTALLED = False
+_QKV_RECOMPUTE = os.environ.get('OV2_OPT_QKV_RECOMPUTE', '0') == '1'
 # 'all' (default), 'lm' (causal language-model attention only) or 'vision' (bidirectional only)
 _SCOPE = os.environ.get('OV2_OPT_FA4_SCOPE', 'all')
 _VISION_FROM = int(os.environ.get('OV2_OPT_FA4_VISION_FROM', '0') or 0)
@@ -153,6 +154,12 @@ def install():
                 softmax_scale=_softmax_scale(self, query.shape[-1]), causal=causal, deterministic=_deterministic())
             if isinstance(out, tuple):
                 out = out[0]
+            if _QKV_RECOMPUTE:
+                # OV2_OPT_QKV_RECOMPUTE: q / k / v freed now, rebuilt before this call's backward
+                from aiak_training_llm.models.custom.common.fused_qk_norm_rope import take_qkv_recompute
+                rq = take_qkv_recompute(query)
+                if rq is not None:
+                    rq.discard(out)
             return out.reshape(out.shape[0], -1)
         return original(self, query, key, value, attention_mask, attn_mask_type, attention_bias=attention_bias,
                         packed_seq_params=packed_seq_params)

@@ -196,6 +196,49 @@ class _FusedQKVNormRope(torch.autograd.Function):
             vs.copy_(dv)
         return dm, out[0], out[1], None, None, None, None, None, None
 
+    @staticmethod
+    def refill(mixed, wq, wk, eps, cos, sin, np_, ng, hn, q, k, v):
+        """The forward's q / k / v again, written into the given tensors (same kernels, same inputs: bitwise the same
+        values); the rstd outputs go to scratch buffers."""
+        T = mixed.shape[0]
+        hpg = np_ // ng
+        st, sg = mixed.stride(0), mixed.stride(2)
+        rq = torch.empty(T * np_, dtype=torch.float32, device=mixed.device)
+        rk = torch.empty(T * ng, dtype=torch.float32, device=mixed.device)
+        _fwd_kernel[(triton.cdiv(T * np_, _BR),)](mixed, st, sg, hn, hpg, wq, cos, sin, q, rq, T * np_, np_,
+                                                  float(eps), BR=_BR, HALF=hn // 2, num_warps=_NW)
+        kview = mixed[..., hpg * hn:(hpg + 1) * hn]
+        _fwd_kernel[(triton.cdiv(T * ng, _BR),)](kview, st, sg, hn, 1, wk, cos, sin, k, rk, T * ng, ng,
+                                                 float(eps), BR=_BR, HALF=hn // 2, num_warps=_NW)
+        # storage-level copy: no version-counter bump on v (a saved input of the attention's backward)
+        v.untyped_storage().copy_(mixed[..., (hpg + 1) * hn:].contiguous().untyped_storage())
+
+
+class QKVRecompute:
+    """OV2_OPT_QKV_RECOMPUTE (memory switch, off by default): the language model's q / k / v (outputs of the fused
+    split + q/k norm + RoPE, the attention kernel's saved inputs) are freed once the attention forward has run and
+    rebuilt from the linear_qkv output (kept anyway for the norm's backward) right before the attention backward (hook
+    on the attention output's gradient), as Megatron's output-discarding recompute does. ~12 KB per token and layer."""
+
+    def __init__(self, args, q, k, v):
+        self.args, self.qkv = args, (q, k, v)
+        self.sizes = [t.untyped_storage().size() for t in self.qkv]
+
+    def discard(self, out):
+        if not out.requires_grad:
+            return
+        for t in self.qkv:
+            t.untyped_storage().resize_(0)
+        out.register_hook(self.rebuild)
+
+    def rebuild(self, _grad):
+        q, k, v = self.qkv
+        for t, n in zip(self.qkv, self.sizes):
+            t.untyped_storage().resize_(n)
+        with torch.no_grad():
+            _FusedQKVNormRope.refill(*self.args, q, k, v)
+        self.args = self.qkv = None
+
 
 def positions(cu_seqlens, total):
     """Position of every token within its sub-sample (cached on the cu_seqlens tensor; no host sync)."""
@@ -254,6 +297,18 @@ def _identity_rope(t, freqs, config=None, cu_seqlens=None, **kwargs):
 
 
 _INSTALLED = False
+_QKV_RECOMPUTE = os.environ.get('OV2_OPT_QKV_RECOMPUTE', '0') == '1'
+_LAST = None
+
+
+def take_qkv_recompute(query):
+    """The pending OV2_OPT_QKV_RECOMPUTE record whose q is (a view of) this query, or None."""
+    global _LAST
+    rec = _LAST
+    if rec is None or rec.qkv is None or rec.qkv[0].untyped_storage().data_ptr() != query.untyped_storage().data_ptr():
+        return None
+    _LAST = None
+    return rec
 
 
 def install():
@@ -328,6 +383,12 @@ def install():
                 raise RuntimeError('fused qkv split + q/k norm + RoPE: unsupported layout')
             cos, sin = rope_tables(rq[0], rq[1], mixed.shape[0])
             q, k, v = _FusedQKVNormRope.apply(mixed, qn.weight, kn.weight, qn.eps, cos, sin, np_, ng, hn)
+            if _QKV_RECOMPUTE and self.training and torch.is_grad_enabled():
+                # picked up by the attention wrapper (fa4_attention / fa3_attention) of this layer, which frees them
+                # after its forward (matched by storage: Megatron passes views of q / k / v to the core attention)
+                global _LAST
+                _LAST = QKVRecompute((mixed.detach(), qn.weight.detach(), kn.weight.detach(), qn.eps, cos, sin,
+                                      np_, ng, hn), q, k, v)
             return q, k, v
 
         SelfAttention.get_query_key_value_tensors = get_query_key_value_tensors
