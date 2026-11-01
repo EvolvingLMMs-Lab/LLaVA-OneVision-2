@@ -77,6 +77,22 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
         MCoreModel: The returned model
     """
     args = get_args()
+    if opt_switches.flag('TRITON_CE'):
+        # the language model's per-token cross-entropy in two Triton kernels (same fp32 math, no fp32 logits copy)
+        from aiak_training_llm.models.custom.common import triton_cross_entropy
+        triton_cross_entropy.install()
+    if opt_switches.flag('FUSED_SWIGLU'):
+        # the language model's SwiGLU (jit_fuser in Megatron) in two Triton kernels (bitwise as the jit version)
+        from aiak_training_llm.models.custom.common import fused_swiglu
+        fused_swiglu.install()
+    if opt_switches.flag('FAST_BIAS_ADD'):
+        # the vision MLP's broadcast fc1 bias add in a vectorised Triton kernel (bitwise as PyTorch's)
+        from aiak_training_llm.models.custom.common import bias_add
+        bias_add.install()
+    if opt_switches.flag('FUSED_QK_NORM_ROPE'):
+        # the language model's q/k RMSNorm and rotary embedding in one Triton kernel each way
+        from aiak_training_llm.models.custom.common import fused_qk_norm_rope
+        fused_qk_norm_rope.install()
     model_family = get_model_family(args.model_name)
     model_provider = get_model_provider(model_family)
     assert model_provider is not None, f"model provider for {args.model_name} not found"
