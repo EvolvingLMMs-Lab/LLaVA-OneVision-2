@@ -77,6 +77,14 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
         MCoreModel: The returned model
     """
     args = get_args()
+    if opt_switches.flag('FA4_ATTN'):
+        # FlashAttention-4 (optional package) for the packed self-attention
+        from aiak_training_llm.models.custom.common import fa4_attention
+        fa4_attention.install()
+    if os.environ.get('OV2_OPT_FA3_ATTN', '0') not in ('', '0'):
+        # FlashAttention-3 (optional package, Hopper) for the packed self-attention in scope (all | lm | vision)
+        from aiak_training_llm.models.custom.common import fa3_attention
+        fa3_attention.install()
     if opt_switches.flag('TRITON_CE'):
         # the language model's per-token cross-entropy in two Triton kernels (same fp32 math, no fp32 logits copy)
         from aiak_training_llm.models.custom.common import triton_cross_entropy
