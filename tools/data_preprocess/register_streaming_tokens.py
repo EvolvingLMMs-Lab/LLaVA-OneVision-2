@@ -32,6 +32,7 @@ fails rather than write a tokenizer that indexes past the embedding matrix.
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -50,6 +51,12 @@ except ImportError:  # usable without the training package on sys.path
 # hold freshly converted weights that must not be overwritten by the base model's.
 WEIGHT_SUFFIXES = (".safetensors", ".bin", ".pt", ".pth", ".index.json")
 
+# Hand-made and editor backups sit next to the real files in some processor directories
+# (preprocessor_config.json.bak_4Mpixels, modeling_llava_onevision2.py.bak_1dpos). Copying
+# them puts a stale duplicate of a live file into the released model, where at best it
+# confuses a reader and at worst someone restores it over the file that is actually used.
+BACKUP_NAME_RE = re.compile(r"(~|\.(bak|orig|old|tmp|save|swp|swo|rej)(_[^.]*)?)$", re.IGNORECASE)
+
 
 def read_json(path):
     with open(path, encoding="utf-8") as f:
@@ -63,14 +70,22 @@ def write_json(path, payload):
 
 
 def copy_aux_files(src, dst):
-    """Copy config/processor/tokenizer files, leaving any weights in dst alone."""
-    copied = []
+    """Copy config/processor/tokenizer files, leaving any weights in dst alone.
+
+    Backups in ``src`` are skipped and reported rather than shipped; see BACKUP_NAME_RE.
+    """
+    copied, skipped = [], []
     for name in sorted(os.listdir(src)):
         path = os.path.join(src, name)
         if not os.path.isfile(path) or name.startswith(".") or name.endswith(WEIGHT_SUFFIXES):
             continue
+        if BACKUP_NAME_RE.search(name):
+            skipped.append(name)
+            continue
         shutil.copy2(path, os.path.join(dst, name))
         copied.append(name)
+    if skipped:
+        print(f"[aux] skipped {len(skipped)} backup file(s) in {src}: " + ", ".join(skipped))
     return copied
 
 
