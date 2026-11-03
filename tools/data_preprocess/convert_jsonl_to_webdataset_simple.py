@@ -88,6 +88,7 @@ def sample_loader(sample: dict) -> dict:
 		image=images if len(images) > 0 else None,
 		fps=data.get('fps'),
 		timestamp_decimal=data.get('timestamp_decimal'),
+		data_type=data.get('data_type'),
 	)
 	if patch_positions is not None:
 		result['patch_positions'] = patch_positions
@@ -201,6 +202,9 @@ def _build_sample(
     }
     if timestamp_decimal is not None:
         payload["timestamp_decimal"] = timestamp_decimal
+    data_type = entry.get("data_type")
+    if data_type is not None:
+        payload["data_type"] = data_type
     logging.info(payload["fps"])
     if patch_positions_keys:
         payload["patch_positions_keys"] = patch_positions_keys
