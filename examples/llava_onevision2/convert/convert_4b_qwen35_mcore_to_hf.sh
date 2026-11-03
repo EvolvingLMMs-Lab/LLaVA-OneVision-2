@@ -25,6 +25,16 @@
 #   REFERENCE  merged HF model to copy config/modeling/tokenizer from
 #              (default /models/llava_onevision2_4b_qwen35_p16m3)
 #
+# Streaming models (STREAMING_EXPORT=auto|1|0, default auto): a checkpoint trained with the streaming
+# loss (--streaming-loss-scope=last-segment / --state-token-focal-loss in its args, or a <silence>
+# token in its --hf-tokenizer-path) is exported as a streaming model: the tokenizer/processor are
+# copied from the tokenizer it was TRAINED with (all trained ids kept, e.g. <captioning>, nothing
+# re-registered), and chat_template.jinja becomes the dual-mode template -- offline by default (the
+# trainer's qwen2-vl default system), streaming with apply_chat_template(..., streaming=True) (the
+# trainer's STREAMING_SYSTEM_PROMPT) -- with "<T.T seconds>" before timestamped images in both modes.
+# Both modes are checked against the training format. Override the tokenizer with TOKENIZER_SRC=<dir>.
+# Non-streaming exports are unaffected.
+#
 # Example:
 #   bash convert_4b_qwen35_mcore_to_hf.sh \
 #     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1 \
@@ -80,6 +90,35 @@ if [[ -d "$LOAD/release" ]]; then
     LOAD_REL="$LOAD/release"
 else
     LOAD_REL="$LOAD"
+fi
+
+# ---- what was this checkpoint trained as? (read before any weights-only rewrite below) -------------
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/../../.." && pwd)   # tools shipped with this script, independent of AIAK_TRAINING_PATH
+read -r TRAIN_TOKENIZER TRAIN_STREAMING < <(python - "$(ls -d $LOAD_REL/mp_rank_00 $LOAD_REL/mp_rank_00_000 2>/dev/null | head -1)/model_optim_rng.pt" <<'PYEOF'
+import json, os, sys, torch
+args = torch.load(sys.argv[1], map_location="cpu", weights_only=False).get("args")
+tok = getattr(args, "hf_tokenizer_path", None) or "-"
+# --streaming-loss-scope carries default="all", so argparse stores it in the args of EVERY run and
+# the checkpoint keeps it. Only a value the user actually chose is evidence of streaming training;
+# taking the default as evidence would mark every checkpoint streaming and fail the finalize check
+# below on ordinary exports. The tokenizer probe underneath is the real fallback, so let it run.
+scope = getattr(args, "streaming_loss_scope", None)
+streaming = scope not in (None, "all") or bool(getattr(args, "state_token_focal_loss", False))
+tj = os.path.join(tok, "tokenizer.json")
+if not streaming and os.path.isfile(tj):
+    streaming = any(a["content"] == "<silence>" for a in json.load(open(tj)).get("added_tokens", []))
+print(tok, int(streaming))
+PYEOF
+)
+STREAMING_EXPORT=${STREAMING_EXPORT:-auto}
+[[ $STREAMING_EXPORT == auto ]] && STREAMING_EXPORT=${TRAIN_STREAMING:-0}
+echo "[wrapper] trained tokenizer=$TRAIN_TOKENIZER streaming_checkpoint=${TRAIN_STREAMING:-?} -> STREAMING_EXPORT=$STREAMING_EXPORT"
+if [[ $STREAMING_EXPORT == 1 ]]; then
+    STREAMING_TOKENIZER=${TOKENIZER_SRC:-$TRAIN_TOKENIZER}
+    [[ -f $STREAMING_TOKENIZER/tokenizer.json ]] || {
+        echo "[wrapper] streaming export needs the training tokenizer, not found: '$STREAMING_TOKENIZER'" >&2
+        echo "[wrapper] pass TOKENIZER_SRC=<the --hf-tokenizer-path used in training>" >&2; exit 1; }
 fi
 
 # ---- refuse checkpoints whose replicated GDN params drifted across TP ranks (pre SP-FIX
@@ -200,3 +239,25 @@ done
 
 rm -rf $SAVE_LANGUAGE_MODEL $SAVE_VISION_MODEL $SAVE_ADAPTER $SAVE_PATCH ./tmp/work-release
 echo "Done. Merged HuggingFace model saved to: $SAVE"
+
+# =============================================================================
+# Streaming checkpoints only: make the export loadable AND aligned with training.
+#
+# Everything above copies config/modeling/processor/tokenizer verbatim from
+# REFERENCE, which for a streaming model is the wrong tokenizer (no <silence> ..
+# <caption_begin>: they would tokenize as sub-words and the streaming signal
+# would be silently lost) and a chat template that cannot render streaming turns.
+# Copy the tokenizer the model was actually TRAINED with, untouched, then install
+# the dual-mode template and check both modes against the training format.
+#
+# A non-streaming export leaves this block alone and ends above, unchanged.
+# =============================================================================
+if [[ $STREAMING_EXPORT == 1 ]]; then
+    python $REPO_ROOT/tools/data_preprocess/register_streaming_tokens.py \
+        --src "$STREAMING_TOKENIZER" --dst "$SAVE" --no-streaming-tokens || exit 1
+    python $REPO_ROOT/tools/data_preprocess/finalize_streaming_export.py \
+        --dst "$SAVE" --train-tokenizer "$STREAMING_TOKENIZER" --repo "$REPO_ROOT" \
+        --template "$SCRIPT_DIR/chat_template_ov_dual.jinja" || {
+        echo "[finalize] streaming export check FAILED; $SAVE is not aligned with training" >&2; exit 1; }
+    echo "Done. Streaming HuggingFace model: $SAVE"
+fi

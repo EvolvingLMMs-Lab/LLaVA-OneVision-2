@@ -1,0 +1,57 @@
+{#- OV2.5 Qwen3.5 chat template with two modes, aligned with the training renderer (aiak `qwen2-vl`
+    template + canvas timestamps). Pick the mode per call:
+        processor.apply_chat_template(messages, ...)                  -> offline (default)
+        processor.apply_chat_template(messages, ..., streaming=True)  -> streaming
+    The modes differ only in the default system turn, exactly as in training: offline samples get
+    the qwen2-vl default system, data_type=streaming samples get the streaming prompt. An explicit
+    system message always wins. (Both placeholders are filled from the training code at export
+    time by finalize_streaming_export.py, so they cannot drift.)
+    Layout: <|im_start|>system\n{system}<|im_end|>\n then per turn <|im_start|>{role}\n{content}<|im_end|>\n.
+    - String content is emitted verbatim (callers that pre-render "<T seconds><|vision_start|>...").
+    - An image item may carry "timestamp" (seconds = frame_index / fps); it is rendered as the trainer
+      does, "<T.T seconds>" right before <|vision_start|>. Video frames get timestamps in both modes;
+      single images have none. Put the trained "\n" after a frame as a text item, e.g.
+      [{"type":"image","timestamp":4.0},{"type":"text","text":"\n"}].
+    - The processor expands each <|image_pad|> to the frame's merged patch count; a <|video_pad|>
+      block is expanded by the processor into per-frame "<X.X seconds>" blocks (offline video path). -#}
+{%- set image_count = namespace(value=0) %}
+{%- set video_count = namespace(value=0) %}
+{%- if streaming is defined and streaming %}
+    {%- set default_system = '__STREAMING_SYSTEM_PROMPT__' %}
+{%- else %}
+    {%- set default_system = '__OFFLINE_SYSTEM_PROMPT__' %}
+{%- endif %}
+{%- for message in messages %}
+    {%- if loop.first and message['role'] != 'system' %}
+        {{- '<|im_start|>system\n' + default_system + '<|im_end|>\n' }}
+    {%- endif %}
+    {{- '<|im_start|>' + message['role'] + '\n' }}
+    {%- if message['content'] is string %}
+        {{- message['content'] }}
+    {%- else %}
+        {%- for content in message['content'] %}
+            {%- if content['type'] == 'image' or 'image' in content or 'image_url' in content %}
+                {%- set image_count.value = image_count.value + 1 %}
+                {%- if add_vision_id %}
+                    {{- 'Picture ' + image_count.value|string + ': ' }}
+                {%- endif %}
+                {%- if content['timestamp'] is defined and content['timestamp'] is not none %}
+                    {{- '<' + '%.1f'|format(content['timestamp']|float) + ' seconds>' }}
+                {%- endif %}
+                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}
+            {%- elif content['type'] == 'video' or 'video' in content %}
+                {%- set video_count.value = video_count.value + 1 %}
+                {%- if add_vision_id %}
+                    {{- 'Video ' + video_count.value|string + ': ' }}
+                {%- endif %}
+                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}
+            {%- elif 'text' in content %}
+                {{- content['text'] }}
+            {%- endif %}
+        {%- endfor %}
+    {%- endif %}
+    {{- '<|im_end|>\n' }}
+{%- endfor %}
+{%- if add_generation_prompt %}
+    {{- '<|im_start|>assistant\n' }}
+{%- endif %}
