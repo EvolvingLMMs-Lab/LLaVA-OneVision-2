@@ -843,9 +843,26 @@ class Qwen2VLTaskEncoder(TaskEncoder):
     @stateless
     def pack_selected_samples(self, samples: list[Qwen2VLImageTaskSample]) -> list[Qwen2VLImageTaskSamplePacked]:
         """Pack selected samples into one big sample."""
-        image_grid_thw, video_grid_thw = self.process_samples_grid(samples)
+        packed = super().pack_selected_samples(samples)
+        # The base implementation drops sub-samples that do not fit seq_length
+        # ([OVERLONG_SUBSAMPLE_SKIP] / [SHORT_SUBSAMPLE_SKIP]) and builds tokens, imgs and
+        # cu_lengths from what it kept, so the grids have to describe that same set. Computing
+        # them from `samples` leaves image_grid_thw one row longer than the pixel tensor; the
+        # vision tower then splits N-1 images worth of patches by N grid rows, which stays
+        # finite in the forward pass and only shows up as NaN grads in the backward pass.
+        # packed.__key__ is the kept keys, comma-joined, in their original order.
+        kept_keys = packed.__key__.split(",")
+        kept, ki = [], 0
+        for x in samples:
+            if ki < len(kept_keys) and x.__key__ == kept_keys[ki]:
+                kept.append(x)
+                ki += 1
+        if len(kept) != len(samples):
+            print(f"[PACK_SKIP_REGRID] grids rebuilt for {len(kept)}/{len(samples)} sub-samples",
+                  flush=True)
+        image_grid_thw, video_grid_thw = self.process_samples_grid(kept)
         return Qwen2VLImageTaskSamplePacked(
-            super().pack_selected_samples(samples), image_grid_thw=image_grid_thw, video_grid_thw=video_grid_thw
+            packed, image_grid_thw=image_grid_thw, video_grid_thw=video_grid_thw
         )
 
     @override
