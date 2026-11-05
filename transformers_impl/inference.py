@@ -61,7 +61,7 @@ def main(args):
     # device_map="auto" will handle placing the model on available GPUs
     model = LLaVAOneVision1_5_ForConditionalGeneration.from_pretrained(
         args.model_path, 
-        torch_dtype="auto", 
+        dtype="auto", 
         device_map="auto",
         trust_remote_code=False # Recommended for custom models
     )
