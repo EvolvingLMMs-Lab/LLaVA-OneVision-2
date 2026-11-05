@@ -513,7 +513,7 @@ Training infrastructure optimizations by [ResearchBoost-Agent](https://github.co
 OV2_PRESET=blackwell bash examples/llava_onevision2/quick_start_4b/quick_start.sh
 ```
 
-Without a preset, training runs exactly as before. See docs/faster_training.md for how to set up the environment for accelerated training and for details on each speed-up switch.
+Without a preset, training runs exactly as before. See [docs/faster_training.md](docs/faster_training.md) for how to set up the environment for accelerated training and for details on each speed-up switch.
 
 ## Contributors
 Thanks so much to all of our amazing contributors!
