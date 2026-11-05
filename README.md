@@ -41,6 +41,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 ---
 
 ## NEWS
+- 2026-11-05: Thanks to [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) for making [LLaVA-OneVision-2-4B](#quick-start-4b-single-node) SFT 2.2–3.0× faster! See [Training Acceleration](#training-acceleration) for details.
 - 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
 - 2025-12-11: Released RL recipe for LLaVA-OneVision-1.5, with [Project](https://mvp-ai-lab.github.io/LLaVA-OneVision-1.5-RL/), [Code](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5-RL), [Data](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-RL-Data), and [Model](https://huggingface.co/mvp-lab/LLaVA-OneVision-1.5-8B-RL).
@@ -56,6 +57,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 - [Models](#models)
 - [Datasets](#datasets)
 - [Quick Start (4B, single node)](#quick-start-4b-single-node)
+- [Training Acceleration](#training-acceleration)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
 - [LLaVA-OneVision-1.5](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5/tree/1.5)
@@ -453,7 +455,7 @@ bash examples/llava_onevision2/quick_start_4b/quick_start.sh
 
 That's it. Defaults: 8 GPUs, TP=1, PP=1, SEQ_LEN=10192, MBS=1, GBS=16, 1 epoch over 219,907 packed bins. Logs + checkpoints land under `${OUTPUT_DIR}/quick_start/`.
 
-Faster (opt-in): `OV2_PRESET=blackwell` (8-GPU Blackwell node, 3.0× per epoch) or `OV2_PRESET=hopper_80g` (Hopper, 80 GB, 2.2×); see [docs/faster_training.md](docs/faster_training.md).
+Faster (opt-in): `OV2_PRESET=blackwell` (8-GPU Blackwell node, 3.0× per epoch) or `OV2_PRESET=hopper_80g` (Hopper, 80 GB, 2.2×); see [Training Acceleration](#training-acceleration).
 
 <details>
 <summary>What the script does, hyperparameter overrides, and env knobs</summary>
@@ -497,6 +499,21 @@ Optional speed-up:
 
 </details>
 
+
+## Training Acceleration
+
+Training infrastructure optimizations by [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) make the 4B quick-start SFT 2.2–3.0× faster. Pick the preset that matches your GPUs:
+
+| Preset | GPU Architecture | Peak memory per GPU | Speed-up |
+|---|---|---|---|
+| `blackwell` | Blackwell | 157.6 GiB | 3.0× |
+| `hopper_80g` | Hopper | 74.8 GiB | 2.2× |
+
+```bash
+OV2_PRESET=blackwell bash examples/llava_onevision2/quick_start_4b/quick_start.sh
+```
+
+Without a preset, training runs exactly as before. See docs/faster_training.md for how to set up the environment for accelerated training and for details on each speed-up switch.
 
 ## Contributors
 Thanks so much to all of our amazing contributors!
