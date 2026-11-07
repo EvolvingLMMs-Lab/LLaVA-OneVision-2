@@ -17,6 +17,11 @@ rank and iteration, and that each sequence is trained exactly once with its own 
 schedule are untouched: each sequence is still one micro-batch, normalised by its own loss-token count and by the number
 of micro-batches, and the gradient reduction averages over the ranks). The objective is therefore the same; only the
 order in which per-sequence gradients are summed changes.
+
+startup_check() runs first and keeps the default data path, with a warning, where balancing is not supported or cannot
+help: TP, PP or CP above 1 (not validated, and process groups below assume one data-parallel group), one data-parallel
+rank, one sequence per rank and iteration, or a group that spans nodes (moved sequences would cross the node fabric;
+OV2_OPT_BALANCE_CROSS_NODE=1 allows it).
 """
 import collections
 import os
@@ -117,11 +122,90 @@ def sequence_cost(d):
     return max(cost, _HOST_FLOOR)
 
 
+def startup_problem(dp_size, job_size, micro_batches, nodes, cross_node):
+    """Why OV2_OPT_BALANCE stays off for this job, or None if it can run."""
+    if dp_size != job_size:
+        return f'the data-parallel group holds {dp_size} of the {job_size} ranks; only TP, PP and CP 1 are supported'
+    if dp_size < 2:
+        return 'there is only one data-parallel rank'
+    if micro_batches < 2:
+        return (f'{micro_batches} sequence per rank and iteration leaves nothing to balance; it needs a global batch '
+                'size of at least 2 x data-parallel size x micro-batch size')
+    if nodes > 1 and not cross_node:
+        return (f'the data-parallel group spans {nodes} nodes and moved sequences, pixels included, would cross the '
+                'node fabric; set OV2_OPT_BALANCE_CROSS_NODE=1 to balance anyway')
+    return None
+
+
+def startup_check():
+    """True if BalancedDataIterator should wrap the data iterator. Its constructor creates process groups, which every
+    rank must enter together, so this runs first and gives the same answer on every rank."""
+    from megatron.training import get_args
+    args = get_args()
+    group = mpu.get_data_parallel_group()
+    dp_size = torch.distributed.get_world_size(group)
+    job_size = torch.distributed.get_world_size()
+    ranks_per_node = int(os.environ.get('LOCAL_WORLD_SIZE', 0)) or torch.cuda.device_count()
+    nodes = len({r // ranks_per_node for r in torch.distributed.get_process_group_ranks(group)})
+    problem = startup_problem(dp_size, job_size, args.global_batch_size // (args.micro_batch_size * dp_size), nodes,
+                              os.environ.get('OV2_OPT_BALANCE_CROSS_NODE', '0') == '1')
+    if dp_size == job_size:
+        # every rank is here (with a smaller group some ranks have no data iterator, and all ranks stop without a
+        # collective); ranks can disagree when the launcher does not pass the same environment to every node
+        agreed = torch.tensor([problem is None], dtype=torch.int32, device=torch.cuda.current_device())
+        torch.distributed.all_reduce(agreed, op=torch.distributed.ReduceOp.MIN)
+        if problem is None and not agreed.item():
+            problem = 'another rank found a problem (is the environment the same on every node?)'
+    if problem is not None and torch.distributed.get_rank() == 0:
+        print(f'[ov2-balance] WARNING: OV2_OPT_BALANCE is off for this run: {problem}', flush=True)
+    return problem is None
+
+
+def match_groups(groups, world):
+    """perm[g] = the rank of group g, keeping the most sequences on the rank that loaded them: a maximum-weight
+    bipartite matching (Hungarian algorithm on integers, deterministic, about 0.5 ms at world 48)."""
+    cost = [[0] * world for _ in range(world)]
+    for g, group in enumerate(groups):
+        for c in group:
+            cost[g][c[1]] -= 1
+    inf = float('inf')
+    u, v = [0] * (world + 1), [0] * (world + 1)
+    owner, way = [0] * (world + 1), [0] * (world + 1)      # owner[r + 1]: 1-based group matched to rank r
+    for g in range(1, world + 1):
+        owner[0], col = g, 0
+        slack, used = [inf] * (world + 1), [False] * (world + 1)
+        while True:
+            used[col] = True
+            row, delta, nxt = owner[col], inf, 0
+            for j in range(1, world + 1):
+                if not used[j]:
+                    cur = cost[row - 1][j - 1] - u[row] - v[j]
+                    if cur < slack[j]:
+                        slack[j], way[j] = cur, col
+                    if slack[j] < delta:
+                        delta, nxt = slack[j], j
+            for j in range(world + 1):
+                if used[j]:
+                    u[owner[j]] += delta
+                    v[j] -= delta
+                else:
+                    slack[j] -= delta
+            col = nxt
+            if owner[col] == 0:
+                break
+        while col:
+            owner[col] = owner[way[col]]
+            col = way[col]
+    perm = [0] * world
+    for j in range(1, world + 1):
+        perm[owner[j] - 1] = j - 1
+    return tuple(perm)
+
+
 def assign(costs, world, per_rank):
     """costs: list of (cost, src_rank, index), world * per_rank entries. Returns for every rank the list of (src_rank,
     index) it trains, per_rank each: LPT then pairwise-swap refinement of the largest load, then the group -> rank
     matching that keeps the most sequences where they were loaded. Deterministic (ties broken by (src_rank, index))."""
-    import itertools
     order = sorted(costs, key=lambda x: (-x[0], x[1], x[2]))
     groups = [[] for _ in range(world)]
     loads = [0.0] * world
@@ -149,12 +233,7 @@ def assign(costs, world, per_rank):
         groups[hi][a], groups[lo][b] = groups[lo][b], groups[hi][a]
         loads[hi] -= d
         loads[lo] += d
-    if world <= 6:
-        perms = itertools.permutations(range(world))
-        perm = max(perms, key=lambda p: (sum(1 for g in range(world) for c in groups[g] if c[1] == p[g]),
-                                          tuple(-x for x in p)))
-    else:
-        perm = tuple(range(world))
+    perm = match_groups(groups, world)
     out = [None] * world
     for g in range(world):
         r = perm[g]

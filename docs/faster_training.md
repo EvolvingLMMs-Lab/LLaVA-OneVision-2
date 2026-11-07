@@ -52,10 +52,11 @@ The following table lists the speedup switches, their effect on training, and wh
 | `OV2_OPT_TRITON_CE=1` | LM cross-entropy in two Triton kernels, no fp32 logits copy | rounding | on | on |
 | `OV2_OPT_CE_FUSION=1` | Megatron's fused cross-entropy | rounding | on | on |
 | `OV2_OPT_DDP_AVG=1` | 1/DP gradient scaling inside the reduce-scatter | exact (power-of-two DP size) | on | on |
-| `OV2_OPT_BALANCE=1`, `OV2_OPT_BALANCE_PREPULL=1` | cross-rank load balancing of each iteration's packed sequences; the next iteration's sequences are taken from the loader while the GPU finishes | rounding | on | on |
+| `OV2_OPT_BALANCE=1`, `OV2_OPT_BALANCE_PREPULL=1` | cross-rank load balancing of each iteration's packed sequences; the next iteration's sequences are taken from the loader while the GPU finishes. Stays off, with a warning, unless data parallelism is the whole job (TP, PP, CP 1), within one node, with global batch size >= 2 × data-parallel size | rounding | on | on |
+| `OV2_OPT_BALANCE_CROSS_NODE=1` | allow balancing across nodes (moved sequences, pixels included, cross the node fabric) | rounding | off | off |
 | `OV2_OPT_BALANCE_COSTS=<9 values>` | balancing cost model for another GPU (with the planned recomputation) | rounding | off | Hopper values |
 | `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` | PyTorch allocator setting (allocator slack ~14 → ~1.6 GiB) | exact | off | on |
-| `OV2_OPT_MEM_BUDGET_GIB=g` | per-micro-batch planner: only the recomputation needed to keep activations within g GiB | exact | off | 33 |
+| `OV2_OPT_MEM_BUDGET_GIB=g` | per-micro-batch planner: only the recomputation needed to keep activations within g GiB. Stays off, with a warning, with pipeline parallelism | exact | off | 33 |
 | `OV2_OPT_QKV_RECOMPUTE=1` | LM q/k/v freed after the attention forward, rebuilt before its backward | exact | off | on |
 | `OV2_OPT_ACT_RECOMPUTE`, `OV2_OPT_FC1_RECOMPUTE_{LM,VISION}`, `OV2_OPT_RECOMPUTE_{LM,VISION}` | static recomputation choices (the planner chooses per sequence) | exact | off | off |
 | `OV2_OPT_FA3_ATTN`, `OV2_OPT_FA3_VISION_FROM` | FlashAttention-3 (experimental, Hopper only; not faster than `flash-attn-4`'s sm90 kernels) | rounding | off | off |

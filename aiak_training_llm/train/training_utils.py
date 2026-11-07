@@ -282,8 +282,9 @@ def pretrain(
         if (opt_switches.flag('BALANCE') and train_data_iterator is not None
                 and not isinstance(train_data_iterator, list)):
             # OV2_OPT_BALANCE: cross-rank load balancing of each iteration's packed sequences
-            from aiak_training_llm.train.balanced_iterator import BalancedDataIterator
-            train_data_iterator = BalancedDataIterator(train_data_iterator)
+            from aiak_training_llm.train.balanced_iterator import BalancedDataIterator, startup_check
+            if startup_check():
+                train_data_iterator = BalancedDataIterator(train_data_iterator)
         if args.do_train and args.train_iters > 0:
             iteration, num_floating_point_operations_so_far = train(
                 forward_step_func=forward_step_func,

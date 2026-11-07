@@ -22,7 +22,7 @@ the same inputs (bitwise identical in deterministic mode); only memory and time 
         linear model MEM_MODEL below) and turns on, cheapest per GiB first, only as much recomputation as needed to
         stay within g GiB: activation recompute (LM, vision), fc1 recompute of the vision MLPs, fc1 recompute of k
         language-model MLPs, then full recompute of vision / LM layers. Light sequences (few patches) run with little
-        or no recomputation. The plan depends only on the sequence's shapes.
+        or no recomputation. The plan depends only on the sequence's shapes. Off, with a warning, with PP > 1.
   OV2_OPT_QKV_RECOMPUTE=1
         The language model's q / k / v are freed after the attention forward and rebuilt before its backward (needs
         OV2_OPT_FUSED_QKV_SPLIT and the FA4 / FA3 attention; fused_qk_norm_rope.QKVRecompute).
@@ -163,7 +163,13 @@ def mark_model(model):
     """After the model is built: flag the MLPs of the layers that get fc1 recomputation (patching MLP.forward once),
     or install the per micro-batch planner (OV2_OPT_MEM_BUDGET_GIB)."""
     if budget_enabled():
-        return install_planner(model)
+        from megatron.core import parallel_state
+        if parallel_state.get_pipeline_model_parallel_world_size() == 1:
+            return install_planner(model)
+        # MEM_MODEL describes the whole model on one GPU, and a pipeline stage may not hold the vision encoder at all
+        if torch.distributed.get_rank() == 0:
+            print('[ov2-mem] WARNING: OV2_OPT_MEM_BUDGET_GIB is off for this run: pipeline parallelism is not supported. '
+                  'With OV2_OPT_NO_RECOMPUTE, nothing limits activation memory.', flush=True)
     n_vis = _count('OV2_OPT_FC1_RECOMPUTE_VISION', _LAYERS['vision'])
     n_lm = _count('OV2_OPT_FC1_RECOMPUTE_LM', _LAYERS['lm'])
     if not (n_vis or n_lm):
