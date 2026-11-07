@@ -11,6 +11,7 @@ from megatron.core.transformer.mlp import MLP, MLPSubmodules
 from megatron.core.transformer.spec_utils import ModuleSpec
 from megatron.core.transformer.transformer_layer import TransformerLayer, TransformerLayerSubmodules
 
+from aiak_training_llm.utils import opt_switches
 from aiak_training_llm.models.llava_onevision1_5.llava_onevision1_5_layer_spec import (
     get_adapeter_layer_with_spec,
     get_qwen_layer_with_te_spec,
@@ -49,6 +50,11 @@ def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interl
     Returns:
         torch.Tensor: Tensor with rotary position embedding applied.
     """
+    if opt_switches.flag("FUSED_VISION_ROPE"):
+        from aiak_training_llm.models.llava_onevision2 import fused_vision_rope
+
+        if fused_vision_rope.supported(t, freqs, cu_seqlens):
+            return fused_vision_rope.fused_apply_rotary_pos_emb_vision(t, freqs)
     orig_dtype = t.dtype
     t = t.float()
     if cu_seqlens is not None:

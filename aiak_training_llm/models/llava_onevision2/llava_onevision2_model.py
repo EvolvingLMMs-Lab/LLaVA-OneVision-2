@@ -228,7 +228,9 @@ class LlavaOnevision2(MegatronModule):
                 )  # [img_len, h_vision]
                 image_embeddings = self.adapter(image_embeddings)
 
-                n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
+                n_image_tokens = getattr(input_ids, "_ov2_n_image_tokens", None)
+                if n_image_tokens is None:
+                    n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
                 n_image_features = image_embeddings.shape[0]
                 if n_image_features > n_image_tokens:
                     # Trim any extra embeddings produced by ViT SP-padding tokens that
@@ -277,7 +279,12 @@ class LlavaOnevision2(MegatronModule):
             if use_inference_kv_cache or (images is None and pixel_values_videos is None):
                 combined_embeddings = language_embeddings
             else:
-                if images is not None and self.config.image_token_id in input_ids:
+                host_n_image_tokens = getattr(input_ids, "_ov2_n_image_tokens", None)
+                if host_n_image_tokens is not None:
+                    has_image_tokens = host_n_image_tokens > 0
+                else:
+                    has_image_tokens = self.config.image_token_id in input_ids
+                if images is not None and has_image_tokens:
                     image_token_id = self.config.image_token_id
                     images_mask = (
                         (input_ids == image_token_id)
@@ -287,7 +294,19 @@ class LlavaOnevision2(MegatronModule):
                         .to(language_embeddings.device)
                     )
                     image_embeddings = image_embeddings.to(language_embeddings.device, language_embeddings.dtype)
-                    combined_embeddings = language_embeddings.masked_scatter(images_mask, image_embeddings)
+                    image_pos = getattr(input_ids, "_ov2_image_pos", None)
+                    if (
+                        image_pos is not None
+                        and language_embeddings.shape[1] == 1
+                        and image_embeddings.shape[0] == image_pos.shape[0]
+                    ):
+                        # masked_scatter with host-computed row positions: the same copies forward and backward
+                        # (grad of the text embeddings zeroed at the image rows, grad of the image embeddings
+                        # gathered from them), without masked_scatter's backward nonzero() host sync.
+                        combined_embeddings = language_embeddings.clone()
+                        combined_embeddings[image_pos] = image_embeddings.unsqueeze(1)
+                    else:
+                        combined_embeddings = language_embeddings.masked_scatter(images_mask, image_embeddings)
 
             if self.config.context_parallel_size > 1:
                 combined_embeddings = get_inputs_on_this_cp_rank(combined_embeddings)

@@ -96,6 +96,7 @@ from megatron.training.training import (
 )
 
 from aiak_training_llm.utils import get_args, initialize_aiak_megatron
+from aiak_training_llm.utils import opt_switches
 
 stimer = StragglerDetector()
 
@@ -278,6 +279,12 @@ def pretrain(
             print_rank_0("retro cyclic train iters : %d" % args.train_iters)
 
         iteration = 0
+        if (opt_switches.flag('BALANCE') and train_data_iterator is not None
+                and not isinstance(train_data_iterator, list)):
+            # OV2_OPT_BALANCE: cross-rank load balancing of each iteration's packed sequences
+            from aiak_training_llm.train.balanced_iterator import BalancedDataIterator, startup_check
+            if startup_check():
+                train_data_iterator = BalancedDataIterator(train_data_iterator)
         if args.do_train and args.train_iters > 0:
             iteration, num_floating_point_operations_so_far = train(
                 forward_step_func=forward_step_func,
@@ -533,6 +540,13 @@ def save_checkpoint_and_time(iteration, model, ema, optimizer, opt_param_schedul
     timers('interval-time', log_level=0).start(barrier=True)
 
 
+def _flush_deferred_loss_reduce():
+    """Data-parallel loss reductions deferred by the model's loss function (OV2_OPT_DEFER_LOSS_REDUCE)."""
+    if opt_switches.flag('DEFER_LOSS_REDUCE'):
+        from aiak_training_llm.train.pretrain import pretrain_llava_onevision2
+        pretrain_llava_onevision2.flush_deferred_loss_reduce()
+
+
 def train_step(forward_step_func, data_iterator, model, optimizer, opt_param_scheduler, config):
     """Single training step."""
     args = get_args()
@@ -556,6 +570,7 @@ def train_step(forward_step_func, data_iterator, model, optimizer, opt_param_sch
             micro_batch_size=args.micro_batch_size,
             decoder_seq_length=args.decoder_seq_length,
             forward_only=False)
+        _flush_deferred_loss_reduce()
 
     should_checkpoint, should_exit, exit_code = rerun_state_machine.should_checkpoint_and_exit()
     if should_exit:
@@ -945,6 +960,15 @@ def train(forward_step_func, model, ema, optimizer, opt_param_scheduler,
         if len(model) == 1:
             config.param_sync_func = config.param_sync_func[0]
     config.finalize_model_grads_func = finalize_model_grads
+    if opt_switches.flag('BALANCE') and opt_switches.flag('BALANCE_PREPULL'):
+        # OV2_OPT_BALANCE_PREPULL: the next iteration's sequences are taken from the loader while the GPU finishes
+        # the last backward (the host would otherwise wait for it at the gradient reduce-scatter)
+        from aiak_training_llm.train import balanced_iterator as _bi
+
+        def _finalize_after_prepull(*a, **k):
+            _bi.prepull()
+            return finalize_model_grads(*a, **k)
+        config.finalize_model_grads_func = _finalize_after_prepull
 
     timers('interval-time', log_level=0).start(barrier=True)
     print_datetime('before the start of training step')
@@ -959,6 +983,10 @@ def train(forward_step_func, model, ema, optimizer, opt_param_scheduler,
         assert args.manual_gc_interval >= 0, 'Manual garbage collection interval should be laerger than or equal to 0.'
         gc.disable()
         gc.collect()
+        if opt_switches.flag('GC_SYNC'):
+            # Objects alive at the start of training (model, optimizer, datasets, ...) never become garbage;
+            # moving them to the permanent generation keeps the periodic collections below short.
+            gc.freeze()
 
     # Singleton Initialization
     if args.log_straggler:
@@ -1052,6 +1080,11 @@ def train(forward_step_func, model, ema, optimizer, opt_param_scheduler,
 
         if args.log_detail and args.timing_log_level < 1 and (iteration + 1) % args.detail_log_interval == 0:
             timers.set_show_detail_log(True)
+
+        if (args.manual_gc and args.manual_gc_interval != 0 and opt_switches.flag('GC_SYNC')
+                and iteration % args.manual_gc_interval == 0):
+            # the same iteration on every rank: no rank is held up by another rank's collection
+            gc.collect()
 
         args.curr_iteration = iteration
         ft_integration.on_training_step_start()            

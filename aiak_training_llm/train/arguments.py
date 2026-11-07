@@ -27,7 +27,8 @@ def parse_train_args(args_defaults={}):
         validate_extra_args_provider=validate_aiak_extra_args,
         args_defaults=args_defaults,
     )
-    return args
+    from aiak_training_llm.utils.opt_switches import apply_to_args
+    return apply_to_args(args)
 
 
 def aiak_extra_train_args_provider(parser: argparse.ArgumentParser):
