@@ -1,6 +1,8 @@
 """megatron local norm"""
 
+import torch
 from megatron.core.transformer.transformer_config import TransformerConfig
+from aiak_training_llm.utils import opt_switches
 from megatron.core.fusions.fused_layer_norm import FusedLayerNorm
 
 try:
@@ -38,6 +40,27 @@ class FusedRMSNorm(ApexFusedRMSNorm):
 
         # set sequence parallelism flag on weight parameters
         setattr(self.weight, 'sequence_parallel', self.sequence_parallel)
+
+    def forward(self, input):
+        rope = self.__dict__.get('_ov2_rope')
+        if rope is not None:
+            # OV2_OPT_FUSED_QK_NORM_ROPE: the attention layer handed over its rotary embedding; norm + RoPE fused
+            from aiak_training_llm.models.custom.common import fused_qk_norm_rope
+            freqs, cu_seqlens = rope
+            if not (self.elementwise_affine and not self.memory_efficient
+                    and fused_qk_norm_rope.supported(input, self.weight, freqs)):
+                raise RuntimeError('fused q/k norm + RoPE: unsupported input (the separate RoPE call is disabled)')
+            return fused_qk_norm_rope.fused_qk_norm_rope(input, self.weight, self.eps, freqs, cu_seqlens)
+        if opt_switches.flag('BITEXACT_QK_RMSNORM'):
+            from aiak_training_llm.models.custom.common import bitexact_rmsnorm
+            if (self.elementwise_affine and not self.memory_efficient
+                    and tuple(self.normalized_shape) == (bitexact_rmsnorm.N2,) and input.is_cuda
+                    and not torch.jit.is_tracing() and not torch.jit.is_scripting()
+                    and not torch.compiler.is_compiling() and not torch.is_autocast_enabled()
+                    and bitexact_rmsnorm.supported(input, self.weight)):
+                # same arithmetic as apex's fused_rms_norm_affine (bitwise), faster kernels, no contiguous copies
+                return bitexact_rmsnorm.bitexact_rms_norm(input, self.weight, self.eps)
+        return super().forward(input)
 
 
 class LocalNorm:

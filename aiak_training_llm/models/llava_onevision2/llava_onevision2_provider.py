@@ -54,6 +54,10 @@ def llavaov_2_model_provider(
     # print(vision_config)
     setattr(language_config, "image_token_id", 151655)
     setattr(language_config, "video_token_id", 151656)
+    from aiak_training_llm.models.custom.common import activation_memory
+    if activation_memory.enabled():
+        # OV2_OPT_*_RECOMPUTE / OV2_OPT_MEM_BUDGET_GIB: recomputation per sub-model (80 GB GPUs); off by default
+        activation_memory.configure(language_config, vision_config)
 
     # FIXME: fix this if model_type is encoder_and_decoder
     if args.encoder_pipeline_model_parallel_size in [0, None]:

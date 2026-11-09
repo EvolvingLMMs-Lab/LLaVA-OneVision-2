@@ -1,0 +1,26 @@
+{
+  "environment": {
+    "OV2_OPT_NO_RECOMPUTE": "1",
+    "OV2_OPT_ATTN_FUSED": "1",
+    "OV2_OPT_DEFER_LOSS_REDUCE": "1",
+    "OV2_OPT_HOST_SYNC_FREE": "1",
+    "OV2_OPT_GC_SYNC": "1",
+    "OV2_OPT_FUSED_VISION_ROPE": "1",
+    "OV2_OPT_INDEX_SCATTER": "1",
+    "OV2_OPT_BITEXACT_QK_RMSNORM": "1",
+    "OV2_OPT_CE_FUSION": "1",
+    "OV2_OPT_BALANCE": "1",
+    "OV2_OPT_TRITON_CE": "1",
+    "OV2_OPT_FUSED_QK_NORM_ROPE": "1",
+    "OV2_OPT_FAST_BIAS_ADD": "1",
+    "OV2_OPT_FUSED_SWIGLU": "1",
+    "OV2_OPT_FA4_ATTN": "1",
+    "OV2_OPT_FA4_SCOPE": "lm",
+    "OV2_OPT_FA4_EXACT_MAX": "1",
+    "OV2_OPT_FUSED_QKV_SPLIT": "1",
+    "OV2_OPT_DDP_AVG": "1",
+    "OV2_OPT_ASYNC_TOKEN_COUNT": "1",
+    "OV2_OPT_BALANCE_PREPULL": "1",
+    "OV2_OPT_FA4_VISION_FROM": "6"
+  }
+}

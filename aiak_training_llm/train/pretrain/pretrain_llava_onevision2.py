@@ -20,6 +20,7 @@ from aiak_training_llm.train.megatron_trainer import MegatronTrainer
 from aiak_training_llm.train.sft.utils import build_sft_data_collator
 from aiak_training_llm.train.trainer_builder import register_model_trainer
 from aiak_training_llm.utils import constants, get_args
+from aiak_training_llm.utils import opt_switches
 from transformers import DataCollatorForSeq2Seq
 
 
@@ -76,15 +77,160 @@ def model_provider(pre_process=True, post_process=True, add_encoder=True, add_de
         MCoreModel: The returned model
     """
     args = get_args()
+    if opt_switches.flag('FA4_ATTN'):
+        # FlashAttention-4 (optional package) for the packed self-attention
+        from aiak_training_llm.models.custom.common import fa4_attention
+        fa4_attention.install()
+    if os.environ.get('OV2_OPT_FA3_ATTN', '0') not in ('', '0'):
+        # FlashAttention-3 (optional package, Hopper) for the packed self-attention in scope (all | lm | vision)
+        from aiak_training_llm.models.custom.common import fa3_attention
+        fa3_attention.install()
+    if opt_switches.flag('TRITON_CE'):
+        # the language model's per-token cross-entropy in two Triton kernels (same fp32 math, no fp32 logits copy)
+        from aiak_training_llm.models.custom.common import triton_cross_entropy
+        triton_cross_entropy.install()
+    if opt_switches.flag('FUSED_SWIGLU'):
+        # the language model's SwiGLU (jit_fuser in Megatron) in two Triton kernels (bitwise as the jit version)
+        from aiak_training_llm.models.custom.common import fused_swiglu
+        fused_swiglu.install()
+    if opt_switches.flag('FAST_BIAS_ADD'):
+        # the vision MLP's broadcast fc1 bias add in a vectorised Triton kernel (bitwise as PyTorch's)
+        from aiak_training_llm.models.custom.common import bias_add
+        bias_add.install()
+    if opt_switches.flag('FUSED_QK_NORM_ROPE'):
+        # the language model's q/k RMSNorm and rotary embedding in one Triton kernel each way
+        from aiak_training_llm.models.custom.common import fused_qk_norm_rope
+        fused_qk_norm_rope.install()
     model_family = get_model_family(args.model_name)
     model_provider = get_model_provider(model_family)
     assert model_provider is not None, f"model provider for {args.model_name} not found"
+    from aiak_training_llm.models.custom.common import activation_memory
+    if activation_memory.enabled():
+        # OV2_OPT_MEM_BUDGET_GIB / OV2_OPT_FC1_RECOMPUTE_*: selective recomputation of the MLPs (80 GB GPUs)
+        return activation_memory.mark_model(model_provider(pre_process, post_process, add_encoder, add_decoder))
     return model_provider(pre_process, post_process, add_encoder, add_decoder)
+
+
+def _to_device_async(t):
+    """Host tensor -> current GPU without a host synchronisation (pinned staging, non-blocking copy)."""
+    t = t.contiguous()
+    if not t.is_pinned():
+        t = t.pin_memory()
+    return t.to(torch.cuda.current_device(), non_blocking=True)
+
+
+def _get_batch_host(data_iterator):
+    """get_batch() for TP 1 / CP 1 without sequence parallelism, with every decision taken on the host copy of the
+    micro-batch: the same tensors (values, dtypes, shapes) on the GPU, but no host<->device synchronisation (the
+    default path moves each key with a synchronous copy and reads flags and lengths back with .item()). Host-side
+    metadata the model would otherwise read back from the GPU is attached to the GPU tensors."""
+    data = next(data_iterator)
+    if isinstance(data.get("tokens"), torch.Tensor):
+        orig_dtype = data["tokens"].dtype
+        if data["tokens"].dtype != torch.long:
+            print(
+                f"[WARN] tokens dtype {orig_dtype} -> force cast to torch.long; shape={tuple(data['tokens'].shape)}"
+            )
+            data["tokens"] = data["tokens"].to(torch.long)
+    if isinstance(data.get("labels"), torch.Tensor) and data["labels"].dtype != torch.long:
+        data["labels"] = data["labels"].to(torch.long)
+    assert isinstance(data["tokens"], torch.Tensor) and data["tokens"].dtype == torch.long, (
+        f"Expected tokens torch.int64 but got {type(data['tokens'])} {getattr(data['tokens'], 'dtype', None)}"
+    )
+    assert isinstance(data["labels"], torch.Tensor) and data["labels"].dtype == torch.long, (
+        f"Expected labels torch.int64 but got {type(data['labels'])} {getattr(data['labels'], 'dtype', None)}"
+    )
+
+    def move(key, dtype):
+        # tensor_parallel.broadcast_data() asserts the dtype of every key
+        assert data[key].dtype == dtype, (
+            "{} has data type {} which is different than {}".format(key, data[key].dtype, dtype)
+        )
+        return _to_device_async(data[key])
+
+    tokens_host = data["tokens"]
+    tokens = move("tokens", torch.int64)
+    labels = move("labels", torch.int64)
+    attn_mask_host = data["attn_mask"]
+    assert attn_mask_host.dtype == torch.bool
+    cu_lengths_host = data["cu_lengths"]
+    assert cu_lengths_host.dtype == torch.int32
+    max_lengths_host = data["max_lengths"]
+    assert max_lengths_host.dtype == torch.int32
+
+    has_video = bool((tokens_host == video_token_id).any())
+    n_image_tokens = int((tokens_host == image_token_id).sum())
+    has_image = n_image_tokens > 0
+    thw = None
+    video_grid_thw = None
+    imgs = None
+    pixel_values_videos = None
+    patch_positions = None
+    if has_image:
+        imgs = move("imgs", torch.float32)
+        thw = move("image_grid_thw", torch.int32)
+        thw._ov2_host = data["image_grid_thw"]
+        if "patch_positions" in data and data["patch_positions"] is not None:
+            patch_positions = move("patch_positions", torch.int64)
+    if has_video:
+        pixel_values_videos = move("pixel_values_videos", torch.float32)
+        video_grid_thw = move("video_grid_thw", torch.int32)
+    tokens._ov2_n_image_tokens = n_image_tokens
+    if has_image and opt_switches.flag('INDEX_SCATTER') and tokens_host.shape[0] == 1:
+        tokens._ov2_image_pos = _to_device_async(
+            (tokens_host[0] == image_token_id).nonzero(as_tuple=True)[0]
+        )
+
+    packed_seq_params = None
+    labels = torch.roll(labels, shifts=-1, dims=1)
+    loss_mask = (labels != -100).long()
+
+    if cu_lengths_host.shape == torch.Size([1, 1]):
+        attn_mask = _to_device_async(attn_mask_host)
+        for i in range(attn_mask_host.shape[0]):
+            loss_mask[i, int((attn_mask_host[i] == False).sum()) - 1] = 0
+    else:
+        assert cu_lengths_host.shape[0] == 1, "micro-batch-size must be 1 for packing"
+        cu_lengths = _to_device_async(cu_lengths_host)
+        max_seqlen = int(max_lengths_host[0])
+        packed_seq_params = PackedSeqParams(
+            qkv_format="thd",
+            cu_seqlens_q=cu_lengths[0],
+            cu_seqlens_kv=cu_lengths[0],
+            max_seqlen_q=max_seqlen,
+            max_seqlen_kv=max_seqlen,
+        )
+
+    attn_mask_type = AttnMaskType.causal
+    attn_mask = None
+    position_ids = None
+    return (
+        imgs,
+        thw,
+        pixel_values_videos,
+        video_grid_thw,
+        tokens,
+        position_ids,
+        attn_mask,
+        labels,
+        loss_mask,
+        attn_mask_type,
+        packed_seq_params,
+        patch_positions,
+    )
 
 
 def get_batch(data_iterator):
     """Generate a batch"""
     args = get_args()
+    if (
+        opt_switches.flag('HOST_SYNC_FREE')
+        and data_iterator is not None
+        and args.tensor_model_parallel_size == 1
+        and args.context_parallel_size == 1
+        and not args.sequence_parallel
+    ):
+        return _get_batch_host(data_iterator)
     if data_iterator is not None and mpu.get_tensor_model_parallel_rank() == 0:
         data = next(data_iterator)
         if isinstance(data.get("tokens"), torch.Tensor):
@@ -254,7 +400,11 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         torch.distributed.all_reduce(loss, group=mpu.get_context_parallel_group())
 
     # Check individual rank losses are not NaN prior to DP all-reduce.
-    if args.check_for_nan_in_loss_and_grad:
+    deferred = opt_switches.flag('DEFER_LOSS_REDUCE') and torch.is_grad_enabled()
+    if args.check_for_nan_in_loss_and_grad and deferred and opt_switches.flag('HOST_SYNC_FREE'):
+        # the same check, read back once per iteration in flush_deferred_loss_reduce()
+        _DEFERRED_NAN_CHECKS.append(loss[0].isnan())
+    elif args.check_for_nan_in_loss_and_grad:
         global_rank = torch.distributed.get_rank()
         assert not loss[0].isnan(), (
             f"Rank {global_rank}: found NaN in local forward loss calculation. "
@@ -263,6 +413,25 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
 
     # Reduce loss for logging.
     reporting_loss = loss.clone().detach()
+    if opt_switches.flag('DEFER_LOSS_REDUCE') and torch.is_grad_enabled():
+        # Training: the same data-parallel all-reduces (same tensors, same order) are issued by
+        # flush_deferred_loss_reduce() after the backward of the last micro-batch, so that the fast ranks are not
+        # held at the end of every micro-batch's forward by the slowest one. The dict holds views of the tensors
+        # that are reduced in place, exactly as before.
+        local_num_tokens = loss[1].clone().detach().to(torch.int)
+        loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
+        input_tokens = None
+        if args.variable_seq_lengths:
+            num_input_tokens = output_tensor.shape[0] * output_tensor.shape[1]
+            if opt_switches.flag('ASYNC_TOKEN_COUNT'):
+                # the same int tensor, filled on the device: torch.tensor(..., device=cuda) is a blocking
+                # host-to-device copy, i.e. a stream synchronisation after every micro-batch's forward
+                input_tokens = torch.full((), num_input_tokens, dtype=torch.int, device=output_tensor.device)
+            else:
+                input_tokens = torch.tensor(num_input_tokens, dtype=torch.int, device=output_tensor.device)
+        _DEFERRED_LOSS_REDUCE.append((reporting_loss, input_tokens, loss_reduced_dict))
+        return (loss[0] * args.context_parallel_size, local_num_tokens, loss_reduced_dict)
+
     torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
 
     local_num_tokens = loss[1].clone().detach().to(torch.int)
@@ -279,6 +448,37 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
 
     return (loss[0] * args.context_parallel_size, local_num_tokens, loss_reduced_dict)
+
+
+_DEFERRED_LOSS_REDUCE = []
+_DEFERRED_NAN_CHECKS = []
+
+
+def flush_deferred_loss_reduce():
+    """Issue the data-parallel reductions loss_func deferred during training, in micro-batch order (per micro-batch:
+    the reporting loss, then the input-token count), and fill in 'total_inputs'."""
+    if _DEFERRED_NAN_CHECKS:
+        flags = list(_DEFERRED_NAN_CHECKS)
+        _DEFERRED_NAN_CHECKS.clear()
+        if bool(torch.stack(flags).any()):
+            global_rank = torch.distributed.get_rank()
+            raise AssertionError(
+                f"Rank {global_rank}: found NaN in local forward loss calculation. "
+                f"Device: {torch.cuda.current_device()}, node: {os.uname()[1]}"
+            )
+    if not _DEFERRED_LOSS_REDUCE:
+        return
+    args = get_args()
+    pending = list(_DEFERRED_LOSS_REDUCE)
+    _DEFERRED_LOSS_REDUCE.clear()
+    group = mpu.get_data_parallel_group()
+    for reporting_loss, input_tokens, _ in pending:
+        torch.distributed.all_reduce(reporting_loss, group=group)
+        if input_tokens is not None:
+            torch.distributed.all_reduce(input_tokens, group=group)
+    for _, input_tokens, loss_reduced_dict in pending:
+        if input_tokens is not None:
+            loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
 
 
 def forward_step(data_iterator, model):

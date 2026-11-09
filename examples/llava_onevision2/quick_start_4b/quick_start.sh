@@ -48,6 +48,20 @@ CHECKPOINT_PATH="${CHECKPOINT_PATH:-./ov2_quickstart/ov_encoder_p14m22_qwen3_mco
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
 
+# Optional speed-up preset (docs/faster_training.md): OV2_PRESET=blackwell | hopper_80g (presets/<name>.json next to this
+# script) or the path of such a file. Its "environment" switches are exported before torchrun. Unset: no switch, default
+# behaviour.
+if [ -n "${OV2_PRESET:-}" ]; then
+    PRESET_FILE="$OV2_PRESET"
+    [ -f "$PRESET_FILE" ] || PRESET_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/presets/${OV2_PRESET}.json"
+    [ -f "$PRESET_FILE" ] || { echo "OV2_PRESET=${OV2_PRESET}: no such preset" >&2; exit 1; }
+    PRESET_EXPORTS="$(python3 -c 'import json, shlex, sys
+for k, v in json.load(open(sys.argv[1]))["environment"].items():
+    print(f"export {k}={shlex.quote(str(v))}")' "$PRESET_FILE")" || exit 1
+    eval "$PRESET_EXPORTS"
+    echo "OV2_PRESET: ${PRESET_FILE}"
+fi
+
 GPUS_PER_NODE="${GPUS_PER_NODE:-8}"
 MASTER_ADDR="${MASTER_ADDR:-127.0.0.1}"
 MASTER_PORT="${MASTER_PORT:-26000}"
