@@ -5,8 +5,8 @@ on:
     branches:
       - main
   schedule:
-    # Daily refresh so stargazer counts on the site stay reasonably current.
-    - cron: '0 0 * * *'
+    # Monthly refresh on the first day of each month.
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
 permissions:
@@ -71,9 +71,20 @@ jobs:
           fi
           git add "${paths[@]}"
           git commit -m "docs: refresh community assets"
-          # A human push can still land on main between checkout and this push.
-          git pull --rebase --autostash origin main
-          git push origin HEAD:main
+          # Other writers can advance main even after our pull completes.
+          # Retry the pull/push pair; a rebase conflict still fails immediately.
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [[ "$attempt" -lt 3 ]]; then
+              echo "Push failed (attempt $attempt/3); syncing main before retry."
+              sleep "$((attempt * 2))"
+            fi
+          done
+          echo "::error::Unable to push community assets after 3 attempts."
+          exit 1
 
       # Deploy Pages in the same workflow. We intentionally do NOT re-checkout
       # between the push and these steps — the working tree still has the
