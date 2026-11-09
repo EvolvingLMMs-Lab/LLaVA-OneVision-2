@@ -5,8 +5,8 @@ on:
     branches:
       - main
   schedule:
-    # Daily refresh so stargazer counts on the site stay reasonably current.
-    - cron: '0 0 * * *'
+    # Monthly refresh on the first day of each month.
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
 permissions:
