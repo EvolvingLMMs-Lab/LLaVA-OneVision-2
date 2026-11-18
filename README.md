@@ -8,8 +8,7 @@
 
 **Fully Open Framework for Democratized Multimodal Training**
 
-> [!IMPORTANT]
-> 🌟 **The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).**
+> 🌟 The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).
 
 <p>
 🤗 <samp><b>2.5</b></samp> <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a> · Technical Report (coming soon) · <a href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a><br>
