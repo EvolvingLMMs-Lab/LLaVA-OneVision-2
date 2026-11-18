@@ -1,23 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2640 320" width="100%" height="100%">
+  <defs>
+    <!-- one period of the flow: the two lmms-lab.com theme colours, cyan #04d9ed and magenta #ff2b9f.
+         It starts and ends on the same colour, so shifting by one period (2200) loops without a seam. -->
+    <linearGradient id="ov25-flow" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="2200" y2="0" spreadMethod="repeat">
+      <stop offset="0" stop-color="#04d9ed"/>
+      <stop offset="0.5" stop-color="#ff2b9f"/>
+      <stop offset="1" stop-color="#04d9ed"/>
+    </linearGradient>
+    <clipPath id="ov25-wordmark">
+      <text x="16" y="78%" dominant-baseline="alphabetic" text-anchor="start"
+            font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+            font-size="240" letter-spacing="-0.045em">
+        <tspan font-weight="700">LLaVA-OneVision</tspan><tspan font-weight="500">&#8202;2.5</tspan>
+      </text>
+    </clipPath>
+  </defs>
   <style>
-    /* accent pulses between the two lmms-lab.com theme colours: cyan #04d9ed and magenta #ff2b9f */
-    .ov25-accent {
-      transform-box: fill-box;
-      transform-origin: left center;
-      animation: ov25-pulse 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-    @keyframes ov25-pulse {
-      0%   { fill: #04d9ed; transform: scale(1); }
-      40%  { fill: #ff2b9f; transform: scale(1.05); }
-      100% { fill: #04d9ed; transform: scale(1); }
+    .ov25-flow { animation: ov25-flow 6s linear infinite; }
+    @keyframes ov25-flow {
+      from { transform: translateX(-2200px); }
+      to   { transform: translateX(0); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .ov25-accent { animation: none; fill: #ff2b9f; }
+      .ov25-flow { animation: none; }
     }
   </style>
-  <text x="16" y="78%" dominant-baseline="alphabetic" text-anchor="start"
-        font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
-        font-size="240" letter-spacing="-0.045em">
-    <tspan font-weight="700" fill="#0A0A0A">LLaVA-OneVision</tspan><tspan class="ov25-accent" font-weight="500" fill="#ff2b9f">&#8202;2.5</tspan>
-  </text>
+  <!-- the colours flow left to right through the whole wordmark -->
+  <g clip-path="url(#ov25-wordmark)">
+    <rect class="ov25-flow" x="0" y="0" width="4840" height="320" fill="url(#ov25-flow)"/>
+  </g>
 </svg>
