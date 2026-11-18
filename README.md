@@ -26,6 +26,12 @@ href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a></b> 👈
 </p>
 
 <p align="center">
+🤗 <b>2.5 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a></b> · <b>Technical Report (coming soon)</b> · <b><a
+href="#inference">Inference</a></b> · <b><a
+href="#training-llava-onevision-25">Training</a></b>
+</p>
+
+<p align="center">
 🤗 <b>2 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct">Models</a></b> · <b><a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data">Datasets</a></b> · <b><a
 href="https://arxiv.org/pdf/2605.25979">Technical Report</a></b> · <b><a
 href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/">HomePage</a></b> · <b><a
@@ -41,7 +47,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 ---
 
 ## NEWS
-- 2026-11-18: The repository becomes **LLaVA-OneVision-2.5**, merging the 2.5 line of work: the Qwen3.5 hybrid-attention backbone (GatedDeltaNet + full attention every 4 layers), streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism. The released LLaVA-OneVision-2 models, datasets and reported numbers below are unchanged.
+- 2026-11-18: Released [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) — one 4B model for offline and **streaming** video. This repository becomes **LLaVA-OneVision-2.5** and now carries its training code: the Qwen3.5 hybrid-attention backbone (GatedDeltaNet + full attention every 4 layers), streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism. See [Training LLaVA-OneVision-2.5](#training-llava-onevision-25). The released LLaVA-OneVision-2 models, datasets and reported numbers are unchanged.
 - 2026-11-05: Thanks to [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) for making [LLaVA-OneVision-2-4B](#quick-start-4b-single-node) SFT 2.2–3.0× faster! See [Training Acceleration](#training-acceleration) for details.
 - 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
@@ -57,7 +63,9 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 - [Method](#method)
 - [Models](#models)
 - [Datasets](#datasets)
+- [Inference](#inference)
 - [Quick Start (4B, single node)](#quick-start-4b-single-node)
+- [Training LLaVA-OneVision-2.5](#training-llava-onevision-25)
 - [Training Acceleration](#training-acceleration)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
@@ -66,7 +74,22 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 
 ## Introduction
 
-**LLaVA-OneVision-2** is the next-generation release of the LLaVA-OneVision family — a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
+**LLaVA-OneVision-2.5** is the latest release of the LLaVA-OneVision family. Its first model, [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct), is a 4B vision-language model for single-image, multi-image and video input. Beyond the usual offline tasks, it is trained for **streaming** video: frames arrive one at a time, and at every step the model decides whether to stay silent or speak. The same weights and the same chat template serve both modes.
+
+- **Offline and streaming in one model.** `apply_chat_template(..., streaming=True)` switches mode; eight protocol tokens carry the per-frame decision to stay silent, respond or caption. Nothing else about the input changes.
+- **Codec-aligned video.** Besides uniform frame sampling, *codec mode* uses the encoder's bit-cost to pack the informative regions of a video into a handful of canvases.
+- **9× spatial compression.** A patch-16 vision tower with 3×3 merging gives one visual token per 48×48 pixels, so long videos fit comfortably in the 262k context.
+
+This repository is the training framework behind it. On top of the LLaVA-OneVision-2 codebase, 2.5 adds:
+
+- **Qwen3.5 hybrid-attention backbone** — GatedDeltaNet linear-attention layers with one full-attention layer every 4, 3D M-RoPE, and HF ↔ Megatron-Core converters for it.
+- **Streaming training** — streaming protocol tokens, per-sample `data_type` markers carried from jsonl through packing to the encoder, and streaming-specific losses.
+- **Manifest-based offline packing** — the `s0`–`s4` pipeline in [`offline_packing/`](offline_packing/README.md), including dynamic per-sample budgets ([`DYNAMIC_PACKING.md`](offline_packing/DYNAMIC_PACKING.md)).
+- **Training at long context** — the Muon optimizer, GDN head parallelism across tensor-parallel ranks, chunked vision forward and selective recompute.
+
+### LLaVA-OneVision-2
+
+LLaVA-OneVision-2.5 keeps the LLaVA-OneVision-2 architecture. **LLaVA-OneVision-2**, released in April 2026, is a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
 
 ### 🎬 Codec-Aligned Vision Encoders
 
@@ -94,6 +117,98 @@ Four datasets ship with the LLaVA-OneVision family — two new for 2, two carrie
 And unlike most "open" releases, *everything* ships alongside them: encoder weights, training code, configs, and full training logs. Reproducible end to end.
 
 ## Evaluation Results
+
+### LLaVA-OneVision-2.5-4B-Instruct
+
+#### Video
+
+<table style="width:100%; display:table;">
+<thead><tr>
+<th align="left" style="width:28%">Benchmark</th>
+<th align="center" style="width:24%">OV2.5-4B (codec)</th>
+<th align="center" style="width:24%">OV2.5-4B (frames)</th>
+<th align="center" style="width:24%">Qwen3.5-4B</th>
+</tr></thead>
+<tbody>
+<tr><td colspan="4" align="left"><b>General video understanding</b></td></tr>
+<tr><td align="left">VideoMME (no subtitles)</td><td align="center"><b>71.9</b></td><td align="center">69.7</td><td align="center">71.7</td></tr>
+<tr><td align="left">VideoMME (subtitles)</td><td align="center">74.7</td><td align="center">75.2</td><td align="center"><b>75.9</b></td></tr>
+<tr><td align="left">MotionBench</td><td align="center"><b>64.2</b> <sup>TC128×313,600</sup></td><td align="center">62.4 <sup>128f×153,664</sup></td><td align="center">60.1 <sup>128f×153,664</sup></td></tr>
+<tr><td align="left">TOMATO</td><td align="center">36.0 <sup>TC16×153,664</sup></td><td align="center"><b>39.2</b> <sup>16f×153,664</sup></td><td align="center">32.4 <sup>16f×153,664</sup></td></tr>
+<tr><td align="left">MVBench</td><td align="center"><b>75.5</b> <sup>TC64×313,600</sup></td><td align="center">72.0 <sup>64f×153,664</sup></td><td align="center">64.0 <sup>64f×153,664</sup></td></tr>
+<tr><td align="left">NextQA MC test</td><td align="center"><b>86.4</b> <sup>TC64×313,600</sup></td><td align="center">86.1 <sup>64f×153,664</sup></td><td align="center">80.7 <sup>64f×153,664</sup></td></tr>
+<tr><td align="left">TempCompass MC</td><td align="center"><b>79.7</b> <sup>TC64×313,600</sup></td><td align="center">75.8 <sup>64f×153,664</sup></td><td align="center">73.4 <sup>64f×153,664</sup></td></tr>
+<tr><td align="left">Video-MME-v2</td><td align="center"><b>17.2</b> <sup>TC64×313,600</sup></td><td align="center">16.4 <sup>64f×330,000</sup></td><td align="center">15.5 <sup>64f×330,000</sup></td></tr>
+<tr><td align="left">EgoSchema subset</td><td align="center">79.8 <sup>TC64×313,600</sup></td><td align="center"><b>80.0</b> <sup>64f×153,664</sup></td><td align="center">68.2 <sup>64f×153,664</sup></td></tr>
+<tr><td align="left">Video-Index</td><td align="center"><b>23.1</b> <sup>TC512×55,296</sup></td><td align="center">20.0 <sup>1fps, ≤512f×55,296</sup></td><td align="center">19.6 <sup>1fps, ≤512f×55,296</sup></td></tr>
+<tr><td colspan="4" align="left"><b>Long video</b></td></tr>
+<tr><td align="left">LVBench</td><td align="center">61.6 <sup>TC1024×156,800</sup></td><td align="center"><b>62.0</b> <sup>950f×200,000</sup></td><td align="center">56.5 <sup>2048f×120,000</sup></td></tr>
+<tr><td align="left">MLVU dev</td><td align="center"><b>77.1</b> <sup>TC512×313,600</sup></td><td align="center">75.3 <sup>512f×72,900</sup></td><td align="center">73.8 <sup>512f×72,900</sup></td></tr>
+<tr><td align="left">LongVideoBench val</td><td align="center"><b>71.1</b> <sup>TC768×235,200</sup></td><td align="center">69.0 <sup>1280f×80,000</sup></td><td align="center">62.7 <sup>700f×300,000</sup></td></tr>
+<tr><td align="left">VideoEval-Pro</td><td align="center"><b>64.6</b> <sup>TC768×235,200</sup></td><td align="center">64.4 <sup>950f×200,000</sup></td><td align="center">62.8 <sup>2048f×100,000</sup></td></tr>
+<tr><td colspan="4" align="left"><b>Temporal grounding (mIoU)</b></td></tr>
+<tr><td align="left">TimeLens ActivityNet</td><td align="center"><b>59.1</b> <sup>TC128×313,600</sup></td><td align="center">58.8 <sup>2048f×409,600, fps=4</sup></td><td align="center">53.8 <sup>2048f×409,600, fps=4</sup></td></tr>
+<tr><td align="left">TimeLens Charades</td><td align="center"><b>61.3</b> <sup>TC128×313,600</sup></td><td align="center">60.6 <sup>2048f×409,600, fps=4</sup></td><td align="center">48.1 <sup>2048f×409,600, fps=4</sup></td></tr>
+<tr><td align="left">TimeLens QVHighlights</td><td align="center"><b>70.3</b> <sup>TC128×313,600</sup></td><td align="center">68.4 <sup>2048f×409,600, fps=4</sup></td><td align="center">67.5 <sup>2048f×409,600, fps=4</sup></td></tr>
+</tbody>
+</table>
+
+#### Streaming video
+
+<table style="width:100%; display:table;">
+<thead><tr>
+<th align="left" style="width:40%">Benchmark</th>
+<th align="center" style="width:20%">OV2.5-4B<br>(codec, 24 fps)</th>
+<th align="center" style="width:20%">MOSS-VL-Realtime 11B<br>(1 fps)</th>
+<th align="center" style="width:20%">JoyAI-VL-Interaction 8B<br>(1 fps)</th>
+</tr></thead>
+<tbody>
+<tr><td colspan="4" align="left"><b>OVO-Bench</b></td></tr>
+<tr><td align="left">Real-Time Visual Perception (RTVP)</td><td align="center"><b>81.0</b></td><td align="center">75.9</td><td align="center">76.4</td></tr>
+<tr><td align="left">Backward Tracing (BT)</td><td align="center">68.8</td><td align="center"><b>72.6</b></td><td align="center">53.3</td></tr>
+<tr><td align="left">Forward Active Responding (FAR)</td><td align="center">60.7</td><td align="center"><b>62.1</b></td><td align="center">54.6</td></tr>
+<tr><td align="left">Overall</td><td align="center"><b>70.2</b></td><td align="center"><b>70.2</b></td><td align="center">61.4</td></tr>
+<tr><td colspan="4" align="left"><b>StreamingBench</b></td></tr>
+<tr><td align="left">Real-Time Visual Understanding (RTVU)</td><td align="center"><b>85.3</b></td><td align="center">82.9</td><td align="center">83.2</td></tr>
+<tr><td align="left">Misleading Context Understanding (MCU)</td><td align="center">36.8</td><td align="center">--</td><td align="center"><b>37.2</b></td></tr>
+<tr><td align="left">Anomaly Context Understanding (ACU)</td><td align="center"><b>67.6</b></td><td align="center">--</td><td align="center">51.6</td></tr>
+<tr><td align="left">Sequential Question Answering (SQA)</td><td align="center"><b>54.8</b></td><td align="center">50.4</td><td align="center">53.6</td></tr>
+<tr><td align="left">Proactive Output (PO)</td><td align="center"><b>63.6</b></td><td align="center">60.0</td><td align="center">39.6</td></tr>
+<tr><td align="left">Contextual Understanding (CU)</td><td align="center">55.7</td><td align="center"><b>56.4</b></td><td align="center">45.5</td></tr>
+<tr><td colspan="4" align="left"><b>Proactive and interactive</b></td></tr>
+<tr><td align="left">OmniMMI: Proactive Alerting (PA)</td><td align="center"><b>68.5</b></td><td align="center">66.0</td><td align="center">13.5</td></tr>
+<tr><td align="left">ProactiveVideoQA: PAUC (ω=0.5)</td><td align="center">33.1</td><td align="center"><b>47.2</b></td><td align="center">37.0</td></tr>
+<tr><td align="left">InteractionBench: Total</td><td align="center">38.6</td><td align="center">--</td><td align="center">--</td></tr>
+<tr><td align="left">StreamArena: Proactive Interaction (Pro)</td><td align="center"><b>25.5</b></td><td align="center">11.8</td><td align="center">9.4</td></tr>
+</tbody>
+</table>
+
+#### Image
+
+<table style="width:100%; display:table;">
+<thead><tr>
+<th align="left" style="width:24%">General perception and reading</th>
+<th align="center" style="width:13%">OV2.5-4B</th>
+<th align="center" style="width:13%">Qwen3.5-4B</th>
+<th align="left" style="width:24%">Grounding and spatial</th>
+<th align="center" style="width:13%">OV2.5-4B</th>
+<th align="center" style="width:13%">Qwen3.5-4B</th>
+</tr></thead>
+<tbody>
+<tr><td align="left">MMStar</td><td align="center">63.9</td><td align="center"><b>66.9</b></td><td align="left">RefCOCO val (Acc@0.5)</td><td align="center"><b>92.6</b></td><td align="center">89.1</td></tr>
+<tr><td align="left">MMBench-EN dev</td><td align="center">88.2</td><td align="center"><b>88.8</b></td><td align="left">RefCOCOg val (Acc@0.5)</td><td align="center"><b>88.9</b></td><td align="center">87.7</td></tr>
+<tr><td align="left">RealWorldQA</td><td align="center">73.9</td><td align="center"><b>74.4</b></td><td align="left">RefSpatial-Bench</td><td align="center"><b>62.1</b></td><td align="center">29.1</td></tr>
+<tr><td align="left">AI2D</td><td align="center">82.2</td><td align="center"><b>82.4</b></td><td align="left">CrossPoint</td><td align="center"><b>80.5</b></td><td align="center">33.7</td></tr>
+<tr><td align="left">BLINK</td><td align="center"><b>67.1</b></td><td align="center">63.6</td><td align="left">CV-Bench 2D</td><td align="center"><b>83.3</b></td><td align="center">80.7</td></tr>
+<tr><td align="left">V*-Bench</td><td align="center"><b>89.5</b></td><td align="center">81.7</td><td align="left">CV-Bench 3D</td><td align="center"><b>94.5</b></td><td align="center">92.0</td></tr>
+<tr><td align="left">OCRBench</td><td align="center">79.8</td><td align="center"><b>85.2</b></td><td align="left">EmbSpatial</td><td align="center"><b>83.0</b></td><td align="center">74.7</td></tr>
+<tr><td align="left">DocVQA val</td><td align="center">92.9</td><td align="center"><b>95.2</b></td><td align="left">MMSI-Bench</td><td align="center"><b>33.3</b></td><td align="center">31.4</td></tr>
+</tbody>
+</table>
+
+<sub>Compared with Qwen3.5-4B, thinking disabled. **Bold** is the best score in each row; `--` means not available. The superscript on each video score is the setting that produced it: frames × pixels per frame, or for codec, canvases (TC) × pixels per canvas. VideoMME is the mean over the short, medium and long splits. Each side reports its best score over the settings tried, from single runs. The image table shows selected benchmarks; full results, settings and protocol will be given in the technical report.</sub>
+
+### LLaVA-OneVision-2-8B-Instruct
 
 <p align="center">
   <picture>
@@ -166,6 +281,7 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 
 | Model                           | HF Link                                                                                                                                                                                                                                                       | Training Log                                                                                                                                                                                                                                                                              |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LLaVA-OneVision-2.5-4B-Instruct | [![HF / 2.5-4B-Instruct](https://img.shields.io/badge/%F0%9F%A4%97_HF-2.5--4B--Instruct-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge) |
 | LLaVA-OneVision-2-8B-Instruct | [![HF / 8B-Instruct](https://img.shields.io/badge/%F0%9F%A4%97_HF-8B--Instruct-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct)                                                         | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
 | LLaVA-OneVision-2-4B-Instruct | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                           | ![Coming soon](https://img.shields.io/badge/Coming_soon-9CA3AF?style=for-the-badge)                                                                                                                                                                                                       |
 | LLaVA-OneVision-1.5-4B-Instruct | [![HF / 4B-Instruct](https://img.shields.io/badge/%F0%9F%A4%97_HF-4B--Instruct-FF9D00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                                                                 | [![TensorBoard](https://img.shields.io/badge/%F0%9F%93%88_TensorBoard-4B--Instruct-FF6F00?style=for-the-badge&labelColor=2D2D2D)](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard)                                                                             |
@@ -189,6 +305,50 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
     <img src="asset/llava_onevision2_data_distribution_light_anim.svg" width="100%" alt="LLaVA-OneVision Data Distribution">
   </picture>
 </p>
+
+
+## Inference
+
+LLaVA-OneVision-2.5-4B-Instruct runs with 🤗 Transformers. The modeling code ships with the weights, so `trust_remote_code=True` is required.
+
+```bash
+pip install "transformers>=5.7.0" accelerate torch torchvision
+pip install flash-attn --no-build-isolation   # optional, recommended
+pip install decord                            # frame-sampling video path only
+```
+
+### Image example
+
+```python
+import torch
+from PIL import Image
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+MODEL = "lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct"
+
+processor = AutoProcessor.from_pretrained(MODEL, trust_remote_code=True)
+model = AutoModelForImageTextToText.from_pretrained(
+    MODEL, trust_remote_code=True, dtype=torch.bfloat16,
+    attn_implementation="flash_attention_2",   # "sdpa" without flash-attn
+    device_map="auto",
+).eval()
+
+messages = [{"role": "user", "content": [
+    {"type": "image"},
+    {"type": "text", "text": "Describe this image in detail."},
+]}]
+text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+inputs = processor(text=text, images=[Image.open("example.jpg").convert("RGB")],
+                   return_tensors="pt").to(model.device)
+
+with torch.inference_mode():
+    out = model.generate(**inputs, max_new_tokens=512, do_sample=False)
+print(processor.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True))
+```
+
+Video input (uniform frames or codec mode) and streaming are covered in the [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct#quickstart).
+
+For LLaVA-OneVision-2-8B-Instruct, see its [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct) and the [vLLM integration](https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/).
 
 
 ## Quick Start (4B, single node)
@@ -499,6 +659,24 @@ Optional speed-up:
 - `OV2_PRESET` — `blackwell` or `hopper_80g` (or a preset file); see [docs/faster_training.md](docs/faster_training.md)
 
 </details>
+
+
+## Training LLaVA-OneVision-2.5
+
+The quick start above reproduces the LLaVA-OneVision-2 4B recipe (Qwen3 dense language model, p14 / 2×2-merge vision tower). The 2.5 recipe uses the Qwen3.5 hybrid backbone with a p16 / 3×3-merge vision tower and has its own entry points:
+
+| What | Where |
+| --- | --- |
+| Single-node quick start (4B, full model, packed data, Muon) | [`examples/llava_onevision2/quick_start_4b/quick_start_qwen35.sh`](examples/llava_onevision2/quick_start_4b/quick_start_qwen35.sh) |
+| Backbone guide: building weights, HF ↔ Megatron-Core conversion, training scripts, pitfalls (Chinese) | [`README_qwen35.md`](README_qwen35.md) |
+| Checkpoint converters | [`examples/llava_onevision2/convert/`](examples/llava_onevision2/convert/) (`convert_4b_qwen35_*`, `convert_35b_a3b_qwen35_*`) |
+| Offline packing pipeline | [`offline_packing/README.md`](offline_packing/README.md), [`offline_packing/DYNAMIC_PACKING.md`](offline_packing/DYNAMIC_PACKING.md) |
+| Canvas timestamp schema for codec video | [`docs/llava_onevision2/canvas_timestamp_schema.md`](docs/llava_onevision2/canvas_timestamp_schema.md) |
+
+Two things differ from the LLaVA-OneVision-2 quick start:
+
+- **Checkpoint and tokenizer.** `quick_start_qwen35.sh` reuses the packed dataset from [`lmms-lab-encoder/ov2_quickstart`](https://huggingface.co/datasets/lmms-lab-encoder/ov2_quickstart), but needs a Megatron-Core checkpoint and tokenizer for the Qwen3.5 backbone, which that bundle does not contain. `README_qwen35.md` describes how to build and convert them.
+- **Image.** The GatedDeltaNet layers need [flash-linear-attention](https://github.com/fla-org/flash-linear-attention); `README_qwen35.md` §1 lists the image requirements. The first iteration compiles Triton kernels and is slow.
 
 
 ## Training Acceleration
