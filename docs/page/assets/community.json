@@ -1,7 +1,7 @@
 {
   "owner": "EvolvingLMMs-Lab",
-  "repo": "LLaVA-OneVision-2.5",
-  "generated_at": "2026-11-09T09:20:34.512905+00:00",
+  "repo": "LLaVA-OneVision-2",
+  "generated_at": "2026-11-18T13:50:12.537130+00:00",
   "contributors": [
     {
       "login": "anxiangsir",
@@ -373,6 +373,12 @@
           "commits": 1,
           "additions": 2,
           "deletions": 2
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -617,75 +623,75 @@
         },
         {
           "week": "2026-06-14",
-          "commits": 0,
-          "additions": 0,
+          "commits": 1,
+          "additions": 265,
           "deletions": 0
         },
         {
           "week": "2026-06-21",
-          "commits": 0,
-          "additions": 0,
+          "commits": 1,
+          "additions": 562,
           "deletions": 0
         },
         {
           "week": "2026-06-28",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 1,
+          "additions": 37,
+          "deletions": 324
         },
         {
           "week": "2026-07-05",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 2,
+          "additions": 261,
+          "deletions": 1
         },
         {
           "week": "2026-07-12",
-          "commits": 1,
-          "additions": 9,
-          "deletions": 5
+          "commits": 14,
+          "additions": 12332,
+          "deletions": 509
         },
         {
           "week": "2026-07-19",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 7,
+          "additions": 827,
+          "deletions": 30
         },
         {
           "week": "2026-07-26",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 5,
+          "additions": 999,
+          "deletions": 24
         },
         {
           "week": "2026-08-02",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 11,
+          "additions": 1459,
+          "deletions": 89
         },
         {
           "week": "2026-08-09",
-          "commits": 1,
-          "additions": 0,
-          "deletions": 5
+          "commits": 4,
+          "additions": 441,
+          "deletions": 20
         },
         {
           "week": "2026-08-16",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 3,
+          "additions": 351,
+          "deletions": 52
         },
         {
           "week": "2026-08-23",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 5,
+          "additions": 792,
+          "deletions": 141
         },
         {
           "week": "2026-08-30",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 3,
+          "additions": 132,
+          "deletions": 16
         },
         {
           "week": "2026-09-06",
@@ -701,27 +707,27 @@
         },
         {
           "week": "2026-09-20",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 11,
+          "additions": 1737,
+          "deletions": 173
         },
         {
           "week": "2026-09-27",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 4,
+          "additions": 668,
+          "deletions": 64
         },
         {
           "week": "2026-10-04",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 2,
+          "additions": 89,
+          "deletions": 5
         },
         {
           "week": "2026-10-11",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 5,
+          "additions": 1139,
+          "deletions": 123
         },
         {
           "week": "2026-10-18",
@@ -731,21 +737,27 @@
         },
         {
           "week": "2026-10-25",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 3,
+          "additions": 380,
+          "deletions": 40
         },
         {
           "week": "2026-11-01",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 5,
+          "additions": 1480,
+          "deletions": 4
         },
         {
           "week": "2026-11-08",
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 15,
+          "additions": 13003,
+          "deletions": 18166
         }
       ]
     },
@@ -1116,6 +1128,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -1492,6 +1510,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -1784,9 +1808,9 @@
         },
         {
           "week": "2026-08-09",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 9,
+          "additions": 420,
+          "deletions": 78
         },
         {
           "week": "2026-08-16",
@@ -1796,9 +1820,9 @@
         },
         {
           "week": "2026-08-23",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 3,
+          "additions": 299,
+          "deletions": 61
         },
         {
           "week": "2026-08-30",
@@ -1862,6 +1886,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -2238,6 +2268,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -2608,6 +2644,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -2984,6 +3026,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -3354,6 +3402,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -3730,6 +3784,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -4100,6 +4160,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -4476,6 +4542,12 @@
           "commits": 1,
           "additions": 3162,
           "deletions": 5
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -4846,6 +4918,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -5222,6 +5300,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -5592,6 +5676,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -5968,6 +6058,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -6341,6 +6437,12 @@
           "commits": 0,
           "additions": 0,
           "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
         }
       ]
     },
@@ -6651,9 +6753,9 @@
         },
         {
           "week": "2026-08-30",
-          "commits": 0,
-          "additions": 0,
-          "deletions": 0
+          "commits": 1,
+          "additions": 649,
+          "deletions": 38
         },
         {
           "week": "2026-09-06",
@@ -6711,6 +6813,12 @@
         },
         {
           "week": "2026-11-08",
+          "commits": 0,
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "week": "2026-11-15",
           "commits": 0,
           "additions": 0,
           "deletions": 0
@@ -9498,11 +9606,6 @@
       "login": "hengfei-wang",
       "starred_at": "2025-10-26T16:05:04Z",
       "avatar_url": "https://avatars.githubusercontent.com/u/39575336?v=4"
-    },
-    {
-      "login": "939386360",
-      "starred_at": "2025-10-27T03:19:28Z",
-      "avatar_url": "https://avatars.githubusercontent.com/u/57240051?v=4"
     },
     {
       "login": "AberHu",
@@ -12878,6 +12981,31 @@
       "login": "aailham",
       "starred_at": "2026-11-05T17:34:24Z",
       "avatar_url": "https://avatars.githubusercontent.com/u/246989658?v=4"
+    },
+    {
+      "login": "DreamMr",
+      "starred_at": "2026-11-10T02:41:16Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28838045?v=4"
+    },
+    {
+      "login": "cyysky",
+      "starred_at": "2026-11-11T01:55:50Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2968391?v=4"
+    },
+    {
+      "login": "journey1234-liu",
+      "starred_at": "2026-11-12T03:13:48Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65387573?v=4"
+    },
+    {
+      "login": "tianciB",
+      "starred_at": "2026-11-12T13:14:20Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/157381273?v=4"
+    },
+    {
+      "login": "Jambo-12",
+      "starred_at": "2026-11-17T08:26:29Z",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72024336?v=4"
     }
   ]
 }
