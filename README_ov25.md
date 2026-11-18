@@ -37,15 +37,15 @@ Qwen3.5 LLM ┘                     ▲                                  │
 
 ## 3. (B) HuggingFace → Megatron-Core   ★主流程
 
-脚本：`examples/llava_onevision2/convert/convert_4b_qwen35_hf_to_mcore.sh`
+脚本：`examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh`
 
 ```bash
 # 在容器内、仓库根目录执行
-bash examples/llava_onevision2/convert/convert_4b_qwen35_hf_to_mcore.sh \
+bash examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh \
      <LOAD_HF>  <SAVE_MCORE>  [TP]  [PP]
 
 # 例（TP=1）
-bash examples/llava_onevision2/convert/convert_4b_qwen35_hf_to_mcore.sh \
+bash examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh \
   /models/llava_onevision2_4b_qwen35_p16m3 \
   /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1  1  1
 ```
@@ -69,16 +69,16 @@ Qwen3.5 的线性注意力层 `in_proj_qkvz` / `in_proj_ba` 是**多 head 的 q/
 
 ## 4. (C) Megatron-Core → HuggingFace   ★主流程
 
-脚本：`examples/llava_onevision2/convert/convert_4b_qwen35_mcore_to_hf.sh`
+脚本：`examples/llava_onevision2/convert/convert_4b_ov25_mcore_to_hf.sh`
 
 ```bash
-bash examples/llava_onevision2/convert/convert_4b_qwen35_mcore_to_hf.sh \
+bash examples/llava_onevision2/convert/convert_4b_ov25_mcore_to_hf.sh \
      <LOAD_MCORE>  <SAVE_HF>  [TP]  [PP]  [REFERENCE]
 
 # 例（从训练产物 TP1 转回 HF）
-bash examples/llava_onevision2/convert/convert_4b_qwen35_mcore_to_hf.sh \
-  ./checkpoints/qwen35_stage_vit_adapter_packed_muon/iter_0002000 \
-  /models/qwen35_stage_vit_adapter_from_mcore  1  1
+bash examples/llava_onevision2/convert/convert_4b_ov25_mcore_to_hf.sh \
+  ./checkpoints/ov25_stage_vit_adapter_packed_muon/iter_0002000 \
+  /models/ov25_stage_vit_adapter_from_mcore  1  1
 ```
 
 参数：`LOAD_MCORE`=mcore ckpt（含 `release/` 或直接含 `mp_rank_*` 的目录；也可指向训练的 `iter_XXXXXXX/`）；`SAVE_HF`=输出 HF 目录；`REFERENCE`=拷 config/modeling/processor/tokenizer 的参考 HF 模型（默认 `.../llava_onevision2_4b_qwen35_p16m3`，**只重生成权重，其余文件从参考拷**）。
@@ -112,15 +112,15 @@ python -m transformers_impl.merge_ov2 merge \
 
 | 脚本 | 用途 |
 |---|---|
-| `examples/.../quick_start_4b/qwen35_stage_1_alignment_adapter_only.sh` | stage-1 对齐：非 packed、仅 adapter、adam、TP1、seq32k、GBS256、lr2e-5 |
-| `examples/.../quick_start_4b/qwen35_stage_vit_adapter_packed_muon.sh` | 续训练：**packed + muon**，`--trainable-modules adapter vision_model`，`--finetune` 从 step 0 载 stage-1 权重 |
-| `examples/.../quick_start_4b/qwen35_packed64k_tp4_sp.sh` | TP4+SP+packed 64k 模板 |
+| `examples/.../quick_start_4b/ov25_stage_1_alignment_adapter_only.sh` | stage-1 对齐：非 packed、仅 adapter、adam、TP1、seq32k、GBS256、lr2e-5 |
+| `examples/.../quick_start_4b/ov25_stage_vit_adapter_packed_muon.sh` | 续训练：**packed + muon**，`--trainable-modules adapter vision_model`，`--finetune` 从 step 0 载 stage-1 权重 |
+| `examples/.../quick_start_4b/ov25_packed64k_tp4_sp.sh` | TP4+SP+packed 64k 模板 |
 
 启动（双机示例，容器内）：
 ```bash
 # 每台节点各执行（脚本按本机 IP 自动定 node_rank）
 docker exec -w /workspace/LLaVA-OneVision-2.5 llava_megatron_container \
-  bash examples/llava_onevision2/quick_start_4b/qwen35_stage_vit_adapter_packed_muon.sh
+  bash examples/llava_onevision2/quick_start_4b/ov25_stage_vit_adapter_packed_muon.sh
 ```
 默认节点 `LIST_IP="192.0.2.11 192.0.2.12"`，可用环境变量覆盖：`LIST_IP="ip1 ip2 ..."`。
 

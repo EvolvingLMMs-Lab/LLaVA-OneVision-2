@@ -3,7 +3,7 @@
 # SELF-CONTAINED stage-1 alignment SMOKE (PACKED) | LLaVA-OneVision2-4B/Qwen3.5
 # Single node, SINGLE GPU, TP=1 PP=1, adapter-only (freeze ViT + LLM), 5 iters.
 #
-# PACKED variant of smoke_stage1_qwen35_1gpu.sh: OFFLINE_PACKED_DATA=1 so the
+# PACKED variant of smoke_stage1_ov25_1gpu.sh: OFFLINE_PACKED_DATA=1 so the
 # dataloader emits 8k offline-packed bins and get_batch builds a THD
 # PackedSeqParams (cu_seqlens). This exercises the two packed-only code paths:
 #   (1) GatedDeltaNet varlen fla kernels (causal_conv1d / chunk_gated_delta_rule)
@@ -20,7 +20,7 @@
 #
 # Usage (inside container llava_megatron_container):
 #   CUDA_VISIBLE_DEVICES=<free_gpu> \
-#     bash examples/llava_onevision2/quick_start_4b/smoke_stage1_qwen35_packed_1gpu.sh
+#     bash examples/llava_onevision2/quick_start_4b/smoke_stage1_ov25_packed_1gpu.sh
 #
 # Overridable via positional args: TP PP SEQ_LEN MBS GBS NSTEP
 # =============================================================================

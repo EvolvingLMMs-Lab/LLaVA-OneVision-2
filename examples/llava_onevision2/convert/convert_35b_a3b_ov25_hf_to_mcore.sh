@@ -2,7 +2,7 @@
 # =============================================================================
 # Qwen3.5-MoE (35B-A3B) LLaVA-OneVision2: merged HuggingFace -> Megatron-Core.
 #
-# Separate from convert_4b_qwen35_hf_to_mcore.sh: that one is for the dense
+# Separate from convert_4b_ov25_hf_to_mcore.sh: that one is for the dense
 # Qwen3.5 backbones, while this one fixes TP=1 (expert weights have no TP rule)
 # and adds the expert-parallel split that a MoE training run loads.
 #
@@ -13,7 +13,7 @@
 #      megatron writes when expert_model_parallel_size > 1.
 #
 # Usage:
-#   bash convert_35b_a3b_qwen35_hf_to_mcore.sh <LOAD_HF> <SAVE> [EP]
+#   bash convert_35b_a3b_ov25_hf_to_mcore.sh <LOAD_HF> <SAVE> [EP]
 #   env: NUM_LAYERS (40), FULL_ATTENTION_INTERVAL (4), NUM_EXPERTS (256),
 #        KEEP_TP1 (0 -> delete the intermediate TP1 checkpoint), AIAK_TRAINING_PATH
 # =============================================================================

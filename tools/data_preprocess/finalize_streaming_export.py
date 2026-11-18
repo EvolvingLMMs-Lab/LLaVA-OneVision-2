@@ -16,7 +16,7 @@ tokenizer the model was TRAINED with (the checkpoint's --hf-tokenizer-path). It
 
 Any mismatch exits non-zero.
 
-    python finalize_streaming_export.py --dst <hf_dir> --train-tokenizer <dir> [--repo <OV21 repo>]
+    python finalize_streaming_export.py --dst <hf_dir> --train-tokenizer <dir> [--repo <OV2.5 repo>]
 """
 import argparse
 import json

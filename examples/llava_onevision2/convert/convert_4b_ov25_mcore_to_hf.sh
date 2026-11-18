@@ -2,7 +2,7 @@
 # LLaVA-OneVision2 4B (Qwen3.5 hybrid LLM) - Convert Megatron-Core -> HuggingFace
 # =============================================================================
 #
-# REVERSE of convert_4b_qwen35_hf_to_mcore.sh. The LLM backbone is a hybrid stack
+# REVERSE of convert_4b_ov25_hf_to_mcore.sh. The LLM backbone is a hybrid stack
 # (linear gated-delta-net + periodic full-attention, interleaved 3D M-RoPE,
 # partial rotary 0.25), so the *language* step uses the dedicated reverse converter
 # custom/llava_onevision2/qwen35_mcore_to_hf.py (built on the validated
@@ -15,7 +15,7 @@
 # the reference merged HF model (only the weights are regenerated).
 #
 # Usage:
-#   bash convert_4b_qwen35_mcore_to_hf.sh <LOAD> <SAVE> [TP] [PP] [REFERENCE]
+#   bash convert_4b_ov25_mcore_to_hf.sh <LOAD> <SAVE> [TP] [PP] [REFERENCE]
 #
 #   LOAD       Megatron-Core checkpoint root (contains release/mp_rank_*)  OR a
 #              dir that directly contains mp_rank_* .
@@ -36,7 +36,7 @@
 # Non-streaming exports are unaffected.
 #
 # Example:
-#   bash convert_4b_qwen35_mcore_to_hf.sh \
+#   bash convert_4b_ov25_mcore_to_hf.sh \
 #     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1 \
 #     /models/llava_onevision2_4b_qwen35_p16m3_from_mcore 4 1
 # =============================================================================

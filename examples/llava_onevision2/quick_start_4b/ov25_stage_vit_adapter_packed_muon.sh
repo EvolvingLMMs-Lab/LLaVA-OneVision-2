@@ -51,7 +51,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-output}"
 DATA_PATH=${DATA_PATH:-"/data/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"./checkpoints/qwen35_stage_1_alignment_adapter_only"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"./checkpoints/ov25_stage_1_alignment_adapter_only"}
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1

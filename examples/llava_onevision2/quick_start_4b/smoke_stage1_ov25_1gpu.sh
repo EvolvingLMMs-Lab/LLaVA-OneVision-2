@@ -14,7 +14,7 @@
 #
 # Usage (inside container llava_megatron_container):
 #   CUDA_VISIBLE_DEVICES=<free_gpu> \
-#     bash examples/llava_onevision2/quick_start_4b/smoke_stage1_qwen35_1gpu.sh
+#     bash examples/llava_onevision2/quick_start_4b/smoke_stage1_ov25_1gpu.sh
 #
 # Overridable via positional args: TP PP SEQ_LEN MBS GBS NSTEP
 # =============================================================================

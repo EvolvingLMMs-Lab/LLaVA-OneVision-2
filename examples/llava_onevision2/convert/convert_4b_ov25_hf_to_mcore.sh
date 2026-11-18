@@ -11,7 +11,7 @@
 # validated converters as the Qwen3 4B model (identical p16/merge3 ViT + adapter).
 #
 # Usage:
-#   bash convert_4b_qwen35_hf_to_mcore.sh <LOAD> <SAVE> [TP] [PP]
+#   bash convert_4b_ov25_hf_to_mcore.sh <LOAD> <SAVE> [TP] [PP]
 #
 #   LOAD  merged HF checkpoint (LlavaOnevision2ForConditionalGeneration)
 #   SAVE  output Megatron-Core checkpoint dir
@@ -19,7 +19,7 @@
 #   PP    pipeline-parallel size (default 1)
 #
 # Example:
-#   bash convert_4b_qwen35_hf_to_mcore.sh \
+#   bash convert_4b_ov25_hf_to_mcore.sh \
 #     /models/llava_onevision2_4b_qwen35_p16m3 \
 #     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1 1 1
 # =============================================================================

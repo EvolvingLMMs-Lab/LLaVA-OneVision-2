@@ -2,7 +2,7 @@
 # =============================================================================
 # Qwen3.5-MoE (35B-A3B) LLaVA-OneVision2: Megatron-Core -> merged HuggingFace.
 #
-# Separate from convert_4b_qwen35_mcore_to_hf.sh because a MoE checkpoint differs
+# Separate from convert_4b_ov25_mcore_to_hf.sh because a MoE checkpoint differs
 # in three ways that do not belong in the dense wrapper:
 #   * expert parallelism: shards are release/mp_rank_{t:02d}_{e:03d}, and the
 #     routed experts have to be gathered and renumbered (the language converter
@@ -16,7 +16,7 @@
 # qwen35_mcore_to_hf.py refuses to un-shard such a checkpoint).
 #
 # Usage:
-#   bash convert_35b_a3b_qwen35_mcore_to_hf.sh <LOAD> <SAVE> [EP] [REFERENCE]
+#   bash convert_35b_a3b_ov25_mcore_to_hf.sh <LOAD> <SAVE> [EP] [REFERENCE]
 #     LOAD       mcore checkpoint dir (with or without the release/ level)
 #     SAVE       output merged-HF dir
 #     EP         expert-parallel size of the checkpoint (default: auto-count)

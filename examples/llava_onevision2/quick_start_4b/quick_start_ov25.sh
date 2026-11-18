@@ -1,15 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# LLaVA-OneVision-2.1 / 4B-qwen35 / single-node QuickStart
+# LLaVA-OneVision-2.5 / 4B / single-node QuickStart
 #
-# This is the tutorial entry point for OV2.1 and the reference target for
+# This is the tutorial entry point for OV2.5 and the reference target for
 # performance work. It is a stripped-down but otherwise faithful copy of the
 # production SFT recipe: same model, same parallelism per GPU, same packed data
 # path, same optimizer, same environment gates. Only the fleet is smaller
 # (1 node instead of 24) and the data is a small bundle.
 #
 # Run it bare, no arguments needed:
-#     bash examples/llava_onevision2/quick_start_4b/quick_start.sh
+#     bash examples/llava_onevision2/quick_start_4b/quick_start_ov25.sh
 #
 # Positional args (same order as the OV2.0 quick_start.sh):
 #     TP PP SEQ_LEN MBS GBS EPOCHS       defaults: 4 1 131072 1 4 1
@@ -75,35 +75,35 @@
 # -----------------------------------------------------------------------------
 # The packed dataset is the one from the OV2.0 quick start - no new data needed:
 #     https://huggingface.co/datasets/lmms-lab-encoder/ov2_quickstart
-# It loads unchanged under OV2.1: both packs use `PackedCaptioningSample`, and the
+# It loads unchanged under OV2.5: both packs use `PackedCaptioningSample`, and the
 # only difference between the two `sample_loader.py` files is the `data_type`
-# marker OV2.1 adds for streaming data, which is `Optional[...] = None` on the
+# marker OV2.5 adds for streaming data, which is `Optional[...] = None` on the
 # dataclass. OV2.0 bins simply load with `data_type = None`, i.e. the offline
 # path, which is what they are.
 #
 # The checkpoint and tokenizer cannot be reused: OV2.0 ships a Qwen3 dense model
-# (`ov_encoder_p14m22_qwen3_*`), OV2.1-4B is the Qwen3.5 hybrid with a 248320
-# vocabulary. Both come from the OV2.1 side.
+# (`ov_encoder_p14m22_qwen3_*`), OV2.5-4B is the Qwen3.5 hybrid with a 248320
+# vocabulary. Both come from the OV2.5 side.
 #
 # Expected layout under $BUNDLE_DIR (override any path individually):
-#     ov21_quickstart/
+#     ov25_quickstart/
 #       packed_mixed_sft_cap_v30s/dataset.yaml      from lmms-lab-encoder/ov2_quickstart
-#       ov25_4b_qwen35_streaming_tokenizer/         OV2.1 HF tokenizer + config (vocab 248320)
-#       ov25_4b_qwen35_mcore_tp4pp1/                OV2.1 Megatron checkpoint, TP4 PP1
+#       ov25_4b_qwen35_streaming_tokenizer/         OV2.5 HF tokenizer + config (vocab 248320)
+#       ov25_4b_qwen35_mcore_tp4pp1/                OV2.5 Megatron checkpoint, TP4 PP1
 #
 # The checkpoint is TP-specific: changing TP needs a converted checkpoint
 # (examples/llava_onevision2/convert/).
 #
-# Two things to know about running OV2.0 data through OV2.1:
+# Two things to know about running OV2.0 data through OV2.5:
 #   - The pack was budgeted with the Qwen3 tokenizer and a p14/merge2 vision
-#     tower. OV2.1 tokenizes the same text with a different vocabulary and
+#     tower. OV2.5 tokenizes the same text with a different vocabulary and
 #     patchifies the same JPEGs at p16/merge3, so the realised row lengths differ
 #     from the original 8192 target. SEQ_LEN defaults to 16384 here to leave
 #     room; rows that still exceed it are dropped by the packing-skip path.
 #   - That is also why this default is not the production sequence length. To
 #     exercise the long-sequence regime the production recipe lives in, point
 #     DATA_PATH at a 110k pack and run
-#         bash quick_start.sh 4 1 131072 1 4
+#         bash quick_start_ov25.sh 4 1 131072 1 4
 # =============================================================================
 
 # =============================================================================
@@ -115,13 +115,13 @@ MBS="${4:-1}"
 GBS="${5:-4}"
 EPOCHS="${6:-1}"
 
-BUNDLE_DIR="${BUNDLE_DIR:-./ov21_quickstart}"
+BUNDLE_DIR="${BUNDLE_DIR:-./ov25_quickstart}"
 DATA_PATH="${DATA_PATH:-${BUNDLE_DIR}/packed_mixed_sft_cap_v30s/dataset.yaml}"
 TOKENIZER_PATH="${TOKENIZER_PATH:-${BUNDLE_DIR}/ov25_4b_qwen35_streaming_tokenizer}"
 CHECKPOINT_PATH="${CHECKPOINT_PATH:-${BUNDLE_DIR}/ov25_4b_qwen35_mcore_tp4pp1}"
 OUTPUT_DIR="${OUTPUT_DIR:-./output/quick_start_4b_qwen35}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/OV2.1}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 # pyshim: fla autotune cap + energon leak fix. REQUIRED for long sequences -
 # without it a long row triggers an fla autotune sweep that has hard-hung nodes
@@ -132,7 +132,7 @@ TRAINABLE="${TRAINABLE:-language_model adapter vision_model}"   # full model
 RECOMPUTE="${RECOMPUTE:-full}"
 
 # One epoch over the blend, as min(weight, available bins) per dataset:
-#   - OV2.1 production blends carry bin counts as weights, some sub-sampled
+#   - OV2.5 production blends carry bin counts as weights, some sub-sampled
 #     below what the dataset holds, so the weight is the per-epoch size.
 #   - The OV2.0 bundle carries the input-sample count as the weight (2,033,704)
 #     while holding 218,907 bins, so there the available count is the size.
