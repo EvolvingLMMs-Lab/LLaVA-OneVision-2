@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_black.svg">
-    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_white.svg">
-    <img alt="LLaVA-OneVision-2.5" src="asset/llava_onevision_2_white.svg" width="820" style="max-width: 100%;">
+    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_5_black.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_5_white.svg">
+    <img alt="LLaVA-OneVision-2.5" src="asset/llava_onevision_2_5_white.svg" width="820" style="max-width: 100%;">
   </picture>
 </p>
 
@@ -26,9 +26,7 @@ href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a></b> 👈
 </p>
 
 <p align="center">
-🤗 <b>2.5 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a></b> · <b>Technical Report (coming soon)</b> · <b><a
-href="#inference">Inference</a></b> · <b><a
-href="#training-llava-onevision-25">Training</a></b>
+🤗 <b>2.5 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a></b> · <b>Technical Report (coming soon)</b>
 </p>
 
 <p align="center">
@@ -47,7 +45,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 ---
 
 ## NEWS
-- 2026-11-18: Released [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) — one 4B model for offline and **streaming** video. This repository becomes **LLaVA-OneVision-2.5** and now carries its training code: the Qwen3.5 hybrid-attention backbone (GatedDeltaNet + full attention every 4 layers), streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism. See [Training LLaVA-OneVision-2.5](#training-llava-onevision-25). The released LLaVA-OneVision-2 models, datasets and reported numbers are unchanged.
+- 2026-11-18: Released [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) — one 4B model for offline and **streaming** video. This repository becomes **LLaVA-OneVision-2.5** and carries its training code: the Qwen3.5 hybrid-attention backbone, streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism.
 - 2026-11-05: Thanks to [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) for making [LLaVA-OneVision-2-4B](#quick-start-4b-single-node) SFT 2.2–3.0× faster! See [Training Acceleration](#training-acceleration) for details.
 - 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
@@ -63,9 +61,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 - [Method](#method)
 - [Models](#models)
 - [Datasets](#datasets)
-- [Inference](#inference)
 - [Quick Start (4B, single node)](#quick-start-4b-single-node)
-- [Training LLaVA-OneVision-2.5](#training-llava-onevision-25)
 - [Training Acceleration](#training-acceleration)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
@@ -74,22 +70,9 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 
 ## Introduction
 
-**LLaVA-OneVision-2.5** is the latest release of the LLaVA-OneVision family. Its first model, [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct), is a 4B vision-language model for single-image, multi-image and video input. Beyond the usual offline tasks, it is trained for **streaming** video: frames arrive one at a time, and at every step the model decides whether to stay silent or speak. The same weights and the same chat template serve both modes.
+**LLaVA-OneVision-2.5** is the latest release of the family. [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) is a 4B model for single-image, multi-image and video input that is also trained for **streaming** video: frames arrive one at a time, and at every step the model decides whether to stay silent or speak. The same weights and the same chat template serve both modes.
 
-- **Offline and streaming in one model.** `apply_chat_template(..., streaming=True)` switches mode; eight protocol tokens carry the per-frame decision to stay silent, respond or caption. Nothing else about the input changes.
-- **Codec-aligned video.** Besides uniform frame sampling, *codec mode* uses the encoder's bit-cost to pack the informative regions of a video into a handful of canvases.
-- **9× spatial compression.** A patch-16 vision tower with 3×3 merging gives one visual token per 48×48 pixels, so long videos fit comfortably in the 262k context.
-
-This repository is the training framework behind it. On top of the LLaVA-OneVision-2 codebase, 2.5 adds:
-
-- **Qwen3.5 hybrid-attention backbone** — GatedDeltaNet linear-attention layers with one full-attention layer every 4, 3D M-RoPE, and HF ↔ Megatron-Core converters for it.
-- **Streaming training** — streaming protocol tokens, per-sample `data_type` markers carried from jsonl through packing to the encoder, and streaming-specific losses.
-- **Manifest-based offline packing** — the `s0`–`s4` pipeline in [`offline_packing/`](offline_packing/README.md), including dynamic per-sample budgets ([`DYNAMIC_PACKING.md`](offline_packing/DYNAMIC_PACKING.md)).
-- **Training at long context** — the Muon optimizer, GDN head parallelism across tensor-parallel ranks, chunked vision forward and selective recompute.
-
-### LLaVA-OneVision-2
-
-LLaVA-OneVision-2.5 keeps the LLaVA-OneVision-2 architecture. **LLaVA-OneVision-2**, released in April 2026, is a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
+**LLaVA-OneVision-2** is the next-generation release of the LLaVA-OneVision family — a fully open 8B multimodal model that unifies image, long-form video, and spatial understanding under a single architecture, with the entire pipeline (data, encoders, training, checkpoints, logs) released end-to-end.
 
 ### 🎬 Codec-Aligned Vision Encoders
 
@@ -118,9 +101,7 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 
 ## Evaluation Results
 
-### LLaVA-OneVision-2.5-4B-Instruct
-
-#### Video
+**LLaVA-OneVision-2.5-4B-Instruct — video**
 
 <table style="width:100%; display:table;">
 <thead><tr>
@@ -153,7 +134,7 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 </tbody>
 </table>
 
-#### Streaming video
+**LLaVA-OneVision-2.5-4B-Instruct — streaming video**
 
 <table style="width:100%; display:table;">
 <thead><tr>
@@ -183,7 +164,7 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 </tbody>
 </table>
 
-#### Image
+**LLaVA-OneVision-2.5-4B-Instruct — image**
 
 <table style="width:100%; display:table;">
 <thead><tr>
@@ -207,8 +188,6 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 </table>
 
 <sub>Compared with Qwen3.5-4B, thinking disabled. **Bold** is the best score in each row; `--` means not available. The superscript on each video score is the setting that produced it: frames × pixels per frame, or for codec, canvases (TC) × pixels per canvas. VideoMME is the mean over the short, medium and long splits. Each side reports its best score over the settings tried, from single runs. The image table shows selected benchmarks; full results, settings and protocol will be given in the technical report.</sub>
-
-### LLaVA-OneVision-2-8B-Instruct
 
 <p align="center">
   <picture>
@@ -307,51 +286,9 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 </p>
 
 
-## Inference
-
-LLaVA-OneVision-2.5-4B-Instruct runs with 🤗 Transformers. The modeling code ships with the weights, so `trust_remote_code=True` is required.
-
-```bash
-pip install "transformers>=5.7.0" accelerate torch torchvision
-pip install flash-attn --no-build-isolation   # optional, recommended
-pip install decord                            # frame-sampling video path only
-```
-
-### Image example
-
-```python
-import torch
-from PIL import Image
-from transformers import AutoProcessor, AutoModelForImageTextToText
-
-MODEL = "lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct"
-
-processor = AutoProcessor.from_pretrained(MODEL, trust_remote_code=True)
-model = AutoModelForImageTextToText.from_pretrained(
-    MODEL, trust_remote_code=True, dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",   # "sdpa" without flash-attn
-    device_map="auto",
-).eval()
-
-messages = [{"role": "user", "content": [
-    {"type": "image"},
-    {"type": "text", "text": "Describe this image in detail."},
-]}]
-text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-inputs = processor(text=text, images=[Image.open("example.jpg").convert("RGB")],
-                   return_tensors="pt").to(model.device)
-
-with torch.inference_mode():
-    out = model.generate(**inputs, max_new_tokens=512, do_sample=False)
-print(processor.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True))
-```
-
-Video input (uniform frames or codec mode) and streaming are covered in the [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct#quickstart).
-
-For LLaVA-OneVision-2-8B-Instruct, see its [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct) and the [vLLM integration](https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/).
-
-
 ## Quick Start (4B, single node)
+
+> **LLaVA-OneVision-2.5:** the steps below reproduce the LLaVA-OneVision-2 4B recipe. For the 2.5 recipe (Qwen3.5 hybrid backbone) use [`quick_start_qwen35.sh`](examples/llava_onevision2/quick_start_4b/quick_start_qwen35.sh) and see [`README_qwen35.md`](README_qwen35.md).
 
 > **🚨 Strongly recommended: don't read the rest of this section.** Just hand the prompt below to any code agent (Claude Code, opencode, Cursor, Codex, etc.) from a working directory on your 8×GPU node, and it will reproduce the full SFT run end-to-end — clone, download the 340 GB bundle, load the docker image, and launch detached training — without you reading a single step.
 
@@ -659,24 +596,6 @@ Optional speed-up:
 - `OV2_PRESET` — `blackwell` or `hopper_80g` (or a preset file); see [docs/faster_training.md](docs/faster_training.md)
 
 </details>
-
-
-## Training LLaVA-OneVision-2.5
-
-The quick start above reproduces the LLaVA-OneVision-2 4B recipe (Qwen3 dense language model, p14 / 2×2-merge vision tower). The 2.5 recipe uses the Qwen3.5 hybrid backbone with a p16 / 3×3-merge vision tower and has its own entry points:
-
-| What | Where |
-| --- | --- |
-| Single-node quick start (4B, full model, packed data, Muon) | [`examples/llava_onevision2/quick_start_4b/quick_start_qwen35.sh`](examples/llava_onevision2/quick_start_4b/quick_start_qwen35.sh) |
-| Backbone guide: building weights, HF ↔ Megatron-Core conversion, training scripts, pitfalls (Chinese) | [`README_qwen35.md`](README_qwen35.md) |
-| Checkpoint converters | [`examples/llava_onevision2/convert/`](examples/llava_onevision2/convert/) (`convert_4b_qwen35_*`, `convert_35b_a3b_qwen35_*`) |
-| Offline packing pipeline | [`offline_packing/README.md`](offline_packing/README.md), [`offline_packing/DYNAMIC_PACKING.md`](offline_packing/DYNAMIC_PACKING.md) |
-| Canvas timestamp schema for codec video | [`docs/llava_onevision2/canvas_timestamp_schema.md`](docs/llava_onevision2/canvas_timestamp_schema.md) |
-
-Two things differ from the LLaVA-OneVision-2 quick start:
-
-- **Checkpoint and tokenizer.** `quick_start_qwen35.sh` reuses the packed dataset from [`lmms-lab-encoder/ov2_quickstart`](https://huggingface.co/datasets/lmms-lab-encoder/ov2_quickstart), but needs a Megatron-Core checkpoint and tokenizer for the Qwen3.5 backbone, which that bundle does not contain. `README_qwen35.md` describes how to build and convert them.
-- **Image.** The GatedDeltaNet layers need [flash-linear-attention](https://github.com/fla-org/flash-linear-attention); `README_qwen35.md` §1 lists the image requirements. The first iteration compiles Triton kernels and is slow.
 
 
 ## Training Acceleration
