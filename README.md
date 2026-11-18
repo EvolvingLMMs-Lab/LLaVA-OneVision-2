@@ -12,12 +12,10 @@
 > 🌟 **The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).**
 
 <p>
-🤗 <b>2.5</b> <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a> · Technical Report (coming soon)<br>
+🤗 <b>2.5</b> <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct">Models</a> · Technical Report (coming soon) · <a href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a><br>
 🤗 <b>2</b> <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct">Models</a> · <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data">Datasets</a> · <a href="https://arxiv.org/pdf/2605.25979">Technical Report</a> · <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/">HomePage</a> · <a href="https://huggingface.co/spaces/FeilongTang/OneVision-Encoder-Codec-View">Codec&nbsp;Playground</a> · <a href="https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/">vLLM</a> · <a href="https://discord.gg/PmdGHMFNP">Discord</a><br>
 🤗 <b>1.5</b> <a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Models</a> · <a href="https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713">Datasets</a> · <a href="https://arxiv.org/abs/2509.23661">Technical Report</a> · <a href="https://docs.nvidia.com/nemo/automodel/nightly/model-coverage/vlm/lmms-lab/llava-onevision.html">NeMo</a> · <a href="https://discord.gg/PmdGHMFNP">Discord</a>
 </p>
-
-👉 <a href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a> 👈
 
 ---
 
