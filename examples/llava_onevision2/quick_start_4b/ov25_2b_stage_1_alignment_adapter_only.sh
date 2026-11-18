@@ -9,17 +9,17 @@
 #
 # Qwen3.5-specific (vs the p16m3 recipe):
 #   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5 (has the qwen3_5 backbone)
-#   * --model-name llava-onevision2-2b-qwen35 (language_model_type=qwen3_5 from arch config)
+#   * --model-name llava-onevision2-2b-ov25 (language_model_type=qwen3_5 from arch config)
 #   * TOKENIZER = Qwen3.5 processor (vocab 248320); alignment wds stores raw
 #     text+images and is tokenized live, so it is reused as-is.
-#   * --load = the qwen35 mcore ckpt at the SAME TP as this run.
-#   * QWEN35_ARGS (linear-attn / M-RoPE / partial-rotary) + ViT per-frame attn.
+#   * --load = the ov25 mcore ckpt at the SAME TP as this run.
+#   * OV25_ARGS (linear-attn / M-RoPE / partial-rotary) + ViT per-frame attn.
 #   * --cross-entropy-loss-fusion ADDED: Qwen3.5 vocab (248320) is 63% larger
 #     than p16m3 (151936); at TP=1 the seq-32000 CE would otherwise be heavy.
 #
 # >>> MEMORY NOTE <<< If TP=1 OOMs on the 248320-vocab cross-entropy at seq
 #   32000 (even with fusion), rerun with TP=2 (arg1=2) and the matching ckpt
-#   .../llava_onevision2_4b_qwen35_p16m3_mcore_tp2pp1 (add --sequence-parallel
+#   .../llava_onevision2_4b_ov25_p16m3_mcore_tp2pp1 (add --sequence-parallel
 #   for TP>1 if desired).
 # =============================================================================
 TP="${1:-1}"
@@ -37,8 +37,8 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}
 
 OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 DATA_PATH=${DATA_PATH:-"/data/blip_laion_cc_sbu_558k_wds"}
-TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_2b_qwen35_p16m3_mcore_tp${TP}pp${PP}"}
+TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov25_processor"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_2b_ov25_p16m3_mcore_tp${TP}pp${PP}"}
 
 export OFFLINE_PACKING_BMR=0
 export OFFLINE_PACKED_DATA=0
@@ -91,10 +91,10 @@ else
     DISTRIBUTED_ARGS=( --nproc_per_node "$GPUS_PER_NODE" --nnodes "$NNODES" --node_rank "$NODE_RANK" --master_addr "$MASTER_ADDR" --master_port "$MASTER_PORT" )
 fi
 
-MODEL_ARGS=( --model-name llava-onevision2-2b-qwen35 )
+MODEL_ARGS=( --model-name llava-onevision2-2b-ov25 )
 
 # Qwen3.5 hybrid-attention hyperparams (also defaulted by the arch config).
-QWEN35_ARGS=(
+OV25_ARGS=(
     --linear-key-head-dim 128
     --linear-value-head-dim 128
     --linear-num-key-heads 16
@@ -176,7 +176,7 @@ PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/aiak_training_llm/train.py" \
     "${MODEL_ARGS[@]}" \
-    "${QWEN35_ARGS[@]}" \
+    "${OV25_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \

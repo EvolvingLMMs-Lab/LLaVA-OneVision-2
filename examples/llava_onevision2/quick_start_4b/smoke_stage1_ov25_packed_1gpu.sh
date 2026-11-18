@@ -38,13 +38,13 @@ LR_WARMUP_ITERS="${LR_WARMUP_ITERS:-2}"
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_qwen35}"
+OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_ov25}"
 DATA_PATH="${DATA_PATH:-/data/sft_packed_8k/dataset.yaml}"
 # p16m3 tokenizer (Qwen2.5-VL token space: image_token_id=151655), consistent
 # with the packed p16m3 data AND the provider's image/video token ids.
 TOKENIZER_PATH="${TOKENIZER_PATH:-/models/lmms-lab/LLaVA-OneVision-2-4B-p16m33}"
 # Converted Qwen3.5-backbone mcore checkpoint (TP1/PP1, loads 0 missing/0 unexpected).
-CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1}"
+CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_ov25_p16m3_mcore_tp1pp1}"
 
 # Offline-packed data (both required for correct THD attention isolation).
 export OFFLINE_PACKING_BMR=1
@@ -91,7 +91,7 @@ DISTRIBUTED_ARGS=(
 
 # ---- model: the NEW Qwen3.5-backbone arch ----------------------------------
 MODEL_ARGS=(
-    --model-name llava-onevision2-4b-qwen35
+    --model-name llava-onevision2-4b-ov25
     # Qwen3.5 hybrid-attention backbone args (also carried by the arch config;
     # passed explicitly per the training-recipe contract).
     --linear-key-head-dim 128

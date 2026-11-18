@@ -5,8 +5,8 @@
 # Qwen3.5 counterpart of convert_4b_hf_to_mcore.sh. The LLM backbone is a hybrid
 # stack (linear gated-delta-net + periodic full-attention, interleaved 3D M-RoPE,
 # partial rotary 0.25), so the *language* step uses the dedicated converter
-# custom/llava_onevision2/qwen35_hf_to_mcore.py (built on the validated
-# aiak_training_llm.models.qwen35.hf_convert layer math) INSTEAD of the generic
+# custom/llava_onevision2/ov25_hf_to_mcore.py (built on the validated
+# aiak_training_llm.models.ov25.hf_convert layer math) INSTEAD of the generic
 # model.py + qwen3.json path. Vision tower / adapter / vision-patch reuse the same
 # validated converters as the Qwen3 4B model (identical p16/merge3 ViT + adapter).
 #
@@ -20,8 +20,8 @@
 #
 # Example:
 #   bash convert_4b_ov25_hf_to_mcore.sh \
-#     /models/llava_onevision2_4b_qwen35_p16m3 \
-#     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1 1 1
+#     /models/llava_onevision2_4b_ov25_p16m3 \
+#     /models/llava_onevision2_4b_ov25_p16m3_mcore_tp1pp1 1 1
 # =============================================================================
 set -e
 
@@ -43,13 +43,13 @@ FULL_ATTENTION_INTERVAL=${FULL_ATTENTION_INTERVAL:-4}
 export PYTHONPATH="$AIAK_MAGATRON_PATH:$CONVERT_CHECKPOINT_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH"
 
 mkdir -p ./tmp/
-SAVE_LANGUAGE_MODEL=./tmp/language-mcore-qwen35
+SAVE_LANGUAGE_MODEL=./tmp/language-mcore-ov25
 SAVE_VISION_MODEL=./tmp/vision-model-mcore
 SAVE_ADAPTER=./tmp/adapter-mcore
 SAVE_PATCH=./tmp/patch-mcore
 
 # ---- language: Qwen3.5 hybrid LLM (dedicated converter) ---------------------
-python $CUSTOM/qwen35_hf_to_mcore.py \
+python $CUSTOM/ov25_hf_to_mcore.py \
     --load_ckpt_path=$LOAD \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \

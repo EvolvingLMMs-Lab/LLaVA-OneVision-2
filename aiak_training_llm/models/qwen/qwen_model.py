@@ -10,7 +10,7 @@ from megatron.core.config_logger import has_config_logger_enabled, log_config_to
 from megatron.core.dist_checkpointing.mapping import ShardedStateDict
 from megatron.core.models.common.embeddings.language_model_embedding import LanguageModelEmbedding
 from megatron.core.models.common.embeddings.rotary_pos_embedding import RotaryEmbedding
-from aiak_training_llm.models.qwen35.qwen35_rope import Qwen35RotaryEmbedding
+from aiak_training_llm.models.ov25.ov25_rope import OV25RotaryEmbedding
 from megatron.core.models.common.language_module.language_module import LanguageModule
 from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.transformer.enums import ModelType, AttnMaskType
@@ -128,17 +128,17 @@ class QwenModel(LanguageModule):
 
         # Qwen3.5 hybrid-attention backbone uses interleaved 3D M-RoPE (partial rotary)
         # instead of the standard 1D RotaryEmbedding. Selected via config flag set by
-        # the provider (apply_qwen35_language_config) / arch config.
-        self.use_qwen35_mrope = getattr(config, 'language_model_type', None) in ('qwen3_5', 'qwen35')
-        if self.use_qwen35_mrope:
+        # the provider (apply_ov25_language_config) / arch config.
+        self.use_ov25_mrope = getattr(config, 'language_model_type', None) in ('qwen3_5', 'ov25')
+        if self.use_ov25_mrope:
             # Proven parity recipe flags (idempotent if provider already set them).
             config.rotary_interleaved = False
             # config.apply_rope_fusion = False
             config.multi_latent_attention = False
 
         if self.position_embedding_type == 'rope' and not self.config.multi_latent_attention:
-            if self.use_qwen35_mrope:
-                self.rotary_pos_emb = Qwen35RotaryEmbedding(self.config)
+            if self.use_ov25_mrope:
+                self.rotary_pos_emb = OV25RotaryEmbedding(self.config)
             else:
                 self.rotary_pos_emb = RotaryEmbedding(
                     kv_channels=self.config.kv_channels,
@@ -247,7 +247,7 @@ class QwenModel(LanguageModule):
         # memory, so the data_ptr alone is not a safe cross-step key.
         # Mirrors the ViT-side `_ROPE_CACHE.clear()` in commit 1b9d69b
         # (OneVisionEncoderModel.forward).
-        from aiak_training_llm.models.qwen35.qwen35_rope import clear_llm_rope_cache
+        from aiak_training_llm.models.ov25.ov25_rope import clear_llm_rope_cache
         clear_llm_rope_cache()
 
         # If decoder_input is provided (not None), then input_ids and position_ids are ignored.
@@ -264,7 +264,7 @@ class QwenModel(LanguageModule):
 
         # Rotary positional embeddings (embedding is None for PP intermediate devices)
         if rotary_pos_emb is None and self.position_embedding_type == 'rope' and not self.config.multi_latent_attention:
-            if self.use_qwen35_mrope:
+            if self.use_ov25_mrope:
                 # Qwen3.5 interleaved 3D M-RoPE. Derive (seq_len, batch) from whichever
                 # input is present (decoder_input is [S, B, H]; input_ids is [B, S]).
                 # sp_scattered: the tensor S was read from is the SP-scattered hidden

@@ -30,8 +30,8 @@ Qwen3.5 LLM ┘                     ▲                                  │
                                   └────────(C) mcore→hf ◀────────────┘ (训练产物回 HF)
 ```
 
-- 合并 HF 模型（已就绪）：`/models/llava_onevision2_4b_qwen35_p16m3`
-- mcore 权重（已就绪,TP 1/2/4）：`.../llava_onevision2_4b_qwen35_p16m3_mcore_tp{1,2,4}pp1`
+- 合并 HF 模型（已就绪）：`/models/llava_onevision2_4b_ov25_p16m3`
+- mcore 权重（已就绪,TP 1/2/4）：`.../llava_onevision2_4b_ov25_p16m3_mcore_tp{1,2,4}pp1`
 
 ---
 
@@ -46,8 +46,8 @@ bash examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh \
 
 # 例（TP=1）
 bash examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh \
-  /models/llava_onevision2_4b_qwen35_p16m3 \
-  /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1  1  1
+  /models/llava_onevision2_4b_ov25_p16m3 \
+  /models/llava_onevision2_4b_ov25_p16m3_mcore_tp1pp1  1  1
 ```
 
 参数：`LOAD_HF`=合并好的 HF 模型；`SAVE_MCORE`=输出 mcore 目录；`TP∈{1,2,4}`，`PP=1`。
@@ -56,14 +56,14 @@ bash examples/llava_onevision2/convert/convert_4b_ov25_hf_to_mcore.sh \
 
 | 组件 | 转换器 | 说明 |
 |---|---|---|
-| **language(Qwen3.5)** | `custom/llava_onevision2/qwen35_hf_to_mcore.py` | **专用**转换器（不走通用 model.py+qwen3.json）。传 `--num_layers=32 --full_attention_interval=4 --tensor_model_parallel_size=$TP` |
+| **language(Qwen3.5)** | `custom/llava_onevision2/ov25_hf_to_mcore.py` | **专用**转换器（不走通用 model.py+qwen3.json）。传 `--num_layers=32 --full_attention_interval=4 --tensor_model_parallel_size=$TP` |
 | ViT | 通用 `tools/convert_checkpoint/model.py` | 复用 Qwen3-4B 同款(p16/merge3 ViT 一致) |
 | adapter | `custom/llava_onevision2/adapter.py` | 复用 |
 | vision patch | `custom/llava_onevision2/vision_patch.py` | 复用 |
 | **合并** | `custom/llava_onevision2/merge_megatron.py` | 四路 `release/` 合并成一个 mcore ckpt，写 `latest_checkpointed_iteration.txt=release` |
 
 ### 为什么 language 要专用转换器
-Qwen3.5 的线性注意力层 `in_proj_qkvz` / `in_proj_ba` 是**多 head 的 q/k/v/z 交错打包**布局，需按 head 组重排；SwiGLU 的 `fc1` 要 transpose 后按 TP 切；线性注意力的 key/value 头在 TP≥2 时也要沿 TP 切。这些逻辑在经过验证的 `aiak_training_llm/models/qwen35/hf_convert.py` 里，专用转换器基于它。
+Qwen3.5 的线性注意力层 `in_proj_qkvz` / `in_proj_ba` 是**多 head 的 q/k/v/z 交错打包**布局，需按 head 组重排；SwiGLU 的 `fc1` 要 transpose 后按 TP 切；线性注意力的 key/value 头在 TP≥2 时也要沿 TP 切。这些逻辑在经过验证的 `aiak_training_llm/models/ov25/hf_convert.py` 里，专用转换器基于它。
 
 ---
 
@@ -81,11 +81,11 @@ bash examples/llava_onevision2/convert/convert_4b_ov25_mcore_to_hf.sh \
   /models/ov25_stage_vit_adapter_from_mcore  1  1
 ```
 
-参数：`LOAD_MCORE`=mcore ckpt（含 `release/` 或直接含 `mp_rank_*` 的目录；也可指向训练的 `iter_XXXXXXX/`）；`SAVE_HF`=输出 HF 目录；`REFERENCE`=拷 config/modeling/processor/tokenizer 的参考 HF 模型（默认 `.../llava_onevision2_4b_qwen35_p16m3`，**只重生成权重，其余文件从参考拷**）。
+参数：`LOAD_MCORE`=mcore ckpt（含 `release/` 或直接含 `mp_rank_*` 的目录；也可指向训练的 `iter_XXXXXXX/`）；`SAVE_HF`=输出 HF 目录；`REFERENCE`=拷 config/modeling/processor/tokenizer 的参考 HF 模型（默认 `.../llava_onevision2_4b_ov25_p16m3`，**只重生成权重，其余文件从参考拷**）。
 
 ### 内部（B 的逆过程）
-- language 用**专用逆转换器** `qwen35_mcore_to_hf.py`；ViT / adapter / vision_patch 复用通用逆转换器；`merge_huggingface.py` 合并成一个 `LlavaOnevision2ForConditionalGeneration`。
-- **args 注入小机关**:ViT 的逆转换(model.py)需要 ckpt 里带 megatron `args`。真实训练 ckpt 都有；但**前向 language 转换器写出的 ckpt 没有 `args`**。脚本会自动探测,缺失时用参考模型跑一次「throwaway 前向 vision 转换」合成 args,再用 `qwen35_inject_args.py` 注入到一份工作副本（**绝不改原 ckpt**）。所以从「hf→mcore 产物」直接转回时也能工作。
+- language 用**专用逆转换器** `ov25_mcore_to_hf.py`；ViT / adapter / vision_patch 复用通用逆转换器；`merge_huggingface.py` 合并成一个 `LlavaOnevision2ForConditionalGeneration`。
+- **args 注入小机关**:ViT 的逆转换(model.py)需要 ckpt 里带 megatron `args`。真实训练 ckpt 都有；但**前向 language 转换器写出的 ckpt 没有 `args`**。脚本会自动探测,缺失时用参考模型跑一次「throwaway 前向 vision 转换」合成 args,再用 `ov25_inject_args.py` 注入到一份工作副本（**绝不改原 ckpt**）。所以从「hf→mcore 产物」直接转回时也能工作。
 
 ### 往返一致性
 `HF → mcore → HF` 已验证**逐比特一致**；整模型前向 cos 相似度 0.9999997。
@@ -100,9 +100,9 @@ python -m transformers_impl.merge_ov2 merge \
   --variant dense \
   --vit   <raw_vit_path> \
   --llm   <qwen3.5_llm_path> \
-  --processor <ov2_qwen35_processor> \
+  --processor <ov25_processor> \
   --spatial-merge-size 3 --target-dtype bf16 \
-  --out   /models/llava_onevision2_4b_qwen35_p16m3
+  --out   /models/llava_onevision2_4b_ov25_p16m3
 ```
 注意 **`--spatial-merge-size 3`**(p16m3)。合并后 48 个 SSM 参数(`A_log`、线性注意力 `norm`)会保持 **fp32**(其余 bf16),不可全降 bf16。
 
@@ -126,14 +126,14 @@ docker exec -w /workspace/LLaVA-OneVision-2.5 llava_megatron_container \
 
 关键 CLI（Qwen3.5 专有,脚本已内置）：
 ```
---model-name llava-onevision2-4b-qwen35
+--model-name llava-onevision2-4b-ov25
 --linear-key-head-dim 128 --linear-value-head-dim 128
 --linear-num-key-heads 16 --linear-num-value-heads 32
 --linear-conv-kernel-dim 4 --full-attention-interval 4
 --mrope-section 11 11 10 --mrope-interleaved --partial-rotary-factor 0.25
 --vision-frame-windows-size 1
 --cross-entropy-loss-fusion          # 词表 248320 大，TP1 下省显存
---hf-tokenizer-path /models/ov2_qwen35_processor
+--hf-tokenizer-path /models/ov25_processor
 ```
 
 ---
@@ -153,22 +153,22 @@ docker exec -w /workspace/LLaVA-OneVision-2.5 llava_megatron_container \
 ## 8. 文件地图
 
 ```
-aiak_training_llm/models/qwen35/            # 新增 mcore 基座模块
+aiak_training_llm/models/ov25/            # 新增 mcore 基座模块
   gated_deltanet.py    线性注意力层(FLA delta 递推)
   gated_attention.py   全注意力层(带输出门)
   rmsnorm.py           Qwen3.5 RMSNorm
-  qwen35_rope.py       M-RoPE(3D/interleaved/partial)
-  qwen35_layer_spec.py 按 full_attention_interval 组装混合层栈
+  ov25_rope.py       M-RoPE(3D/interleaved/partial)
+  ov25_layer_spec.py 按 full_attention_interval 组装混合层栈
   hf_convert.py        HF↔mcore 权重映射数学(转换器基于它)
 aiak_training_llm/models/llava_onevision2/
-  llava_onevision2_config.py    arch: llava_onevision2_4b_qwen35()
+  llava_onevision2_config.py    arch: llava_onevision2_4b_ov25()
   llava_onevision2_model.py     get_rope_index / get_rope_index_packed
   llava_onevision2_provider.py  build 模型 + vision token id
 tools/convert_checkpoint/custom/llava_onevision2/
-  qwen35_hf_to_mcore.py / qwen35_mcore_to_hf.py / qwen35_inject_args.py
+  ov25_hf_to_mcore.py / ov25_mcore_to_hf.py / ov25_inject_args.py
 examples/llava_onevision2/convert/          # 转换 wrapper(见 §3/§4)
 examples/llava_onevision2/quick_start_4b/   # 训练脚本(见 §6)
 ```
 
 ---
-*生成于 2026-07-20，内容基于 `qwen35` 分支实际代码与脚本。*
+*生成于 2026-07-20，内容基于 `ov25` 分支实际代码与脚本。*

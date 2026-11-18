@@ -12,8 +12,8 @@
 #   * no hidden-size auto-detect: 35B-A3B and the dense 2B share hidden_size
 #     2048, so size probing is the wrong way to pick the reference here.
 #
-# MoE is TP=1 only (qwen35_hf_to_mcore.py does not TP-shard expert weights, and
-# qwen35_mcore_to_hf.py refuses to un-shard such a checkpoint).
+# MoE is TP=1 only (ov25_hf_to_mcore.py does not TP-shard expert weights, and
+# ov25_mcore_to_hf.py refuses to un-shard such a checkpoint).
 #
 # Usage:
 #   bash convert_35b_a3b_ov25_mcore_to_hf.sh <LOAD> <SAVE> [EP] [REFERENCE]
@@ -71,10 +71,10 @@ fi
 # (vacuous at TP=1, kept so the MoE path cannot silently skip a check the dense
 #  path enforces; SKIP_TP_CHECK=1 bypasses.)
 if [[ "${SKIP_TP_CHECK:-0}" != "1" ]]; then
-    python $CUSTOM/qwen35_tp_consistency.py check "$LOAD_REL_NONLANG" || exit 1
+    python $CUSTOM/ov25_tp_consistency.py check "$LOAD_REL_NONLANG" || exit 1
 fi
 
-SAVE_LANGUAGE_MODEL=./tmp/language-hf-qwen35-moe
+SAVE_LANGUAGE_MODEL=./tmp/language-hf-ov25-moe
 SAVE_VISION_MODEL=./tmp/vision-model-hf-moe
 SAVE_ADAPTER=./tmp/adapter-hf-moe
 SAVE_PATCH=./tmp/patch-hf-moe
@@ -94,7 +94,7 @@ if [ "$HAS_ARGS" != "True" ]; then
         --tensor_model_parallel_size=$TP --pipeline_model_parallel_size=1 \
         --load_ckpt_path=$REFERENCE --save_ckpt_path=$TMP_VIS_ARGS \
         --safetensors --no_save_optim --no_load_optim
-    python $CUSTOM/qwen35_inject_args.py \
+    python $CUSTOM/ov25_inject_args.py \
         --args_from $TMP_VIS_ARGS/release --src $LOAD_REL_NONLANG --dst $WORK_REL --tp $TP
     rm -rf $TMP_VIS_ARGS
     # Only the non-language view is rewritten: the language converter reads the real
@@ -105,7 +105,7 @@ fi
 # ---- language: Qwen3.5-MoE hybrid LLM ---------------------------------------
 FUSED_FLAG=""
 [[ "${FUSED_EXPERTS:-0}" == "1" ]] && FUSED_FLAG="--fused_experts"
-python $CUSTOM/qwen35_mcore_to_hf.py \
+python $CUSTOM/ov25_mcore_to_hf.py \
     --load_ckpt_path=$LOAD_REL \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \

@@ -5,8 +5,8 @@
 # REVERSE of convert_4b_ov25_hf_to_mcore.sh. The LLM backbone is a hybrid stack
 # (linear gated-delta-net + periodic full-attention, interleaved 3D M-RoPE,
 # partial rotary 0.25), so the *language* step uses the dedicated reverse converter
-# custom/llava_onevision2/qwen35_mcore_to_hf.py (built on the validated
-# aiak_training_llm.models.qwen35.hf_convert mcore_to_hf_* layer math) INSTEAD of
+# custom/llava_onevision2/ov25_mcore_to_hf.py (built on the validated
+# aiak_training_llm.models.ov25.hf_convert mcore_to_hf_* layer math) INSTEAD of
 # the generic model.py + qwen3.json path. Vision tower / adapter / vision-patch
 # REUSE the exact same validated mcore->hf converters as the Qwen3 4B p16m3 model.
 #
@@ -23,7 +23,7 @@
 #   TP         tensor-parallel size (default 1)   -- TP in {1,2,4}
 #   PP         pipeline-parallel size (default 1) -- PP=1/PP=2 supported (2D mp_rank_{t}_{p} merged in the LLM loader)
 #   REFERENCE  merged HF model to copy config/modeling/tokenizer from
-#              (default /models/llava_onevision2_4b_qwen35_p16m3)
+#              (default /models/llava_onevision2_4b_ov25_p16m3)
 #
 # Streaming models (STREAMING_EXPORT=auto|1|0, default auto): a checkpoint trained with the streaming
 # loss (--streaming-loss-scope=last-segment / --state-token-focal-loss in its args, or a <silence>
@@ -37,8 +37,8 @@
 #
 # Example:
 #   bash convert_4b_ov25_mcore_to_hf.sh \
-#     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1 \
-#     /models/llava_onevision2_4b_qwen35_p16m3_from_mcore 4 1
+#     /models/llava_onevision2_4b_ov25_p16m3_mcore_tp4pp1 \
+#     /models/llava_onevision2_4b_ov25_p16m3_from_mcore 4 1
 # =============================================================================
 set -e
 
@@ -67,16 +67,16 @@ for k, v in m.items():
 PYEOF
 )
 if [[ "$_HID" == "2048" ]]; then
-    _DEF_REF=/models/llava_onevision2_2b_qwen35_p16m3; _DEF_LAYERS=24
+    _DEF_REF=/models/llava_onevision2_2b_ov25_p16m3; _DEF_LAYERS=24
 elif [[ "$_HID" == "2560" ]]; then
-    _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_4b_ov25_p16m3; _DEF_LAYERS=32
 elif [[ "$_HID" == "4096" ]]; then
-    _DEF_REF=/models/llava_onevision2_9b_qwen35_p16m3_v0904; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_9b_ov25_p16m3_v0904; _DEF_LAYERS=32
 elif [[ "$_HID" == "5120" ]]; then
     _DEF_REF=/models/llava_onevision2_27b_qwen38_p16m3_v0923; _DEF_LAYERS=64
 else
     echo "[wrapper] WARNING: unknown hidden_size=$_HID; falling back to 4B defaults"
-    _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_4b_ov25_p16m3; _DEF_LAYERS=32
 fi
 REFERENCE=${5:-$_DEF_REF}
 NUM_LAYERS=${NUM_LAYERS:-$_DEF_LAYERS}
@@ -123,30 +123,30 @@ fi
 
 # ---- refuse checkpoints whose replicated GDN params drifted across TP ranks (pre SP-FIX
 #      training): the converter reads TP rank 0 only and would export a rank-0-only model.
-#      Repair with `qwen35_tp_consistency.py resync <src> <dst>` and convert <dst>.
+#      Repair with `ov25_tp_consistency.py resync <src> <dst>` and convert <dst>.
 #      Set SKIP_TP_CHECK=1 to bypass. ----------------------------------------------------
 # ---- a --gdn-head-parallel checkpoint holds per-rank GDN head shards: rebuild the replicated
 #      layout (weights only) first; everything below reads replicated GDN tensors. ------------
-if [[ "$(python $CUSTOM/qwen35_gdn_head_tp.py detect "$LOAD_REL")" == "head_parallel" ]]; then
+if [[ "$(python $CUSTOM/ov25_gdn_head_tp.py detect "$LOAD_REL")" == "head_parallel" ]]; then
     echo "[wrapper] GDN head-parallel checkpoint -> unsharding to replicated layout"
     rm -rf ./tmp/gdn-unsharded
-    python $CUSTOM/qwen35_gdn_head_tp.py unshard "$LOAD_REL" ./tmp/gdn-unsharded || exit 1
+    python $CUSTOM/ov25_gdn_head_tp.py unshard "$LOAD_REL" ./tmp/gdn-unsharded || exit 1
     LOAD_REL=./tmp/gdn-unsharded
 fi
 
 if [[ "${SKIP_TP_CHECK:-0}" != "1" ]]; then
-    python $CUSTOM/qwen35_tp_consistency.py check "$LOAD_REL" || exit 1
+    python $CUSTOM/ov25_tp_consistency.py check "$LOAD_REL" || exit 1
 fi
 
 mkdir -p ./tmp/
-SAVE_LANGUAGE_MODEL=./tmp/language-hf-qwen35
+SAVE_LANGUAGE_MODEL=./tmp/language-hf-ov25
 SAVE_VISION_MODEL=./tmp/vision-model-hf
 SAVE_ADAPTER=./tmp/adapter-hf
 SAVE_PATCH=./tmp/patch-hf
 
 # ---- ensure the checkpoint carries megatron `args` (needed only by the vision
 #      tower reverse via model.py). Real training checkpoints always have it; the
-#      qwen35 forward language converter writes an args-less {"model":...}. If it
+#      ov25 forward language converter writes an args-less {"model":...}. If it
 #      is missing, synthesize args from a throwaway forward vision conversion of
 #      the reference model (identical arch) and copy the checkpoint into a working
 #      dir with args injected (originals are never mutated). --------------------
@@ -163,14 +163,14 @@ if [ "$HAS_ARGS" != "True" ]; then
         --tensor_model_parallel_size=$TP --pipeline_model_parallel_size=1 \
         --load_ckpt_path=$REFERENCE --save_ckpt_path=$TMP_VIS_ARGS \
         --safetensors --no_save_optim --no_load_optim
-    python $CUSTOM/qwen35_inject_args.py \
+    python $CUSTOM/ov25_inject_args.py \
         --args_from $TMP_VIS_ARGS/release --src $LOAD_REL --dst $WORK_REL --tp $TP
     rm -rf $TMP_VIS_ARGS
     LOAD_REL="$WORK_REL"
 fi
 
 # ---- language: Qwen3.5 hybrid LLM (dedicated reverse converter) -------------
-python $CUSTOM/qwen35_mcore_to_hf.py \
+python $CUSTOM/ov25_mcore_to_hf.py \
     --load_ckpt_path=$LOAD_REL \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \

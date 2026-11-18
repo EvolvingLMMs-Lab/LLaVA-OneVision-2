@@ -14,7 +14,7 @@ from aiak_training_llm.models.llava_onevision2.llava_onevision2_layer_spec impor
     get_vision_layer_with_spec,
 )
 from aiak_training_llm.models.llava_onevision2.llava_onevision2_model import LlavaOnevision2
-from aiak_training_llm.models.qwen35.qwen35_layer_spec import get_qwen3_5_transformer_layer_spec
+from aiak_training_llm.models.ov25.ov25_layer_spec import get_qwen3_5_transformer_layer_spec
 from aiak_training_llm.utils import build_transformer_config, get_args, print_rank_0
 from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
 
@@ -22,7 +22,7 @@ from aiak_training_llm.utils.constants import VisionLanguageModelFamilies
 # Fields that the Qwen3.5 mcore modules read off the TransformerConfig via getattr.
 # core_transformer_config_from_args only copies known TransformerConfig fields, so
 # these must be threaded onto language_config explicitly.
-_QWEN35_EXTRA_FIELDS = (
+_OV25_EXTRA_FIELDS = (
     "linear_key_head_dim",
     "linear_value_head_dim",
     "linear_num_key_heads",
@@ -36,20 +36,20 @@ _QWEN35_EXTRA_FIELDS = (
 )
 
 
-def is_qwen35(src) -> bool:
+def is_ov25(src) -> bool:
     """True if this arch uses the Qwen3.5 hybrid-attention LLM backbone."""
-    return getattr(src, "language_model_type", None) in ("qwen3_5", "qwen35")
+    return getattr(src, "language_model_type", None) in ("qwen3_5", "ov25")
 
 
-def apply_qwen35_language_config(language_config, src):
+def apply_ov25_language_config(language_config, src):
     """Thread the Qwen3.5 hybrid-attention fields + required rope flags from ``src``
     (the args namespace or a model-config object) onto ``language_config`` so the
-    ported mcore modules and Qwen35RotaryEmbedding read them via getattr.
+    ported mcore modules and OV25RotaryEmbedding read them via getattr.
 
     Mirrors the proven full-model parity recipe: rotary_interleaved=False,
     apply_rope_fusion=True, multi_latent_attention=False.
     """
-    for k in _QWEN35_EXTRA_FIELDS:
+    for k in _OV25_EXTRA_FIELDS:
         v = getattr(src, k, None)
         if v is not None:
             setattr(language_config, k, v)
@@ -163,9 +163,9 @@ def llavaov_2_model_provider(
     # model never finds image tokens in input_ids -> the adapter is bypassed in
     # forward -> grad norm 0 (adapter never trains). Qwen3.5 uses a different
     # token space (248056/248057/248053/248054) than Qwen3/OV1.5 (151655/...).
-    _is_qwen35 = (getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35")
-                  or "qwen35" in getattr(args, "model_name", ""))
-    if _is_qwen35:
+    _is_ov25 = (getattr(args, "language_model_type", None) in ("qwen3_5", "ov25")
+                  or "ov25" in getattr(args, "model_name", ""))
+    if _is_ov25:
         setattr(language_config, "image_token_id", 248056)
         setattr(language_config, "video_token_id", 248057)
         setattr(language_config, "vision_start_token_id", 248053)
@@ -227,10 +227,10 @@ def llavaov_2_model_provider(
     else:
         adapter_layer_spec = get_adapeter_layer_with_spec()
         vision_layer_spec = get_vision_layer_with_spec()
-        if is_qwen35(args):
+        if is_ov25(args):
             # Qwen3.5 hybrid-attention backbone: thread extra fields + rope flags onto
             # language_config, then build the hybrid (linear + full attention) spec.
-            apply_qwen35_language_config(language_config, args)
+            apply_ov25_language_config(language_config, args)
             language_layer_spec = get_qwen3_5_transformer_layer_spec(language_config)[0]
         else:
             language_layer_spec = get_qwen_layer_with_te_spec(language_config)

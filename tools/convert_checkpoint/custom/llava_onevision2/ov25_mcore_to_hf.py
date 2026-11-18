@@ -4,11 +4,11 @@
 """Convert the Qwen3.5 hybrid-attention LANGUAGE part of a Megatron-Core (AIAK)
 LLaVA-OneVision2 checkpoint back to the merged-HF layout.
 
-This is the exact inverse of ``qwen35_hf_to_mcore.py``:
+This is the exact inverse of ``ov25_hf_to_mcore.py``:
   * un-shard the per-rank tensor-parallel shards back to a single TP1 language
     state dict (inverse of ``shard_language``), then
   * invert each per-decoder-layer weight rule via
-    ``aiak_training_llm.models.qwen35.hf_convert.mcore_to_hf_{linear,full}_attn_layer``
+    ``aiak_training_llm.models.ov25.hf_convert.mcore_to_hf_{linear,full}_attn_layer``
     (which invert convert_{linear,full}_attn_layer, cos=1.0 / bit-identical proven).
 
 TP UN-SHARD (inverse of shard_language), applied per parameter suffix:
@@ -40,9 +40,9 @@ Primary target: PP=1 (1D mp_rank_{t:02d} layout), TP in {1,2,4}.
 MoE (Qwen3.5-MoE / qwen3_5_moe, e.g. the 35B-A3B backbone): layers carrying
 ``mlp.router.weight`` take the MoE path instead of the dense SwiGLU one, and
 ``--expert_model_parallel_size`` un-shards the expert-parallel layout written by
-``qwen35_split_ep.py`` (routed experts are gathered from mp_rank_*_{e:03d} and
+``ov25_split_ep.py`` (routed experts are gathered from mp_rank_*_{e:03d} and
 renumbered local->global; everything else is replicated, rank 0 wins).
-MoE is TP=1 only -- qwen35_hf_to_mcore.py does not TP-shard expert weights, so a
+MoE is TP=1 only -- ov25_hf_to_mcore.py does not TP-shard expert weights, so a
 TP>1 MoE checkpoint is rejected rather than silently mis-assembled.
 """
 import argparse
@@ -53,7 +53,7 @@ import re
 import torch
 from safetensors.torch import save_file
 
-from aiak_training_llm.models.qwen35.hf_convert import (
+from aiak_training_llm.models.ov25.hf_convert import (
     mcore_to_hf_linear_attn_layer,
     mcore_to_hf_full_attn_layer,
 )
@@ -70,7 +70,7 @@ def transpose_shape0(param, m, n):
     return param.view(*current_shape).transpose(0, 1).contiguous().view(*_shape)
 
 
-# Suffix rules -- MUST mirror qwen35_hf_to_mcore.shard_language.
+# Suffix rules -- MUST mirror ov25_hf_to_mcore.shard_language.
 _COL_DIM0 = (
     "embedding.word_embeddings.weight",
     "output_layer.weight",                # untied models only (vocab dim0)
@@ -123,7 +123,7 @@ def load_language_shards(load_path, tp, pp=1, ep=1, return_untie_flag=False):
     """Load the mcore language shards and return a list of tp flat dicts of
     language_model.* -> tensor (weights only, _extra_state dropped).
 
-    EP UN-SHARD (inverse of qwen35_split_ep.py): routed-expert weights
+    EP UN-SHARD (inverse of ov25_split_ep.py): routed-expert weights
     ``mlp.experts.linear_fc{1,2}.weight{local}`` live only on the EP rank that
     owns them and are numbered LOCALLY (0..num_experts/ep-1); they are gathered
     and renumbered back to global ids. Every other parameter (router, shared
@@ -201,7 +201,7 @@ def unshard_language(shards, tp):
     if any(_EXPERT_RE.search(k) or k.endswith(_MOE_NON_EXPERT) for k in shards[0]):
         raise NotImplementedError(
             "MoE checkpoints are only supported at TP=1 (expert parallelism is handled "
-            "separately via --expert_model_parallel_size). qwen35_hf_to_mcore.py does not "
+            "separately via --expert_model_parallel_size). ov25_hf_to_mcore.py does not "
             "shard expert/shared-expert weights across TP either, so a TP>1 MoE checkpoint "
             "produced by it would be wrong; refusing to un-shard one here.")
     full = {}
@@ -224,7 +224,7 @@ def unshard_language(shards, tp):
 
 def _convert_moe_mlp_to_hf(layer_sd, hpre, out, fused_experts=False):
     """mcore MoELayer -> HF qwen3_5_moe layer MLP. Inverse of
-    qwen35_hf_to_mcore._convert_moe_mlp.
+    ov25_hf_to_mcore._convert_moe_mlp.
 
     mcore:
       mlp.router.weight                    [E, H]
@@ -285,7 +285,7 @@ def _convert_moe_mlp_to_hf(layer_sd, hpre, out, fused_experts=False):
         raise KeyError(
             f"{hpre}: mlp.shared_experts.gate_weight missing. Qwen3.5-MoE scales the shared "
             "expert by sigmoid(shared_expert_gate(x)); a checkpoint trained with "
-            "QWEN35_SHARED_EXPERT_GATE=0 cannot be exported to the HF layout.")
+            "OV25_SHARED_EXPERT_GATE=0 cannot be exported to the HF layout.")
     out[hpre + "mlp.shared_expert_gate.weight"] = gate_w.clone().contiguous()
     return n_exp
 
@@ -327,7 +327,7 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
         out["lm_head.weight"] = output_w.clone().contiguous()
     else:
         out["lm_head.weight"] = embed.clone().contiguous()  # tied
-    print(f"[qwen35_mcore_to_hf] lm_head: {'untied (output_layer)' if untied else 'tied (embed copy)'}")
+    print(f"[ov25_mcore_to_hf] lm_head: {'untied (output_layer)' if untied else 'tied (embed copy)'}")
 
     n_full, n_lin, n_moe, n_exp = 0, 0, 0, 0
     for i in range(num_layers):
@@ -363,7 +363,7 @@ def convert_language_mcore_to_hf(lang_sd, num_layers, full_attention_interval,
 
     moe_note = (f", {n_moe} MoE ({n_exp} routed experts"
                 f"{', fused' if fused_experts else ', per-expert'})" if n_moe else "")
-    print(f"[qwen35_mcore_to_hf] converted {num_layers} layers: "
+    print(f"[ov25_mcore_to_hf] converted {num_layers} layers: "
           f"{n_full} full-attn, {n_lin} linear{moe_note}")
     return out
 
@@ -395,15 +395,15 @@ def main():
     tp = args.tensor_model_parallel_size
     assert tp >= 1
 
-    print(f"[qwen35_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
+    print(f"[ov25_mcore_to_hf] loading {tp} shard(s) from: {args.load_ckpt_path}")
     shards, untie_flag = load_language_shards(
         args.load_ckpt_path, tp, pp=args.pipeline_model_parallel_size,
         ep=args.expert_model_parallel_size, return_untie_flag=True)
     lang = unshard_language(shards, tp)
-    from aiak_training_llm.models.qwen35.hf_convert import dims_from_hf_config
+    from aiak_training_llm.models.ov25.hf_convert import dims_from_hf_config
     dims = dims_from_hf_config(args.hf_config_path) if args.hf_config_path else None
-    print(f"[qwen35_mcore_to_hf] dims: {dims or 'default (4B)'}")
-    print(f"[qwen35_mcore_to_hf] ckpt args untie_embeddings_and_output_weights={untie_flag}")
+    print(f"[ov25_mcore_to_hf] dims: {dims or 'default (4B)'}")
+    print(f"[ov25_mcore_to_hf] ckpt args untie_embeddings_and_output_weights={untie_flag}")
     hf = convert_language_mcore_to_hf(lang, args.num_layers, args.full_attention_interval,
                                       orig_vocab_size=args.orig_vocab_size, dims=dims,
                                       ckpt_untie_flag=untie_flag,
@@ -412,7 +412,7 @@ def main():
     os.makedirs(args.save_ckpt_path, exist_ok=True)
     out_path = os.path.join(args.save_ckpt_path, "model.safetensors")
     save_file({k: v.contiguous() for k, v in hf.items()}, out_path, metadata={"format": "pt"})
-    print(f"[qwen35_mcore_to_hf] wrote {len(hf)} HF language weights -> {out_path}")
+    print(f"[ov25_mcore_to_hf] wrote {len(hf)} HF language weights -> {out_path}")
 
 
 if __name__ == "__main__":

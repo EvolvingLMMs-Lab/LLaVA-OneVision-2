@@ -336,7 +336,7 @@ def get_batch(data_iterator):
     # Qwen3/OV1.5 use the module-level 151655/151656. Using the wrong id makes
     # has_image False -> imgs never broadcast -> images=None in the model forward
     # -> the adapter is skipped -> grad norm 0 (adapter never trains).
-    if getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35"):
+    if getattr(args, "language_model_type", None) in ("qwen3_5", "ov25"):
         _img_tok, _vid_tok = 248056, 248057
     else:
         _img_tok, _vid_tok = image_token_id, video_token_id

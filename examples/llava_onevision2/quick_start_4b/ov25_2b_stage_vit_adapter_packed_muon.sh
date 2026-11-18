@@ -10,7 +10,7 @@
 #   date0511_ax_stage_1_alignment_p16m3_packed_new16_muon.sh
 # with the Qwen3.5-specific plumbing carried over from the stage-1 script:
 #   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5 (qwen3_5 backbone)
-#   * --model-name llava-onevision2-2b-qwen35 + QWEN35_ARGS (linear-attn / M-RoPE)
+#   * --model-name llava-onevision2-2b-ov25 + OV25_ARGS (linear-attn / M-RoPE)
 #   * Qwen3.5 processor tokenizer (vocab 248320); packed wds stores raw
 #     text+images tokenized live, so it is reused as-is with this tokenizer.
 #   * --cross-entropy-loss-fusion (large 248320 vocab CE at TP1).
@@ -48,7 +48,7 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}
 
 OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 DATA_PATH=${DATA_PATH:-"/data/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
-TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
+TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov25_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-"./checkpoints/ov25_2b_stage_1_alignment_adapter_only"}
 
@@ -104,10 +104,10 @@ else
     DISTRIBUTED_ARGS=( --nproc_per_node "$GPUS_PER_NODE" --nnodes "$NNODES" --node_rank "$NODE_RANK" --master_addr "$MASTER_ADDR" --master_port "$MASTER_PORT" )
 fi
 
-MODEL_ARGS=( --model-name llava-onevision2-2b-qwen35 )
+MODEL_ARGS=( --model-name llava-onevision2-2b-ov25 )
 
 # Qwen3.5 hybrid-attention hyperparams (also defaulted by the arch config).
-QWEN35_ARGS=(
+OV25_ARGS=(
     --linear-key-head-dim 128
     --linear-value-head-dim 128
     --linear-num-key-heads 16
@@ -201,7 +201,7 @@ PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/aiak_training_llm/train.py" \
     "${MODEL_ARGS[@]}" \
-    "${QWEN35_ARGS[@]}" \
+    "${OV25_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \

@@ -2,14 +2,14 @@
 # =============================================================================
 # LLaVA-OneVision-2 4B *Qwen3.5* backbone — PACKED 64k template, TP=4 + SP.
 # For stage-1.5 / later stages (packed SFT). Stage-1 ALIGNMENT uses the
-# non-packed ax_stage_1_alignment_qwen35_adapter_only.sh instead.
+# non-packed ov25_stage_1_alignment_adapter_only.sh instead.
 # Set TRAINABLE="language_model adapter vision_model" for full stage-1.5.  Launch via launch_date05_training.sh
 # (pass --ips "<node list>"; it exports LIST_IP/MASTER_ADDR/MASTER_PORT).
 #
 # WHAT IS DIFFERENT vs the Qwen3 (p16m3) scripts — all REQUIRED for Qwen3.5:
 #   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5  (the tree with the
-#     qwen35 hybrid-attention backbone; the old baseline tree has no qwen3_5).
-#   * --model-name llava-onevision2-4b-qwen35  (hybrid GatedDeltaNet+full attn;
+#     ov25 hybrid-attention backbone; the old baseline tree has no qwen3_5).
+#   * --model-name llava-onevision2-4b-ov25  (hybrid GatedDeltaNet+full attn;
 #     language_model_type=qwen3_5 is set by the arch config, NOT the CLI).
 #   * TOKENIZER = the Qwen3.5 processor (vocab 248320, image_pad=248056).  The
 #     old p16m33 tokenizer is vocab 151936 and is INCOMPATIBLE.
@@ -50,8 +50,8 @@ AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}
 OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 # Existing mixed_64k packed webdataset (raw text + images; tokenized live).
 DATA_PATH=${DATA_PATH:-"/data/packed_64k/dataset.yaml"}
-TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1"}
+TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov25_processor"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_4b_ov25_p16m3_mcore_tp4pp1"}
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
@@ -105,12 +105,12 @@ else
     DISTRIBUTED_ARGS=( --nproc_per_node "$GPUS_PER_NODE" --nnodes "$NNODES" --node_rank "$NODE_RANK" --master_addr "$MASTER_ADDR" --master_port "$MASTER_PORT" )
 fi
 
-MODEL_ARGS=( --model-name llava-onevision2-4b-qwen35 )
+MODEL_ARGS=( --model-name llava-onevision2-4b-ov25 )
 
 # Qwen3.5 hybrid-attention hyperparams. These also have defaults in the arch
 # config (copied onto args), but we pass them explicitly for clarity/override.
 # NOTE: language_model_type is set by the arch config (not a valid CLI choice).
-QWEN35_ARGS=(
+OV25_ARGS=(
     --linear-key-head-dim 128
     --linear-value-head-dim 128
     --linear-num-key-heads 16
@@ -189,7 +189,7 @@ PYTHONPATH="$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/aiak_training_llm/train.py" \
     "${MODEL_ARGS[@]}" \
-    "${QWEN35_ARGS[@]}" \
+    "${OV25_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \

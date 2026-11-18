@@ -20,7 +20,7 @@ from megatron.core.models.common.embeddings.rope_utils import (
     _apply_rotary_pos_emb_bshd,
 )
 
-# BUGFIX(packed M-RoPE) gate: Qwen35RotaryEmbedding emits a PER-TOKEN freqs
+# BUGFIX(packed M-RoPE) gate: OV25RotaryEmbedding emits a PER-TOKEN freqs
 # table (row i = token i; per-segment position restarts are already encoded
 # by get_rope_index_packed). The stock thd rope path (mcore unfused AND the
 # TE fused kernel) re-slices freqs[:seg_len] for EVERY segment, so in a

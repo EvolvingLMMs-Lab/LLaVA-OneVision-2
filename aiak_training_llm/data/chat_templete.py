@@ -440,7 +440,7 @@ _register_chat_template(
 #   think-on : generation prompt ends with "<think>\n"  -> response is "reasoning\n</think>\n\nanswer"
 #   think-off: generation prompt ends with "<think>\n\n</think>\n\n" -> response is the answer only
 _register_chat_template(
-    name="qwen35-vl-think-on",
+    name="ov25-vl-think-on",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
@@ -451,7 +451,7 @@ _register_chat_template(
 )
 
 _register_chat_template(
-    name="qwen35-vl-think-off",
+    name="ov25-vl-think-off",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
@@ -485,15 +485,15 @@ def _think_auto_reply(content: str) -> Tuple[bool, str]:
     return True, f"{reasoning}\n</think>\n\n{answer}"
 
 
-class Qwen35ThinkAutoTemplate(ChatTemplate):
+class OV25ThinkAutoTemplate(ChatTemplate):
     def _encode(
         self,
         tokenizer: "AutoTokenizerFromHF",
         messages: Sequence[Dict[str, str]],
         system: Optional[str],
     ) -> List[List[int]]:
-        think_on = MAPPING_NAME_TO_TEMPLATE["qwen35-vl-think-on"]
-        think_off = MAPPING_NAME_TO_TEMPLATE["qwen35-vl-think-off"]
+        think_on = MAPPING_NAME_TO_TEMPLATE["ov25-vl-think-on"]
+        think_off = MAPPING_NAME_TO_TEMPLATE["ov25-vl-think-off"]
         system = system or self.default_system
         encoded_messages = []
         for i, message in enumerate(messages):
@@ -525,8 +525,8 @@ class Qwen35ThinkAutoTemplate(ChatTemplate):
 
 # format_user/format_assistant are unused: the on/off templates provide them.
 _register_chat_template(
-    name="qwen35-vl-think-auto",
-    cls=Qwen35ThinkAutoTemplate,
+    name="ov25-vl-think-auto",
+    cls=OV25ThinkAutoTemplate,
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are a helpful assistant.",
