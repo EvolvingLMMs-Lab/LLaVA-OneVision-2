@@ -162,14 +162,35 @@ python $CUSTOM/merge_huggingface.py \
     --save_ckpt_path $SAVE
 
 mkdir -p "$SAVE"
+# The code files are listed under both namings: a reference merged by this repo
+# ships *_llava_onevision2.py, the released 2.5 checkpoint *_llava_onevision2_5.py
+# plus canvas_timestamp_schema.py. Only the ones the reference has are copied.
 for f in config.json configuration_llava_onevision2.py modeling_llava_onevision2.py \
          processing_llava_onevision2.py video_processing_llava_onevision2.py \
-         codec_video_processing_llava_onevision2.py video_preprocessor_config.json \
+         codec_video_processing_llava_onevision2.py \
+         configuration_llava_onevision2_5.py modeling_llava_onevision2_5.py \
+         processing_llava_onevision2_5.py video_processing_llava_onevision2_5.py \
+         codec_video_processing_llava_onevision2_5.py canvas_timestamp_schema.py \
+         video_preprocessor_config.json \
          generation_config.json processor_config.json preprocessor_config.json \
          tokenizer_config.json tokenizer.json tokenizer.model vocab.json merges.txt \
          chat_template.jinja special_tokens_map.json added_tokens.json; do
     [[ -f "$REFERENCE/$f" ]] && cp "$REFERENCE/$f" "$SAVE/$f"
 done
+
+# config.json's auto_map names the code files the export loads with; without them
+# the directory looks complete but cannot be loaded.
+missing=$(python -c '
+import json, os, sys
+d = sys.argv[1]
+auto_map = json.load(open(os.path.join(d, "config.json"))).get("auto_map", {})
+mods = {v.split("--")[-1].split(".")[0] + ".py" for v in auto_map.values() if isinstance(v, str)}
+print(" ".join(sorted(m for m in mods if not os.path.isfile(os.path.join(d, m)))))
+' "$SAVE") || exit 1
+if [[ -n "$missing" ]]; then
+    echo "ERROR: $SAVE/config.json refers to code files that REFERENCE=$REFERENCE does not provide: $missing" >&2
+    exit 1
+fi
 
 rm -rf $SAVE_LANGUAGE_MODEL $SAVE_VISION_MODEL $SAVE_ADAPTER $SAVE_PATCH \
        ./tmp/work-release-moe ./tmp/ep-rank0
