@@ -56,7 +56,6 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 <!-- TOC -->
 - [Introduction](#introduction)
 - [Results](#evaluation-results)
-- [Evaluation Reproduction](#evaluation-reproduction)
 - [Method](#method)
 - [Models](#models)
 - [Datasets](#datasets)
@@ -109,19 +108,6 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 </p>
 
 <sub>Compared with Qwen3.5-4B, thinking disabled; `--` means not available. VideoMME is the mean over the short, medium and long splits. Each side reports its best score over the settings tried, from single runs; the setting behind each video score is listed in the [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct#performance). The image block shows selected benchmarks; full results, settings and protocol will be given in the technical report.</sub>
-
-## Evaluation Reproduction
-
-The evaluation settings behind the reported LLaVA-OneVision-2 results are
-published in the `llava-onevision2` branch of `lmms-eval`:
-
-- Branch: https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/llava-onevision2
-- Reproduction guide: https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/llava-onevision2/README.md
-
-That branch includes the exact evaluation model wrapper, benchmark/task
-configs, Docker environment, and thin launcher scripts used to reproduce the
-reported numbers for both the frames backend and the codec backend.
-
 
 ## Method
 
