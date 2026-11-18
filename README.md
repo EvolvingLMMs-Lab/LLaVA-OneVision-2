@@ -100,109 +100,15 @@ And unlike most "open" releases, *everything* ships alongside them: encoder weig
 
 ## Evaluation Results
 
-**LLaVA-OneVision-2.5-4B-Instruct — video**
-
-<table style="width:100%; display:table;">
-<thead><tr>
-<th align="left" style="width:28%">Benchmark</th>
-<th align="center" style="width:24%">OV2.5-4B (codec)</th>
-<th align="center" style="width:24%">OV2.5-4B (frames)</th>
-<th align="center" style="width:24%">Qwen3.5-4B</th>
-</tr></thead>
-<tbody>
-<tr><td colspan="4" align="left"><b>General video understanding</b></td></tr>
-<tr><td align="left">VideoMME (no subtitles)</td><td align="center"><b>71.9</b></td><td align="center">69.7</td><td align="center">71.7</td></tr>
-<tr><td align="left">VideoMME (subtitles)</td><td align="center">74.7</td><td align="center">75.2</td><td align="center"><b>75.9</b></td></tr>
-<tr><td align="left">MotionBench</td><td align="center"><b>64.2</b> <sup>TC128×313,600</sup></td><td align="center">62.4 <sup>128f×153,664</sup></td><td align="center">60.1 <sup>128f×153,664</sup></td></tr>
-<tr><td align="left">TOMATO</td><td align="center">36.0 <sup>TC16×153,664</sup></td><td align="center"><b>39.2</b> <sup>16f×153,664</sup></td><td align="center">32.4 <sup>16f×153,664</sup></td></tr>
-<tr><td align="left">MVBench</td><td align="center"><b>75.5</b> <sup>TC64×313,600</sup></td><td align="center">72.0 <sup>64f×153,664</sup></td><td align="center">64.0 <sup>64f×153,664</sup></td></tr>
-<tr><td align="left">NextQA MC test</td><td align="center"><b>86.4</b> <sup>TC64×313,600</sup></td><td align="center">86.1 <sup>64f×153,664</sup></td><td align="center">80.7 <sup>64f×153,664</sup></td></tr>
-<tr><td align="left">TempCompass MC</td><td align="center"><b>79.7</b> <sup>TC64×313,600</sup></td><td align="center">75.8 <sup>64f×153,664</sup></td><td align="center">73.4 <sup>64f×153,664</sup></td></tr>
-<tr><td align="left">Video-MME-v2</td><td align="center"><b>17.2</b> <sup>TC64×313,600</sup></td><td align="center">16.4 <sup>64f×330,000</sup></td><td align="center">15.5 <sup>64f×330,000</sup></td></tr>
-<tr><td align="left">EgoSchema subset</td><td align="center">79.8 <sup>TC64×313,600</sup></td><td align="center"><b>80.0</b> <sup>64f×153,664</sup></td><td align="center">68.2 <sup>64f×153,664</sup></td></tr>
-<tr><td align="left">Video-Index</td><td align="center"><b>23.1</b> <sup>TC512×55,296</sup></td><td align="center">20.0 <sup>1fps, ≤512f×55,296</sup></td><td align="center">19.6 <sup>1fps, ≤512f×55,296</sup></td></tr>
-<tr><td colspan="4" align="left"><b>Long video</b></td></tr>
-<tr><td align="left">LVBench</td><td align="center">61.6 <sup>TC1024×156,800</sup></td><td align="center"><b>62.0</b> <sup>950f×200,000</sup></td><td align="center">56.5 <sup>2048f×120,000</sup></td></tr>
-<tr><td align="left">MLVU dev</td><td align="center"><b>77.1</b> <sup>TC512×313,600</sup></td><td align="center">75.3 <sup>512f×72,900</sup></td><td align="center">73.8 <sup>512f×72,900</sup></td></tr>
-<tr><td align="left">LongVideoBench val</td><td align="center"><b>71.1</b> <sup>TC768×235,200</sup></td><td align="center">69.0 <sup>1280f×80,000</sup></td><td align="center">62.7 <sup>700f×300,000</sup></td></tr>
-<tr><td align="left">VideoEval-Pro</td><td align="center"><b>64.6</b> <sup>TC768×235,200</sup></td><td align="center">64.4 <sup>950f×200,000</sup></td><td align="center">62.8 <sup>2048f×100,000</sup></td></tr>
-<tr><td colspan="4" align="left"><b>Temporal grounding (mIoU)</b></td></tr>
-<tr><td align="left">TimeLens ActivityNet</td><td align="center"><b>59.1</b> <sup>TC128×313,600</sup></td><td align="center">58.8 <sup>2048f×409,600, fps=4</sup></td><td align="center">53.8 <sup>2048f×409,600, fps=4</sup></td></tr>
-<tr><td align="left">TimeLens Charades</td><td align="center"><b>61.3</b> <sup>TC128×313,600</sup></td><td align="center">60.6 <sup>2048f×409,600, fps=4</sup></td><td align="center">48.1 <sup>2048f×409,600, fps=4</sup></td></tr>
-<tr><td align="left">TimeLens QVHighlights</td><td align="center"><b>70.3</b> <sup>TC128×313,600</sup></td><td align="center">68.4 <sup>2048f×409,600, fps=4</sup></td><td align="center">67.5 <sup>2048f×409,600, fps=4</sup></td></tr>
-</tbody>
-</table>
-
-**LLaVA-OneVision-2.5-4B-Instruct — streaming video**
-
-<table style="width:100%; display:table;">
-<thead><tr>
-<th align="left" style="width:40%">Benchmark</th>
-<th align="center" style="width:20%">OV2.5-4B<br>(codec, 24 fps)</th>
-<th align="center" style="width:20%">MOSS-VL-Realtime 11B<br>(1 fps)</th>
-<th align="center" style="width:20%">JoyAI-VL-Interaction 8B<br>(1 fps)</th>
-</tr></thead>
-<tbody>
-<tr><td colspan="4" align="left"><b>OVO-Bench</b></td></tr>
-<tr><td align="left">Real-Time Visual Perception (RTVP)</td><td align="center"><b>81.0</b></td><td align="center">75.9</td><td align="center">76.4</td></tr>
-<tr><td align="left">Backward Tracing (BT)</td><td align="center">68.8</td><td align="center"><b>72.6</b></td><td align="center">53.3</td></tr>
-<tr><td align="left">Forward Active Responding (FAR)</td><td align="center">60.7</td><td align="center"><b>62.1</b></td><td align="center">54.6</td></tr>
-<tr><td align="left">Overall</td><td align="center"><b>70.2</b></td><td align="center"><b>70.2</b></td><td align="center">61.4</td></tr>
-<tr><td colspan="4" align="left"><b>StreamingBench</b></td></tr>
-<tr><td align="left">Real-Time Visual Understanding (RTVU)</td><td align="center"><b>85.3</b></td><td align="center">82.9</td><td align="center">83.2</td></tr>
-<tr><td align="left">Misleading Context Understanding (MCU)</td><td align="center">36.8</td><td align="center">--</td><td align="center"><b>37.2</b></td></tr>
-<tr><td align="left">Anomaly Context Understanding (ACU)</td><td align="center"><b>67.6</b></td><td align="center">--</td><td align="center">51.6</td></tr>
-<tr><td align="left">Sequential Question Answering (SQA)</td><td align="center"><b>54.8</b></td><td align="center">50.4</td><td align="center">53.6</td></tr>
-<tr><td align="left">Proactive Output (PO)</td><td align="center"><b>63.6</b></td><td align="center">60.0</td><td align="center">39.6</td></tr>
-<tr><td align="left">Contextual Understanding (CU)</td><td align="center">55.7</td><td align="center"><b>56.4</b></td><td align="center">45.5</td></tr>
-<tr><td colspan="4" align="left"><b>Proactive and interactive</b></td></tr>
-<tr><td align="left">OmniMMI: Proactive Alerting (PA)</td><td align="center"><b>68.5</b></td><td align="center">66.0</td><td align="center">13.5</td></tr>
-<tr><td align="left">ProactiveVideoQA: PAUC (ω=0.5)</td><td align="center">33.1</td><td align="center"><b>47.2</b></td><td align="center">37.0</td></tr>
-<tr><td align="left">InteractionBench: Total</td><td align="center">38.6</td><td align="center">--</td><td align="center">--</td></tr>
-<tr><td align="left">StreamArena: Proactive Interaction (Pro)</td><td align="center"><b>25.5</b></td><td align="center">11.8</td><td align="center">9.4</td></tr>
-</tbody>
-</table>
-
-**LLaVA-OneVision-2.5-4B-Instruct — image**
-
-<table style="width:100%; display:table;">
-<thead><tr>
-<th align="left" style="width:24%">General perception and reading</th>
-<th align="center" style="width:13%">OV2.5-4B</th>
-<th align="center" style="width:13%">Qwen3.5-4B</th>
-<th align="left" style="width:24%">Grounding and spatial</th>
-<th align="center" style="width:13%">OV2.5-4B</th>
-<th align="center" style="width:13%">Qwen3.5-4B</th>
-</tr></thead>
-<tbody>
-<tr><td align="left">MMStar</td><td align="center">63.9</td><td align="center"><b>66.9</b></td><td align="left">RefCOCO val (Acc@0.5)</td><td align="center"><b>92.6</b></td><td align="center">89.1</td></tr>
-<tr><td align="left">MMBench-EN dev</td><td align="center">88.2</td><td align="center"><b>88.8</b></td><td align="left">RefCOCOg val (Acc@0.5)</td><td align="center"><b>88.9</b></td><td align="center">87.7</td></tr>
-<tr><td align="left">RealWorldQA</td><td align="center">73.9</td><td align="center"><b>74.4</b></td><td align="left">RefSpatial-Bench</td><td align="center"><b>62.1</b></td><td align="center">29.1</td></tr>
-<tr><td align="left">AI2D</td><td align="center">82.2</td><td align="center"><b>82.4</b></td><td align="left">CrossPoint</td><td align="center"><b>80.5</b></td><td align="center">33.7</td></tr>
-<tr><td align="left">BLINK</td><td align="center"><b>67.1</b></td><td align="center">63.6</td><td align="left">CV-Bench 2D</td><td align="center"><b>83.3</b></td><td align="center">80.7</td></tr>
-<tr><td align="left">V*-Bench</td><td align="center"><b>89.5</b></td><td align="center">81.7</td><td align="left">CV-Bench 3D</td><td align="center"><b>94.5</b></td><td align="center">92.0</td></tr>
-<tr><td align="left">OCRBench</td><td align="center">79.8</td><td align="center"><b>85.2</b></td><td align="left">EmbSpatial</td><td align="center"><b>83.0</b></td><td align="center">74.7</td></tr>
-<tr><td align="left">DocVQA val</td><td align="center">92.9</td><td align="center"><b>95.2</b></td><td align="left">MMSI-Bench</td><td align="center"><b>33.3</b></td><td align="center">31.4</td></tr>
-</tbody>
-</table>
-
-<sub>Compared with Qwen3.5-4B, thinking disabled. **Bold** is the best score in each row; `--` means not available. The superscript on each video score is the setting that produced it: frames × pixels per frame, or for codec, canvases (TC) × pixels per canvas. VideoMME is the mean over the short, medium and long splits. Each side reports its best score over the settings tried, from single runs. The image table shows selected benchmarks; full results, settings and protocol will be given in the technical report.</sub>
-
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision2_performance_dark_anim.svg">
-    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision2_performance_light_anim.svg">
-    <img src="asset/llava_onevision2_performance_light_anim.svg" width="100%" alt="LLaVA-OneVision-2 Benchmark Comparison">
+    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision2_5_performance_dark_anim.svg">
+    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision2_5_performance_light_anim.svg">
+    <img src="asset/llava_onevision2_5_performance_light_anim.svg" width="100%" alt="LLaVA-OneVision-2.5-4B Benchmark Comparison">
   </picture>
 </p>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="asset/method_codec_vs_frame_dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="asset/method_codec_vs_frame_light.svg">
-    <img src="asset/method_codec_vs_frame_light.svg" width="100%" alt="Codec-aligned sampling compared with uniform frame sampling across video benchmarks">
-  </picture>
-</p>
+<sub>Compared with Qwen3.5-4B, thinking disabled; `--` means not available. VideoMME is the mean over the short, medium and long splits. Each side reports its best score over the settings tried, from single runs; the setting behind each video score is listed in the [model card](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct#performance). The image block shows selected benchmarks; full results, settings and protocol will be given in the technical report.</sub>
 
 ## Evaluation Reproduction
 

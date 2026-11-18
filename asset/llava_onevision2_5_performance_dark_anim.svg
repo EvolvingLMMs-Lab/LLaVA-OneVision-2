@@ -1,0 +1,1857 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1046.7pt" height="2134.98pt" viewBox="0 0 1046.7 2134.98" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<style type="text/css"><![CDATA[
+@keyframes tbl-fade-down { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tbl-fade-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes tbl-pop { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes tbl-pulse { 0%, 100% { filter: none; } 50% { filter: drop-shadow(0 0 4px #86efac); } }
+@keyframes tbl-col-fade { from { opacity: 0; } to { opacity: 1; } }
+g[id='tbl-header'] { animation: tbl-fade-down 0.45s ease-out 0.1s both; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-ours-col'] { animation: tbl-col-fade 0.6s ease-out 0.25s both; }
+g[id='tbl-row-0'] { animation: tbl-fade-in 0.32s ease-out 0.550s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-1'] { animation: tbl-fade-in 0.32s ease-out 0.595s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-2'] { animation: tbl-fade-in 0.32s ease-out 0.640s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-3'] { animation: tbl-fade-in 0.32s ease-out 0.685s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-4'] { animation: tbl-fade-in 0.32s ease-out 0.730s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-5'] { animation: tbl-fade-in 0.32s ease-out 0.775s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-6'] { animation: tbl-fade-in 0.32s ease-out 0.820s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-7'] { animation: tbl-fade-in 0.32s ease-out 0.865s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-8'] { animation: tbl-fade-in 0.32s ease-out 0.910s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-9'] { animation: tbl-fade-in 0.32s ease-out 0.955s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-10'] { animation: tbl-fade-in 0.32s ease-out 1.000s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-11'] { animation: tbl-fade-in 0.32s ease-out 1.045s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-12'] { animation: tbl-fade-in 0.32s ease-out 1.090s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-13'] { animation: tbl-fade-in 0.32s ease-out 1.135s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-14'] { animation: tbl-fade-in 0.32s ease-out 1.180s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-15'] { animation: tbl-fade-in 0.32s ease-out 1.225s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-16'] { animation: tbl-fade-in 0.32s ease-out 1.270s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-17'] { animation: tbl-fade-in 0.32s ease-out 1.315s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-18'] { animation: tbl-fade-in 0.32s ease-out 1.360s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-19'] { animation: tbl-fade-in 0.32s ease-out 1.405s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-20'] { animation: tbl-fade-in 0.32s ease-out 1.450s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-21'] { animation: tbl-fade-in 0.32s ease-out 1.495s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-22'] { animation: tbl-fade-in 0.32s ease-out 1.540s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-23'] { animation: tbl-fade-in 0.32s ease-out 1.585s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-24'] { animation: tbl-fade-in 0.32s ease-out 1.630s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-25'] { animation: tbl-fade-in 0.32s ease-out 1.675s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-26'] { animation: tbl-fade-in 0.32s ease-out 1.720s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-27'] { animation: tbl-fade-in 0.32s ease-out 1.765s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-28'] { animation: tbl-fade-in 0.32s ease-out 1.810s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-29'] { animation: tbl-fade-in 0.32s ease-out 1.855s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-30'] { animation: tbl-fade-in 0.32s ease-out 1.900s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-31'] { animation: tbl-fade-in 0.32s ease-out 1.945s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-32'] { animation: tbl-fade-in 0.32s ease-out 1.990s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-33'] { animation: tbl-fade-in 0.32s ease-out 2.035s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-34'] { animation: tbl-fade-in 0.32s ease-out 2.080s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-35'] { animation: tbl-fade-in 0.32s ease-out 2.125s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-36'] { animation: tbl-fade-in 0.32s ease-out 2.170s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-37'] { animation: tbl-fade-in 0.32s ease-out 2.215s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-38'] { animation: tbl-fade-in 0.32s ease-out 2.260s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-39'] { animation: tbl-fade-in 0.32s ease-out 2.305s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-40'] { animation: tbl-fade-in 0.32s ease-out 2.350s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-41'] { animation: tbl-fade-in 0.32s ease-out 2.395s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-42'] { animation: tbl-fade-in 0.32s ease-out 2.440s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-43'] { animation: tbl-fade-in 0.32s ease-out 2.485s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-row-44'] { animation: tbl-fade-in 0.32s ease-out 2.530s both; transform-box: fill-box; transform-origin: left center; }
+g[id='tbl-best-0'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.675s both, tbl-pulse 2.4s ease-in-out 3.175s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-1'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.705s both, tbl-pulse 2.4s ease-in-out 3.205s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-2'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.735s both, tbl-pulse 2.4s ease-in-out 3.235s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-3'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.765s both, tbl-pulse 2.4s ease-in-out 3.265s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-4'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.795s both, tbl-pulse 2.4s ease-in-out 3.295s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-5'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.825s both, tbl-pulse 2.4s ease-in-out 3.325s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-6'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.855s both, tbl-pulse 2.4s ease-in-out 3.355s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-7'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.885s both, tbl-pulse 2.4s ease-in-out 3.385s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-8'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.915s both, tbl-pulse 2.4s ease-in-out 3.415s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-9'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.945s both, tbl-pulse 2.4s ease-in-out 3.445s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-10'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 2.975s both, tbl-pulse 2.4s ease-in-out 3.475s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-11'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.005s both, tbl-pulse 2.4s ease-in-out 3.505s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-12'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.035s both, tbl-pulse 2.4s ease-in-out 3.535s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-13'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.065s both, tbl-pulse 2.4s ease-in-out 3.565s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-14'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.095s both, tbl-pulse 2.4s ease-in-out 3.595s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-15'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.125s both, tbl-pulse 2.4s ease-in-out 3.625s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-16'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.155s both, tbl-pulse 2.4s ease-in-out 3.655s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-17'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.185s both, tbl-pulse 2.4s ease-in-out 3.685s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-18'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.215s both, tbl-pulse 2.4s ease-in-out 3.715s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-19'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.245s both, tbl-pulse 2.4s ease-in-out 3.745s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-20'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.275s both, tbl-pulse 2.4s ease-in-out 3.775s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-21'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.305s both, tbl-pulse 2.4s ease-in-out 3.805s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-22'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.335s both, tbl-pulse 2.4s ease-in-out 3.835s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-23'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.365s both, tbl-pulse 2.4s ease-in-out 3.865s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-24'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.395s both, tbl-pulse 2.4s ease-in-out 3.895s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-25'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.425s both, tbl-pulse 2.4s ease-in-out 3.925s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-26'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.455s both, tbl-pulse 2.4s ease-in-out 3.955s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-27'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.485s both, tbl-pulse 2.4s ease-in-out 3.985s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-28'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.515s both, tbl-pulse 2.4s ease-in-out 4.015s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-29'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.545s both, tbl-pulse 2.4s ease-in-out 4.045s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-30'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.575s both, tbl-pulse 2.4s ease-in-out 4.075s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-31'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.605s both, tbl-pulse 2.4s ease-in-out 4.105s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-32'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.635s both, tbl-pulse 2.4s ease-in-out 4.135s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-33'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.665s both, tbl-pulse 2.4s ease-in-out 4.165s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-34'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.695s both, tbl-pulse 2.4s ease-in-out 4.195s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-35'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.725s both, tbl-pulse 2.4s ease-in-out 4.225s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-36'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.755s both, tbl-pulse 2.4s ease-in-out 4.255s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-37'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.785s both, tbl-pulse 2.4s ease-in-out 4.285s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-38'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.815s both, tbl-pulse 2.4s ease-in-out 4.315s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-39'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.845s both, tbl-pulse 2.4s ease-in-out 4.345s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-40'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.875s both, tbl-pulse 2.4s ease-in-out 4.375s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-41'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.905s both, tbl-pulse 2.4s ease-in-out 4.405s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-42'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.935s both, tbl-pulse 2.4s ease-in-out 4.435s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-43'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.965s both, tbl-pulse 2.4s ease-in-out 4.465s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-44'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 3.995s both, tbl-pulse 2.4s ease-in-out 4.495s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-45'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 4.025s both, tbl-pulse 2.4s ease-in-out 4.525s 2; transform-box: fill-box; transform-origin: center; }
+g[id='tbl-best-46'] { animation: tbl-pop 0.5s cubic-bezier(.34,1.56,.64,1) 4.055s both, tbl-pulse 2.4s ease-in-out 4.555s 2; transform-box: fill-box; transform-origin: center; }
+]]></style>
+<defs>
+  <clipPath id="p6f05ee82f2">
+   <rect x="7.2" y="7.2" width="1032.3" height="2120.58"/>
+  </clipPath>
+ </defs>
+<defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 2134.98
+L 1046.7 2134.98
+L 1046.7 0
+L 0 0
+z
+" style="fill: #0d1117"/>
+  </g>
+  <g id="axes_1">
+   <g id="PolyCollection_1">
+    <defs>
+     <path id="m7f49a90561" d="M 43.47 -1825.632
+L 43.47 -1861.668
+L 1003.23 -1861.668
+L 1003.23 -1825.632
+L 1003.23 -1825.632
+L 43.47 -1825.632
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m7f49a90561" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_2">
+    <defs>
+     <path id="mf21ad11f2c" d="M 43.47 -1753.56
+L 43.47 -1789.596
+L 1003.23 -1789.596
+L 1003.23 -1753.56
+L 1003.23 -1753.56
+L 43.47 -1753.56
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mf21ad11f2c" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_3">
+    <defs>
+     <path id="mada4f0b517" d="M 43.47 -1681.488
+L 43.47 -1717.524
+L 1003.23 -1717.524
+L 1003.23 -1681.488
+L 1003.23 -1681.488
+L 43.47 -1681.488
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mada4f0b517" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_4">
+    <defs>
+     <path id="m2910aed8e1" d="M 43.47 -1609.416
+L 43.47 -1645.452
+L 1003.23 -1645.452
+L 1003.23 -1609.416
+L 1003.23 -1609.416
+L 43.47 -1609.416
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m2910aed8e1" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_5">
+    <defs>
+     <path id="m568fab3e93" d="M 43.47 -1537.344
+L 43.47 -1573.38
+L 1003.23 -1573.38
+L 1003.23 -1537.344
+L 1003.23 -1537.344
+L 43.47 -1537.344
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m568fab3e93" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_6">
+    <defs>
+     <path id="mff532a1009" d="M 43.47 -1429.236
+L 43.47 -1465.272
+L 1003.23 -1465.272
+L 1003.23 -1429.236
+L 1003.23 -1429.236
+L 43.47 -1429.236
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mff532a1009" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_7">
+    <defs>
+     <path id="m8ea3988968" d="M 43.47 -1357.164
+L 43.47 -1393.2
+L 1003.23 -1393.2
+L 1003.23 -1357.164
+L 1003.23 -1357.164
+L 43.47 -1357.164
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m8ea3988968" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_8">
+    <defs>
+     <path id="m90695b3377" d="M 43.47 -1249.056
+L 43.47 -1285.092
+L 1003.23 -1285.092
+L 1003.23 -1249.056
+L 1003.23 -1249.056
+L 43.47 -1249.056
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m90695b3377" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_9">
+    <defs>
+     <path id="md5e2230a47" d="M 43.47 -977.4
+L 43.47 -1013.436
+L 1003.23 -1013.436
+L 1003.23 -977.4
+L 1003.23 -977.4
+L 43.47 -977.4
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#md5e2230a47" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_10">
+    <defs>
+     <path id="mda6ae6b335" d="M 43.47 -905.328
+L 43.47 -941.364
+L 1003.23 -941.364
+L 1003.23 -905.328
+L 1003.23 -905.328
+L 43.47 -905.328
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mda6ae6b335" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_11">
+    <defs>
+     <path id="m92ebcb21b5" d="M 43.47 -797.22
+L 43.47 -833.256
+L 1003.23 -833.256
+L 1003.23 -797.22
+L 1003.23 -797.22
+L 43.47 -797.22
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m92ebcb21b5" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_12">
+    <defs>
+     <path id="m904e439479" d="M 43.47 -725.148
+L 43.47 -761.184
+L 1003.23 -761.184
+L 1003.23 -725.148
+L 1003.23 -725.148
+L 43.47 -725.148
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m904e439479" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_13">
+    <defs>
+     <path id="m82505817a6" d="M 43.47 -653.076
+L 43.47 -689.112
+L 1003.23 -689.112
+L 1003.23 -653.076
+L 1003.23 -653.076
+L 43.47 -653.076
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m82505817a6" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_14">
+    <defs>
+     <path id="m287cfe18a3" d="M 43.47 -544.968
+L 43.47 -581.004
+L 1003.23 -581.004
+L 1003.23 -544.968
+L 1003.23 -544.968
+L 43.47 -544.968
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m287cfe18a3" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_15">
+    <defs>
+     <path id="mf1906e8984" d="M 43.47 -472.896
+L 43.47 -508.932
+L 1003.23 -508.932
+L 1003.23 -472.896
+L 1003.23 -472.896
+L 43.47 -472.896
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mf1906e8984" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_16">
+    <defs>
+     <path id="m59f946dce6" d="M 43.47 -273.312
+L 43.47 -309.348
+L 501.03 -309.348
+L 501.03 -273.312
+L 501.03 -273.312
+L 43.47 -273.312
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m59f946dce6" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_17">
+    <defs>
+     <path id="m6bd4dff7d0" d="M 43.47 -201.24
+L 43.47 -237.276
+L 501.03 -237.276
+L 501.03 -201.24
+L 501.03 -201.24
+L 43.47 -201.24
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m6bd4dff7d0" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_18">
+    <defs>
+     <path id="mb332fc96b5" d="M 43.47 -129.168
+L 43.47 -165.204
+L 501.03 -165.204
+L 501.03 -129.168
+L 501.03 -129.168
+L 43.47 -129.168
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mb332fc96b5" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_19">
+    <defs>
+     <path id="mceab6fdbe8" d="M 43.47 -57.096
+L 43.47 -93.132
+L 501.03 -93.132
+L 501.03 -57.096
+L 501.03 -57.096
+L 43.47 -57.096
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mceab6fdbe8" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_20">
+    <defs>
+     <path id="ma44ead41b1" d="M 545.67 -273.312
+L 545.67 -309.348
+L 1003.23 -309.348
+L 1003.23 -273.312
+L 1003.23 -273.312
+L 545.67 -273.312
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#ma44ead41b1" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_21">
+    <defs>
+     <path id="m897f46a53e" d="M 545.67 -201.24
+L 545.67 -237.276
+L 1003.23 -237.276
+L 1003.23 -201.24
+L 1003.23 -201.24
+L 545.67 -201.24
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m897f46a53e" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_22">
+    <defs>
+     <path id="m8965d24c4c" d="M 545.67 -129.168
+L 545.67 -165.204
+L 1003.23 -165.204
+L 1003.23 -129.168
+L 1003.23 -129.168
+L 545.67 -129.168
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m8965d24c4c" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="PolyCollection_23">
+    <defs>
+     <path id="md31b6cca1f" d="M 545.67 -57.096
+L 545.67 -93.132
+L 1003.23 -93.132
+L 1003.23 -57.096
+L 1003.23 -57.096
+L 545.67 -57.096
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#md31b6cca1f" x="0" y="2134.98" style="fill: #142018"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="m6b190dbd62" d="M 400.59 -1213.02
+L 400.59 -1991.952
+L 601.47 -1991.952
+L 601.47 -1213.02
+L 601.47 -1213.02
+L 400.59 -1213.02
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m6b190dbd62" x="0" y="2134.98" style="fill: #111c16"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="mf906c014ba" d="M 601.47 -1213.02
+L 601.47 -1991.952
+L 802.35 -1991.952
+L 802.35 -1213.02
+L 802.35 -1213.02
+L 601.47 -1213.02
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mf906c014ba" x="0" y="2134.98" style="fill: #111c16"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="mcb1a16417e" d="M 400.59 -472.896
+L 400.59 -1143.72
+L 601.47 -1143.72
+L 601.47 -472.896
+L 601.47 -472.896
+L 400.59 -472.896
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#mcb1a16417e" x="0" y="2134.98" style="fill: #111c16"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="m1c91133206" d="M 288.99 -57.096
+L 288.99 -403.596
+L 395.01 -403.596
+L 395.01 -57.096
+L 395.01 -57.096
+L 288.99 -57.096
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m1c91133206" x="0" y="2134.98" style="fill: #111c16"/>
+    </g>
+   </g>
+   <g id="tbl-ours-col">
+    <defs>
+     <path id="m1c28ccffee" d="M 791.19 -57.096
+L 791.19 -403.596
+L 897.21 -403.596
+L 897.21 -57.096
+L 897.21 -57.096
+L 791.19 -57.096
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6f05ee82f2)">
+     <use xlink:href="#m1c28ccffee" x="0" y="2134.98" style="fill: #111c16"/>
+    </g>
+   </g>
+   <g id="patch_2">
+    <path d="M 46.818 61.5312
+L 57.978 61.5312
+Q 61.326 61.5312 61.326 64.8576
+L 61.326 74.8368
+Q 61.326 78.1632 57.978 78.1632
+L 46.818 78.1632
+Q 43.47 78.1632 43.47 74.8368
+L 43.47 64.8576
+Q 43.47 61.5312 46.818 61.5312
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-0">
+    <path d="M 411.75 240.6024
+L 590.31 240.6024
+Q 595.89 240.6024 595.89 246.1464
+L 595.89 264.4416
+Q 595.89 269.9856 590.31 269.9856
+L 411.75 269.9856
+Q 406.17 269.9856 406.17 264.4416
+L 406.17 246.1464
+Q 406.17 240.6024 411.75 240.6024
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-1">
+    <path d="M 813.51 276.6384
+L 992.07 276.6384
+Q 997.65 276.6384 997.65 282.1824
+L 997.65 300.4776
+Q 997.65 306.0216 992.07 306.0216
+L 813.51 306.0216
+Q 807.93 306.0216 807.93 300.4776
+L 807.93 282.1824
+Q 807.93 276.6384 813.51 276.6384
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-2">
+    <path d="M 411.75 312.6744
+L 590.31 312.6744
+Q 595.89 312.6744 595.89 318.2184
+L 595.89 336.5136
+Q 595.89 342.0576 590.31 342.0576
+L 411.75 342.0576
+Q 406.17 342.0576 406.17 336.5136
+L 406.17 318.2184
+Q 406.17 312.6744 411.75 312.6744
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-3">
+    <path d="M 612.63 348.7104
+L 791.19 348.7104
+Q 796.77 348.7104 796.77 354.2544
+L 796.77 372.5496
+Q 796.77 378.0936 791.19 378.0936
+L 612.63 378.0936
+Q 607.05 378.0936 607.05 372.5496
+L 607.05 354.2544
+Q 607.05 348.7104 612.63 348.7104
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-4">
+    <path d="M 411.75 384.7464
+L 590.31 384.7464
+Q 595.89 384.7464 595.89 390.2904
+L 595.89 408.5856
+Q 595.89 414.1296 590.31 414.1296
+L 411.75 414.1296
+Q 406.17 414.1296 406.17 408.5856
+L 406.17 390.2904
+Q 406.17 384.7464 411.75 384.7464
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-5">
+    <path d="M 411.75 420.7824
+L 590.31 420.7824
+Q 595.89 420.7824 595.89 426.3264
+L 595.89 444.6216
+Q 595.89 450.1656 590.31 450.1656
+L 411.75 450.1656
+Q 406.17 450.1656 406.17 444.6216
+L 406.17 426.3264
+Q 406.17 420.7824 411.75 420.7824
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-6">
+    <path d="M 411.75 456.8184
+L 590.31 456.8184
+Q 595.89 456.8184 595.89 462.3624
+L 595.89 480.6576
+Q 595.89 486.2016 590.31 486.2016
+L 411.75 486.2016
+Q 406.17 486.2016 406.17 480.6576
+L 406.17 462.3624
+Q 406.17 456.8184 411.75 456.8184
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-7">
+    <path d="M 411.75 492.8544
+L 590.31 492.8544
+Q 595.89 492.8544 595.89 498.3984
+L 595.89 516.6936
+Q 595.89 522.2376 590.31 522.2376
+L 411.75 522.2376
+Q 406.17 522.2376 406.17 516.6936
+L 406.17 498.3984
+Q 406.17 492.8544 411.75 492.8544
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-8">
+    <path d="M 612.63 528.8904
+L 791.19 528.8904
+Q 796.77 528.8904 796.77 534.4344
+L 796.77 552.7296
+Q 796.77 558.2736 791.19 558.2736
+L 612.63 558.2736
+Q 607.05 558.2736 607.05 552.7296
+L 607.05 534.4344
+Q 607.05 528.8904 612.63 528.8904
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-9">
+    <path d="M 411.75 564.9264
+L 590.31 564.9264
+Q 595.89 564.9264 595.89 570.4704
+L 595.89 588.7656
+Q 595.89 594.3096 590.31 594.3096
+L 411.75 594.3096
+Q 406.17 594.3096 406.17 588.7656
+L 406.17 570.4704
+Q 406.17 564.9264 411.75 564.9264
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-10">
+    <path d="M 612.63 636.9984
+L 791.19 636.9984
+Q 796.77 636.9984 796.77 642.5424
+L 796.77 660.8376
+Q 796.77 666.3816 791.19 666.3816
+L 612.63 666.3816
+Q 607.05 666.3816 607.05 660.8376
+L 607.05 642.5424
+Q 607.05 636.9984 612.63 636.9984
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-11">
+    <path d="M 411.75 673.0344
+L 590.31 673.0344
+Q 595.89 673.0344 595.89 678.5784
+L 595.89 696.8736
+Q 595.89 702.4176 590.31 702.4176
+L 411.75 702.4176
+Q 406.17 702.4176 406.17 696.8736
+L 406.17 678.5784
+Q 406.17 673.0344 411.75 673.0344
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-12">
+    <path d="M 411.75 709.0704
+L 590.31 709.0704
+Q 595.89 709.0704 595.89 714.6144
+L 595.89 732.9096
+Q 595.89 738.4536 590.31 738.4536
+L 411.75 738.4536
+Q 406.17 738.4536 406.17 732.9096
+L 406.17 714.6144
+Q 406.17 709.0704 411.75 709.0704
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-13">
+    <path d="M 411.75 745.1064
+L 590.31 745.1064
+Q 595.89 745.1064 595.89 750.6504
+L 595.89 768.9456
+Q 595.89 774.4896 590.31 774.4896
+L 411.75 774.4896
+Q 406.17 774.4896 406.17 768.9456
+L 406.17 750.6504
+Q 406.17 745.1064 411.75 745.1064
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-14">
+    <path d="M 411.75 817.1784
+L 590.31 817.1784
+Q 595.89 817.1784 595.89 822.7224
+L 595.89 841.0176
+Q 595.89 846.5616 590.31 846.5616
+L 411.75 846.5616
+Q 406.17 846.5616 406.17 841.0176
+L 406.17 822.7224
+Q 406.17 817.1784 411.75 817.1784
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-15">
+    <path d="M 411.75 853.2144
+L 590.31 853.2144
+Q 595.89 853.2144 595.89 858.7584
+L 595.89 877.0536
+Q 595.89 882.5976 590.31 882.5976
+L 411.75 882.5976
+Q 406.17 882.5976 406.17 877.0536
+L 406.17 858.7584
+Q 406.17 853.2144 411.75 853.2144
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-16">
+    <path d="M 411.75 889.2504
+L 590.31 889.2504
+Q 595.89 889.2504 595.89 894.7944
+L 595.89 913.0896
+Q 595.89 918.6336 590.31 918.6336
+L 411.75 918.6336
+Q 406.17 918.6336 406.17 913.0896
+L 406.17 894.7944
+Q 406.17 889.2504 411.75 889.2504
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-17">
+    <path d="M 411.75 1088.8344
+L 590.31 1088.8344
+Q 595.89 1088.8344 595.89 1094.3784
+L 595.89 1112.6736
+Q 595.89 1118.2176 590.31 1118.2176
+L 411.75 1118.2176
+Q 406.17 1118.2176 406.17 1112.6736
+L 406.17 1094.3784
+Q 406.17 1088.8344 411.75 1088.8344
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-18">
+    <path d="M 612.63 1124.8704
+L 791.19 1124.8704
+Q 796.77 1124.8704 796.77 1130.4144
+L 796.77 1148.7096
+Q 796.77 1154.2536 791.19 1154.2536
+L 612.63 1154.2536
+Q 607.05 1154.2536 607.05 1148.7096
+L 607.05 1130.4144
+Q 607.05 1124.8704 612.63 1124.8704
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-19">
+    <path d="M 612.63 1160.9064
+L 791.19 1160.9064
+Q 796.77 1160.9064 796.77 1166.4504
+L 796.77 1184.7456
+Q 796.77 1190.2896 791.19 1190.2896
+L 612.63 1190.2896
+Q 607.05 1190.2896 607.05 1184.7456
+L 607.05 1166.4504
+Q 607.05 1160.9064 612.63 1160.9064
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-20">
+    <path d="M 411.75 1196.9424
+L 590.31 1196.9424
+Q 595.89 1196.9424 595.89 1202.4864
+L 595.89 1220.7816
+Q 595.89 1226.3256 590.31 1226.3256
+L 411.75 1226.3256
+Q 406.17 1226.3256 406.17 1220.7816
+L 406.17 1202.4864
+Q 406.17 1196.9424 411.75 1196.9424
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-21">
+    <path d="M 612.63 1196.9424
+L 791.19 1196.9424
+Q 796.77 1196.9424 796.77 1202.4864
+L 796.77 1220.7816
+Q 796.77 1226.3256 791.19 1226.3256
+L 612.63 1226.3256
+Q 607.05 1226.3256 607.05 1220.7816
+L 607.05 1202.4864
+Q 607.05 1196.9424 612.63 1196.9424
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-22">
+    <path d="M 411.75 1269.0144
+L 590.31 1269.0144
+Q 595.89 1269.0144 595.89 1274.5584
+L 595.89 1292.8536
+Q 595.89 1298.3976 590.31 1298.3976
+L 411.75 1298.3976
+Q 406.17 1298.3976 406.17 1292.8536
+L 406.17 1274.5584
+Q 406.17 1269.0144 411.75 1269.0144
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-23">
+    <path d="M 813.51 1305.0504
+L 992.07 1305.0504
+Q 997.65 1305.0504 997.65 1310.5944
+L 997.65 1328.8896
+Q 997.65 1334.4336 992.07 1334.4336
+L 813.51 1334.4336
+Q 807.93 1334.4336 807.93 1328.8896
+L 807.93 1310.5944
+Q 807.93 1305.0504 813.51 1305.0504
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-24">
+    <path d="M 411.75 1341.0864
+L 590.31 1341.0864
+Q 595.89 1341.0864 595.89 1346.6304
+L 595.89 1364.9256
+Q 595.89 1370.4696 590.31 1370.4696
+L 411.75 1370.4696
+Q 406.17 1370.4696 406.17 1364.9256
+L 406.17 1346.6304
+Q 406.17 1341.0864 411.75 1341.0864
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-25">
+    <path d="M 411.75 1377.1224
+L 590.31 1377.1224
+Q 595.89 1377.1224 595.89 1382.6664
+L 595.89 1400.9616
+Q 595.89 1406.5056 590.31 1406.5056
+L 411.75 1406.5056
+Q 406.17 1406.5056 406.17 1400.9616
+L 406.17 1382.6664
+Q 406.17 1377.1224 411.75 1377.1224
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-26">
+    <path d="M 411.75 1413.1584
+L 590.31 1413.1584
+Q 595.89 1413.1584 595.89 1418.7024
+L 595.89 1436.9976
+Q 595.89 1442.5416 590.31 1442.5416
+L 411.75 1442.5416
+Q 406.17 1442.5416 406.17 1436.9976
+L 406.17 1418.7024
+Q 406.17 1413.1584 411.75 1413.1584
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-27">
+    <path d="M 612.63 1449.1944
+L 791.19 1449.1944
+Q 796.77 1449.1944 796.77 1454.7384
+L 796.77 1473.0336
+Q 796.77 1478.5776 791.19 1478.5776
+L 612.63 1478.5776
+Q 607.05 1478.5776 607.05 1473.0336
+L 607.05 1454.7384
+Q 607.05 1449.1944 612.63 1449.1944
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-28">
+    <path d="M 411.75 1521.2664
+L 590.31 1521.2664
+Q 595.89 1521.2664 595.89 1526.8104
+L 595.89 1545.1056
+Q 595.89 1550.6496 590.31 1550.6496
+L 411.75 1550.6496
+Q 406.17 1550.6496 406.17 1545.1056
+L 406.17 1526.8104
+Q 406.17 1521.2664 411.75 1521.2664
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-29">
+    <path d="M 612.63 1557.3024
+L 791.19 1557.3024
+Q 796.77 1557.3024 796.77 1562.8464
+L 796.77 1581.1416
+Q 796.77 1586.6856 791.19 1586.6856
+L 612.63 1586.6856
+Q 607.05 1586.6856 607.05 1581.1416
+L 607.05 1562.8464
+Q 607.05 1557.3024 612.63 1557.3024
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-30">
+    <path d="M 411.75 1629.3744
+L 590.31 1629.3744
+Q 595.89 1629.3744 595.89 1634.9184
+L 595.89 1653.2136
+Q 595.89 1658.7576 590.31 1658.7576
+L 411.75 1658.7576
+Q 406.17 1658.7576 406.17 1653.2136
+L 406.17 1634.9184
+Q 406.17 1629.3744 411.75 1629.3744
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-31">
+    <path d="M 406.17 1792.9224
+L 489.87 1792.9224
+Q 495.45 1792.9224 495.45 1798.4664
+L 495.45 1816.7616
+Q 495.45 1822.3056 489.87 1822.3056
+L 406.17 1822.3056
+Q 400.59 1822.3056 400.59 1816.7616
+L 400.59 1798.4664
+Q 400.59 1792.9224 406.17 1792.9224
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-32">
+    <path d="M 406.17 1828.9584
+L 489.87 1828.9584
+Q 495.45 1828.9584 495.45 1834.5024
+L 495.45 1852.7976
+Q 495.45 1858.3416 489.87 1858.3416
+L 406.17 1858.3416
+Q 400.59 1858.3416 400.59 1852.7976
+L 400.59 1834.5024
+Q 400.59 1828.9584 406.17 1828.9584
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-33">
+    <path d="M 406.17 1864.9944
+L 489.87 1864.9944
+Q 495.45 1864.9944 495.45 1870.5384
+L 495.45 1888.8336
+Q 495.45 1894.3776 489.87 1894.3776
+L 406.17 1894.3776
+Q 400.59 1894.3776 400.59 1888.8336
+L 400.59 1870.5384
+Q 400.59 1864.9944 406.17 1864.9944
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-34">
+    <path d="M 406.17 1901.0304
+L 489.87 1901.0304
+Q 495.45 1901.0304 495.45 1906.5744
+L 495.45 1924.8696
+Q 495.45 1930.4136 489.87 1930.4136
+L 406.17 1930.4136
+Q 400.59 1930.4136 400.59 1924.8696
+L 400.59 1906.5744
+Q 400.59 1901.0304 406.17 1901.0304
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-35">
+    <path d="M 300.15 1937.0664
+L 383.85 1937.0664
+Q 389.43 1937.0664 389.43 1942.6104
+L 389.43 1960.9056
+Q 389.43 1966.4496 383.85 1966.4496
+L 300.15 1966.4496
+Q 294.57 1966.4496 294.57 1960.9056
+L 294.57 1942.6104
+Q 294.57 1937.0664 300.15 1937.0664
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-36">
+    <path d="M 300.15 1973.1024
+L 383.85 1973.1024
+Q 389.43 1973.1024 389.43 1978.6464
+L 389.43 1996.9416
+Q 389.43 2002.4856 383.85 2002.4856
+L 300.15 2002.4856
+Q 294.57 2002.4856 294.57 1996.9416
+L 294.57 1978.6464
+Q 294.57 1973.1024 300.15 1973.1024
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-37">
+    <path d="M 406.17 2009.1384
+L 489.87 2009.1384
+Q 495.45 2009.1384 495.45 2014.6824
+L 495.45 2032.9776
+Q 495.45 2038.5216 489.87 2038.5216
+L 406.17 2038.5216
+Q 400.59 2038.5216 400.59 2032.9776
+L 400.59 2014.6824
+Q 400.59 2009.1384 406.17 2009.1384
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-38">
+    <path d="M 406.17 2045.1744
+L 489.87 2045.1744
+Q 495.45 2045.1744 495.45 2050.7184
+L 495.45 2069.0136
+Q 495.45 2074.5576 489.87 2074.5576
+L 406.17 2074.5576
+Q 400.59 2074.5576 400.59 2069.0136
+L 400.59 2050.7184
+Q 400.59 2045.1744 406.17 2045.1744
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-39">
+    <path d="M 802.35 1792.9224
+L 886.05 1792.9224
+Q 891.63 1792.9224 891.63 1798.4664
+L 891.63 1816.7616
+Q 891.63 1822.3056 886.05 1822.3056
+L 802.35 1822.3056
+Q 796.77 1822.3056 796.77 1816.7616
+L 796.77 1798.4664
+Q 796.77 1792.9224 802.35 1792.9224
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-40">
+    <path d="M 802.35 1828.9584
+L 886.05 1828.9584
+Q 891.63 1828.9584 891.63 1834.5024
+L 891.63 1852.7976
+Q 891.63 1858.3416 886.05 1858.3416
+L 802.35 1858.3416
+Q 796.77 1858.3416 796.77 1852.7976
+L 796.77 1834.5024
+Q 796.77 1828.9584 802.35 1828.9584
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-41">
+    <path d="M 802.35 1864.9944
+L 886.05 1864.9944
+Q 891.63 1864.9944 891.63 1870.5384
+L 891.63 1888.8336
+Q 891.63 1894.3776 886.05 1894.3776
+L 802.35 1894.3776
+Q 796.77 1894.3776 796.77 1888.8336
+L 796.77 1870.5384
+Q 796.77 1864.9944 802.35 1864.9944
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-42">
+    <path d="M 802.35 1901.0304
+L 886.05 1901.0304
+Q 891.63 1901.0304 891.63 1906.5744
+L 891.63 1924.8696
+Q 891.63 1930.4136 886.05 1930.4136
+L 802.35 1930.4136
+Q 796.77 1930.4136 796.77 1924.8696
+L 796.77 1906.5744
+Q 796.77 1901.0304 802.35 1901.0304
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-43">
+    <path d="M 802.35 1937.0664
+L 886.05 1937.0664
+Q 891.63 1937.0664 891.63 1942.6104
+L 891.63 1960.9056
+Q 891.63 1966.4496 886.05 1966.4496
+L 802.35 1966.4496
+Q 796.77 1966.4496 796.77 1960.9056
+L 796.77 1942.6104
+Q 796.77 1937.0664 802.35 1937.0664
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-44">
+    <path d="M 802.35 1973.1024
+L 886.05 1973.1024
+Q 891.63 1973.1024 891.63 1978.6464
+L 891.63 1996.9416
+Q 891.63 2002.4856 886.05 2002.4856
+L 802.35 2002.4856
+Q 796.77 2002.4856 796.77 1996.9416
+L 796.77 1978.6464
+Q 796.77 1973.1024 802.35 1973.1024
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-45">
+    <path d="M 802.35 2009.1384
+L 886.05 2009.1384
+Q 891.63 2009.1384 891.63 2014.6824
+L 891.63 2032.9776
+Q 891.63 2038.5216 886.05 2038.5216
+L 802.35 2038.5216
+Q 796.77 2038.5216 796.77 2032.9776
+L 796.77 2014.6824
+Q 796.77 2009.1384 802.35 2009.1384
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-best-46">
+    <path d="M 802.35 2045.1744
+L 886.05 2045.1744
+Q 891.63 2045.1744 891.63 2050.7184
+L 891.63 2069.0136
+Q 891.63 2074.5576 886.05 2074.5576
+L 802.35 2074.5576
+Q 796.77 2074.5576 796.77 2069.0136
+L 796.77 2050.7184
+Q 796.77 2045.1744 802.35 2045.1744
+z
+" clip-path="url(#p6f05ee82f2)" style="fill: #25482f; stroke: #166534; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 143.028
+L 1003.23 143.028
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 201.24
+L 1003.23 201.24
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #8b949e; stroke-width: 0.5"/>
+   </g>
+   <g id="tbl-row-11">
+    <path d="M 43.47 597.636
+L 1003.23 597.636
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #f0f6fc; stroke-width: 0.4"/>
+   </g>
+   <g id="tbl-row-16">
+    <path d="M 43.47 777.816
+L 1003.23 777.816
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #f0f6fc; stroke-width: 0.4"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 921.96
+L 1003.23 921.96
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 991.26
+L 1003.23 991.26
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 1049.472
+L 1003.23 1049.472
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #8b949e; stroke-width: 0.5"/>
+   </g>
+   <g id="tbl-row-25">
+    <path d="M 43.47 1229.652
+L 1003.23 1229.652
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #f0f6fc; stroke-width: 0.4"/>
+   </g>
+   <g id="tbl-row-32">
+    <path d="M 43.47 1481.904
+L 1003.23 1481.904
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke-dasharray: 0.8,0.8; stroke-dashoffset: 0; stroke: #f0f6fc; stroke-width: 0.4"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 1662.084
+L 1003.23 1662.084
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 1731.384
+L 501.03 1731.384
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 1789.596
+L 501.03 1789.596
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #8b949e; stroke-width: 0.5"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 43.47 2077.884
+L 501.03 2077.884
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 545.67 1731.384
+L 1003.23 1731.384
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 545.67 1789.596
+L 1003.23 1789.596
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #8b949e; stroke-width: 0.5"/>
+   </g>
+   <g id="tbl-header">
+    <path d="M 545.67 2077.884
+L 1003.23 2077.884
+" clip-path="url(#p6f05ee82f2)" style="fill: none; stroke: #f0f6fc"/>
+   </g>
+   <g id="text_1">
+    <text style="fill: #8b949e; font: 700 22px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="43.47" y="43.874962" transform="rotate(-0 43.47 43.874962)">Table 1: </text>
+   </g>
+   <g id="text_2">
+    <text style="fill: #f0f6fc; font: 700 22px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="157.293" y="43.874962" transform="rotate(-0 157.293 43.874962)">Benchmark comparison of LLaVA-OneVision-2.5-4B.</text>
+   </g>
+   <g id="text_3">
+    <text style="fill: #f0f6fc; font: 17px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="68.022" y="77.310137" transform="rotate(-0 68.022 77.310137)">Best</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="128.039" transform="rotate(-0 46.26 128.039)">VIDEO</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 17px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="176.824937" transform="rotate(-0 46.26 176.824937)">Benchmark</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="166.959142" transform="rotate(-0 501.03 166.959142)">OV2.5-4B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #8b949e; font: 13px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="187.363587" transform="rotate(-0 501.03 187.363587)">(codec)</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="166.959142" transform="rotate(-0 701.91 166.959142)">OV2.5-4B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #8b949e; font: 13px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="187.363587" transform="rotate(-0 701.91 187.363587)">(frames)</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="176.273062" transform="rotate(-0 902.79 176.273062)">Qwen3.5-4B</text>
+   </g>
+   <g id="tbl-row-0">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="223.55925" transform="rotate(-0 46.26 223.55925)">General video understanding</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="260.81275" transform="rotate(-0 46.26 260.81275)">VideoMME (no subtitles)</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="260.81275" transform="rotate(-0 501.03 260.81275)">71.9</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="260.81275" transform="rotate(-0 701.91 260.81275)">69.7</text>
+   </g>
+   <g id="tbl-row-1">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="260.81275" transform="rotate(-0 902.79 260.81275)">71.7</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="296.84875" transform="rotate(-0 46.26 296.84875)">VideoMME (subtitles)</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="296.84875" transform="rotate(-0 501.03 296.84875)">74.7</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="296.84875" transform="rotate(-0 701.91 296.84875)">75.2</text>
+   </g>
+   <g id="tbl-row-2">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="296.84875" transform="rotate(-0 902.79 296.84875)">75.9</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="332.88475" transform="rotate(-0 46.26 332.88475)">MotionBench</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="332.88475" transform="rotate(-0 501.03 332.88475)">64.2</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="332.88475" transform="rotate(-0 701.91 332.88475)">62.4</text>
+   </g>
+   <g id="tbl-row-3">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="332.88475" transform="rotate(-0 902.79 332.88475)">60.1</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="368.92075" transform="rotate(-0 46.26 368.92075)">TOMATO</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="368.92075" transform="rotate(-0 501.03 368.92075)">36.0</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="368.92075" transform="rotate(-0 701.91 368.92075)">39.2</text>
+   </g>
+   <g id="tbl-row-4">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="368.92075" transform="rotate(-0 902.79 368.92075)">32.4</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="404.95675" transform="rotate(-0 46.26 404.95675)">MVBench</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="404.95675" transform="rotate(-0 501.03 404.95675)">75.5</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="404.95675" transform="rotate(-0 701.91 404.95675)">72.0</text>
+   </g>
+   <g id="tbl-row-5">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="404.95675" transform="rotate(-0 902.79 404.95675)">64.0</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="440.99275" transform="rotate(-0 46.26 440.99275)">NextQA MC test</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="440.99275" transform="rotate(-0 501.03 440.99275)">86.4</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="440.99275" transform="rotate(-0 701.91 440.99275)">86.1</text>
+   </g>
+   <g id="tbl-row-6">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="440.99275" transform="rotate(-0 902.79 440.99275)">80.7</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="477.02875" transform="rotate(-0 46.26 477.02875)">TempCompass MC</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="477.02875" transform="rotate(-0 501.03 477.02875)">79.7</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="477.02875" transform="rotate(-0 701.91 477.02875)">75.8</text>
+   </g>
+   <g id="tbl-row-7">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="477.02875" transform="rotate(-0 902.79 477.02875)">73.4</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="513.06475" transform="rotate(-0 46.26 513.06475)">Video-MME-v2</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="513.06475" transform="rotate(-0 501.03 513.06475)">17.2</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="513.06475" transform="rotate(-0 701.91 513.06475)">16.4</text>
+   </g>
+   <g id="tbl-row-8">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="513.06475" transform="rotate(-0 902.79 513.06475)">15.5</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="548.958563" transform="rotate(-0 46.26 548.958563)">EgoSchema subset</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="549.10075" transform="rotate(-0 501.03 549.10075)">79.8</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="549.10075" transform="rotate(-0 701.91 549.10075)">80.0</text>
+   </g>
+   <g id="tbl-row-9">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="549.10075" transform="rotate(-0 902.79 549.10075)">68.2</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="585.13675" transform="rotate(-0 46.26 585.13675)">Video-Index</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="585.13675" transform="rotate(-0 501.03 585.13675)">23.1</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="585.13675" transform="rotate(-0 701.91 585.13675)">20.0</text>
+   </g>
+   <g id="tbl-row-10">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="585.13675" transform="rotate(-0 902.79 585.13675)">19.6</text>
+   </g>
+   <g id="tbl-row-11">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="619.95525" transform="rotate(-0 46.26 619.95525)">Long video</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="657.20875" transform="rotate(-0 46.26 657.20875)">LVBench</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="657.20875" transform="rotate(-0 501.03 657.20875)">61.6</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="657.20875" transform="rotate(-0 701.91 657.20875)">62.0</text>
+   </g>
+   <g id="tbl-row-12">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="657.20875" transform="rotate(-0 902.79 657.20875)">56.5</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="693.24475" transform="rotate(-0 46.26 693.24475)">MLVU dev</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="693.24475" transform="rotate(-0 501.03 693.24475)">77.1</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="693.24475" transform="rotate(-0 701.91 693.24475)">75.3</text>
+   </g>
+   <g id="tbl-row-13">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="693.24475" transform="rotate(-0 902.79 693.24475)">73.8</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="729.138563" transform="rotate(-0 46.26 729.138563)">LongVideoBench val</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="729.28075" transform="rotate(-0 501.03 729.28075)">71.1</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="729.28075" transform="rotate(-0 701.91 729.28075)">69.0</text>
+   </g>
+   <g id="tbl-row-14">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="729.28075" transform="rotate(-0 902.79 729.28075)">62.7</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="765.31675" transform="rotate(-0 46.26 765.31675)">VideoEval-Pro</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="765.31675" transform="rotate(-0 501.03 765.31675)">64.6</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="765.31675" transform="rotate(-0 701.91 765.31675)">64.4</text>
+   </g>
+   <g id="tbl-row-15">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="765.31675" transform="rotate(-0 902.79 765.31675)">62.8</text>
+   </g>
+   <g id="tbl-row-16">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="800.13525" transform="rotate(-0 46.26 800.13525)">Temporal grounding (mIoU)</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="837.104375" transform="rotate(-0 46.26 837.104375)">TimeLens ActivityNet</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="837.38875" transform="rotate(-0 501.03 837.38875)">59.1</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="837.38875" transform="rotate(-0 701.91 837.38875)">58.8</text>
+   </g>
+   <g id="tbl-row-17">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="837.38875" transform="rotate(-0 902.79 837.38875)">53.8</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="873.42475" transform="rotate(-0 46.26 873.42475)">TimeLens Charades</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="873.42475" transform="rotate(-0 501.03 873.42475)">61.3</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="873.42475" transform="rotate(-0 701.91 873.42475)">60.6</text>
+   </g>
+   <g id="tbl-row-18">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="873.42475" transform="rotate(-0 902.79 873.42475)">48.1</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="909.318563" transform="rotate(-0 46.26 909.318563)">TimeLens QVHighlights</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="909.46075" transform="rotate(-0 501.03 909.46075)">70.3</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="909.46075" transform="rotate(-0 701.91 909.46075)">68.4</text>
+   </g>
+   <g id="tbl-row-19">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="909.46075" transform="rotate(-0 902.79 909.46075)">67.5</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="976.271" transform="rotate(-0 46.26 976.271)">STREAMING VIDEO</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 17px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1025.056938" transform="rotate(-0 46.26 1025.056938)">Benchmark</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1015.191143" transform="rotate(-0 501.03 1015.191143)">OV2.5-4B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #8b949e; font: 13px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1035.595588" transform="rotate(-0 501.03 1035.595588)">(codec, 24 fps)</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1015.191143" transform="rotate(-0 701.91 1015.191143)">MOSS-VL-Realtime 11B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #8b949e; font: 13px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1035.595588" transform="rotate(-0 701.91 1035.595588)">(1 fps)</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1015.084502" transform="rotate(-0 902.79 1015.084502)">JoyAI-VL-Interaction 8B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #8b949e; font: 13px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1035.595588" transform="rotate(-0 902.79 1035.595588)">(1 fps)</text>
+   </g>
+   <g id="tbl-row-20">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1071.905" transform="rotate(-0 46.26 1071.905)">OVO-Bench</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1109.04475" transform="rotate(-0 46.26 1109.04475)">Real-Time Visual Perception (RTVP)</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1109.04475" transform="rotate(-0 501.03 1109.04475)">81.0</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1109.04475" transform="rotate(-0 701.91 1109.04475)">75.9</text>
+   </g>
+   <g id="tbl-row-21">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1109.04475" transform="rotate(-0 902.79 1109.04475)">76.4</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1144.938563" transform="rotate(-0 46.26 1144.938563)">Backward Tracing (BT)</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1145.08075" transform="rotate(-0 501.03 1145.08075)">68.8</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1145.08075" transform="rotate(-0 701.91 1145.08075)">72.6</text>
+   </g>
+   <g id="tbl-row-22">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1145.08075" transform="rotate(-0 902.79 1145.08075)">53.3</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1180.974563" transform="rotate(-0 46.26 1180.974563)">Forward Active Responding (FAR)</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1181.11675" transform="rotate(-0 501.03 1181.11675)">60.7</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1181.11675" transform="rotate(-0 701.91 1181.11675)">62.1</text>
+   </g>
+   <g id="tbl-row-23">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1181.11675" transform="rotate(-0 902.79 1181.11675)">54.6</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1217.15275" transform="rotate(-0 46.26 1217.15275)">Overall</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1217.15275" transform="rotate(-0 501.03 1217.15275)">70.2</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1217.15275" transform="rotate(-0 701.91 1217.15275)">70.2</text>
+   </g>
+   <g id="tbl-row-24">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1217.15275" transform="rotate(-0 902.79 1217.15275)">61.4</text>
+   </g>
+   <g id="tbl-row-25">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1251.97125" transform="rotate(-0 46.26 1251.97125)">StreamingBench</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1289.082562" transform="rotate(-0 46.26 1289.082562)">Real-Time Visual Understanding (RTVU)</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1289.22475" transform="rotate(-0 501.03 1289.22475)">85.3</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1289.22475" transform="rotate(-0 701.91 1289.22475)">82.9</text>
+   </g>
+   <g id="tbl-row-26">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1289.22475" transform="rotate(-0 902.79 1289.22475)">83.2</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1325.118562" transform="rotate(-0 46.26 1325.118562)">Misleading Context Understanding (MCU)</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1325.26075" transform="rotate(-0 501.03 1325.26075)">36.8</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="fill: #8b949e; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1325.26075" transform="rotate(-0 701.91 1325.26075)">--</text>
+   </g>
+   <g id="tbl-row-27">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1325.26075" transform="rotate(-0 902.79 1325.26075)">37.2</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1361.154562" transform="rotate(-0 46.26 1361.154562)">Anomaly Context Understanding (ACU)</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1361.29675" transform="rotate(-0 501.03 1361.29675)">67.6</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="fill: #8b949e; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1361.29675" transform="rotate(-0 701.91 1361.29675)">--</text>
+   </g>
+   <g id="tbl-row-28">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1361.29675" transform="rotate(-0 902.79 1361.29675)">51.6</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1397.190562" transform="rotate(-0 46.26 1397.190562)">Sequential Question Answering (SQA)</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1397.33275" transform="rotate(-0 501.03 1397.33275)">54.8</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1397.33275" transform="rotate(-0 701.91 1397.33275)">50.4</text>
+   </g>
+   <g id="tbl-row-29">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1397.33275" transform="rotate(-0 902.79 1397.33275)">53.6</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1433.36875" transform="rotate(-0 46.26 1433.36875)">Proactive Output (PO)</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1433.36875" transform="rotate(-0 501.03 1433.36875)">63.6</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1433.36875" transform="rotate(-0 701.91 1433.36875)">60.0</text>
+   </g>
+   <g id="tbl-row-30">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1433.36875" transform="rotate(-0 902.79 1433.36875)">39.6</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1469.262562" transform="rotate(-0 46.26 1469.262562)">Contextual Understanding (CU)</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1469.40475" transform="rotate(-0 501.03 1469.40475)">55.7</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1469.40475" transform="rotate(-0 701.91 1469.40475)">56.4</text>
+   </g>
+   <g id="tbl-row-31">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1469.40475" transform="rotate(-0 902.79 1469.40475)">45.5</text>
+   </g>
+   <g id="tbl-row-32">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1504.337" transform="rotate(-0 46.26 1504.337)">Proactive and interactive</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1541.334562" transform="rotate(-0 46.26 1541.334562)">OmniMMI: Proactive Alerting (PA)</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1541.47675" transform="rotate(-0 501.03 1541.47675)">68.5</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1541.47675" transform="rotate(-0 701.91 1541.47675)">66.0</text>
+   </g>
+   <g id="tbl-row-33">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1541.47675" transform="rotate(-0 902.79 1541.47675)">13.5</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1577.51275" transform="rotate(-0 46.26 1577.51275)">ProactiveVideoQA: PAUC (ω=0.5)</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1577.51275" transform="rotate(-0 501.03 1577.51275)">33.1</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1577.51275" transform="rotate(-0 701.91 1577.51275)">47.2</text>
+   </g>
+   <g id="tbl-row-34">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1577.51275" transform="rotate(-0 902.79 1577.51275)">37.0</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1613.54875" transform="rotate(-0 46.26 1613.54875)">InteractionBench: Total</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1613.54875" transform="rotate(-0 501.03 1613.54875)">38.6</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="fill: #8b949e; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1613.54875" transform="rotate(-0 701.91 1613.54875)">--</text>
+   </g>
+   <g id="tbl-row-35">
+    <text style="fill: #8b949e; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1613.54875" transform="rotate(-0 902.79 1613.54875)">--</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1649.58475" transform="rotate(-0 46.26 1649.58475)">StreamArena: Proactive Interaction (Pro)</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="501.03" y="1649.58475" transform="rotate(-0 501.03 1649.58475)">25.5</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="701.91" y="1649.58475" transform="rotate(-0 701.91 1649.58475)">11.8</text>
+   </g>
+   <g id="tbl-row-36">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="902.79" y="1649.58475" transform="rotate(-0 902.79 1649.58475)">9.4</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #b8c0c8; font: 700 16px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1716.395" transform="rotate(-0 46.26 1716.395)">IMAGE</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 17px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1765.060078" transform="rotate(-0 46.26 1765.060078)">General perception and reading</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1764.629062" transform="rotate(-0 342 1764.629062)">OV2.5-4B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1764.629062" transform="rotate(-0 448.02 1764.629062)">Qwen3.5-4B</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1813.13275" transform="rotate(-0 46.26 1813.13275)">MMStar</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1813.13275" transform="rotate(-0 342 1813.13275)">63.9</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1813.13275" transform="rotate(-0 448.02 1813.13275)">66.9</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1849.16875" transform="rotate(-0 46.26 1849.16875)">MMBench-EN dev</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1849.16875" transform="rotate(-0 342 1849.16875)">88.2</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1849.16875" transform="rotate(-0 448.02 1849.16875)">88.8</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1885.20475" transform="rotate(-0 46.26 1885.20475)">RealWorldQA</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1885.20475" transform="rotate(-0 342 1885.20475)">73.9</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1885.20475" transform="rotate(-0 448.02 1885.20475)">74.4</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1921.24075" transform="rotate(-0 46.26 1921.24075)">AI2D</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1921.24075" transform="rotate(-0 342 1921.24075)">82.2</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1921.24075" transform="rotate(-0 448.02 1921.24075)">82.4</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1957.27675" transform="rotate(-0 46.26 1957.27675)">BLINK</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1957.27675" transform="rotate(-0 342 1957.27675)">67.1</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1957.27675" transform="rotate(-0 448.02 1957.27675)">63.6</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="1993.31275" transform="rotate(-0 46.26 1993.31275)">V*-Bench</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="1993.31275" transform="rotate(-0 342 1993.31275)">89.5</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="1993.31275" transform="rotate(-0 448.02 1993.31275)">81.7</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="2029.34875" transform="rotate(-0 46.26 2029.34875)">OCRBench</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="2029.34875" transform="rotate(-0 342 2029.34875)">79.8</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="2029.34875" transform="rotate(-0 448.02 2029.34875)">85.2</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="46.26" y="2065.38475" transform="rotate(-0 46.26 2065.38475)">DocVQA val</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="342" y="2065.38475" transform="rotate(-0 342 2065.38475)">92.9</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="448.02" y="2065.38475" transform="rotate(-0 448.02 2065.38475)">95.2</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 17px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1765.060078" transform="rotate(-0 548.46 1765.060078)">Grounding and spatial</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1764.629062" transform="rotate(-0 844.2 1764.629062)">OV2.5-4B</text>
+   </g>
+   <g id="tbl-header">
+    <text style="fill: #f0f6fc; font: 700 15px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1764.629062" transform="rotate(-0 950.22 1764.629062)">Qwen3.5-4B</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1813.13275" transform="rotate(-0 548.46 1813.13275)">RefCOCO val (Acc@0.5)</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1813.13275" transform="rotate(-0 844.2 1813.13275)">92.6</text>
+   </g>
+   <g id="tbl-row-37">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1813.13275" transform="rotate(-0 950.22 1813.13275)">89.1</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1849.026562" transform="rotate(-0 548.46 1849.026562)">RefCOCOg val (Acc@0.5)</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1849.16875" transform="rotate(-0 844.2 1849.16875)">88.9</text>
+   </g>
+   <g id="tbl-row-38">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1849.16875" transform="rotate(-0 950.22 1849.16875)">87.7</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1885.20475" transform="rotate(-0 548.46 1885.20475)">RefSpatial-Bench</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1885.20475" transform="rotate(-0 844.2 1885.20475)">62.1</text>
+   </g>
+   <g id="tbl-row-39">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1885.20475" transform="rotate(-0 950.22 1885.20475)">29.1</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1921.24075" transform="rotate(-0 548.46 1921.24075)">CrossPoint</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1921.24075" transform="rotate(-0 844.2 1921.24075)">80.5</text>
+   </g>
+   <g id="tbl-row-40">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1921.24075" transform="rotate(-0 950.22 1921.24075)">33.7</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1957.27675" transform="rotate(-0 548.46 1957.27675)">CV-Bench 2D</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1957.27675" transform="rotate(-0 844.2 1957.27675)">83.3</text>
+   </g>
+   <g id="tbl-row-41">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1957.27675" transform="rotate(-0 950.22 1957.27675)">80.7</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="1993.31275" transform="rotate(-0 548.46 1993.31275)">CV-Bench 3D</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="1993.31275" transform="rotate(-0 844.2 1993.31275)">94.5</text>
+   </g>
+   <g id="tbl-row-42">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="1993.31275" transform="rotate(-0 950.22 1993.31275)">92.0</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="2029.34875" transform="rotate(-0 548.46 2029.34875)">EmbSpatial</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="2029.34875" transform="rotate(-0 844.2 2029.34875)">83.0</text>
+   </g>
+   <g id="tbl-row-43">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="2029.34875" transform="rotate(-0 950.22 2029.34875)">74.7</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: start" x="548.46" y="2065.38475" transform="rotate(-0 548.46 2065.38475)">MMSI-Bench</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 700 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="844.2" y="2065.38475" transform="rotate(-0 844.2 2065.38475)">33.3</text>
+   </g>
+   <g id="tbl-row-44">
+    <text style="fill: #f0f6fc; font: 20px 'DejaVu Serif', 'Nimbus Roman', 'Times New Roman', 'Times', serif; text-anchor: middle" x="950.22" y="2065.38475" transform="rotate(-0 950.22 2065.38475)">31.4</text>
+   </g>
+  </g>
+ </g>
+ </svg>

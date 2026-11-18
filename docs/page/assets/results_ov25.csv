@@ -1,0 +1,126 @@
+table,category,benchmark,model,score,best
+Video,General video understanding,VideoMME (no subtitles),OV2.5-4B (codec),71.9,1
+Video,General video understanding,VideoMME (no subtitles),OV2.5-4B (frames),69.7,0
+Video,General video understanding,VideoMME (no subtitles),Qwen3.5-4B,71.7,0
+Video,General video understanding,VideoMME (subtitles),OV2.5-4B (codec),74.7,0
+Video,General video understanding,VideoMME (subtitles),OV2.5-4B (frames),75.2,0
+Video,General video understanding,VideoMME (subtitles),Qwen3.5-4B,75.9,1
+Video,General video understanding,MotionBench,OV2.5-4B (codec),64.2,1
+Video,General video understanding,MotionBench,OV2.5-4B (frames),62.4,0
+Video,General video understanding,MotionBench,Qwen3.5-4B,60.1,0
+Video,General video understanding,TOMATO,OV2.5-4B (codec),36.0,0
+Video,General video understanding,TOMATO,OV2.5-4B (frames),39.2,1
+Video,General video understanding,TOMATO,Qwen3.5-4B,32.4,0
+Video,General video understanding,MVBench,OV2.5-4B (codec),75.5,1
+Video,General video understanding,MVBench,OV2.5-4B (frames),72.0,0
+Video,General video understanding,MVBench,Qwen3.5-4B,64.0,0
+Video,General video understanding,NextQA MC test,OV2.5-4B (codec),86.4,1
+Video,General video understanding,NextQA MC test,OV2.5-4B (frames),86.1,0
+Video,General video understanding,NextQA MC test,Qwen3.5-4B,80.7,0
+Video,General video understanding,TempCompass MC,OV2.5-4B (codec),79.7,1
+Video,General video understanding,TempCompass MC,OV2.5-4B (frames),75.8,0
+Video,General video understanding,TempCompass MC,Qwen3.5-4B,73.4,0
+Video,General video understanding,Video-MME-v2,OV2.5-4B (codec),17.2,1
+Video,General video understanding,Video-MME-v2,OV2.5-4B (frames),16.4,0
+Video,General video understanding,Video-MME-v2,Qwen3.5-4B,15.5,0
+Video,General video understanding,EgoSchema subset,OV2.5-4B (codec),79.8,0
+Video,General video understanding,EgoSchema subset,OV2.5-4B (frames),80.0,1
+Video,General video understanding,EgoSchema subset,Qwen3.5-4B,68.2,0
+Video,General video understanding,Video-Index,OV2.5-4B (codec),23.1,1
+Video,General video understanding,Video-Index,OV2.5-4B (frames),20.0,0
+Video,General video understanding,Video-Index,Qwen3.5-4B,19.6,0
+Video,Long video,LVBench,OV2.5-4B (codec),61.6,0
+Video,Long video,LVBench,OV2.5-4B (frames),62.0,1
+Video,Long video,LVBench,Qwen3.5-4B,56.5,0
+Video,Long video,MLVU dev,OV2.5-4B (codec),77.1,1
+Video,Long video,MLVU dev,OV2.5-4B (frames),75.3,0
+Video,Long video,MLVU dev,Qwen3.5-4B,73.8,0
+Video,Long video,LongVideoBench val,OV2.5-4B (codec),71.1,1
+Video,Long video,LongVideoBench val,OV2.5-4B (frames),69.0,0
+Video,Long video,LongVideoBench val,Qwen3.5-4B,62.7,0
+Video,Long video,VideoEval-Pro,OV2.5-4B (codec),64.6,1
+Video,Long video,VideoEval-Pro,OV2.5-4B (frames),64.4,0
+Video,Long video,VideoEval-Pro,Qwen3.5-4B,62.8,0
+Video,Temporal grounding (mIoU),TimeLens ActivityNet,OV2.5-4B (codec),59.1,1
+Video,Temporal grounding (mIoU),TimeLens ActivityNet,OV2.5-4B (frames),58.8,0
+Video,Temporal grounding (mIoU),TimeLens ActivityNet,Qwen3.5-4B,53.8,0
+Video,Temporal grounding (mIoU),TimeLens Charades,OV2.5-4B (codec),61.3,1
+Video,Temporal grounding (mIoU),TimeLens Charades,OV2.5-4B (frames),60.6,0
+Video,Temporal grounding (mIoU),TimeLens Charades,Qwen3.5-4B,48.1,0
+Video,Temporal grounding (mIoU),TimeLens QVHighlights,OV2.5-4B (codec),70.3,1
+Video,Temporal grounding (mIoU),TimeLens QVHighlights,OV2.5-4B (frames),68.4,0
+Video,Temporal grounding (mIoU),TimeLens QVHighlights,Qwen3.5-4B,67.5,0
+Streaming video,OVO-Bench,Real-Time Visual Perception (RTVP),"OV2.5-4B (codec, 24 fps)",81.0,1
+Streaming video,OVO-Bench,Real-Time Visual Perception (RTVP),MOSS-VL-Realtime 11B (1 fps),75.9,0
+Streaming video,OVO-Bench,Real-Time Visual Perception (RTVP),JoyAI-VL-Interaction 8B (1 fps),76.4,0
+Streaming video,OVO-Bench,Backward Tracing (BT),"OV2.5-4B (codec, 24 fps)",68.8,0
+Streaming video,OVO-Bench,Backward Tracing (BT),MOSS-VL-Realtime 11B (1 fps),72.6,1
+Streaming video,OVO-Bench,Backward Tracing (BT),JoyAI-VL-Interaction 8B (1 fps),53.3,0
+Streaming video,OVO-Bench,Forward Active Responding (FAR),"OV2.5-4B (codec, 24 fps)",60.7,0
+Streaming video,OVO-Bench,Forward Active Responding (FAR),MOSS-VL-Realtime 11B (1 fps),62.1,1
+Streaming video,OVO-Bench,Forward Active Responding (FAR),JoyAI-VL-Interaction 8B (1 fps),54.6,0
+Streaming video,OVO-Bench,Overall,"OV2.5-4B (codec, 24 fps)",70.2,1
+Streaming video,OVO-Bench,Overall,MOSS-VL-Realtime 11B (1 fps),70.2,1
+Streaming video,OVO-Bench,Overall,JoyAI-VL-Interaction 8B (1 fps),61.4,0
+Streaming video,StreamingBench,Real-Time Visual Understanding (RTVU),"OV2.5-4B (codec, 24 fps)",85.3,1
+Streaming video,StreamingBench,Real-Time Visual Understanding (RTVU),MOSS-VL-Realtime 11B (1 fps),82.9,0
+Streaming video,StreamingBench,Real-Time Visual Understanding (RTVU),JoyAI-VL-Interaction 8B (1 fps),83.2,0
+Streaming video,StreamingBench,Misleading Context Understanding (MCU),"OV2.5-4B (codec, 24 fps)",36.8,0
+Streaming video,StreamingBench,Misleading Context Understanding (MCU),MOSS-VL-Realtime 11B (1 fps),--,0
+Streaming video,StreamingBench,Misleading Context Understanding (MCU),JoyAI-VL-Interaction 8B (1 fps),37.2,1
+Streaming video,StreamingBench,Anomaly Context Understanding (ACU),"OV2.5-4B (codec, 24 fps)",67.6,1
+Streaming video,StreamingBench,Anomaly Context Understanding (ACU),MOSS-VL-Realtime 11B (1 fps),--,0
+Streaming video,StreamingBench,Anomaly Context Understanding (ACU),JoyAI-VL-Interaction 8B (1 fps),51.6,0
+Streaming video,StreamingBench,Sequential Question Answering (SQA),"OV2.5-4B (codec, 24 fps)",54.8,1
+Streaming video,StreamingBench,Sequential Question Answering (SQA),MOSS-VL-Realtime 11B (1 fps),50.4,0
+Streaming video,StreamingBench,Sequential Question Answering (SQA),JoyAI-VL-Interaction 8B (1 fps),53.6,0
+Streaming video,StreamingBench,Proactive Output (PO),"OV2.5-4B (codec, 24 fps)",63.6,1
+Streaming video,StreamingBench,Proactive Output (PO),MOSS-VL-Realtime 11B (1 fps),60.0,0
+Streaming video,StreamingBench,Proactive Output (PO),JoyAI-VL-Interaction 8B (1 fps),39.6,0
+Streaming video,StreamingBench,Contextual Understanding (CU),"OV2.5-4B (codec, 24 fps)",55.7,0
+Streaming video,StreamingBench,Contextual Understanding (CU),MOSS-VL-Realtime 11B (1 fps),56.4,1
+Streaming video,StreamingBench,Contextual Understanding (CU),JoyAI-VL-Interaction 8B (1 fps),45.5,0
+Streaming video,Proactive and interactive,OmniMMI: Proactive Alerting (PA),"OV2.5-4B (codec, 24 fps)",68.5,1
+Streaming video,Proactive and interactive,OmniMMI: Proactive Alerting (PA),MOSS-VL-Realtime 11B (1 fps),66.0,0
+Streaming video,Proactive and interactive,OmniMMI: Proactive Alerting (PA),JoyAI-VL-Interaction 8B (1 fps),13.5,0
+Streaming video,Proactive and interactive,ProactiveVideoQA: PAUC (ω=0.5),"OV2.5-4B (codec, 24 fps)",33.1,0
+Streaming video,Proactive and interactive,ProactiveVideoQA: PAUC (ω=0.5),MOSS-VL-Realtime 11B (1 fps),47.2,1
+Streaming video,Proactive and interactive,ProactiveVideoQA: PAUC (ω=0.5),JoyAI-VL-Interaction 8B (1 fps),37.0,0
+Streaming video,Proactive and interactive,InteractionBench: Total,"OV2.5-4B (codec, 24 fps)",38.6,0
+Streaming video,Proactive and interactive,InteractionBench: Total,MOSS-VL-Realtime 11B (1 fps),--,0
+Streaming video,Proactive and interactive,InteractionBench: Total,JoyAI-VL-Interaction 8B (1 fps),--,0
+Streaming video,Proactive and interactive,StreamArena: Proactive Interaction (Pro),"OV2.5-4B (codec, 24 fps)",25.5,1
+Streaming video,Proactive and interactive,StreamArena: Proactive Interaction (Pro),MOSS-VL-Realtime 11B (1 fps),11.8,0
+Streaming video,Proactive and interactive,StreamArena: Proactive Interaction (Pro),JoyAI-VL-Interaction 8B (1 fps),9.4,0
+Image,General perception and reading,MMStar,OV2.5-4B,63.9,0
+Image,General perception and reading,MMStar,Qwen3.5-4B,66.9,1
+Image,General perception and reading,MMBench-EN dev,OV2.5-4B,88.2,0
+Image,General perception and reading,MMBench-EN dev,Qwen3.5-4B,88.8,1
+Image,General perception and reading,RealWorldQA,OV2.5-4B,73.9,0
+Image,General perception and reading,RealWorldQA,Qwen3.5-4B,74.4,1
+Image,General perception and reading,AI2D,OV2.5-4B,82.2,0
+Image,General perception and reading,AI2D,Qwen3.5-4B,82.4,1
+Image,General perception and reading,BLINK,OV2.5-4B,67.1,1
+Image,General perception and reading,BLINK,Qwen3.5-4B,63.6,0
+Image,General perception and reading,V*-Bench,OV2.5-4B,89.5,1
+Image,General perception and reading,V*-Bench,Qwen3.5-4B,81.7,0
+Image,General perception and reading,OCRBench,OV2.5-4B,79.8,0
+Image,General perception and reading,OCRBench,Qwen3.5-4B,85.2,1
+Image,General perception and reading,DocVQA val,OV2.5-4B,92.9,0
+Image,General perception and reading,DocVQA val,Qwen3.5-4B,95.2,1
+Image,Grounding and spatial,RefCOCO val (Acc@0.5),OV2.5-4B,92.6,1
+Image,Grounding and spatial,RefCOCO val (Acc@0.5),Qwen3.5-4B,89.1,0
+Image,Grounding and spatial,RefCOCOg val (Acc@0.5),OV2.5-4B,88.9,1
+Image,Grounding and spatial,RefCOCOg val (Acc@0.5),Qwen3.5-4B,87.7,0
+Image,Grounding and spatial,RefSpatial-Bench,OV2.5-4B,62.1,1
+Image,Grounding and spatial,RefSpatial-Bench,Qwen3.5-4B,29.1,0
+Image,Grounding and spatial,CrossPoint,OV2.5-4B,80.5,1
+Image,Grounding and spatial,CrossPoint,Qwen3.5-4B,33.7,0
+Image,Grounding and spatial,CV-Bench 2D,OV2.5-4B,83.3,1
+Image,Grounding and spatial,CV-Bench 2D,Qwen3.5-4B,80.7,0
+Image,Grounding and spatial,CV-Bench 3D,OV2.5-4B,94.5,1
+Image,Grounding and spatial,CV-Bench 3D,Qwen3.5-4B,92.0,0
+Image,Grounding and spatial,EmbSpatial,OV2.5-4B,83.0,1
+Image,Grounding and spatial,EmbSpatial,Qwen3.5-4B,74.7,0
+Image,Grounding and spatial,MMSI-Bench,OV2.5-4B,33.3,1
+Image,Grounding and spatial,MMSI-Bench,Qwen3.5-4B,31.4,0
