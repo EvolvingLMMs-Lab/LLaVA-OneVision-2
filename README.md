@@ -44,7 +44,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 ---
 
 ## NEWS
-- 2026-11-18: Released [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) — one 4B model for offline and **streaming** video. This repository becomes **LLaVA-OneVision-2.5** and carries its training code: the Qwen3.5 hybrid-attention backbone, streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism.
+- 2026-11-18: Released [LLaVA-OneVision-2.5-4B-Instruct](https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2.5-4B-Instruct) — one 4B model for offline and streaming video, with its training code.
 - 2026-11-05: Thanks to [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) for making [LLaVA-OneVision-2-4B](#quick-start-4b-single-node) SFT 2.2–3.0× faster! See [Training Acceleration](#training-acceleration) for details.
 - 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
