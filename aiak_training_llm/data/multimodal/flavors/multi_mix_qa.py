@@ -32,3 +32,6 @@ class MultiMixQASample(Sample):
 
     #: Number of decimal places for frame timestamps (1 or 2, default 1)
     timestamp_decimal: Optional[int] = None
+
+    #: Sample-level modality marker, e.g. "streaming". None means ordinary offline data.
+    data_type: Optional[str] = None

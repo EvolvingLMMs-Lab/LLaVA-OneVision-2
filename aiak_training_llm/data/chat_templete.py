@@ -436,6 +436,106 @@ _register_chat_template(
     replace_eos=True,
 )
 
+# Qwen3.5 thinking switch (prompt-side only; matches official chat_template.jinja):
+#   think-on : generation prompt ends with "<think>\n"  -> response is "reasoning\n</think>\n\nanswer"
+#   think-off: generation prompt ends with "<think>\n\n</think>\n\n" -> response is the answer only
+_register_chat_template(
+    name="qwen3_5-vl-think-on",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+_register_chat_template(
+    name="qwen3_5-vl-think-off",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+
+# Per-turn auto switch between think-on and think-off.
+#   assistant reply starts with "<think>" and has exactly one "</think>"
+#     -> think-on: drop the leading "<think>" and the newlines after it; trim the reasoning;
+#        re-join as "reasoning\n</think>\n\nanswer"; the user prompt before it ends with "<think>\n"
+#   anything else (no think block, or "<think>" without "</think>")
+#     -> think-off: reply kept as is; the user prompt ends with "<think>\n\n</think>\n\n"
+#   stray think tags left over in the data (e.g. a duplicated "</think>" at the end of the
+#     answer) are dropped: the reasoning ends at the FIRST "</think>". Rejecting such a reply
+#     would make the loader skip its whole packed bin (up to ~110 samples).
+# Each user turn takes the mode of the reply that follows it.
+def _think_auto_reply(content: str) -> Tuple[bool, str]:
+    """Returns (is_think_on, normalized_reply)."""
+    body = content.lstrip()
+    if not body.startswith("<think>") or "</think>" not in body:
+        return False, content
+    reasoning, answer = body[len("<think>"):].split("</think>", 1)
+    reasoning = reasoning.replace("<think>", "").strip()
+    if "<think>" in answer or "</think>" in answer:  # stray tags only: drop them and the trailing gap
+        answer = answer.replace("<think>", "").replace("</think>", "").rstrip()
+    answer = answer.lstrip("\n")
+    return True, f"{reasoning}\n</think>\n\n{answer}"
+
+
+class Qwen3_5ThinkAutoTemplate(ChatTemplate):
+    def _encode(
+        self,
+        tokenizer: "AutoTokenizerFromHF",
+        messages: Sequence[Dict[str, str]],
+        system: Optional[str],
+    ) -> List[List[int]]:
+        think_on = MAPPING_NAME_TO_TEMPLATE["qwen3_5-vl-think-on"]
+        think_off = MAPPING_NAME_TO_TEMPLATE["qwen3_5-vl-think-off"]
+        system = system or self.default_system
+        encoded_messages = []
+        for i, message in enumerate(messages):
+            elements = []
+
+            if i == 0:
+                elements += self.format_prefix.apply()
+                if system:
+                    elements += self.format_system.apply(content=system)
+            elif i > 0 and i % 2 == 0:
+                elements += self.format_separator.apply()
+
+            if message["role"] == DataRoles.USER:
+                # the mode of the reply that follows this user turn decides the prompt prefix
+                reply = messages[i + 1]["content"] if i + 1 < len(messages) else ""
+                is_on, _ = _think_auto_reply(reply)
+                fmt = think_on.format_user if is_on else think_off.format_user
+                elements += fmt.apply(content=message["content"], idx=str(i // 2))
+            elif message["role"] == DataRoles.ASSISTANT:
+                _, content = _think_auto_reply(message["content"])
+                elements += self.format_assistant.apply(content=content)
+            else:
+                raise NotImplementedError("Unexpected role: {}".format(message["role"]))
+
+            encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
+
+        return encoded_messages
+
+
+# format_user/format_assistant are unused: the on/off templates provide them.
+_register_chat_template(
+    name="qwen3_5-vl-think-auto",
+    cls=Qwen3_5ThinkAutoTemplate,
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=Qwen2VLPlugin(image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+
 _register_chat_template(
     name="qwen2-vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),

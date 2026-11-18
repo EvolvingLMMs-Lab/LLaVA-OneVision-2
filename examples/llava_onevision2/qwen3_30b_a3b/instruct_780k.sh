@@ -17,7 +17,7 @@ GBS="${6:-96}"
 TOTAL_SAMPLES=740000
 NSTEP="${7:-$(((TOTAL_SAMPLES + GBS - 1) / GBS))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 OUTPUT_DIR="${OUTPUT_DIR:-/ov2/xiangan/ckpts_30b_a3b_date_0318}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/webdataset_llava_next_740k"}
@@ -30,39 +30,39 @@ CHECKPOINT_PATH=${CHECKPOINT_PATH:-""}
 # --- Multi-node configuration ---
 # List of IP addresses for the nodes in the training cluster
 declare -a list_ip=(
-    # 172.16.5.19
-    # 172.16.5.27
-    # 172.16.5.81
-    # 172.16.5.82
-    # 172.16.5.85
-    # 172.16.5.86
-    # 172.16.5.87
-    # 172.16.5.88
-    # 172.16.5.89
-    # 172.16.5.90
-    # 172.16.5.91
-    # 172.16.5.92
-    # 172.16.5.93
-    # 172.16.5.94
-    # 172.16.5.95
-    # 172.16.5.96
+    # 192.0.2.11
+    # 192.0.2.12
+    # 192.0.2.13
+    # 192.0.2.14
+    # 192.0.2.15
+    # 192.0.2.16
+    # 192.0.2.17
+    # 192.0.2.18
+    # 192.0.2.19
+    # 192.0.2.20
+    # 192.0.2.21
+    # 192.0.2.22
+    # 192.0.2.23
+    # 192.0.2.24
+    # 192.0.2.25
+    # 192.0.2.26
 
-    # 172.16.5.33
-    172.16.5.34
-    # 172.16.5.35
-    # 172.16.5.36
-    # 172.16.5.37
-    172.16.5.38
-    172.16.5.39
-    172.16.5.40
-    172.16.5.41
-    172.16.5.42
-    172.16.5.43
-    172.16.5.44
-    172.16.5.45
-    172.16.5.46
-    172.16.5.47
-    172.16.5.49
+    # 192.0.2.27
+    192.0.2.28
+    # 192.0.2.29
+    # 192.0.2.30
+    # 192.0.2.31
+    192.0.2.32
+    192.0.2.33
+    192.0.2.34
+    192.0.2.35
+    192.0.2.36
+    192.0.2.37
+    192.0.2.38
+    192.0.2.39
+    192.0.2.40
+    192.0.2.41
+    192.0.2.42
 )
 
 # Get the primary IP of the current node

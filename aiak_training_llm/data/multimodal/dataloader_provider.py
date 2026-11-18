@@ -8,11 +8,14 @@ from megatron import energon
 from megatron.core import parallel_state
 from megatron.training import get_args
 from megatron.training.checkpointing import get_checkpoint_name
+from .energon_patches import apply_energon_patches
 from .task_encoder import print_error_handler
 
 
 def get_train_dataset(task_encoder):
     """Get the training dataset"""
+    # Must run before the loader forks its workers (they inherit the patch).
+    apply_energon_patches()
     args = get_args()
     worker_config = energon.WorkerConfig(
         rank=parallel_state.get_data_parallel_rank(),
@@ -27,7 +30,11 @@ def get_train_dataset(task_encoder):
         batch_size=args.micro_batch_size,
         task_encoder=task_encoder,
         worker_config=worker_config,
-        max_samples_per_sequence=None,
+        # None = each tar shard is ONE endless sequential read; its reader (and C-level
+        # read buffers) stays resident per touched dataset -> unbounded worker RSS growth
+        # on many-dataset mixes (s4 dynD leak, 08-13). A finite value splits shards into
+        # re-openable sequences so readers recycle. Env-tunable for A/B.
+        max_samples_per_sequence=int(__import__("os").environ.get("ENERGON_MAX_SAMPLES_PER_SEQ", "0")) or None,
         shuffle_buffer_size=None,
         packing_buffer_size=args.packing_batch_size,
         handler=print_error_handler,

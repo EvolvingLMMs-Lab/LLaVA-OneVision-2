@@ -6,7 +6,7 @@ GBS="${5:-132}"
 TOTAL_SAMPLES=740000
 NSTEP="${6:-$(((TOTAL_SAMPLES + GBS - 1) / GBS))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 OUTPUT_DIR="${OUTPUT_DIR:-/ov2/xiangan/ckpts_4b_date_0214}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/webdataset_llava_next_740k"}
@@ -22,17 +22,17 @@ declare -a list_ip=(
     # localhost
 
 
-    "172.16.5.33"
-    "172.16.5.34"
-    "172.16.5.35"
-    "172.16.5.41"
-    "172.16.5.42"
-    "172.16.5.43"
-    "172.16.5.44"
-    "172.16.5.45"
-    "172.16.5.46"
-    "172.16.5.47"
-    "172.16.5.49"
+    "192.0.2.11"
+    "192.0.2.12"
+    "192.0.2.13"
+    "192.0.2.14"
+    "192.0.2.15"
+    "192.0.2.16"
+    "192.0.2.17"
+    "192.0.2.18"
+    "192.0.2.19"
+    "192.0.2.20"
+    "192.0.2.21"
 
 )
 

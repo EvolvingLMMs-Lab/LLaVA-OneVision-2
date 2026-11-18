@@ -18,3 +18,4 @@ class PackedCaptioningSample(Sample):
     patch_positions: Optional[List[List[np.ndarray]]] = None  # [sample_idx][img_idx] -> np.ndarray
     fps: Optional[List[Optional[Union[float, int]]]] = None  # [sample_idx] -> fps or None
     timestamp_decimal: Optional[List[Optional[int]]] = None  # [sample_idx] -> 1 or 2 or None
+    data_type: Optional[List[Optional[str]]] = None  # [sample_idx] -> "streaming" or None

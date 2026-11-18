@@ -1,4 +1,4 @@
-# Faster training for LLaVA-OneVision-2
+# Faster training for LLaVA-OneVision-2.5
 
 We provide opt-in speedups for the 4B quick-start SFT recipe ([`quick_start.sh`](../examples/llava_onevision2/quick_start_4b/quick_start.sh)). Every speedup is an environment variable switch that is off by default; with none set, training runs exactly as before. A preset contains a set of speedup switches that `quick_start.sh` loads when `OV2_PRESET` points to it.
 

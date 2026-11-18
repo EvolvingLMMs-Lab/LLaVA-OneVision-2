@@ -1,0 +1,35 @@
+{
+  "data_format": "channels_first",
+  "default_to_square": true,
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "Qwen2VLImageProcessor",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "max_pixels": 4000000,
+  "min_pixels": 3136,
+  "merge_size": 3,
+  "patch_size": 16,
+  "processor_class": "LlavaOnevision2Processor",
+  "auto_map": {
+    "AutoProcessor": "processing_llava_onevision2.LlavaOnevision2Processor",
+    "AutoVideoProcessor": "video_processing_llava_onevision2.LlavaOnevision2VideoProcessor"
+  },
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "size": {
+    "longest_edge": 3240000,
+    "shortest_edge": 3136
+  },
+  "temporal_patch_size": 1
+}

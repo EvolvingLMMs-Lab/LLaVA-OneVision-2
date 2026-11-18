@@ -1,0 +1,4 @@
+
+# local private packing env (never commit)
+pack_env.local.sh
+*.local.sh

@@ -16,35 +16,35 @@ MBS="${5:-1}"
 GBS="${6:-128}"
 NSTEP="${7:-500}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 OUTPUT_DIR="${OUTPUT_DIR:-/ov2/xiangan/ckpts_30b_a3b_date_0318}"
 DATA_PATH=${DATA_PATH:-"/workspace/dataset/LLaVA-558K-Webdataset"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2/stage_0_llava_ov2_30b_a3b_release"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2.5/stage_0_llava_ov2_30b_a3b_release"}
 
 #! /bin/bash
 # The script needs to be run on at least 1 nodes.
 
 # --- Multi-node configuration ---
 declare -a list_ip=(
-    172.16.5.19
-    172.16.5.27
-    172.16.5.81
-    172.16.5.82
-    172.16.5.85
-    172.16.5.86
-    172.16.5.87
-    172.16.5.88
-    172.16.5.89
-    172.16.5.90
-    172.16.5.91
-    172.16.5.92
-    172.16.5.93
-    172.16.5.94
-    172.16.5.95
-    172.16.5.96
+    192.0.2.11
+    192.0.2.12
+    192.0.2.13
+    192.0.2.14
+    192.0.2.15
+    192.0.2.16
+    192.0.2.17
+    192.0.2.18
+    192.0.2.19
+    192.0.2.20
+    192.0.2.21
+    192.0.2.22
+    192.0.2.23
+    192.0.2.24
+    192.0.2.25
+    192.0.2.26
 )
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')
