@@ -254,6 +254,9 @@ def sample_loader(sample: dict) -> dict:
     if 'timestamp_decimal' in data:
         result['timestamp_decimal'] = data['timestamp_decimal']
 
+    if 'data_type' in data:
+        result['data_type'] = data['data_type']
+
     return result
 
 
@@ -294,6 +297,7 @@ def _process_single_sample(json_path: Path, input_dir: str, validate: bool) -> d
         patch_positions = data.get("patch_positions", [])
         fps = data.get("fps", None)
         timestamp_decimal = data.get("timestamp_decimal", None)
+        data_type = data.get("data_type", None)
 
         # Determine sample count
         sample_count = 1
@@ -383,6 +387,8 @@ def _process_single_sample(json_path: Path, input_dir: str, validate: bool) -> d
             payload["fps"] = fps
         if timestamp_decimal is not None:
             payload["timestamp_decimal"] = timestamp_decimal
+        if data_type is not None:
+            payload["data_type"] = data_type
         sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
         return sample
@@ -490,6 +496,7 @@ class WebDatasetConverter:
                 patch_positions = data.get("patch_positions", [])
                 fps = data.get("fps", None)
                 timestamp_decimal = data.get("timestamp_decimal", None)
+                data_type = data.get("data_type", None)
 
                 # Determine sample count from structure
                 sample_count = 1
@@ -512,6 +519,8 @@ class WebDatasetConverter:
                     result["fps"] = fps
                 if timestamp_decimal is not None:
                     result["timestamp_decimal"] = timestamp_decimal
+                if data_type is not None:
+                    result["data_type"] = data_type
                 
                 yield result
 
@@ -554,6 +563,12 @@ class WebDatasetConverter:
             if timestamp_decimal is not None and len(timestamp_decimal) != sample_count:
                 print(
                     f"Warning: {entry['id']} timestamp_decimal count ({len(timestamp_decimal)}) != sample count ({sample_count})"
+                )
+                return False
+            entry_data_type = entry.get("data_type", None)
+            if entry_data_type is not None and len(entry_data_type) != sample_count:
+                print(
+                    f"Warning: {entry['id']} data_type count ({len(entry_data_type)}) != sample count ({sample_count})"
                 )
                 return False
         else:
@@ -654,6 +669,9 @@ class WebDatasetConverter:
         if timestamp_decimal is None:
             timestamp_decimal = [1] * sample_count
         payload["timestamp_decimal"] = timestamp_decimal
+        data_type = entry.get("data_type", None)
+        if data_type is not None:
+            payload["data_type"] = data_type
         sample["json"] = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
         return sample

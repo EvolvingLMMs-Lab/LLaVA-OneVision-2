@@ -71,6 +71,7 @@ class BinPacker:
             ("w", "<u2"),  # Width (reserved, set to 0)
             ("l", "<u4"),  # Length (token count)
             ("name", "<U200"),  # Sample name
+            ("p", "<u4"),  # Patch count (for ViT load balancing); 0 if unknown
         ]
     )
 
@@ -78,6 +79,8 @@ class BinPacker:
         self,
         capacity: int = 16000,
         max_samples_per_bin: int = 10,
+        max_patches_per_bin: int = 0,    # 0 = disabled
+        min_patches_per_bin: int = 0,    # 0 = disabled
     ) -> None:
         """
         Initialize the bin packer.
@@ -85,10 +88,15 @@ class BinPacker:
         Args:
             capacity: Maximum token capacity per bin.
             max_samples_per_bin: Maximum samples allowed per bin.
+            max_patches_per_bin: Upper bound on per-bin ViT patches (0 disables).
+            min_patches_per_bin: Lower bound on per-bin ViT patches (0 disables).
         """
         self.capacity = capacity
         self.max_samples_per_bin = max_samples_per_bin
-        self.token_data: dict[str, int] = {}
+        self.max_patches_per_bin = max_patches_per_bin
+        self.min_patches_per_bin = min_patches_per_bin
+        # token_data: name -> (token_count, patch_count)
+        self.token_data: dict[str, tuple[int, int]] = {}
 
     def parse_token_info(self, file_path: str) -> None:
         """
@@ -106,9 +114,11 @@ class BinPacker:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Token info file not found: {file_path}")
 
-        pattern = re.compile(r"^(.+):(\d+)$")
+        # Accept both legacy (name:token) and new (name:token:patch) formats.
+        pattern = re.compile(r"^(.+?):(\d+)(?::(\d+))?$")
         total_lines = 0
         parse_errors = 0
+        with_patch = 0
 
         with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
@@ -121,7 +131,10 @@ class BinPacker:
                 if match:
                     sample_name = match.group(1)
                     token_count = int(match.group(2))
-                    self.token_data[sample_name] = token_count
+                    patch_count = int(match.group(3)) if match.group(3) is not None else 0
+                    if match.group(3) is not None:
+                        with_patch += 1
+                    self.token_data[sample_name] = (token_count, patch_count)
                 else:
                     parse_errors += 1
                     if parse_errors <= 5:
@@ -130,7 +143,8 @@ class BinPacker:
                 if total_lines % 100000 == 0:
                     print(f"   Processed {total_lines:,} lines...")
 
-        print(f"✅ Parsing complete: {len(self.token_data):,} samples loaded")
+        print(f"✅ Parsing complete: {len(self.token_data):,} samples loaded "
+              f"({with_patch:,} with patch_count)")
         if parse_errors > 0:
             print(f"   ⚠️ {parse_errors} lines failed to parse")
 
@@ -147,7 +161,8 @@ class BinPacker:
             print("   ❌ No data to analyze")
             return {}
 
-        tokens = list(self.token_data.values())
+        tokens = [t for t, _ in self.token_data.values()]
+        patches = [p for _, p in self.token_data.values()]
         total_tokens = sum(tokens)
         avg_tokens = total_tokens / len(tokens)
         max_tokens = max(tokens)
@@ -159,6 +174,9 @@ class BinPacker:
             "avg_tokens": avg_tokens,
             "max_tokens": max_tokens,
             "min_tokens": min_tokens,
+            "total_patches": sum(patches),
+            "avg_patches": sum(patches) / len(patches) if patches else 0,
+            "max_patches": max(patches) if patches else 0,
         }
 
         print(f"   Total samples: {stats['total_samples']:,}")
@@ -166,6 +184,10 @@ class BinPacker:
         print(f"   Average:       {stats['avg_tokens']:.1f}")
         print(f"   Max:           {stats['max_tokens']:,}")
         print(f"   Min:           {stats['min_tokens']:,}")
+        if stats["total_patches"]:
+            print(f"   Total patches: {stats['total_patches']:,}")
+            print(f"   Avg patches:   {stats['avg_patches']:.1f}")
+            print(f"   Max patches:   {stats['max_patches']:,}")
 
         # Distribution by size ranges
         ranges = [
@@ -204,10 +226,10 @@ class BinPacker:
         # Sort by token count descending
         print("   Sorting samples by token count...")
         start_time = time.time()
-        sorted_samples = sorted(self.token_data.items(), key=lambda x: x[1], reverse=True)
+        sorted_samples = sorted(self.token_data.items(), key=lambda x: x[1][0], reverse=True)
         print(f"   Sorting complete in {time.time() - start_time:.1f}s")
 
-        bins: list[list[tuple[int, int, str]]] = []
+        bins: list[list[tuple[int, int, str, int]]] = []
         # Track current tokens for each bin to avoid repeated sum() calls
         bin_tokens: list[int] = []
 
@@ -216,7 +238,7 @@ class BinPacker:
 
         with tqdm(total=total_samples, desc="   Packing samples", unit="sample",
                   bar_format="   {l_bar}{bar:30}{r_bar}") as pbar:
-            for sample_name, token_count in sorted_samples:
+            for sample_name, (token_count, patch_count) in sorted_samples:
                 placed = False
 
                 # Try to fit into existing bins
@@ -225,14 +247,14 @@ class BinPacker:
                     current_count = len(bin_samples)
 
                     if current_tokens + token_count <= self.capacity and current_count < self.max_samples_per_bin:
-                        bin_samples.append((0, token_count, sample_name))
+                        bin_samples.append((0, token_count, sample_name, patch_count))
                         bin_tokens[i] += token_count
                         placed = True
                         break
 
                 # Create new bin if needed
                 if not placed:
-                    bins.append([(0, token_count, sample_name)])
+                    bins.append([(0, token_count, sample_name, patch_count)])
                     bin_tokens.append(token_count)
 
                 pbar.update(1)
@@ -263,10 +285,10 @@ class BinPacker:
         # Sort by token count descending
         print("   Sorting samples by token count...")
         start_time = time.time()
-        sorted_samples = sorted(self.token_data.items(), key=lambda x: x[1], reverse=True)
+        sorted_samples = sorted(self.token_data.items(), key=lambda x: x[1][0], reverse=True)
         print(f"   Sorting complete in {time.time() - start_time:.1f}s")
 
-        bins: list[list[tuple[int, int, str]]] = []
+        bins: list[list[tuple[int, int, str, int]]] = []
         # Track current tokens for each bin to avoid repeated sum() calls
         bin_tokens: list[int] = []
 
@@ -275,7 +297,7 @@ class BinPacker:
 
         with tqdm(total=total_samples, desc="   Packing samples", unit="sample",
                   bar_format="   {l_bar}{bar:30}{r_bar}") as pbar:
-            for sample_name, token_count in sorted_samples:
+            for sample_name, (token_count, patch_count) in sorted_samples:
                 best_bin_idx = -1
                 min_remaining = float("inf")
 
@@ -292,10 +314,10 @@ class BinPacker:
 
                 # Place in best bin or create new one
                 if best_bin_idx >= 0:
-                    bins[best_bin_idx].append((0, token_count, sample_name))
+                    bins[best_bin_idx].append((0, token_count, sample_name, patch_count))
                     bin_tokens[best_bin_idx] += token_count
                 else:
-                    bins.append([(0, token_count, sample_name)])
+                    bins.append([(0, token_count, sample_name, patch_count)])
                     bin_tokens.append(token_count)
 
                 pbar.update(1)
@@ -351,26 +373,49 @@ class BinPacker:
         print(f"\n📦 Packing with {algo_name} algorithm (⚡ optimized O(n log n) mode)...")
         print(f"   Capacity: {self.capacity:,} tokens")
         print(f"   Max samples per bin: {self.max_samples_per_bin}")
+        if self.max_patches_per_bin:
+            print(f"   Max patches per bin: {self.max_patches_per_bin:,}")
+        if self.min_patches_per_bin:
+            print(f"   Min patches per bin: {self.min_patches_per_bin:,}")
 
-        # Sort by token count descending
-        print("   Sorting samples by token count...")
+        # Sort primarily by token count, then by patch count, both descending.
+        # This places "heavy in both dims" items first so subsequent fills can patch up the slack.
+        print("   Sorting samples by token/patch count...")
         t0 = time.time()
+        # When patch_cap is active, sort by (patch desc, token desc) so the
+        # heaviest-ViT samples anchor bins first; lighter / zero-patch samples
+        # then slot into remaining patch/token room. When no patch_cap, fall
+        # back to token-primary ordering for classic BFD.
+        if self.max_patches_per_bin:
+            sort_key = lambda kv: (kv[1][1], kv[1][0])  # (patch, token)
+        else:
+            sort_key = lambda kv: (kv[1][0], kv[1][1])  # (token, patch)
         sorted_samples = sorted(
-            self.token_data.items(), key=lambda x: x[1], reverse=True
+            self.token_data.items(),
+            key=sort_key,
+            reverse=True,
         )
         print(f"   Sorting complete in {time.time() - t0:.1f}s")
 
-        bins: list[list[tuple[int, int, str]]] = []
+        bins: list[list[tuple[int, int, str, int]]] = []
         bin_tokens: list[int] = []
+        bin_patches: list[int] = []
         bin_counts: list[int] = []
 
-        # Maintain available bins in a SortedList keyed by (remaining_capacity, bin_index).
-        # Sorted ascending: smallest remaining first → tightest fit at search position.
-        # Invariant: every entry in `available` has count < max_samples_per_bin.
+        # available: SortedList of (remaining_tokens, bin_index).
+        # Bins here still have BOTH token room AND patch room (or no patch_cap).
         available = SortedList()
+        # patch_full_avail: bins whose patch_cap is exhausted but still have
+        # token room. Only zero-patch (text-only) samples may go here.
+        patch_full_avail = SortedList()
+
+        patch_cap = self.max_patches_per_bin or 0  # 0 = no cap
+        patch_floor = self.min_patches_per_bin or 0
 
         start_time = time.time()
         total_samples = len(sorted_samples)
+        patch_overflow_skips = 0
+        zero_patch_into_full = 0  # text-only samples placed into patch-full bins
 
         with tqdm(
             total=total_samples,
@@ -378,54 +423,156 @@ class BinPacker:
             unit="sample",
             bar_format="   {l_bar}{bar:30}{r_bar}",
         ) as pbar:
-            for sample_name, token_count in sorted_samples:
+            for sample_name, (token_count, patch_count) in sorted_samples:
                 placed = False
 
-                # Binary search: find first entry with remaining >= token_count.
-                # In Python, (token_count,) < (token_count, any_non_negative_idx),
-                # so bisect_left lands right before all entries with remaining == token_count.
+                # Search candidates: walk from tightest-fit forward until we find
+                # one that also satisfies the patch_cap (if enabled).
                 pos = available.bisect_left((token_count,))
 
-                if pos < len(available):
-                    # Tightest fit: entry at `pos` has the smallest remaining >= token_count.
-                    # Invariant guarantees count < max_samples_per_bin.
-                    rem, bidx = available.pop(pos)
+                # Snapshot scanning indices we touched to put back rejected candidates.
+                rejected: list[tuple[int, int]] = []
+                while pos < len(available):
+                    rem, bidx = available[pos]
+                    if patch_cap and bin_patches[bidx] + patch_count > patch_cap:
+                        # Patch overflow — move bin to patch_full_avail (still
+                        # has token room for zero-patch samples) and skip.
+                        rejected.append((rem, bidx, True))  # True = move to full pool
+                        available.pop(pos)
+                        patch_overflow_skips += 1
+                        continue
 
-                    bins[bidx].append((0, token_count, sample_name))
+                    # Accept this bin.
+                    available.pop(pos)
+                    bins[bidx].append((0, token_count, sample_name, patch_count))
                     bin_tokens[bidx] += token_count
+                    bin_patches[bidx] += patch_count
                     bin_counts[bidx] += 1
                     new_rem = rem - token_count
 
-                    # Re-add only if bin still has both capacity and room for more samples.
                     if new_rem > 0 and bin_counts[bidx] < self.max_samples_per_bin:
-                        available.add((new_rem, bidx))
-
+                        if not patch_cap or bin_patches[bidx] < patch_cap:
+                            available.add((new_rem, bidx))
+                        else:
+                            # Patch exhausted — keep bin alive for zero-patch samples.
+                            patch_full_avail.add((new_rem, bidx))
                     placed = True
+                    break
+
+                # Restore rejected candidates. Patch-overflow ones go to the
+                # zero-patch-only pool; pure scan-bypass ones go back to available.
+                for entry in rejected:
+                    rem, bidx, to_full = entry
+                    if to_full:
+                        patch_full_avail.add((rem, bidx))
+                    else:
+                        available.add((rem, bidx))
+
+                # If still not placed AND this sample is zero-patch, try the
+                # patch-full pool: any bin with token room accepts it.
+                if not placed and patch_count == 0 and patch_full_avail:
+                    pos2 = patch_full_avail.bisect_left((token_count,))
+                    if pos2 < len(patch_full_avail):
+                        rem, bidx = patch_full_avail.pop(pos2)
+                        bins[bidx].append((0, token_count, sample_name, patch_count))
+                        bin_tokens[bidx] += token_count
+                        bin_counts[bidx] += 1
+                        new_rem = rem - token_count
+                        if new_rem > 0 and bin_counts[bidx] < self.max_samples_per_bin:
+                            patch_full_avail.add((new_rem, bidx))
+                        zero_patch_into_full += 1
+                        placed = True
 
                 if not placed:
-                    # Create a new bin for this sample.
                     new_idx = len(bins)
-                    bins.append([(0, token_count, sample_name)])
+                    bins.append([(0, token_count, sample_name, patch_count)])
                     bin_tokens.append(token_count)
+                    bin_patches.append(patch_count)
                     bin_counts.append(1)
                     new_rem = self.capacity - token_count
                     if new_rem > 0 and 1 < self.max_samples_per_bin:
-                        available.add((new_rem, new_idx))
+                        if not patch_cap or patch_count < patch_cap:
+                            available.add((new_rem, new_idx))
+                        else:
+                            # Oversized singleton bin: patch already over cap,
+                            # but token room remains → reserve for zero-patch fills.
+                            patch_full_avail.add((new_rem, new_idx))
 
                 pbar.update(1)
                 if pbar.n % 50000 == 0:
                     pbar.set_postfix(
                         bins=len(bins),
                         avail=len(available),
+                        skips=patch_overflow_skips,
+                        zfill=zero_patch_into_full,
                         elapsed=f"{time.time() - start_time:.0f}s",
                     )
 
         elapsed = time.time() - start_time
         print(f"✅ Packing complete: {len(bins):,} bins created in {elapsed:.1f}s")
         print(f"   Speed: {total_samples / elapsed:.0f} samples/sec")
-        print(f"   Remaining available bins: {len(available)}")
+        print(f"   Patch-overflow placements rejected: {patch_overflow_skips:,}")
+        print(f"   Zero-patch fills into patch-full bins: {zero_patch_into_full:,}")
+        print(f"   Remaining available bins: {len(available)} (+{len(patch_full_avail)} patch-full)")
+
+        # --- Post-pass: enforce min_patches_per_bin (best-effort).
+        if patch_floor:
+            self._enforce_patch_floor(bins, bin_tokens, bin_patches, patch_floor)
 
         return self._convert_to_numpy(bins)
+
+    def _enforce_patch_floor(
+        self,
+        bins: list[list[tuple[int, int, str, int]]],
+        bin_tokens: list[int],
+        bin_patches: list[int],
+        patch_floor: int,
+    ) -> None:
+        """Best-effort: try to lift bins below ``patch_floor`` by swapping in
+        an item with patches from a 'rich' bin. Does not split samples.
+        If patch_cap is also active we respect it on the receiving side.
+        """
+        cap = self.max_patches_per_bin or 0
+        donor_order = sorted(range(len(bins)), key=lambda i: -bin_patches[i])
+        donor_ptr = 0
+        moved = 0
+        for ridx in range(len(bins)):
+            if bin_patches[ridx] >= patch_floor:
+                continue
+            # Find a donor whose removing one item still keeps it above floor,
+            # and where the item fits in the receiver token-wise.
+            for dpos in range(donor_ptr, len(donor_order)):
+                didx = donor_order[dpos]
+                if didx == ridx or bin_patches[didx] <= patch_floor:
+                    continue
+                # Pick the smallest-patch item from donor that still helps receiver.
+                items = bins[didx]
+                # candidates with patches > 0
+                cand = sorted(
+                    [(i, it) for i, it in enumerate(items) if it[3] > 0],
+                    key=lambda x: x[1][3],
+                )
+                for i, it in cand:
+                    w, tlen, name, pc = it
+                    if bin_tokens[ridx] + tlen > self.capacity:
+                        continue
+                    if cap and bin_patches[ridx] + pc > cap:
+                        continue
+                    if bin_patches[didx] - pc < patch_floor:
+                        continue
+                    # Move
+                    bins[ridx].append(it)
+                    bin_tokens[ridx] += tlen
+                    bin_patches[ridx] += pc
+                    del bins[didx][i]
+                    bin_tokens[didx] -= tlen
+                    bin_patches[didx] -= pc
+                    moved += 1
+                    break
+                if bin_patches[ridx] >= patch_floor:
+                    break
+        if moved:
+            print(f"   Patch-floor pass: moved {moved} item(s) to lift underloaded bins.")
 
     def save_bins(self, bins: list[np.ndarray], output_path: str) -> None:
         """
@@ -507,7 +654,7 @@ class BinPacker:
         avg_samples = total_samples / total_bins
 
         # Theoretical minimum bins
-        all_tokens = sum(self.token_data.values())
+        all_tokens = sum(t for t, _ in self.token_data.values())
         min_bins_theoretical = all_tokens / self.capacity
         efficiency = (min_bins_theoretical / total_bins) * 100
 
@@ -547,6 +694,26 @@ class BinPacker:
             print(f"     {label:8s}: {count:8,} ({pct:5.1f}%)")
             stats[f"util_{low}_{min(high, 100)}"] = count
 
+        # Patch load balance (ViT side) — only meaningful if patch counts are present.
+        bin_patches = np.array([int(sum(int(s["p"]) for s in b)) for b in bins], dtype=np.int64)
+        if bin_patches.sum() > 0:
+            mean_p = float(bin_patches.mean())
+            std_p = float(bin_patches.std())
+            cv = std_p / mean_p if mean_p > 0 else 0.0
+            p50 = float(np.percentile(bin_patches, 50))
+            p90 = float(np.percentile(bin_patches, 90))
+            p99 = float(np.percentile(bin_patches, 99))
+            print("\n   ViT patch load balance (per bin):")
+            print(f"     mean={mean_p:,.0f}  std={std_p:,.0f}  CV={cv:.3f}")
+            print(f"     min={bin_patches.min():,}  max={bin_patches.max():,}")
+            print(f"     p50={p50:,.0f}  p90={p90:,.0f}  p99={p99:,.0f}")
+            print(f"     p99/p50 ratio = {p99 / max(1, p50):.2f}x")
+            stats.update({
+                "patch_mean": mean_p, "patch_std": std_p, "patch_cv": cv,
+                "patch_p50": p50, "patch_p90": p90, "patch_p99": p99,
+                "patch_min": int(bin_patches.min()), "patch_max": int(bin_patches.max()),
+            })
+
         return stats
 
 
@@ -584,6 +751,25 @@ def parse_args() -> argparse.Namespace:
         choices=["ffd", "bfd"],
         help="Packing algorithm: ffd (First Fit Decreasing) or bfd (Best Fit Decreasing)",
     )
+    parser.add_argument(
+        "--max-patches-per-bin",
+        type=int,
+        default=0,
+        help="Hard upper bound on per-bin ViT patches (0 = disabled).",
+    )
+    parser.add_argument(
+        "--min-patches-per-bin",
+        type=int,
+        default=0,
+        help="Soft lower bound on per-bin ViT patches (0 = disabled).",
+    )
+    parser.add_argument(
+        "--patch-slack",
+        type=float,
+        default=0.0,
+        help="If > 0 and --max-patches-per-bin is 0, derive cap from baseline "
+             "as avg_patches_per_bin * (1 + slack).",
+    )
     return parser.parse_args()
 
 
@@ -610,13 +796,26 @@ def main() -> int:
     packer = BinPacker(
         capacity=args.capacity,
         max_samples_per_bin=args.max_samples,
+        max_patches_per_bin=args.max_patches_per_bin,
+        min_patches_per_bin=args.min_patches_per_bin,
     )
 
     # Parse token info
     packer.parse_token_info(args.input)
 
     # Analyze distribution
-    packer.analyze_distribution()
+    dist_stats = packer.analyze_distribution()
+
+    # If user requested auto patch cap via --patch-slack, derive it now.
+    if args.patch_slack > 0 and packer.max_patches_per_bin == 0 and dist_stats.get("total_patches"):
+        total_p = dist_stats["total_patches"]
+        total_t = dist_stats["total_tokens"]
+        # baseline bin count ≈ total_tokens / capacity (lower bound)
+        baseline_bins = max(1, total_t / args.capacity)
+        avg_patches = total_p / baseline_bins
+        packer.max_patches_per_bin = int(avg_patches * (1.0 + args.patch_slack))
+        print(f"\n   🤖 Auto patch cap: avg={avg_patches:.0f}, slack={args.patch_slack:.2f} "
+              f"-> max_patches_per_bin={packer.max_patches_per_bin:,}")
 
     # Pack samples (use optimized O(n log n) algorithm if sortedcontainers is available)
     if _HAS_SORTED_CONTAINERS:

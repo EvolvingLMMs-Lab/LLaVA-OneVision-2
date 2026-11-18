@@ -151,17 +151,24 @@ def load_all_weights(
 ) -> list[LoadReport]:
     reports: list[LoadReport] = []
 
+    # target_dtype is intentionally NOT forwarded: the model already carries its
+    # per-parameter storage dtype (set in build_empty, which keeps source-float32
+    # params such as Qwen3.5 SSM A_log / linear-attn norm in fp32). apply_weights
+    # casts each source tensor to its *target parameter* dtype, so fp32 params stay
+    # fp32 instead of being quantized to bf16 and back.
+    _ = target_dtype
+
     vit_src = _resolve_local_or_hub(vit_path)
     vit_sd = remap_vit(dict(iter_safetensors(vit_src)))
-    reports.append(apply_weights(model, vit_sd.items(), "ViT", target_dtype=target_dtype))
+    reports.append(apply_weights(model, vit_sd.items(), "ViT", target_dtype=None))
 
     if adapter_path:
         adapter_sd = remap_adapter(dict(iter_safetensors(adapter_path)))
-        reports.append(apply_weights(model, adapter_sd.items(), "Adapter", target_dtype=target_dtype))
+        reports.append(apply_weights(model, adapter_sd.items(), "Adapter", target_dtype=None))
 
     llm_src = _resolve_local_or_hub(llm_path)
     llm_sd = remap_llm(dict(iter_safetensors(llm_src)))
-    reports.append(apply_weights(model, llm_sd.items(), "LLM", target_dtype=target_dtype))
+    reports.append(apply_weights(model, llm_sd.items(), "LLM", target_dtype=None))
 
     return reports
 

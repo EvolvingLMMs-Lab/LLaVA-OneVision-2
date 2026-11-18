@@ -2,6 +2,7 @@
 from collections import OrderedDict
 from typing import Dict, Literal, Optional
 
+import torch
 from torch import Tensor
 
 from megatron.core import InferenceParams, tensor_parallel
@@ -9,6 +10,7 @@ from megatron.core.config_logger import has_config_logger_enabled, log_config_to
 from megatron.core.dist_checkpointing.mapping import ShardedStateDict
 from megatron.core.models.common.embeddings.language_model_embedding import LanguageModelEmbedding
 from megatron.core.models.common.embeddings.rotary_pos_embedding import RotaryEmbedding
+from aiak_training_llm.models.qwen35.qwen35_rope import Qwen35RotaryEmbedding
 from megatron.core.models.common.language_module.language_module import LanguageModule
 from megatron.core.packed_seq_params import PackedSeqParams
 from megatron.core.transformer.enums import ModelType, AttnMaskType
@@ -124,17 +126,30 @@ class QwenModel(LanguageModule):
                 scatter_to_sequence_parallel=scatter_embedding_sequence_parallel,
             )
 
+        # Qwen3.5 hybrid-attention backbone uses interleaved 3D M-RoPE (partial rotary)
+        # instead of the standard 1D RotaryEmbedding. Selected via config flag set by
+        # the provider (apply_qwen35_language_config) / arch config.
+        self.use_qwen35_mrope = getattr(config, 'language_model_type', None) in ('qwen3_5', 'qwen35')
+        if self.use_qwen35_mrope:
+            # Proven parity recipe flags (idempotent if provider already set them).
+            config.rotary_interleaved = False
+            # config.apply_rope_fusion = False
+            config.multi_latent_attention = False
+
         if self.position_embedding_type == 'rope' and not self.config.multi_latent_attention:
-            self.rotary_pos_emb = RotaryEmbedding(
-                kv_channels=self.config.kv_channels,
-                rotary_percent=rotary_percent,
-                rotary_interleaved=self.config.rotary_interleaved,
-                seq_len_interpolation_factor=seq_len_interpolation_factor,
-                rotary_base=rotary_base,
-                rope_scaling=rope_scaling,
-                rope_scaling_factor=rope_scaling_factor,
-                use_cpu_initialization=self.config.use_cpu_initialization,
-            )
+            if self.use_qwen35_mrope:
+                self.rotary_pos_emb = Qwen35RotaryEmbedding(self.config)
+            else:
+                self.rotary_pos_emb = RotaryEmbedding(
+                    kv_channels=self.config.kv_channels,
+                    rotary_percent=rotary_percent,
+                    rotary_interleaved=self.config.rotary_interleaved,
+                    seq_len_interpolation_factor=seq_len_interpolation_factor,
+                    rotary_base=rotary_base,
+                    rope_scaling=rope_scaling,
+                    rope_scaling_factor=rope_scaling_factor,
+                    use_cpu_initialization=self.config.use_cpu_initialization,
+                )
 
         # Cache for RoPE tensors which do not change between iterations.
         self.rotary_pos_emb_cache = {}
@@ -227,6 +242,14 @@ class QwenModel(LanguageModule):
             runtime_gather_output (bool): Gather output at runtime. Default None means
                 `parallel_output` arg in the constructor will be used.
         """
+        # Invalidate the per-step Qwen3.5 LLM RoPE cos/sin cache. The freqs
+        # tensor is rebuilt every step and the CUDA allocator reuses freed
+        # memory, so the data_ptr alone is not a safe cross-step key.
+        # Mirrors the ViT-side `_ROPE_CACHE.clear()` in commit 1b9d69b
+        # (OneVisionEncoderModel.forward).
+        from aiak_training_llm.models.qwen35.qwen35_rope import clear_llm_rope_cache
+        clear_llm_rope_cache()
+
         # If decoder_input is provided (not None), then input_ids and position_ids are ignored.
         # Otherwise, apply embedding layer on input_ids and position_ids to get decoder_input.
 
@@ -241,13 +264,72 @@ class QwenModel(LanguageModule):
 
         # Rotary positional embeddings (embedding is None for PP intermediate devices)
         if rotary_pos_emb is None and self.position_embedding_type == 'rope' and not self.config.multi_latent_attention:
-            rotary_seq_len = self.rotary_pos_emb.get_rotary_seq_len(
-                inference_params, self.decoder, decoder_input, self.config, packed_seq_params
-            )
-            rotary_pos_emb = self.rotary_pos_emb(
-                rotary_seq_len,
-                packed_seq=packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
-            )
+            if self.use_qwen35_mrope:
+                # Qwen3.5 interleaved 3D M-RoPE. Derive (seq_len, batch) from whichever
+                # input is present (decoder_input is [S, B, H]; input_ids is [B, S]).
+                # sp_scattered: the tensor S was read from is the SP-scattered hidden
+                # state [S/tp, B, H] (decoder_input on the first stage, the received
+                # input_tensor on later stages), so S must be up-scaled under SP.
+                sp_scattered = False
+                if decoder_input is not None:
+                    S, B = decoder_input.shape[0], decoder_input.shape[1]
+                    dev = decoder_input.device
+                    sp_scattered = True
+                elif input_ids is not None:
+                    B, S = input_ids.shape[0], input_ids.shape[1]
+                    dev = input_ids.device
+                elif getattr(self.decoder, 'input_tensor', None) is not None:
+                    # Non-first pipeline stage: LlavaOnevision2 calls the language model
+                    # with input_ids=None / position_ids=None and no decoder_input; the
+                    # hidden state arrives through set_input_tensor().
+                    pp_input = self.decoder.input_tensor
+                    S, B = pp_input.shape[0], pp_input.shape[1]
+                    dev = pp_input.device
+                    sp_scattered = True
+                else:
+                    S, B, dev = position_ids.shape[-1], position_ids.shape[0], position_ids.device
+                # Under sequence-parallel, decoder_input is the SP-scattered [S/tp, B, H];
+                # rope must be built at the FULL gathered length because attention's
+                # SP->TP all-gather restores the full sequence before rope is applied.
+                # Mirror the standard get_rotary_seq_len up-scale (rotary_pos_embedding.py).
+                # Only up-scale SP-scattered sources so full-length input_ids/position_ids
+                # fallbacks are not double-scaled.
+                if sp_scattered and self.config.sequence_parallel:
+                    S = S * self.config.tensor_model_parallel_size
+                mrope_position_ids = getattr(self, '_mrope_position_ids', None)
+                if mrope_position_ids is None:
+                    # TODO(multimodal): for image/video inputs the 3 (T,H,W) position-id
+                    # rows must be computed per-sample from image_grid_thw/video_grid_thw
+                    # (cf. qwen2_vl get_rope_index). Until the LlavaOnevision2 model wires
+                    # that in and stashes it on self.language_model._mrope_position_ids,
+                    # fall back to the text-path positions (T==H==W==arange), which is
+                    # exact for pure-text and a valid placeholder for the smoke forward.
+                    mrope_position_ids = (
+                        torch.arange(S, device=dev).view(1, 1, S).expand(3, B, S).contiguous()
+                    )
+                elif mrope_position_ids.shape[-1] != S:
+                    # get_rope_index returns unpadded full-length positions; pad (by
+                    # replicating the last position, whose value is irrelevant since pad
+                    # tokens are masked/discarded and unattended) or truncate to the
+                    # SP-padded gathered length S so cos_/sin_ broadcast against the query.
+                    L = mrope_position_ids.shape[-1]
+                    if L < S:
+                        pad = mrope_position_ids[..., -1:].expand(3, B, S - L)
+                        mrope_position_ids = torch.cat((mrope_position_ids, pad), dim=-1).contiguous()
+                    else:
+                        mrope_position_ids = mrope_position_ids[..., :S].contiguous()
+                rotary_pos_emb = self.rotary_pos_emb(
+                    mrope_position_ids,
+                    packed_seq=packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
+                )
+            else:
+                rotary_seq_len = self.rotary_pos_emb.get_rotary_seq_len(
+                    inference_params, self.decoder, decoder_input, self.config, packed_seq_params
+                )
+                rotary_pos_emb = self.rotary_pos_emb(
+                    rotary_seq_len,
+                    packed_seq=packed_seq_params is not None and packed_seq_params.qkv_format == 'thd',
+                )
 
         # Run decoder.
         hidden_states = self.decoder(
@@ -268,27 +350,54 @@ class QwenModel(LanguageModule):
         if self.share_embeddings_and_output_weights:
             output_weight = self.shared_embedding_or_output_weight()
 
-        logits, _ = self.output_layer(
-            hidden_states, weight=output_weight, runtime_gather_output=runtime_gather_output
-        )
+        # Chunked output projection + cross-entropy (env CE_SEQ_CHUNKS, default 1 = off).
+        # At long context the full [s, b, vocab/tp] logits OOM (25GB bf16 + fp32 CE). For the
+        # training path we gather the SP-sharded hidden ONCE, then loop over sequence chunks
+        # doing a plain F.linear projection + per-chunk CE, concatenating per-token losses.
+        # Plain matmul yields a partial (per-vocab-shard) input grad that the gather's
+        # reduce-scatter backward sums exactly ONCE -- identical to the unchunked output_layer
+        # (using the SP=False module path instead would insert a second all-reduce and double
+        # the grad). Full logits are never materialized. Verified fwd+grad identical.
+        _ce_chunks = int(__import__('os').environ.get('CE_SEQ_CHUNKS', '1'))
+        _chunked = labels is not None and _ce_chunks > 1
 
-        if has_config_logger_enabled(self.config):
-            payload = OrderedDict(
-                {
-                    'input_ids': input_ids,
-                    'position_ids': position_ids,
-                    'attention_mask': attention_mask,
-                    'decoder_input': decoder_input,
-                    'logits': logits,
-                }
+        if not _chunked:
+            logits, _ = self.output_layer(
+                hidden_states, weight=output_weight, runtime_gather_output=runtime_gather_output
             )
-            log_config_to_disk(self.config, payload, prefix='input_and_logits')
 
-        if labels is None:
-            # [s b h] => [b s h]
-            return logits.transpose(0, 1).contiguous()
+            if has_config_logger_enabled(self.config):
+                payload = OrderedDict(
+                    {
+                        'input_ids': input_ids,
+                        'position_ids': position_ids,
+                        'attention_mask': attention_mask,
+                        'decoder_input': decoder_input,
+                        'logits': logits,
+                    }
+                )
+                log_config_to_disk(self.config, payload, prefix='input_and_logits')
 
-        loss = self.compute_language_model_loss(labels, logits)
+            if labels is None:
+                # [s b h] => [b s h]
+                return logits.transpose(0, 1).contiguous()
+
+            loss = self.compute_language_model_loss(labels, logits)
+        else:
+            import torch.nn.functional as _F
+            from megatron.core.tensor_parallel.mappings import (
+                gather_from_sequence_parallel_region as _gather_sp,
+            )
+            _w = output_weight if output_weight is not None else self.output_layer.weight
+            _hs = _gather_sp(hidden_states) if self.config.sequence_parallel else hidden_states
+            _s = _hs.shape[0]
+            _c = (_s + _ce_chunks - 1) // _ce_chunks
+            _parts = []
+            for _st in range(0, _s, _c):
+                _en = min(_st + _c, _s)
+                _lg = _F.linear(_hs[_st:_en], _w)
+                _parts.append(self.compute_language_model_loss(labels[:, _st:_en], _lg))
+            loss = __import__('torch').cat(_parts, dim=1)
 
         return loss
 

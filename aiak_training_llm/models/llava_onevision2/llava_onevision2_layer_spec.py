@@ -1,7 +1,9 @@
 import torch
 from megatron.core.extensions.transformer_engine import (
     TEDotProductAttention,
+    TEColumnParallelLinear,
     TELayerNormColumnParallelLinear,
+    TELinear,
     TERowParallelLinear,
 )
 from megatron.core.fusions.fused_bias_dropout import get_bias_dropout_add
@@ -11,11 +13,29 @@ from megatron.core.transformer.mlp import MLP, MLPSubmodules
 from megatron.core.transformer.spec_utils import ModuleSpec
 from megatron.core.transformer.transformer_layer import TransformerLayer, TransformerLayerSubmodules
 
+from aiak_training_llm.models.custom.common.local_norm import LocalNorm
+from aiak_training_llm.models.llava_onevision2.adapter import AdapterSubmodules, get_adapter_type
 from aiak_training_llm.utils import opt_switches
 from aiak_training_llm.models.llava_onevision1_5.llava_onevision1_5_layer_spec import (
-    get_adapeter_layer_with_spec,
     get_qwen_layer_with_te_spec,
 )
+
+
+def get_adapeter_layer_with_spec() -> AdapterSubmodules:
+    """Use ADAPTER_TYPE to select local or tensor-parallel adapter linears."""
+    adapter_type = get_adapter_type()
+    if adapter_type == "TP_LINEAR":
+        linear_fc1 = TEColumnParallelLinear
+        linear_fc2 = TERowParallelLinear
+    elif adapter_type == "LINEAR":
+        linear_fc1 = TELinear
+        linear_fc2 = TELinear
+
+    return AdapterSubmodules(
+        layernorm=LocalNorm,
+        linear_fc1=linear_fc1,
+        linear_fc2=linear_fc2,
+    )
 
 
 def rotate_half(x):
@@ -34,6 +54,15 @@ def rotate_half(x):
     x_even = x[..., ::2]
     x_odd = x[..., 1::2]
     return torch.stack((-x_odd, x_even), dim=-1).flatten(-2)
+
+
+# Cos/sin cache for ViT RoPE. The freqs tensor is the same Python object across
+# all 24 ViT layers and both forward/backward calls within a single encoder
+# step, so a cache hit skips ~96 redundant cos/sin/repeat computations per
+# step. Keyed by (data_ptr, shape, cu_seqlens, t.dtype) to be robust against
+# pointer reuse after free; bounded to one entry by clearing before insert so
+# no encoder-side cleanup is required.
+_ROPE_CACHE = {}
 
 
 def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interleaved=False):
@@ -55,17 +84,20 @@ def apply_rotary_pos_emb_vision(t, freqs, config, cu_seqlens=None, rotary_interl
 
         if fused_vision_rope.supported(t, freqs, cu_seqlens):
             return fused_vision_rope.fused_apply_rotary_pos_emb_vision(t, freqs)
-    orig_dtype = t.dtype
-    t = t.float()
-    if cu_seqlens is not None:
-        freqs = freqs.squeeze(1)
-        cos_ = freqs.cos().float().repeat(1, 1, 2)
-        sin_ = freqs.sin().float().repeat(1, 1, 2)
-    else:
-        cos_ = freqs.cos().float().repeat(1, 1, 1, 2)
-        sin_ = freqs.sin().float().repeat(1, 1, 1, 2)
-    t = (t * cos_) + (rotate_half(t) * sin_)
-    return t.to(orig_dtype)
+    key = (freqs.data_ptr(), tuple(freqs.shape), cu_seqlens is not None, t.dtype)
+    cs = _ROPE_CACHE.get(key)
+    if cs is None:
+        f = freqs.squeeze(1) if cu_seqlens is not None else freqs
+        rep = (1, 1, 2) if cu_seqlens is not None else (1, 1, 1, 2)
+        # bf16 cache (1b9d69b version, parity 3.1e-2 vs uncached fp32 path).
+        # Saved: t.float()/t.to(orig_dtype) round-trip per call.
+        cos_ = f.cos().to(t.dtype).repeat(*rep)
+        sin_ = f.sin().to(t.dtype).repeat(*rep)
+        _ROPE_CACHE.clear()
+        _ROPE_CACHE[key] = (cos_, sin_)
+        cs = (cos_, sin_)
+    cos_, sin_ = cs
+    return (t * cos_) + (rotate_half(t) * sin_)
 
 
 def get_vision_layer_with_spec() -> ModuleSpec:

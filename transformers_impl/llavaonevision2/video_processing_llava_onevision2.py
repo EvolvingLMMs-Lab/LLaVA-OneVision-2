@@ -1,17 +1,14 @@
 """Video frame extraction helpers for LlavaOnevision2 native video input.
 
-Stage 1.1 of NATIVE_VIDEO_PLAN.md: move the frame-extraction utilities from
-the OLD lmms-eval wrapper (lmms_eval/models/simple/llava_onevision2.py) into
-the checkpoint's remote_code, so future stages can build a real
-`LlavaOnevision2VideoProcessor` on top of them.
+Helpers (decord-first / opencv-fallback decoding) are used by
+``LlavaOnevision2VideoProcessor`` defined below.
 
-This file is intentionally a verbatim port (logic-preserving) of the OLD
-helpers, with minor cleanups:
-  - dropped wrapper-only imports (`accelerate`, `lmms_eval`, etc.)
+The helpers were ported from the training pipeline with minor cleanups:
+  - dropped wrapper-only imports
   - consolidated timestamp helpers
   - kept decord-first / opencv-fallback decoding identical
 
-Public API (this stage):
+Public API:
   - format_timestamp(seconds) -> "MM:SS.xx"
   - choose_target_frames(duration, max_frames, fixed_num_frames=None,
         target_fps=None) -> int
@@ -22,8 +19,6 @@ Public API (this stage):
         timestamps_dict)
   - extract_video_frames_to_pil(video_path, ...) -> (frames_pil, frame_indices,
         timestamps_dict)
-
-Stage 1.2 will add the `LlavaOnevision2VideoProcessor` class on top.
 """
 
 from __future__ import annotations
@@ -41,7 +36,6 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # Timestamp helpers
 # =============================================================================
-
 
 def format_timestamp(seconds: float) -> str:
     minutes = int(seconds // 60)
@@ -62,7 +56,6 @@ def time_str_to_seconds(t: str) -> float:
 # Frame-count / index selection
 # =============================================================================
 
-
 def choose_target_frames(
     duration_seconds: float,
     max_frames: int,
@@ -71,7 +64,7 @@ def choose_target_frames(
 ) -> int:
     """Choose target frame count based on video duration in seconds.
 
-    Sampling strategy (matches OLD wrapper / training pipeline):
+    Sampling strategy:
       - if ``target_fps`` is set, sample at that fps (capped by ``max_frames``)
       - elif ``fixed_num_frames`` is set, use that exact count
       - else duration < 10s  -> 8 frames
@@ -99,7 +92,6 @@ def select_frame_indices(frame_count: int, target_count: int) -> List[int]:
 # Spatial resize
 # =============================================================================
 
-
 def smart_resize(height, width, patch_size=14, min_pixels=None, max_pixels=None, align_patch_size=None):
     if height <= 0 or width <= 0:
         raise ValueError(f"Invalid size: height={height}, width={width}")
@@ -121,7 +113,6 @@ def smart_resize(height, width, patch_size=14, min_pixels=None, max_pixels=None,
 # Frame extraction (decord first, opencv fallback)
 # =============================================================================
 
-
 def extract_video_frames(
     video_path: str,
     max_frames: int = 32,
@@ -131,7 +122,6 @@ def extract_video_frames(
     resize_frames: bool = True,
     fixed_num_frames: Optional[int] = None,
     target_fps: Optional[float] = None,
-    spatial_merge_size: int = 3,
 ) -> Tuple[List[np.ndarray], torch.Tensor, dict]:
     """Extract frames from a video.
 
@@ -145,7 +135,7 @@ def extract_video_frames(
         min_pixels: minimum pixel budget for resize.
         max_pixels: maximum pixel budget for resize.
         resize_frames: whether to apply :func:`smart_resize` (with
-            ``align_patch_size = patch_size * spatial_merge_size``).
+            ``align_patch_size = patch_size * 2``, i.e. 28 for spatial_merge=2).
         fixed_num_frames: see :func:`choose_target_frames`.
         target_fps: see :func:`choose_target_frames`.
 
@@ -175,26 +165,25 @@ def extract_video_frames(
             fps = 30.0
 
         duration = frame_count / fps
-        target_count = choose_target_frames(duration, max_frames, fixed_num_frames, target_fps)
+        target_count = choose_target_frames(
+            duration, max_frames, fixed_num_frames, target_fps
+        )
         selected_indices = select_frame_indices(frame_count, target_count)
 
-        # OLD-aligned: one-shot batch decode + torchvision BICUBIC+antialias resize.
+        # One-shot batch decode + torchvision BICUBIC+antialias resize.
         # Mirrors qwen_vl_utils.fetch_video, replacing per-frame cv2 INTER_AREA/LINEAR.
         arr = vr.get_batch(selected_indices).asnumpy()  # [N,H,W,3] uint8 RGB
         H, W = arr.shape[1], arr.shape[2]
         if resize_frames and (min_pixels or max_pixels):
             resized_h, resized_w = smart_resize(
-                H,
-                W,
-                patch_size,
+                H, W, patch_size,
                 min_pixels=min_pixels,
                 max_pixels=max_pixels,
-                align_patch_size=patch_size * spatial_merge_size,
+                align_patch_size=patch_size * 2,
             )
             if (resized_h, resized_w) != (H, W):
                 from torchvision import transforms as _T
                 from torchvision.transforms import InterpolationMode as _IM
-
                 video_t = torch.from_numpy(arr).permute(0, 3, 1, 2).contiguous()
                 video_t = _T.functional.resize(
                     video_t,
@@ -211,7 +200,9 @@ def extract_video_frames(
 
         return frames, torch.tensor(frame_indices, dtype=torch.int64), timestamps
     except Exception as e:
-        logger.warning(f"decord failed to open {video_path}: {e}; falling back to OpenCV")
+        logger.warning(
+            f"decord failed to open {video_path}: {e}; falling back to OpenCV"
+        )
 
     # OpenCV fallback.
     import cv2  # type: ignore
@@ -229,7 +220,9 @@ def extract_video_frames(
 
     if frame_count > 0:
         duration = frame_count / fps
-        target_count = choose_target_frames(duration, max_frames, fixed_num_frames, target_fps)
+        target_count = choose_target_frames(
+            duration, max_frames, fixed_num_frames, target_fps
+        )
         selected_indices = select_frame_indices(frame_count, target_count)
 
         for frame_idx in selected_indices:
@@ -246,7 +239,7 @@ def extract_video_frames(
                     patch_size,
                     min_pixels,
                     max_pixels,
-                    align_patch_size=patch_size * spatial_merge_size,
+                    align_patch_size=patch_size * 2,
                 )
                 if (resized_h, resized_w) != (frame.shape[0], frame.shape[1]):
                     interp = (
@@ -273,7 +266,9 @@ def extract_video_frames(
 
         if temp_frames:
             duration = len(temp_frames) / fps
-            target_count = choose_target_frames(duration, max_frames, fixed_num_frames, target_fps)
+            target_count = choose_target_frames(
+                duration, max_frames, fixed_num_frames, target_fps
+            )
             selected_indices = select_frame_indices(len(temp_frames), target_count)
 
             for idx in selected_indices:
@@ -285,7 +280,7 @@ def extract_video_frames(
                         patch_size,
                         min_pixels,
                         max_pixels,
-                        align_patch_size=patch_size * spatial_merge_size,
+                        align_patch_size=patch_size * 2,
                     )
                     if (resized_h, resized_w) != (frame.shape[0], frame.shape[1]):
                         interp = (
@@ -312,7 +307,6 @@ def extract_video_frames_to_pil(
     resize_frames: bool = True,
     fixed_num_frames: Optional[int] = None,
     target_fps: Optional[float] = None,
-    spatial_merge_size: int = 3,
 ):
     """Same as :func:`extract_video_frames` but returns a list of PIL Images."""
     from PIL import Image  # local import: PIL is mandatory for the processor
@@ -326,7 +320,6 @@ def extract_video_frames_to_pil(
         resize_frames=resize_frames,
         fixed_num_frames=fixed_num_frames,
         target_fps=target_fps,
-        spatial_merge_size=spatial_merge_size,
     )
     frames_pil = [Image.fromarray(frame) for frame in frames_np]
     return frames_pil, frame_indices, timestamps
@@ -335,20 +328,17 @@ def extract_video_frames_to_pil(
 # =============================================================================
 # patch_positions construction (row-major + 2x2 block-layout reorder)
 # =============================================================================
-# Verbatim port of the training pipeline logic
-# (qwen2vl_task_encoder.py:61-105 and :340-371) — same as
-# /tmp/ov2_real_infer.py and the lmms-eval wrappers, kept here so the
+# Block-layout reorder mirroring the training pipeline, kept here so the
 # VideoProcessor is self-contained.
-
 
 def _convert_positions_to_block_layout(
     positions: torch.Tensor,
     t: int,
     h: int,
     w: int,
-    spatial_merge_size: int = 3,
+    spatial_merge_size: int = 2,
 ) -> torch.Tensor:
-    """Reorder ``[t*h*w, 3]`` row-major positions to sms x sms block layout."""
+    """Reorder ``[t*h*w, 3]`` row-major positions to 2x2 block layout."""
     sms = spatial_merge_size
     if sms == 1:
         return positions
@@ -356,24 +346,29 @@ def _convert_positions_to_block_layout(
     total = t * h * w
     indices = torch.arange(total, device=device).view(t, h, w)
     h_m, w_m = h // sms, w // sms
-    indices = indices.view(t, h_m, sms, w_m, sms).permute(0, 1, 3, 2, 4).contiguous().view(total)
+    indices = (
+        indices.view(t, h_m, sms, w_m, sms)
+        .permute(0, 1, 3, 2, 4)
+        .contiguous()
+        .view(total)
+    )
     return positions[indices]
 
 
 def build_patch_positions(
     grid_thw: torch.Tensor,
-    spatial_merge_size: int = 3,
+    spatial_merge_size: int = 2,
     frame_indices: Optional[List[Optional[torch.Tensor]]] = None,
 ) -> torch.Tensor:
     """Build block-layout ``[t,h,w]`` patch positions for one or many videos/images.
 
     Args:
         grid_thw: ``[num_samples, 3]`` LongTensor (T, H_p, W_p) per sample.
-        spatial_merge_size: vision tower spatial-merge size (default 3).
+        spatial_merge_size: vision tower spatial-merge size (default 2).
         frame_indices: optional list (one entry per row of ``grid_thw``) of
             real frame indices to use as the t-coordinate. Each entry should
             be a 1-D LongTensor of length ``T`` for that sample. When provided
-            this matches the training pipeline (``qwen2vl_task_encoder.py``),
+            this matches the training pipeline,
             where ``t`` is the original frame number in the source video so
             the vision tower's 3-D RoPE encodes the actual temporal position
             rather than a 0..T-1 dense index. Pass ``None`` for an entry to
@@ -396,7 +391,8 @@ def build_patch_positions(
             fi = torch.as_tensor(sample_frame_idx, dtype=torch.int64)
             if fi.numel() != t_v:
                 raise ValueError(
-                    f"frame_indices[{sample_idx}] has length {fi.numel()} but grid_thw[{sample_idx}, 0] = {t_v}"
+                    f"frame_indices[{sample_idx}] has length {fi.numel()} but "
+                    f"grid_thw[{sample_idx}, 0] = {t_v}"
                 )
             t_coords = fi.repeat_interleave(h_v * w_v)
         else:
@@ -409,11 +405,11 @@ def build_patch_positions(
 
 
 # =============================================================================
-# LlavaOnevision2VideoProcessor (stage 1.2)
+# LlavaOnevision2VideoProcessor
 # =============================================================================
 # A thin processor that wraps `Qwen2VLImageProcessor` to convert raw video
 # files (or pre-decoded frame lists) into the tensor bundle needed by the
-# NEW LlavaOnevision2 model.
+# LlavaOnevision2 model.
 #
 # Output (BatchFeature):
 #   - pixel_values_videos : [sum(T*H_p*W_p), C, P, P]      patch tensor
@@ -421,23 +417,20 @@ def build_patch_positions(
 #   - patch_positions     : [sum(T*H_p*W_p), 3]            block layout
 #   - frame_timestamps    : list[list[float]]              per-video per-frame seconds
 #
-# Per NATIVE_VIDEO_PLAN.md alignment with NEW modeling, we deliberately
+# Aligned with the modeling code, we deliberately
 # DO NOT emit `second_per_grid_ts`.
-
 
 class LlavaOnevision2VideoProcessor:
     """Decode + sample + patch-ify videos for LlavaOnevision2.
 
-    Designed to be standalone (no transformers.ProcessorMixin inheritance for
-    P0) so it can be unit-tested without the full Processor stack. Stage 2
-    will integrate it into a `Llava_Onevision2Processor` that drives
-    `apply_chat_template` and merges with `image_processor` / `tokenizer`.
+    Designed to be standalone (does not inherit ``transformers.ProcessorMixin``)
+    so it can be unit-tested without the full Processor stack.
     """
 
-    # Canonical defaults match the OLD wrapper (`time_step_type=3`).
+    # Canonical defaults.
     DEFAULT_MAX_FRAMES = 384
     DEFAULT_PATCH_SIZE = 14
-    DEFAULT_SPATIAL_MERGE_SIZE = 3
+    DEFAULT_SPATIAL_MERGE_SIZE = 2
     DEFAULT_TEMPORAL_PATCH_SIZE = 1  # this checkpoint ships tps=1
     DEFAULT_MIN_PIXELS = 256 * 28 * 28
     DEFAULT_MAX_PIXELS = 1605632
@@ -462,7 +455,7 @@ class LlavaOnevision2VideoProcessor:
             max_frames / fixed_num_frames / target_fps: see
                 :func:`choose_target_frames`.
             patch_size: vision tower patch size (default 14).
-            spatial_merge_size: vision tower spatial merge factor (default 3).
+            spatial_merge_size: vision tower spatial merge factor (default 2).
             temporal_patch_size: temporal-patch grouping; this checkpoint
                 ships ``temporal_patch_size=1`` so each pv row is one single
                 patch (3*14*14=588) and ``Σ t·h·w == total_patches``
@@ -548,18 +541,24 @@ class LlavaOnevision2VideoProcessor:
               - ``frame_timestamps``    : ``list[list[float]]`` per video
         """
         if return_tensors not in (None, "pt"):
-            raise ValueError(f"return_tensors={return_tensors!r} not supported; only 'pt' is.")
+            raise ValueError(
+                f"return_tensors={return_tensors!r} not supported; only 'pt' is."
+            )
 
         # Normalise to a list of videos.
         if not isinstance(videos, (list, tuple)) or (
-            len(videos) > 0 and (isinstance(videos[0], str) is False) and not isinstance(videos[0], list)
+            len(videos) > 0
+            and (isinstance(videos[0], str) is False)
+            and not isinstance(videos[0], list)
         ):
             # Heuristic: a single video as `list[PIL.Image]` should not be
             # treated as a batch of single-frame videos. We detect that case
             # by checking the inner element type.
             from PIL import Image
 
-            if isinstance(videos, list) and len(videos) > 0 and isinstance(videos[0], (Image.Image, np.ndarray)):
+            if isinstance(videos, list) and len(videos) > 0 and isinstance(
+                videos[0], (Image.Image, np.ndarray)
+            ):
                 videos = [videos]
             elif isinstance(videos, str):
                 videos = [videos]
@@ -583,7 +582,6 @@ class LlavaOnevision2VideoProcessor:
                     resize_frames=self.resize_frames,
                     fixed_num_frames=self.fixed_num_frames,
                     target_fps=self.target_fps,
-                    spatial_merge_size=self.spatial_merge_size,
                 )
                 # Reconstruct fps from any two timestamps, fall back to 30.
                 seconds_seq: List[float] = []
@@ -610,7 +608,7 @@ class LlavaOnevision2VideoProcessor:
                 raise ValueError(f"No frames decoded from video: {video!r}")
 
             # 2) Patch-ify via Qwen2VLImageProcessor.
-            #    Mirroring the OLD wrapper's actual behaviour: video frames go
+            #    Video frames go
             #    through the *image* path, one frame == one image. The
             #    resulting `image_grid_thw` has shape ``[N, 3]`` with each row
             #    ``[1, H_p, W_p]``. We then merge into a single video grid
@@ -641,7 +639,9 @@ class LlavaOnevision2VideoProcessor:
             T_eff = int(image_grid_thw[:, 0].sum().item())  # sum of per-frame t (each is 1)
             H_p = int(image_grid_thw[0, 1].item())
             W_p = int(image_grid_thw[0, 2].item())
-            video_grid_thw = torch.tensor([[T_eff, H_p, W_p]], dtype=image_grid_thw.dtype)
+            video_grid_thw = torch.tensor(
+                [[T_eff, H_p, W_p]], dtype=image_grid_thw.dtype
+            )
             pixel_values_videos = pixel_values  # already [T_eff*H_p*W_p, C, P, P]
 
             # 3) patch_positions in block layout (over the merged video grid).

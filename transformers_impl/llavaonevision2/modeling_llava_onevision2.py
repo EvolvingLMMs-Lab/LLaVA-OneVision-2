@@ -24,6 +24,144 @@ from transformers.utils.generic import is_flash_attention_requested
 from .configuration_llava_onevision2 import LlavaOnevision2Config, LlavaOnevision2VisionConfig
 
 
+def _default_patch_positions_from_grid(grid_thw, spatial_merge_size, device):
+    """Fallback patch positions when the processor does not provide them.
+
+    Matches the training-side default (task encoder): per visual row [t, h, w],
+    t=0 for all patches, h/w row-major over t*h*w patches, then reordered into
+    the spatial-merge block layout the vision RoPE expects.
+    """
+    chunks = []
+    for i in range(grid_thw.shape[0]):
+        t, h, w = (int(x) for x in grid_thw[i].tolist())
+        n = t * h * w
+        hh = torch.arange(h, dtype=torch.long).repeat_interleave(w).repeat(t)
+        ww = torch.arange(w, dtype=torch.long).repeat(h).repeat(t)
+        tt = torch.zeros(n, dtype=torch.long)
+        pos = torch.stack([tt, hh, ww], dim=1)
+        m = spatial_merge_size
+        if m > 1:
+            idx = (
+                torch.arange(n)
+                .view(t, h, w)
+                .view(t, h // m, m, w // m, m)
+                .permute(0, 1, 3, 2, 4)
+                .reshape(-1)
+            )
+            pos = pos[idx]
+        chunks.append(pos)
+    return torch.cat(chunks, dim=0).to(device)
+
+
+
+
+def _mrope_positions_from_patch_positions(
+    input_ids, attention_mask, patch_positions, merge, image_token_id, video_token_id
+):
+    """Train-parity 3D M-RoPE positions.
+
+    Verbatim port of the TRAINING-side ``_rope_from_patch_positions`` (aiak
+    llava_onevision2_model.py) so eval positions match what the model saw in
+    training exactly — including its convention that the text position cursor
+    does NOT skip past a visual's span (text after an image resumes at the
+    pre-image counter). Do NOT "fix" that here; train/infer parity wins.
+
+    Returns (position_ids [3, B, L], mrope_deltas [B, 1]) or (None, None) when
+    patch_positions is absent/unusable (caller falls back to 1D).
+    """
+    pp = patch_positions
+    if isinstance(pp, (list, tuple)):
+        pp = [p for p in pp if p is not None and (p.numel() if torch.is_tensor(p) else len(p)) > 0]
+        if not pp:
+            return None, None
+        pp = torch.cat([p if torch.is_tensor(p) else torch.as_tensor(p) for p in pp], dim=0)
+    if pp is None or (torch.is_tensor(pp) and pp.numel() == 0):
+        return None, None
+    pp = pp.detach().to("cpu").long()
+    if pp.dim() == 3:
+        pp = pp.reshape(-1, pp.shape[-1])
+    if pp.dim() != 2 or pp.shape[1] != 3:
+        return None, None
+    m2 = merge * merge
+    if pp.shape[0] % m2 != 0:
+        return None, None
+    rep = pp[::m2]
+    if merge > 1:
+        blk = pp[: (pp.shape[0] // m2) * m2].view(-1, m2, 3)
+        bt = blk[:, :, 0]
+        bh = blk[:, :, 1] // merge
+        bw = blk[:, :, 2] // merge
+        if not ((bt == bt[:, :1]).all() and (bh == bh[:, :1]).all() and (bw == bw[:, :1]).all()):
+            return None, None
+    merged_t = rep[:, 0].tolist()
+    merged_h = (rep[:, 1] // merge).tolist()
+    merged_w = (rep[:, 2] // merge).tolist()
+    n_tok = len(merged_t)
+
+    device = input_ids.device
+    B, L = input_ids.shape
+    position_ids = torch.ones(3, B, L, dtype=torch.long, device=device)
+    deltas = []
+    vp = 0  # global cursor into merged vision tokens (sequence order across batch rows)
+    for bi in range(B):
+        if attention_mask is not None:
+            valid = attention_mask[bi] == 1
+        else:
+            valid = torch.ones(L, dtype=torch.bool, device=device)
+        seg = input_ids[bi][valid].tolist()
+        n = len(seg)
+        t_row = [0] * n
+        h_row = [0] * n
+        w_row = [0] * n
+        cur = 0
+        vis_base = None
+        vis_first_t = None
+        vis_rank = {}
+        vis_max = 0
+        for i in range(n):
+            tok = seg[i]
+            if tok == image_token_id or tok == video_token_id:
+                if vp < n_tok:
+                    tt, hh, ww = merged_t[vp], merged_h[vp], merged_w[vp]
+                    vp += 1
+                else:
+                    tt, hh, ww = (vis_first_t or 0), 0, 0
+                block_start = (hh == 0 and ww == 0)
+                new_visual = (
+                    vis_base is None
+                    or (block_start and vis_first_t is not None and tt <= vis_first_t)
+                )
+                if new_visual:
+                    if vis_base is not None:
+                        cur = max(cur, vis_base + vis_max + 1)
+                    vis_base = cur
+                    vis_first_t = tt
+                    vis_rank = {}
+                    vis_max = 0
+                if tt not in vis_rank:
+                    vis_rank[tt] = len(vis_rank)
+                f = vis_rank[tt]
+                t_row[i] = vis_base + f
+                h_row[i] = vis_base + hh
+                w_row[i] = vis_base + ww
+                if f > vis_max:
+                    vis_max = f
+                if hh > vis_max:
+                    vis_max = hh
+                if ww > vis_max:
+                    vis_max = ww
+            else:
+                t_row[i] = cur
+                h_row[i] = cur
+                w_row[i] = cur
+                cur += 1
+        pos = torch.tensor([t_row, h_row, w_row], dtype=torch.long, device=device)
+        position_ids[:, bi, valid] = pos
+        # decode continuation: next token is TEXT -> continues the text cursor
+        # (training convention), NOT max(position)+1.
+        deltas.append(cur - L)
+    return position_ids, torch.tensor(deltas, dtype=torch.long, device=device).view(B, 1)
+
 @dataclass
 @auto_docstring(
     custom_intro="""
@@ -840,6 +978,14 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         # 2. RoPE Construction
         if patch_positions is not None and patch_positions.dim() == 3:
             patch_positions = patch_positions.squeeze(0)
+        if patch_positions is None:
+            if grid_thw is None:
+                raise ValueError("vision forward needs `patch_positions` or `grid_thw`")
+            patch_positions = _default_patch_positions_from_grid(
+                grid_thw,
+                getattr(self.config, "spatial_merge_size", 3),
+                hidden_states.device,
+            )
         freqs_visible = self.video_rope.forward_from_positions(patch_positions)
 
         # Concatenate D/2 + D/2 -> D for applying rope
@@ -853,7 +999,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         cu_seqlens, max_seqlen = self._build_cu_seqlens(
             grid_thw=grid_thw,
             total_patches=total_patches,
-            fixed_t=getattr(self.config, "frame_windows_size", 4),
+            fixed_t=getattr(self.config, "frame_windows_size", 1),
             device=hidden_states.device,
         )
 
@@ -973,7 +1119,7 @@ class LlavaOnevision2VisionPretrainedModel(LlavaOnevision2PreTrainedModel):
         cu_seqlens, max_seqlen = self._build_cu_seqlens(
             grid_thw=grid_thw,
             total_patches=total_patches,
-            fixed_t=getattr(self.config, "frame_windows_size", 4),
+            fixed_t=getattr(self.config, "frame_windows_size", 1),
             device=hidden_states.device,
         )
 
@@ -1182,6 +1328,7 @@ class LlavaOnevision2Model(LlavaOnevision2PreTrainedModel):
         video_grid_thw: Optional[torch.LongTensor] = None,
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
+        mm_token_type_ids: torch.Tensor | None = None,  # emitted by Qwen2.5-VL-style processors; accepted and ignored
         **kwargs: Unpack[TransformersKwargs],
     ) -> Union[tuple, LlavaOnevision2ModelOutputWithPast]:
         r"""
@@ -1236,20 +1383,67 @@ class LlavaOnevision2Model(LlavaOnevision2PreTrainedModel):
             )
             inputs_embeds = inputs_embeds.masked_scatter(video_mask, video_embeds)
 
-        # Use simple 1D position_ids
-        if position_ids is None:
+        # 3D M-RoPE position_ids matching TRAINING (_rope_from_patch_positions).
+        # transformers 5.x GenerationMixin pre-computes 1D position_ids in
+        # prepare_inputs_for_generation, so `position_ids is None` never fires
+        # during generate — recompute whenever the given positions are not 3D.
+        if position_ids is None or position_ids.dim() != 3:
             batch_size, seq_length, _ = inputs_embeds.shape
-            if attention_mask is not None:
-                position_ids = attention_mask.long().cumsum(-1) - 1
-                position_ids.masked_fill_(attention_mask == 0, 1)
-            else:
+            given = position_ids
+            position_ids = None
+            past_len = 0
+            if cache_position is not None and cache_position.numel() > 0:
+                past_len = int(cache_position[0].item())
+            elif given is not None and given.numel() > 0:
+                past_len = int(given.reshape(given.shape[0], -1)[0, 0].item())
+            has_vision = input_ids is not None and (
+                (input_ids == self.config.image_token_id) | (input_ids == self.config.video_token_id)
+            ).any()
+            if past_len == 0 and seq_length > 1:
+                if has_vision and patch_positions is not None:
+                    position_ids, mrope_deltas = _mrope_positions_from_patch_positions(
+                        input_ids,
+                        attention_mask,
+                        patch_positions,
+                        getattr(self.config.vision_config, "spatial_merge_size", 3),
+                        self.config.image_token_id,
+                        self.config.video_token_id,
+                    )
+                    if position_ids is not None:
+                        self._mrope_deltas = mrope_deltas
+                        position_ids = position_ids.to(inputs_embeds.device)
+                if position_ids is None:
+                    self._mrope_deltas = None  # text-only / fallback prefill: stay 1D
+            elif getattr(self, "_mrope_deltas", None) is not None:
+                # decode step after an mrope prefill: continue the text cursor
+                if given is not None and given.dim() == 2:
+                    base = given[:, -seq_length:].to(inputs_embeds.device)
+                else:
+                    base = (
+                        torch.arange(past_len, past_len + seq_length, device=inputs_embeds.device)
+                        .view(1, -1)
+                        .expand(batch_size, -1)
+                    )
                 position_ids = (
-                    torch.arange(seq_length, device=inputs_embeds.device).unsqueeze(0).expand(batch_size, -1)
+                    (base + self._mrope_deltas.to(inputs_embeds.device))
+                    .unsqueeze(0)
+                    .expand(3, -1, -1)
+                    .contiguous()
                 )
+            if position_ids is None:
+                position_ids = given
+            if position_ids is None:
+                if attention_mask is not None:
+                    position_ids = attention_mask.long().cumsum(-1) - 1
+                    position_ids.masked_fill_(attention_mask == 0, 1)
+                else:
+                    position_ids = (
+                        torch.arange(seq_length, device=inputs_embeds.device).unsqueeze(0).expand(batch_size, -1)
+                    )
 
-            # Handle cache_position for generation
-            if cache_position is not None and cache_position[0] != 0:
-                position_ids = position_ids + cache_position[0]
+                # Handle cache_position for generation
+                if cache_position is not None and cache_position[0] != 0:
+                    position_ids = position_ids + cache_position[0]
 
         outputs = self.language_model(
             input_ids=None,
@@ -1339,6 +1533,7 @@ class LlavaOnevision2ForConditionalGeneration(LlavaOnevision2PreTrainedModel, Ge
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
         logits_to_keep: Union[int, torch.Tensor] = 0,
+        mm_token_type_ids: torch.Tensor | None = None,  # emitted by Qwen2.5-VL-style processors; accepted and ignored
         **kwargs: Unpack[TransformersKwargs],
     ) -> Union[tuple, LlavaOnevision2CausalLMOutputWithPast]:
         r"""

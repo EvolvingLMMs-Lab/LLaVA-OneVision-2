@@ -1,7 +1,7 @@
 """default pretrain for generative models like GPTS"""
 
 import os
-from functools import partial
+from functools import lru_cache, partial
 
 import torch
 import torch.nn.functional as F
@@ -15,11 +15,12 @@ from megatron.training import get_timers
 from aiak_training_llm.data.multimodal.dataloader_provider import get_train_dataset, get_train_loader
 from aiak_training_llm.data.multimodal.qwen2vl_task_encoder import Qwen2VLTaskEncoder
 from aiak_training_llm.models import get_model_family, get_model_provider
+from aiak_training_llm.data.multimodal.streaming_tokens import STREAMING_STATE_TOKENS
 from aiak_training_llm.models.qwen_vl.utils import get_inputs_on_this_cp_rank
 from aiak_training_llm.train.megatron_trainer import MegatronTrainer
 from aiak_training_llm.train.sft.utils import build_sft_data_collator
 from aiak_training_llm.train.trainer_builder import register_model_trainer
-from aiak_training_llm.utils import constants, get_args
+from aiak_training_llm.utils import constants, get_args, get_tokenizer
 from aiak_training_llm.utils import opt_switches
 from transformers import DataCollatorForSeq2Seq
 
@@ -201,6 +202,16 @@ def _get_batch_host(data_iterator):
             max_seqlen_kv=max_seqlen,
         )
 
+    # Same per-sample state alpha as get_batch(). This path is TP 1 / CP 1 without
+    # sequence parallelism, so neither the SP padding nor the CP slice applies.
+    args = get_args()
+    state_focal_alpha = None
+    if getattr(args, "state_token_focal_loss", False):
+        state_focal_alpha = _sample_state_token_alpha(
+            labels, loss_mask, cu_lengths_host, _state_token_ids(),
+            response_alpha_max=args.state_token_response_alpha_max,
+        )
+
     attn_mask_type = AttnMaskType.causal
     attn_mask = None
     position_ids = None
@@ -217,7 +228,70 @@ def _get_batch_host(data_iterator):
         attn_mask_type,
         packed_seq_params,
         patch_positions,
+        state_focal_alpha,
     )
+
+@lru_cache(maxsize=1)
+def _state_token_ids() -> tuple[int, ...]:
+    """Resolve silence, response, and the optional caption marker."""
+    tokenizer = get_tokenizer()
+    markers = STREAMING_STATE_TOKENS
+    if getattr(get_args(), "state_token_focal_captioning", False):
+        markers += ("<captioning>",)
+    ids = tuple(tokenizer.convert_tokens_to_ids(marker) for marker in markers)
+    for marker, token_id in zip(markers, ids):
+        if not isinstance(token_id, int) or tokenizer.tokenize(marker, add_special_tokens=False) != [token_id]:
+            raise ValueError(f"{marker} must be registered as a single additional special token")
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"State markers {markers} must have distinct token ids")
+    return ids
+
+
+def _sample_state_token_alpha(
+    labels, loss_mask, cu_lengths, state_token_ids, response_alpha_max=None,
+):
+    """Return per-sample state alpha; zero marks ordinary or ignored targets.
+
+    Labels have already shifted left. Use original packing boundaries and
+    compute before SP padding or CP slicing, after the final loss mask.
+    Response and optional caption tokens share the speaking-state count within
+    each original sample; their target IDs remain distinct in cross entropy.
+    """
+    batch_size, width = labels.shape
+    if cu_lengths.shape == (1, 1):
+        num_samples = batch_size
+        sample_ids = torch.arange(batch_size, device=labels.device)[:, None].expand_as(labels)
+    else:
+        boundaries = cu_lengths[0].to(device=labels.device, dtype=torch.long)
+        num_samples = boundaries.numel() - 1
+        sample_ids = torch.bucketize(torch.arange(width, device=labels.device), boundaries[1:], right=True)
+        # The sample ownership must follow the same next-token shift as labels.
+        sample_ids = torch.roll(sample_ids.unsqueeze(0), shifts=-1, dims=1)
+
+    active = (loss_mask > 0) & (labels != -100)
+    safe_ids = sample_ids.clamp(max=num_samples - 1).reshape(-1)
+    silence = (labels == state_token_ids[0]) & active
+    speaking = labels == state_token_ids[1]
+    if len(state_token_ids) == 3:
+        speaking |= labels == state_token_ids[2]
+    speaking &= active
+    state_masks = (silence, speaking)
+    counts = [
+        torch.zeros(num_samples, device=labels.device, dtype=torch.float32).scatter_add_(
+            0, safe_ids, mask.reshape(-1).float()
+        )
+        for mask in state_masks
+    ]
+    both = (counts[0] > 0) & (counts[1] > 0)
+    total = counts[0] + counts[1]
+    alpha = torch.zeros_like(labels, dtype=torch.float32)
+    for state_index, (mask, count) in enumerate(zip(state_masks, counts)):
+        # Inverse frequency when both states occur; otherwise keep alpha = 1.
+        per_sample = torch.where(both, total / (2 * count.clamp_min(1)), torch.ones_like(total))
+        if state_index == 1 and response_alpha_max is not None:
+            per_sample = per_sample.clamp(max=response_alpha_max)
+        alpha = torch.where(mask, per_sample[safe_ids].view_as(labels), alpha)
+    return alpha
 
 
 def get_batch(data_iterator):
@@ -258,8 +332,16 @@ def get_batch(data_iterator):
     cu_lengths = tensor_parallel.broadcast_data(["cu_lengths"], data, torch.int32)["cu_lengths"]
     max_lengths = tensor_parallel.broadcast_data(["max_lengths"], data, torch.int32)["max_lengths"]
 
-    has_video = video_token_id in tokens
-    has_image = image_token_id in tokens
+    # Vision token ids depend on the LLM tokenizer. Qwen3.5 uses 248056/248057;
+    # Qwen3/OV1.5 use the module-level 151655/151656. Using the wrong id makes
+    # has_image False -> imgs never broadcast -> images=None in the model forward
+    # -> the adapter is skipped -> grad norm 0 (adapter never trains).
+    if getattr(args, "language_model_type", None) in ("qwen3_5", "qwen35"):
+        _img_tok, _vid_tok = 248056, 248057
+    else:
+        _img_tok, _vid_tok = image_token_id, video_token_id
+    has_video = _vid_tok in tokens
+    has_image = _img_tok in tokens
     thw = None
     video_grid_thw = None
     imgs = None
@@ -289,9 +371,6 @@ def get_batch(data_iterator):
         video_grid_thw = tensor_parallel.broadcast_data(["video_grid_thw"], data, torch.int32)["video_grid_thw"]
 
     packed_seq_params = None
-    is_video = video_token_id in tokens
-
-    attn_mask_type = AttnMaskType.padding_causal if attn_mask.any() else AttnMaskType.causal
 
     labels = torch.roll(labels, shifts=-1, dims=1)
     loss_mask = (labels != -100).long()
@@ -314,6 +393,37 @@ def get_batch(data_iterator):
             max_seqlen_kv=max_lengths[0].item(),
         )
 
+        # Cover the packing-pad tail under Sequence Parallel / Context Parallel.
+        # The offline packer can leave cu_seqlens[-1] < tokens.shape[1] (a few
+        # trailing pad tokens that belong to no attention segment). This is
+        # tolerated without SP/CP, but under SP/CP the sequence is scattered
+        # across ranks then gathered for attention; a physical-width vs
+        # logical-cu_seqlens mismatch corrupts the gather and produces NaN
+        # gradients in linear_fc2 backward at iteration 1. Adding the tail as its
+        # own self-attending, loss-masked segment makes cu_seqlens[-1] == width
+        # without altering real-token attention or loss.
+        if args.sequence_parallel or args.context_parallel_size > 1:
+            _phys_len = tokens.shape[1]
+            _last_boundary = int(packed_seq_params.cu_seqlens_q[-1].item())
+            if _last_boundary < _phys_len:
+                _tail_len = _phys_len - _last_boundary
+                _tail_end = packed_seq_params.cu_seqlens_q[-1:] + _tail_len
+                packed_seq_params = PackedSeqParams(
+                    qkv_format="thd",
+                    cu_seqlens_q=torch.cat([packed_seq_params.cu_seqlens_q, _tail_end]),
+                    cu_seqlens_kv=torch.cat([packed_seq_params.cu_seqlens_kv, _tail_end]),
+                    max_seqlen_q=max(packed_seq_params.max_seqlen_q, _tail_len),
+                    max_seqlen_kv=max(packed_seq_params.max_seqlen_kv, _tail_len),
+                )
+                loss_mask[:, -_tail_len:] = 0
+
+    state_focal_alpha = None
+    if getattr(args, "state_token_focal_loss", False):
+        state_focal_alpha = _sample_state_token_alpha(
+            labels, loss_mask, cu_lengths, _state_token_ids(),
+            response_alpha_max=args.state_token_response_alpha_max,
+        )
+
     # Pad sequence for Sequence Parallelism (SP) divisibility.
     # SP requires sequence length to be divisible by TP size;
     # when combined with CP, it must be divisible by TP * CP * 2.
@@ -334,6 +444,8 @@ def get_batch(data_iterator):
             tokens = F.pad(tokens, (0, pad_size), value=pad_token_id)
             labels = F.pad(labels, (0, pad_size), value=-100)
             loss_mask = F.pad(loss_mask, (0, pad_size))
+            if state_focal_alpha is not None:
+                state_focal_alpha = F.pad(state_focal_alpha, (0, pad_size))
             if packed_seq_params is not None:
                 # Append a dummy sequence entry so the packed-sequence attention
                 # kernel covers every element in the padded tensor.
@@ -352,10 +464,25 @@ def get_batch(data_iterator):
                     max_seqlen_kv=max_seqlen_kv,
                 )
 
+    if packed_seq_params is not None:
+        # One CPU copy of the final (post tail-fix/SP-pad) cu_seqlens per step,
+        # instead of gated_deltanet.py doing `.detach().to("cpu")` once per GDN
+        # layer (24 layers x fwd+recompute = 48x/step). GDN already prefers this
+        # field via getattr() if present (gated_deltanet.py:277-280).
+        packed_seq_params.cu_seqlens_cpu = packed_seq_params.cu_seqlens_q.detach().to("cpu")
+
     if args.context_parallel_size > 1:
         labels = get_inputs_on_this_cp_rank(labels.transpose(0, 1)).transpose(0, 1)
         loss_mask = get_inputs_on_this_cp_rank(loss_mask.transpose(0, 1)).transpose(0, 1)
+        if state_focal_alpha is not None:
+            state_focal_alpha = get_inputs_on_this_cp_rank(state_focal_alpha.transpose(0, 1)).transpose(0, 1)
 
+    if __import__('os').environ.get('MFU_DBG','0')=='1' and locals().get('packed_seq_params') is not None:
+        _cs=packed_seq_params.cu_seqlens_q.to('cpu')
+        _d=(_cs[1:]-_cs[:-1]).tolist()
+        _sumsq=sum(x*x for x in _d)
+        if (not __import__('torch').distributed.is_initialized()) or __import__('torch').distributed.get_rank()==0:
+            print('[MFU_DBG] width=%d nseg=%d sumsq=%d maxseg=%d' % (tokens.shape[1], len(_d), _sumsq, max(_d) if _d else 0), flush=True)
     # TODO
     attn_mask_type = AttnMaskType.causal
     attn_mask = None
@@ -373,10 +500,11 @@ def get_batch(data_iterator):
         attn_mask_type,
         packed_seq_params,
         patch_positions,
+        state_focal_alpha,
     )
 
 
-def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
+def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor, state_focal_alpha=None):
     """Loss function.
 
     Args:
@@ -392,6 +520,13 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
 
     losses = output_tensor.float()
     loss_mask = loss_mask.view(-1).float()
+
+    if state_focal_alpha is not None:
+        assert state_focal_alpha.shape == losses.shape
+        # Keep gradients through p(target); the floor protects 0 < gamma < 1 at zero CE.
+        p_target = torch.exp(-losses.clamp_min(0))
+        focal = (1 - p_target).clamp(min=1e-8, max=1.0).pow(args.state_token_focal_gamma)
+        losses = losses * torch.where(state_focal_alpha > 0, state_focal_alpha * focal, 1.0)
 
     total_tokens = loss_mask.sum()
     loss = torch.cat([torch.sum(losses.view(-1) * loss_mask).view(1), total_tokens.view(1)])
@@ -412,12 +547,12 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         )
 
     # Reduce loss for logging.
-    reporting_loss = loss.clone().detach()
     if opt_switches.flag('DEFER_LOSS_REDUCE') and torch.is_grad_enabled():
         # Training: the same data-parallel all-reduces (same tensors, same order) are issued by
         # flush_deferred_loss_reduce() after the backward of the last micro-batch, so that the fast ranks are not
         # held at the end of every micro-batch's forward by the slowest one. The dict holds views of the tensors
         # that are reduced in place, exactly as before.
+        reporting_loss = loss.clone().detach()
         local_num_tokens = loss[1].clone().detach().to(torch.int)
         loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
         input_tokens = None
@@ -432,20 +567,25 @@ def loss_func(loss_mask: torch.Tensor, output_tensor: torch.Tensor):
         _DEFERRED_LOSS_REDUCE.append((reporting_loss, input_tokens, loss_reduced_dict))
         return (loss[0] * args.context_parallel_size, local_num_tokens, loss_reduced_dict)
 
-    torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
-
     local_num_tokens = loss[1].clone().detach().to(torch.int)
 
-    loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
+    is_log_step = ((args.curr_iteration + 1) % args.log_interval == 0)
 
-    if args.variable_seq_lengths:
-        # for variable seq length, we need to calculate the number of tokens on fly
-        # model output tensor shape is [B, S, H]
-        num_input_tokens = output_tensor.shape[0] * output_tensor.shape[1]
-        input_tokens = torch.tensor(num_input_tokens, dtype=torch.int, device=output_tensor.device)
-        # sum across all dp ranks
-        torch.distributed.all_reduce(input_tokens, group=mpu.get_data_parallel_group())
-        loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
+    if is_log_step:
+        reporting_loss = loss.clone().detach()
+        torch.distributed.all_reduce(reporting_loss, group=mpu.get_data_parallel_group())
+        loss_reduced_dict = {"lm loss": (reporting_loss[0], reporting_loss[1])}
+
+        if args.variable_seq_lengths:
+            # for variable seq length, we need to calculate the number of tokens on fly
+            # model output tensor shape is [B, S, H]
+            num_input_tokens = output_tensor.shape[0] * output_tensor.shape[1]
+            input_tokens = torch.tensor(num_input_tokens, dtype=torch.int, device=output_tensor.device)
+            # sum across all dp ranks
+            torch.distributed.all_reduce(input_tokens, group=mpu.get_data_parallel_group())
+            loss_reduced_dict["total_inputs"] = input_tokens.item() * args.context_parallel_size
+    else:
+        loss_reduced_dict = {"lm loss": (loss[0].detach(), local_num_tokens)}
 
     return (loss[0] * args.context_parallel_size, local_num_tokens, loss_reduced_dict)
 
@@ -508,6 +648,7 @@ def forward_step(data_iterator, model):
             attn_mask_type,
             packed_seq_params,
             patch_positions,
+            state_focal_alpha,
         ) = get_batch(data_iterator)
 
     timers("batch-generator").stop()
@@ -557,7 +698,7 @@ def forward_step(data_iterator, model):
                 flush=True,
             )
 
-    return output_tensor, partial(loss_func, loss_mask)
+    return output_tensor, partial(loss_func, loss_mask, state_focal_alpha=state_focal_alpha)
 
 
 def train_valid_test_dataset_provider(train_val_test_num_samples):
