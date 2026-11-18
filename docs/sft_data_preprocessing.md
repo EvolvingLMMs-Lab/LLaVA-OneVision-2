@@ -9,16 +9,16 @@ WebDataset or through the current offline-packing pipeline.
 Using the project Docker image is recommended for reproducible preprocessing.
 
 ```bash
-git clone https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.git
-cd LLaVA-OneVision-2
+git clone https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.5.git
+cd LLaVA-OneVision-2.5
 
 docker build -t llava_megatron:25.04 .
 
 docker run -it --gpus all \
   --ipc host --net host --privileged --cap-add IPC_LOCK \
   --ulimit memlock=-1 --ulimit stack=67108864 --rm \
-  -v "$(pwd)":/workspace/LLaVA-OneVision-2 \
-  -w /workspace/LLaVA-OneVision-2 \
+  -v "$(pwd)":/workspace/LLaVA-OneVision-2.5 \
+  -w /workspace/LLaVA-OneVision-2.5 \
   --name llava_megatron_container \
   llava_megatron:25.04 /bin/bash
 ```

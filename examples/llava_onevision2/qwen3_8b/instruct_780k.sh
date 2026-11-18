@@ -6,7 +6,7 @@ GBS="${5:-132}"
 TOTAL_SAMPLES=740000
 NSTEP="${6:-$(((TOTAL_SAMPLES + GBS - 1) / GBS))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 OUTPUT_DIR="${OUTPUT_DIR:-/ov2/xiangan/ckpts_4b_date_0214}"
 DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/webdataset_llava_next_740k"}

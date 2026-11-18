@@ -17,11 +17,11 @@ Use this skill when merging a standalone ViT encoder and LLM into a unified Llav
 ## Prerequisites / 前置条件
 
 - Container `llava_megatron_container_ax` running with GPU access
-- All paths below assume execution **inside the container** at `/workspace/LLaVA-OneVision-2`
+- All paths below assume execution **inside the container** at `/workspace/LLaVA-OneVision-2.5`
 - `PYTHONPATH=transformers_impl:.` must be set for all Python commands
 - For large models, use tmpfs (`/train_tmp`) for I/O performance
 
-容器 `llava_megatron_container_ax` 需启动并有 GPU 访问权限。以下所有路径假设在容器内 `/workspace/LLaVA-OneVision-2` 执行。所有 Python 命令需设置 `PYTHONPATH=transformers_impl:.`。大模型建议用内存盘 `/train_tmp`。
+容器 `llava_megatron_container_ax` 需启动并有 GPU 访问权限。以下所有路径假设在容器内 `/workspace/LLaVA-OneVision-2.5` 执行。所有 Python 命令需设置 `PYTHONPATH=transformers_impl:.`。大模型建议用内存盘 `/train_tmp`。
 
 ## Architecture / 架构
 
@@ -141,7 +141,7 @@ PYTHONPATH=transformers_impl:. python -m merge_ov2 dry-run \
 
 ```bash
 docker exec llava_megatron_container_ax bash -c '
-cd /workspace/LLaVA-OneVision-2 && \
+cd /workspace/LLaVA-OneVision-2.5 && \
 PYTHONPATH=transformers_impl:. python -u -m merge_ov2 merge \
   --variant dense \
   --vit /train_tmp/onevision-encoder-large-lang-tf57 \
@@ -212,7 +212,7 @@ an already-saved checkpoint. Use this when:
 
 ```bash
 docker exec llava_megatron_container_ax bash -c '
-cd /workspace/LLaVA-OneVision-2 && \
+cd /workspace/LLaVA-OneVision-2.5 && \
 PYTHONPATH=transformers_impl:. python -m merge_ov2 validate \
   --variant dense \
   --ckpt /train_tmp/llava_onevision2_4b_p14m2 \

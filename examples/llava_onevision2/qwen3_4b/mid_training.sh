@@ -37,13 +37,13 @@ NSTEP="${6:-20000}"
 #   CUSTOM_PIPELINE_LAYERS=0,6,6,6,6,6,6 (PP=7)
 CUSTOM_PIPELINE_LAYERS="${CUSTOM_PIPELINE_LAYERS:-0,12,12,12}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 OUTPUT_DIR="${OUTPUT_DIR:-output}"
 
 DATA_PATH=${DATA_PATH:-"dataset_mid/LLaVA-OneVision-1.5-Mid-Training-Webdataset-Quick-Start-Packed-384332"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2/stage_1_alignment_llava_ov_4b_release"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2.5/stage_1_alignment_llava_ov_4b_release"}
 
 #! /bin/bash
 # The script needs to be run on at least 1 nodes.

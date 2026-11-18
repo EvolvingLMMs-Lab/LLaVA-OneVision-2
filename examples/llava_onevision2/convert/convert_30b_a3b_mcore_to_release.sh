@@ -9,7 +9,7 @@
 #   bash convert_30b_a3b_mcore_to_release.sh <LOAD> <SAVE> <TP> <PP> <EP> <CUSTOM_PIPELINE_LAYERS>
 # =============================================================================
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 
 LOAD=$1
 SAVE=$2

@@ -8,7 +8,7 @@
 #       [timestamp_decimal]
 #
 # Environment Variables:
-#   AIAK_TRAINING_PATH: repo root (default: /workspace/LLaVA-OneVision-2)
+#   AIAK_TRAINING_PATH: repo root (default: /workspace/LLaVA-OneVision-2.5)
 #   AIAK_MEGATRON_PATH: aiak_megatron path (default: ${AIAK_TRAINING_PATH}/aiak_megatron)
 
 set -e
@@ -27,7 +27,7 @@ Arguments:
                        Per-sample JSONL field overrides this value.
 
 Environment Variables:
-  AIAK_TRAINING_PATH  Repo root (default: /workspace/LLaVA-OneVision-2)
+  AIAK_TRAINING_PATH  Repo root (default: /workspace/LLaVA-OneVision-2.5)
   AIAK_MAGATRON_PATH  aiak_megatron path (default: ${AIAK_TRAINING_PATH}/aiak_megatron)
 
 Examples:
@@ -37,7 +37,7 @@ Examples:
   bash tools/data_preprocess/convert_jsonl_to_webdataset_simple.sh \
     /data/train.jsonl /data/webdataset_out 2
 
-  AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2 \
+  AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2.5 \
   bash tools/data_preprocess/convert_jsonl_to_webdataset_simple.sh \
     /data/train.jsonl /data/webdataset_out
 EOF
@@ -47,7 +47,7 @@ EOF
 # Environment Setup
 # ============================================================================
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then

@@ -11,7 +11,7 @@ TP=${3:?TP is required}
 PP=${4:?PP is required}
 CUSTOM_PIPELINE_LAYERS=${5:-}
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 CONVERT_CHECKPOINT_PATH="$AIAK_TRAINING_PATH/tools/convert_checkpoint"
 CONFIG_DIR="$CONVERT_CHECKPOINT_PATH/config/llava-onevision2-4b-p16m2"

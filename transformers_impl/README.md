@@ -2,7 +2,7 @@
 
 > Bilingual / 中英双语. English first, then 中文.
 
-This directory hosts the HuggingFace-side tooling for LLaVA-OneVision-2:
+This directory hosts the HuggingFace-side tooling for LLaVA-OneVision-2.5:
 modeling files (`llavaonevision1_5/`, `llavaonevision2/`), the unified merge
 package `merge_ov2/` that fuses **ViT + Adapter + LLM** into a single
 `AutoModelForCausalLM`-loadable checkpoint (dense **and** MoE), plus inference
@@ -55,7 +55,7 @@ PYTHONPATH=transformers_impl:. python -m merge_ov2 {merge,validate,dry-run} ...
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    python -m merge_ov2 merge \
      --variant dense \
      --vit       /ov2/pretrain_models/onevision-encoder-large \
@@ -131,7 +131,7 @@ Quick pointer:
 
 ```bash
 # 1) HF → mcore (TP=1 PP=1)
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2 \
+AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2.5 \
 bash examples/llava_onevision2/convert/convert_4b_hf_to_mcore.sh \
   /train_tmp/ov2-dense-merged \
   /train_tmp/ov2-dense-merged_mcore_tp1_pp1 \
@@ -139,7 +139,7 @@ bash examples/llava_onevision2/convert/convert_4b_hf_to_mcore.sh \
 
 # 2) Run consistency tests (6 checks, see consistency skill for thresholds)
 docker exec llava_megatron_container_ax bash -c "
-  cd /workspace/LLaVA-OneVision-2 && \
+  cd /workspace/LLaVA-OneVision-2.5 && \
   HF_MODEL_PATH=/train_tmp/ov2-dense-merged \
   MCORE_CKPT_PATH=/train_tmp/ov2-dense-merged_mcore_tp1_pp1 \
   MODEL_VARIANT=4b_p16m3 \
@@ -219,7 +219,7 @@ These build a tiny synthetic ViT+adapter+LLM triplet on the fly via
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    pytest tests/merge_ov2/ -v"
 ```
 
@@ -259,7 +259,7 @@ Example — run dense F2 validator tests:
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    OV2_REAL_FIXTURE=1 \
    pytest tests/merge_ov2/validators/ -v"
 ```
@@ -268,7 +268,7 @@ Example — full MoE F2 dispatch suite (needs an 80 GB GPU for the 30B model):
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    OV2_REAL_FIXTURE=1 OV2_REAL_FIXTURE_MOE=1 \
    pytest tests/merge_ov2/moe/test_validators.py -v"
 ```
@@ -320,7 +320,7 @@ PYTHONPATH=transformers_impl:. python -m merge_ov2 {merge,validate,dry-run} ...
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    python -m merge_ov2 merge \
      --variant dense \
      --vit       /ov2/pretrain_models/onevision-encoder-large \
@@ -393,7 +393,7 @@ HF↔mcore 的端到端一致性验证。这套流程在 `llava-onevision2-consi
 
 ```bash
 # 1) HF → mcore (TP=1 PP=1)
-AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2 \
+AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-2.5 \
 bash examples/llava_onevision2/convert/convert_4b_hf_to_mcore.sh \
   /train_tmp/ov2-dense-merged \
   /train_tmp/ov2-dense-merged_mcore_tp1_pp1 \
@@ -401,7 +401,7 @@ bash examples/llava_onevision2/convert/convert_4b_hf_to_mcore.sh \
 
 # 2) 跑一致性测试（6 个 check，阈值见 consistency skill）
 docker exec llava_megatron_container_ax bash -c "
-  cd /workspace/LLaVA-OneVision-2 && \
+  cd /workspace/LLaVA-OneVision-2.5 && \
   HF_MODEL_PATH=/train_tmp/ov2-dense-merged \
   MCORE_CKPT_PATH=/train_tmp/ov2-dense-merged_mcore_tp1_pp1 \
   MODEL_VARIANT=4b_p16m3 \
@@ -478,7 +478,7 @@ tests/merge_ov2/
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    pytest tests/merge_ov2/ -v"
 ```
 
@@ -517,7 +517,7 @@ python tests/merge_ov2/quality/check_no_dead_helpers.py
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    OV2_REAL_FIXTURE=1 \
    pytest tests/merge_ov2/validators/ -v"
 ```
@@ -526,7 +526,7 @@ docker exec llava_megatron_container_ax bash -lc \
 
 ```bash
 docker exec llava_megatron_container_ax bash -lc \
-  "cd /workspace/LLaVA-OneVision-2 && PYTHONPATH=transformers_impl:. \
+  "cd /workspace/LLaVA-OneVision-2.5 && PYTHONPATH=transformers_impl:. \
    OV2_REAL_FIXTURE=1 OV2_REAL_FIXTURE_MOE=1 \
    pytest tests/merge_ov2/moe/test_validators.py -v"
 ```

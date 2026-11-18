@@ -1,6 +1,6 @@
-# LLaVA-OneVision-2 Checkpoint Conversion
+# LLaVA-OneVision-2.5 Checkpoint Conversion
 
-Scripts under this directory convert LLaVA-OneVision-2 checkpoints between
+Scripts under this directory convert LLaVA-OneVision-2.5 checkpoints between
 HuggingFace and Megatron-Core layouts for the 2B / 4B / 8B / 30B-A3B variants.
 
 See the project [README](../../../README.md) for general usage. This document
