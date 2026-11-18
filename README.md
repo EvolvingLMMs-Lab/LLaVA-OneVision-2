@@ -1,8 +1,8 @@
 <p>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_5_black.svg">
-    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_5_white.svg">
-    <img alt="LLaVA-OneVision-2.5" src="asset/llava_onevision_2_5_white.svg" width="720" style="max-width: 100%;">
+    <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_5_black.gif">
+    <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_5_white.gif">
+    <img alt="LLaVA-OneVision-2.5" src="asset/llava_onevision_2_5_white.gif" width="720" style="max-width: 100%;">
   </picture>
 </p>
 
