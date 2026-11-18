@@ -8,7 +8,7 @@
 # alignment data, TP1/PP1, seq 32k, GBS 256, lr 2e-5, adapter-only.
 #
 # Qwen3.5-specific (vs the p16m3 recipe):
-#   * AIAK_TRAINING_PATH -> /vlm/yinxie/code/OV21/qwen35 (has the qwen3_5 backbone)
+#   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5 (has the qwen3_5 backbone)
 #   * --model-name llava-onevision2-2b-qwen35 (language_model_type=qwen3_5 from arch config)
 #   * TOKENIZER = Qwen3.5 processor (vocab 248320); alignment wds stores raw
 #     text+images and is tokenized live, so it is reused as-is.
@@ -32,13 +32,13 @@ TOTAL_SAMPLES="${TOTAL_SAMPLES:-558128}"
 EPOCHS="${EPOCHS:-1}"
 NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/qwen35/checkpoints}"
-DATA_PATH=${DATA_PATH:-"/vlm/data/blip_laion_cc_sbu_558k_wds"}
-TOKENIZER_PATH=${TOKENIZER_PATH:-"/vlm/yinxie/pretrain_models/ov2_qwen35_processor"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/pretrain_models/llava_onevision2_2b_qwen35_p16m3_mcore_tp${TP}pp${PP}"}
+OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
+DATA_PATH=${DATA_PATH:-"/data/blip_laion_cc_sbu_558k_wds"}
+TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_2b_qwen35_p16m3_mcore_tp${TP}pp${PP}"}
 
 export OFFLINE_PACKING_BMR=0
 export OFFLINE_PACKED_DATA=0
@@ -48,7 +48,7 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    declare -a list_ip=( "172.16.5.19" "172.16.5.22" "172.16.5.29" "172.16.5.40" )
+    declare -a list_ip=( "192.0.2.11" "192.0.2.12" "192.0.2.13" "192.0.2.14" )
 fi
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')

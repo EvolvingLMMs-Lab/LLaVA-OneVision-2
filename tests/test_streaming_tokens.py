@@ -7,7 +7,7 @@ back its own training data.
 
 Run inside the training image:
 
-  R=/vlm/yinxie/code/OV21/streaming_canvas_ts
+  R=/workspace/LLaVA-OneVision-2.5
   docker exec -e PYTHONPATH=$R/aiak_megatron:$R -w $R <container> \
       python3 tests/test_streaming_tokens.py [BASE_PROCESSOR_DIR]
 """
@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOL = os.path.join(REPO, "tools", "data_preprocess", "register_streaming_tokens.py")
 BASE = sys.argv[1] if len(sys.argv) > 1 else \
-    "/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"
+    "/models/preprocessor/preprocessor_llava_onevision1_5"
 # Some processor directories ship no config.json; pass the checkpoint's
 # padded_vocab_size as the second argument to still check the ids fit.
 VOCAB_LIMIT = int(sys.argv[2]) if len(sys.argv) > 2 else None

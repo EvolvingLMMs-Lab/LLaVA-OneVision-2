@@ -40,8 +40,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ----------------------------------------------------------------------------
 # Defaults (matches the answers in the chat)
 # ----------------------------------------------------------------------------
-INPUT_GLOB_DEFAULT="/ov21/streaming/180s/all_180s_96w_done_part*.jsonl"
-OUTPUT_BASE_DEFAULT="/ov21/streaming/180s_wds"
+INPUT_GLOB_DEFAULT="/data/streaming/180s/all_180s_96w_done_part*.jsonl"
+OUTPUT_BASE_DEFAULT="/data/streaming/180s_wds"
 IMAGE_ROOT_DEFAULT="/ov21"   # source jsonl uses absolute paths, but s1 still
                              # requires a directory to exist for sanity check.
 
@@ -69,7 +69,7 @@ usage() {
     cat <<USAGE
 Usage: $0 [OPTIONS]
 
-  Convert /ov21/streaming/180s/all_180s_96w_done_part*.jsonl into WebDataset
+  Convert /data/streaming/180s/all_180s_96w_done_part*.jsonl into WebDataset
   shards (no token-packing). Each WebDataset sample wraps exactly one
   original sample. timestamp_decimal=${TIMESTAMP_DECIMAL} is injected into
   every sample's raw payload.

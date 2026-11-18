@@ -12,7 +12,7 @@
 # torchrun launch, env, data plumbing, all Qwen3.5 hybrid-attention args, and
 # the mcore-checkpoint load are inlined below.
 #
-# Usage (inside container llava_megatron_container_ax_ov21):
+# Usage (inside container llava_megatron_container):
 #   CUDA_VISIBLE_DEVICES=<free_gpu> \
 #     bash examples/llava_onevision2/quick_start_4b/smoke_stage1_qwen35_1gpu.sh
 #
@@ -29,16 +29,16 @@ NSTEP="${6:-5}"           # smoke: 5 iters
 LR_WARMUP_ITERS="${LR_WARMUP_ITERS:-2}"
 
 # ---- repo / model / data / tokenizer paths ---------------------------------
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/qwen35/tmp_smoke_qwen35}"
-DATA_PATH="${DATA_PATH:-/ov21/47m_sft_packed_8k/dataset.yaml}"
+OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_qwen35}"
+DATA_PATH="${DATA_PATH:-/data/sft_packed_8k/dataset.yaml}"
 # p16m3 tokenizer (Qwen2.5-VL token space: image_token_id=151655), consistent
 # with the packed p16m3 data AND the provider's image/video token ids.
-TOKENIZER_PATH="${TOKENIZER_PATH:-/vlm/yinxie/pretrain_models/ov2_qwen35_processor}"
+TOKENIZER_PATH="${TOKENIZER_PATH:-/models/ov2_qwen35_processor}"
 # Converted Qwen3.5-backbone mcore checkpoint (TP1/PP1, loads 0 missing/0 unexpected).
-CHECKPOINT_PATH="${CHECKPOINT_PATH:-/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1}"
+CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1}"
 
 # Offline-packed data (both required for correct THD attention isolation).
 export OFFLINE_PACKING_BMR=1

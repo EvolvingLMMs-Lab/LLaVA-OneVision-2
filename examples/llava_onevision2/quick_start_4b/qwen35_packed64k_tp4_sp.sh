@@ -7,7 +7,7 @@
 # (pass --ips "<node list>"; it exports LIST_IP/MASTER_ADDR/MASTER_PORT).
 #
 # WHAT IS DIFFERENT vs the Qwen3 (p16m3) scripts — all REQUIRED for Qwen3.5:
-#   * AIAK_TRAINING_PATH -> /vlm/yinxie/code/OV21/qwen35  (the tree with the
+#   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5  (the tree with the
 #     qwen35 hybrid-attention backbone; the old baseline tree has no qwen3_5).
 #   * --model-name llava-onevision2-4b-qwen35  (hybrid GatedDeltaNet+full attn;
 #     language_model_type=qwen3_5 is set by the arch config, NOT the CLI).
@@ -44,14 +44,14 @@ TOTAL_SAMPLES="${TOTAL_SAMPLES:-350100}"
 EPOCHS="${EPOCHS:-1}"
 NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/vlm/yinxie/code/OV21/qwen35/checkpoints}"
+OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 # Existing mixed_64k packed webdataset (raw text + images; tokenized live).
-DATA_PATH=${DATA_PATH:-"/vlm/yinxie/code/yamls/mixed_6sets_packed_64k/mixed_6sets_packed_64k/dataset_fix_recap_w47m_20260624.yaml"}
-TOKENIZER_PATH=${TOKENIZER_PATH:-"/vlm/yinxie/pretrain_models/ov2_qwen35_processor"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1"}
+DATA_PATH=${DATA_PATH:-"/data/packed_64k/dataset.yaml"}
+TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1"}
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1

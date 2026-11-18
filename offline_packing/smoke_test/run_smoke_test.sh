@@ -4,7 +4,7 @@
 # - L=32000 packing length
 # - model: LLaVA-OneVision-2-4B-p16m33  (patch16, merge3 -> factor=48)
 # - image preprocess: longest_edge=3072, jpeg q=92
-# Target machine: 172.16.5.112
+# Target machine: 192.0.2.11
 
 set -euo pipefail
 export PYTHONUNBUFFERED=1
@@ -14,13 +14,13 @@ source /root/miniconda3/etc/profile.d/conda.sh
 conda activate llava_main_xy
 echo "[smoke] using python: $(which python)"
 
-SRC_JSONL=/ov2/chengzheng/ov2_wds/47m_sft_cleaned_64k_20w/jsonls/47m_1.jsonl
-SMOKE_BASE=/ov21/smoke_test
+SRC_JSONL=/data/jsonls/sft_part1.jsonl
+SMOKE_BASE=/data/smoke_test
 SAMPLE_JSONL=${SMOKE_BASE}/input_10k.jsonl
 OUT_BASE=${SMOKE_BASE}/packed_10k_L32k
 IMAGE_ROOT=/
-MODEL_PATH=/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33
-PIPE_DIR=/vlm/yinxie/code/OV2/OV2_public_main/offline_packing
+MODEL_PATH=/models/lmms-lab/LLaVA-OneVision-2-4B-p16m33
+PIPE_DIR=/workspace/LLaVA-OneVision-2.5/offline_packing
 
 mkdir -p "${SMOKE_BASE}"
 

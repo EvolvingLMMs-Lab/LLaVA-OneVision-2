@@ -5,14 +5,14 @@
 # examples/llava_onevision2/quick_start_4b/launch_date05_training.sh.
 #
 # Usage:
-#   bash tools/rollout_fla.sh --ips "172.16.5.18 172.16.5.19 ..." \
-#        [--container llava_megatron_container_ax] \
-#        [--proxy http://172.16.5.77:8887] [--version 0.5.1] [--dry-run]
+#   bash tools/rollout_fla.sh --ips "192.0.2.11 192.0.2.12 ..." \
+#        [--container llava_megatron_container] \
+#        [--proxy http://proxy.example.com:8888] [--version 0.5.1] [--dry-run]
 set -uo pipefail
 
-CONTAINER="${CONTAINER:-llava_megatron_container_ax}"
+CONTAINER="${CONTAINER:-llava_megatron_container}"
 IPS=""
-PROXY="http://172.16.5.77:8887"
+PROXY="http://proxy.example.com:8888"
 VERSION="0.5.1"
 DRY=0
 

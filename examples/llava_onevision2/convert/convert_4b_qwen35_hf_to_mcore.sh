@@ -20,12 +20,12 @@
 #
 # Example:
 #   bash convert_4b_qwen35_hf_to_mcore.sh \
-#     /vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3 \
-#     /vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1 1 1
+#     /models/llava_onevision2_4b_qwen35_p16m3 \
+#     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp1pp1 1 1
 # =============================================================================
 set -e
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 CONVERT_CHECKPOINT_PATH="$AIAK_TRAINING_PATH/tools/convert_checkpoint"
 CUSTOM="$CONVERT_CHECKPOINT_PATH/custom/llava_onevision2"

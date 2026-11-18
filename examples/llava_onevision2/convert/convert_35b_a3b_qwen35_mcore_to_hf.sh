@@ -26,7 +26,7 @@
 # =============================================================================
 set -e
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 CONVERT_CHECKPOINT_PATH="$AIAK_TRAINING_PATH/tools/convert_checkpoint"
 CUSTOM="$CONVERT_CHECKPOINT_PATH/custom/llava_onevision2"
@@ -35,7 +35,7 @@ CFG="$CONVERT_CHECKPOINT_PATH/config/llava-onevision2-4b-p16m3"   # ViT/adapter 
 LOAD=$1
 SAVE=$2
 EP=${3:-auto}
-REFERENCE=${4:-/vlm/yinxie/pretrain_models/llava_onevision2_35b_a3b_qwen36_p16m3_v1010}
+REFERENCE=${4:-/models/llava_onevision2_35b_a3b_qwen36_p16m3_v1010}
 TP=1
 PP=1
 NUM_LAYERS=${NUM_LAYERS:-40}

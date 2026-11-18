@@ -23,7 +23,7 @@
 #   TP         tensor-parallel size (default 1)   -- TP in {1,2,4}
 #   PP         pipeline-parallel size (default 1) -- PP=1/PP=2 supported (2D mp_rank_{t}_{p} merged in the LLM loader)
 #   REFERENCE  merged HF model to copy config/modeling/tokenizer from
-#              (default /vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3)
+#              (default /models/llava_onevision2_4b_qwen35_p16m3)
 #
 # Streaming models (STREAMING_EXPORT=auto|1|0, default auto): a checkpoint trained with the streaming
 # loss (--streaming-loss-scope=last-segment / --state-token-focal-loss in its args, or a <silence>
@@ -37,12 +37,12 @@
 #
 # Example:
 #   bash convert_4b_qwen35_mcore_to_hf.sh \
-#     /vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1 \
-#     /vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3_from_mcore 4 1
+#     /models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1 \
+#     /models/llava_onevision2_4b_qwen35_p16m3_from_mcore 4 1
 # =============================================================================
 set -e
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/vlm/yinxie/code/OV21/qwen35}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 CONVERT_CHECKPOINT_PATH="$AIAK_TRAINING_PATH/tools/convert_checkpoint"
 CUSTOM="$CONVERT_CHECKPOINT_PATH/custom/llava_onevision2"
@@ -67,16 +67,16 @@ for k, v in m.items():
 PYEOF
 )
 if [[ "$_HID" == "2048" ]]; then
-    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_2b_qwen35_p16m3; _DEF_LAYERS=24
+    _DEF_REF=/models/llava_onevision2_2b_qwen35_p16m3; _DEF_LAYERS=24
 elif [[ "$_HID" == "2560" ]]; then
-    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
 elif [[ "$_HID" == "4096" ]]; then
-    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_9b_qwen35_p16m3_v0904; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_9b_qwen35_p16m3_v0904; _DEF_LAYERS=32
 elif [[ "$_HID" == "5120" ]]; then
-    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_27b_qwen38_p16m3_v0923; _DEF_LAYERS=64
+    _DEF_REF=/models/llava_onevision2_27b_qwen38_p16m3_v0923; _DEF_LAYERS=64
 else
     echo "[wrapper] WARNING: unknown hidden_size=$_HID; falling back to 4B defaults"
-    _DEF_REF=/vlm/yinxie/pretrain_models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
+    _DEF_REF=/models/llava_onevision2_4b_qwen35_p16m3; _DEF_LAYERS=32
 fi
 REFERENCE=${5:-$_DEF_REF}
 NUM_LAYERS=${NUM_LAYERS:-$_DEF_LAYERS}
