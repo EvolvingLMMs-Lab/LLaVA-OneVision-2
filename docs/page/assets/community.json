@@ -1,7 +1,7 @@
 {
   "owner": "EvolvingLMMs-Lab",
   "repo": "LLaVA-OneVision-2.5",
-  "generated_at": "2026-11-18T14:03:06.184051+00:00",
+  "generated_at": "2026-11-18T14:23:17.848121+00:00",
   "contributors": [
     {
       "login": "anxiangsir",
@@ -755,9 +755,9 @@
         },
         {
           "week": "2026-11-15",
-          "commits": 17,
-          "additions": 13005,
-          "deletions": 18170
+          "commits": 22,
+          "additions": 13109,
+          "deletions": 18278
         }
       ]
     },
