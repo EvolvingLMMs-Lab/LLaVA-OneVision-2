@@ -82,7 +82,6 @@ Most open multimodal models still live in a 2D, single-image world. **LLaVA-OneV
 - **Long video** — multi-frame reasoning with efficient codec-aligned inference
 - **Streaming video** — frames arrive one at a time, and the model decides at every step whether to stay silent or speak
 - **3D-aware spatial reasoning** — depth, layout, object relations
-- **Documents, OCR, charts** — structured visual inputs at native resolution
 
 ### 🚀 Fully Open, Reproducible from Day One
 
