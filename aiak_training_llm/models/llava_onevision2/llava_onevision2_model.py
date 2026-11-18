@@ -933,8 +933,8 @@ class LlavaOnevision2(MegatronModule):
         # and unsharded (SP scatter touches only combined_embeddings), so it yields
         # unpadded full-length positions and QwenModel pads them up to the SP-gathered
         # length. Packed uses get_rope_index_packed; CP still uses the placeholder +
-        # ov25_rope CP-slice.
-        if self.add_decoder and getattr(self.language_model, "use_ov25_mrope", False):
+        # qwen3_5_rope CP-slice.
+        if self.add_decoder and getattr(self.language_model, "use_qwen3_5_mrope", False):
             _mrope_pos = None
             _has_vision = (image_grid_thw is not None) or (video_grid_thw is not None)
             _is_packed = (
@@ -950,7 +950,7 @@ class LlavaOnevision2(MegatronModule):
                 # Packed multimodal: per-segment 3D positions (restart at 0 each
                 # segment; image/video spans get the 2D H/W grid layout). Full
                 # sequence length, matching the placeholder convention QwenModel
-                # / OV25RotaryEmbedding expect (SP gathers, CP-slice skipped in
+                # / Qwen3_5RotaryEmbedding expect (SP gathers, CP-slice skipped in
                 # packed rope).
                 _mrope_pos = get_rope_index_packed(
                     input_ids=input_ids,

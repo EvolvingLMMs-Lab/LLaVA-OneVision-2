@@ -41,7 +41,7 @@ def aiak_extra_train_args_provider(parser: argparse.ArgumentParser):
     parser = _add_extra_video_args(parser)
     parser = _add_extra_training_args(parser)
     parser = _add_extra_multimodal_args(parser)
-    parser = _add_extra_ov25_args(parser)
+    parser = _add_extra_qwen3_5_args(parser)
     parser = _add_extra_parallel_args(parser)
 
     parser = _add_extra_training_rice_vl_args(parser)
@@ -461,15 +461,15 @@ def _add_extra_multimodal_args(parser):
     return parser
 
 
-def _add_extra_ov25_args(parser):
+def _add_extra_qwen3_5_args(parser):
     """Register Megatron args for the Qwen3.5 hybrid-attention LLM extras.
 
     Every field added to LlavaOnevision2Config must have a matching argparse arg,
     because _validate_extra_model_args asserts hasattr(args, field.name) for each
-    dataclass field. Defaults mirror the dataclass defaults so non-ov25 archs are
+    dataclass field. Defaults mirror the dataclass defaults so non-qwen3_5 archs are
     unaffected. language_model_type is already registered under extra-multimodal.
     """
-    group = parser.add_argument_group(title='extra-ov25')
+    group = parser.add_argument_group(title='extra-qwen3_5')
     group.add_argument('--linear-key-head-dim', type=int, default=128,
                        help='Gated delta-net key head dim (Qwen3.5).')
     group.add_argument('--linear-value-head-dim', type=int, default=128,
@@ -493,7 +493,7 @@ def _add_extra_ov25_args(parser):
                        help='Shard gated delta-net layers across TP by head instead of replicating '
                             'them on every TP rank (Qwen3.5). Changes the checkpoint layout of the '
                             'GDN params: convert existing checkpoints with '
-                            'tools/convert_checkpoint/custom/llava_onevision2/ov25_gdn_head_tp.py.')
+                            'tools/convert_checkpoint/custom/llava_onevision2/qwen3_5_gdn_head_tp.py.')
     return parser
 
 

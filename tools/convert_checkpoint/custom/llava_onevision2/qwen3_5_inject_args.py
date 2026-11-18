@@ -4,7 +4,7 @@
 """Copy an mcore checkpoint (mp_rank_*) into a working dir, injecting a megatron
 ``args`` namespace into every shard.
 
-Why: the Qwen3.5 forward language converter (ov25_hf_to_mcore.py) writes a
+Why: the Qwen3.5 forward language converter (qwen3_5_hf_to_mcore.py) writes a
 minimal ``{"model": ...}`` with NO megatron ``args`` (it does not need it -- the
 language reverse converter reconstructs everything from CLI + param shapes). But
 the *vision-tower* mcore->hf step reuses the generic ``model.py``, whose

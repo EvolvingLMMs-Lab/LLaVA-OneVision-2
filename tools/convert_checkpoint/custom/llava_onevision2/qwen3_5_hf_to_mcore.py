@@ -9,7 +9,7 @@ This is the Qwen3.5 counterpart of ``tools/convert_checkpoint/model.py`` +
 LLM).  The Qwen3.5 backbone is a hybrid stack (linear gated-delta-net layers +
 periodic full-attention layers, interleaved 3D M-RoPE, partial rotary 0.25) whose
 per-decoder-layer weight math lives in the validated module
-``aiak_training_llm.models.ov25.hf_convert``
+``aiak_training_llm.models.qwen3_5.hf_convert``
 (``convert_linear_attn_layer`` / ``convert_full_attn_layer``, both cos=1.0 proven).
 
 For TP=1 it writes ``<save>/release/mp_rank_00/model_optim_rng.pt`` = ``{"model": {...}}``.
@@ -19,7 +19,7 @@ matching the existing vision/adapter/patch converters + util.load_megatron_check
 + merge_megatron (whose pp==1 branch expects a flat 1D list of tp shards).
 
 It uses ONLY ``language_model.*`` mcore keys, exactly matching the parameter names of
-the model the Phase-3 provider builds (arch ``llava-onevision2-4b-ov25``):
+the model the Phase-3 provider builds (arch ``llava-onevision2_5-4b``):
 
     language_model.embedding.word_embeddings.weight        <- model.language_model.embed_tokens.weight
     language_model.decoder.final_layernorm.weight          <- model.language_model.norm.weight
@@ -76,7 +76,7 @@ import torch
 from safetensors.torch import load_file
 
 # aiak_training_llm must be importable (repo root on PYTHONPATH).
-from aiak_training_llm.models.ov25.hf_convert import (
+from aiak_training_llm.models.qwen3_5.hf_convert import (
     convert_linear_attn_layer,
     convert_full_attn_layer,
 )
@@ -183,7 +183,7 @@ def convert_language(hf_sd, num_layers, full_attention_interval, add_extra_state
         for k, v in attn.items():
             out[mpre + "self_attention." + k] = v
 
-    print(f"[ov25_hf_to_mcore] converted {num_layers} layers: {n_full} full-attn, {n_lin} linear, "
+    print(f"[qwen3_5_hf_to_mcore] converted {num_layers} layers: {n_full} full-attn, {n_lin} linear, "
           f"{len(moe_layers)} MoE")
 
     if add_extra_state:
@@ -259,12 +259,12 @@ def shard_language(lang_sd, tp):
 
     # MoE weights (routed experts, shared expert, router, gate) have no TP rule below,
     # so they would be silently REPLICATED -- wrong for a real TP>1 MoE run. Fail loudly
-    # instead. Qwen3.5-MoE is converted at TP=1; use expert parallelism (ov25_split_ep.py).
+    # instead. Qwen3.5-MoE is converted at TP=1; use expert parallelism (qwen3_5_split_ep.py).
     if any(".mlp.experts." in k or ".mlp.router." in k or ".mlp.shared_experts." in k
            for k in lang_sd):
         raise NotImplementedError(
             f"MoE language weights cannot be tensor-parallel sharded by this converter "
-            f"(requested tp={tp}). Convert at TP=1 and split experts with ov25_split_ep.py.")
+            f"(requested tp={tp}). Convert at TP=1 and split experts with qwen3_5_split_ep.py.")
 
     shards = [dict() for _ in range(tp)]
     for k, v in lang_sd.items():
@@ -312,11 +312,11 @@ def main():
     tp = args.tensor_model_parallel_size
     assert tp >= 1, "tp must be >= 1"
 
-    print(f"[ov25_hf_to_mcore] loading HF checkpoint: {args.load_ckpt_path}")
+    print(f"[qwen3_5_hf_to_mcore] loading HF checkpoint: {args.load_ckpt_path}")
     hf_sd = load_hf_state_dict(args.load_ckpt_path)
-    from aiak_training_llm.models.ov25.hf_convert import dims_from_hf_config
+    from aiak_training_llm.models.qwen3_5.hf_convert import dims_from_hf_config
     dims = dims_from_hf_config(args.load_ckpt_path)
-    print(f"[ov25_hf_to_mcore] dims from config: {dims}")
+    print(f"[qwen3_5_hf_to_mcore] dims from config: {dims}")
     lang = convert_language(hf_sd, args.num_layers, args.full_attention_interval,
                             add_extra_state=not args.no_extra_state, dims=dims)
 
@@ -331,7 +331,7 @@ def main():
         out_path = os.path.join(save_dir, "model_optim_rng.pt")
         torch.save({"model": shards[t]}, out_path)
         n_w = sum(1 for k in shards[t] if not k.endswith("_extra_state"))
-        print(f"[ov25_hf_to_mcore] rank {t}/{tp}: wrote {n_w} language weights (+extra_state) -> {out_path}")
+        print(f"[qwen3_5_hf_to_mcore] rank {t}/{tp}: wrote {n_w} language weights (+extra_state) -> {out_path}")
 
 
 if __name__ == "__main__":

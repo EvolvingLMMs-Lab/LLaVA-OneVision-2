@@ -88,8 +88,8 @@
 # Expected layout under $BUNDLE_DIR (override any path individually):
 #     ov25_quickstart/
 #       packed_mixed_sft_cap_v30s/dataset.yaml      from lmms-lab-encoder/ov2_quickstart
-#       ov25_4b_streaming_tokenizer/         OV2.5 HF tokenizer + config (vocab 248320)
-#       ov25_4b_mcore_tp4pp1/                OV2.5 Megatron checkpoint, TP4 PP1
+#       llava_onevision2_5_4b_streaming_tokenizer/         OV2.5 HF tokenizer + config (vocab 248320)
+#       llava_onevision2_5_4b_mcore_tp4pp1/                OV2.5 Megatron checkpoint, TP4 PP1
 #
 # The checkpoint is TP-specific: changing TP needs a converted checkpoint
 # (examples/llava_onevision2/convert/).
@@ -117,8 +117,8 @@ EPOCHS="${6:-1}"
 
 BUNDLE_DIR="${BUNDLE_DIR:-./ov25_quickstart}"
 DATA_PATH="${DATA_PATH:-${BUNDLE_DIR}/packed_mixed_sft_cap_v30s/dataset.yaml}"
-TOKENIZER_PATH="${TOKENIZER_PATH:-${BUNDLE_DIR}/ov25_4b_streaming_tokenizer}"
-CHECKPOINT_PATH="${CHECKPOINT_PATH:-${BUNDLE_DIR}/ov25_4b_mcore_tp4pp1}"
+TOKENIZER_PATH="${TOKENIZER_PATH:-${BUNDLE_DIR}/llava_onevision2_5_4b_streaming_tokenizer}"
+CHECKPOINT_PATH="${CHECKPOINT_PATH:-${BUNDLE_DIR}/llava_onevision2_5_4b_mcore_tp4pp1}"
 OUTPUT_DIR="${OUTPUT_DIR:-./output/quick_start_4b_ov25}"
 
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
@@ -215,11 +215,11 @@ DISTRIBUTED_ARGS=(
     --master_port "$MASTER_PORT"
 )
 
-MODEL_ARGS=( --model-name llava-onevision2-4b-ov25 )
+MODEL_ARGS=( --model-name llava-onevision2_5-4b )
 
 # Qwen3.5-4B hybrid attention. full-attention-interval 4 over 32 layers means
 # 8 attention layers and 24 GatedDeltaNet layers.
-OV25_ARGS=(
+QWEN3_5_ARGS=(
     --linear-key-head-dim 128
     --linear-value-head-dim 128
     --linear-num-key-heads 16
@@ -333,7 +333,7 @@ PYTHONPATH="$PYSHIM_PATH:$AIAK_MAGATRON_PATH:$AIAK_TRAINING_PATH:$PYTHONPATH" \
     torchrun "${DISTRIBUTED_ARGS[@]}" \
     "$AIAK_TRAINING_PATH/aiak_training_llm/train.py" \
     "${MODEL_ARGS[@]}" \
-    "${OV25_ARGS[@]}" \
+    "${QWEN3_5_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
     "${TRAINING_ARGS[@]}" \
     "${MODEL_PARALLEL_ARGS[@]}" \

@@ -212,7 +212,7 @@ class GatedDeltaNet(HuggingFaceModule):
         # _allreduce_layernorm_grads picks them up (the old
         # average_gradients_across_tp_domain flag has no consumer anywhere).
         # Verified missing-reduce by comparing TP0 vs TP1 grads (rel diff 0.2-2.9); for old checkpoints
-        # see tools/convert_checkpoint/custom/llava_onevision2/ov25_tp_consistency.py.
+        # see tools/convert_checkpoint/custom/llava_onevision2/qwen3_5_tp_consistency.py.
         if self.head_tp:
             # Everything is head-sharded except out_norm (one [value_head_dim] weight shared by
             # all heads): each rank's grad covers only its own heads, so it must be summed over TP.

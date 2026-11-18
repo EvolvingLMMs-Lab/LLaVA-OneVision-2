@@ -9,7 +9,7 @@
 # Two steps:
 #   1. HF -> mcore TP1/PP1, all 256 experts in one shard (language + ViT +
 #      adapter + patch embed, merged);
-#   2. ov25_split_ep.py -> release/mp_rank_00_{e:03d}, i.e. the layout
+#   2. qwen3_5_split_ep.py -> release/mp_rank_00_{e:03d}, i.e. the layout
 #      megatron writes when expert_model_parallel_size > 1.
 #
 # Usage:
@@ -39,14 +39,14 @@ export PYTHONPATH="$AIAK_MAGATRON_PATH:$CONVERT_CHECKPOINT_PATH:$AIAK_TRAINING_P
 echo "[wrapper] 35B-A3B MoE: TP=$TP PP=$PP EP=$EP NUM_LAYERS=$NUM_LAYERS NUM_EXPERTS=$NUM_EXPERTS"
 
 mkdir -p ./tmp/
-SAVE_LANGUAGE_MODEL=./tmp/language-mcore-ov25-moe
+SAVE_LANGUAGE_MODEL=./tmp/language-mcore-qwen3_5-moe
 SAVE_VISION_MODEL=./tmp/vision-model-mcore-moe
 SAVE_ADAPTER=./tmp/adapter-mcore-moe
 SAVE_PATCH=./tmp/patch-mcore-moe
 if [[ "$EP" == "1" ]]; then SAVE_TP1="$SAVE"; else SAVE_TP1="${SAVE}_tp1_premerge"; fi
 
 # ---- language: Qwen3.5-MoE hybrid LLM (router + experts + shared expert) ------
-python $CUSTOM/ov25_hf_to_mcore.py \
+python $CUSTOM/qwen3_5_hf_to_mcore.py \
     --load_ckpt_path=$LOAD \
     --save_ckpt_path=$SAVE_LANGUAGE_MODEL \
     --num_layers=$NUM_LAYERS \
@@ -98,7 +98,7 @@ rm -rf $SAVE_LANGUAGE_MODEL $SAVE_VISION_MODEL $SAVE_ADAPTER $SAVE_PATCH
 
 # ---- expert-parallel split ---------------------------------------------------
 if [[ "$EP" != "1" ]]; then
-    python $CUSTOM/ov25_split_ep.py \
+    python $CUSTOM/qwen3_5_split_ep.py \
         --src $SAVE_TP1 \
         --dst $SAVE \
         --ep $EP \

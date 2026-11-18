@@ -3,7 +3,7 @@
 
 """Qwen3.5 Multimodal RoPE (M-RoPE) for AIAK-Megatron.
 
-Ported from LoongForge ``OV25RotaryEmbedding`` (which extended mcore's
+Ported from LoongForge ``Qwen3_5RotaryEmbedding`` (which extended mcore's
 ``MultimodalRotaryEmbedding``). Our mcore 0.12.0rc0 has no
 ``MultimodalRotaryEmbedding``, so this is implemented as a standalone
 ``torch.nn.Module`` modelled on our existing Qwen2-VL M-RoPE
@@ -28,7 +28,7 @@ from megatron.core.models.common.embeddings.rope_utils import (
 # Cos/sin cache for Qwen3.5 LLM RoPE.
 #
 # Mirrors the ViT pattern (commit 1b9d69b). The freqs tensor built by
-# OV25RotaryEmbedding.forward is the same Python object across every
+# Qwen3_5RotaryEmbedding.forward is the same Python object across every
 # full_attention LLM layer in a single forward, and (q, k) at each layer both
 # receive the same freqs, so the cos/sin computation in the unfused bshd/thd
 # path is duplicated 2 * num_full_attention_layers times per step. Caching
@@ -83,7 +83,7 @@ def _cached_apply_rotary_pos_emb_bshd(
     return torch.cat((t_rot, t_pass), dim=-1)
 
 
-def apply_rotary_pos_emb_ov25_llm(
+def apply_rotary_pos_emb_qwen3_5_llm(
     t: torch.Tensor,
     freqs: torch.Tensor,
     config,
@@ -169,7 +169,7 @@ def clear_llm_rope_cache():
     _LLM_ROPE_CACHE.clear()
 
 
-class OV25RotaryEmbedding(torch.nn.Module):
+class Qwen3_5RotaryEmbedding(torch.nn.Module):
     """Qwen3.5 Rotary Position Embedding (interleaved M-RoPE, partial rotary)."""
 
     def __init__(self, config):

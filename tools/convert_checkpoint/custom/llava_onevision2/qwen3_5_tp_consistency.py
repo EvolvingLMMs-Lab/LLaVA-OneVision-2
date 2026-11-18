@@ -87,7 +87,7 @@ def check(ckpt_dir):
         print(f"[tp_consistency] FAILED: {len(bad)} replicated GDN tensor(s) differ across TP ranks:")
         for line in bad[:20]:
             print("   ", line)
-        print("[tp_consistency] resync first: ov25_tp_consistency.py resync <src> <dst>, then convert <dst>")
+        print("[tp_consistency] resync first: qwen3_5_tp_consistency.py resync <src> <dst>, then convert <dst>")
         return 1
     print(f"[tp_consistency] OK: {n_checked} replicated GDN tensors identical across TP ranks")
     return 0

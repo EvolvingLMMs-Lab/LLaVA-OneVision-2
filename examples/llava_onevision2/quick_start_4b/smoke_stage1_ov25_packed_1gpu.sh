@@ -44,7 +44,7 @@ DATA_PATH="${DATA_PATH:-/data/sft_packed_8k/dataset.yaml}"
 # with the packed p16m3 data AND the provider's image/video token ids.
 TOKENIZER_PATH="${TOKENIZER_PATH:-/models/lmms-lab/LLaVA-OneVision-2-4B-p16m33}"
 # Converted Qwen3.5-backbone mcore checkpoint (TP1/PP1, loads 0 missing/0 unexpected).
-CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_ov25_p16m3_mcore_tp1pp1}"
+CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_5_4b_p16m3_mcore_tp1pp1}"
 
 # Offline-packed data (both required for correct THD attention isolation).
 export OFFLINE_PACKING_BMR=1
@@ -91,7 +91,7 @@ DISTRIBUTED_ARGS=(
 
 # ---- model: the NEW Qwen3.5-backbone arch ----------------------------------
 MODEL_ARGS=(
-    --model-name llava-onevision2-4b-ov25
+    --model-name llava-onevision2_5-4b
     # Qwen3.5 hybrid-attention backbone args (also carried by the arch config;
     # passed explicitly per the training-recipe contract).
     --linear-key-head-dim 128

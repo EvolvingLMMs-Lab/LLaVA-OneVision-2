@@ -27,7 +27,7 @@ class LlavaOnevision2VisionConfig(PreTrainedConfig):
     spatial_merge_size: int = 3
     tokens_per_second: int = 1
     temporal_patch_size: int = 1
-    frame_windows_size: int = 1  # per-frame ViT attention (ov25 encoders); older f4 encoders must set 4 explicitly
+    frame_windows_size: int = 1  # per-frame ViT attention (llava_onevision2_5 encoders); older f4 encoders must set 4 explicitly
 
 
 @strict

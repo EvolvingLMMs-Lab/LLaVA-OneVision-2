@@ -36,13 +36,13 @@ OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_ov25}"
 DATA_PATH="${DATA_PATH:-/data/sft_packed_8k/dataset.yaml}"
 # p16m3 tokenizer (Qwen2.5-VL token space: image_token_id=151655), consistent
 # with the packed p16m3 data AND the provider's image/video token ids.
-TOKENIZER_PATH="${TOKENIZER_PATH:-/models/ov25_processor}"
+TOKENIZER_PATH="${TOKENIZER_PATH:-/models/llava_onevision2_5_processor}"
 # Converted Qwen3.5-backbone mcore checkpoint (TP1/PP1, loads 0 missing/0 unexpected).
-CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_4b_ov25_p16m3_mcore_tp1pp1}"
+CHECKPOINT_PATH="${CHECKPOINT_PATH:-/models/llava_onevision2_5_4b_p16m3_mcore_tp1pp1}"
 
 # Offline-packed data (both required for correct THD attention isolation).
 export OFFLINE_PACKING_BMR=1
-export OFFLINE_PACKED_DATA=0  # NON-packed: packed_seq_params=None so the ov25 gated-deltanet skips cu_seqlens_cpu (unset by get_batch) AND the real get_rope_index path runs
+export OFFLINE_PACKED_DATA=0  # NON-packed: packed_seq_params=None so the Qwen3.5 gated-deltanet skips cu_seqlens_cpu (unset by get_batch) AND the real get_rope_index path runs
 
 # Memory: avoid fragmentation OOM at cross-entropy on the padded vocab.
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
@@ -73,7 +73,7 @@ DISTRIBUTED_ARGS=(
 
 # ---- model: the NEW Qwen3.5-backbone arch ----------------------------------
 MODEL_ARGS=(
-    --model-name llava-onevision2-4b-ov25
+    --model-name llava-onevision2_5-4b
     # Qwen3.5 hybrid-attention backbone args (also carried by the arch config;
     # passed explicitly per the training-recipe contract).
     --linear-key-head-dim 128

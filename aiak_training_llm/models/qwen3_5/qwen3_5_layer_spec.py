@@ -27,7 +27,7 @@ from megatron.core.models.gpt.moe_module_specs import get_moe_module_spec
 from .rmsnorm import Qwen3NextRMSNorm
 from .gated_deltanet import GatedDeltaNet
 from .gated_attention import Qwen3NextSelfAttention
-from .ov25_rope import apply_rotary_pos_emb_ov25_llm
+from .qwen3_5_rope import apply_rotary_pos_emb_qwen3_5_llm
 
 try:
     import transformer_engine  # pylint: disable=unused-import
@@ -115,8 +115,8 @@ def get_qwen3_5_transformer_layer_spec(config, vp_stage=None):
         )
         # Qwen3.5-MoE (qwen3_5_moe) scales the shared expert by sigmoid(shared_expert_gate(x)).
         # The stock mcore spec builds SharedExpertMLP with gate=False; turn it on unless
-        # explicitly disabled with OV25_SHARED_EXPERT_GATE=0.
-        if __import__("os").environ.get("OV25_SHARED_EXPERT_GATE", "1") != "0":
+        # explicitly disabled with QWEN3_5_SHARED_EXPERT_GATE=0.
+        if __import__("os").environ.get("QWEN3_5_SHARED_EXPERT_GATE", "1") != "0":
             mlp.submodules.shared_experts.params = {"gate": True}
 
     full_attention_interval = getattr(config, "full_attention_interval", 4)
@@ -145,7 +145,7 @@ def get_qwen3_5_transformer_layer_spec(config, vp_stage=None):
             # layer calls per step. Mirrors the ViT-side pattern in commit
             # 1b9d69b.
             layer_spec.submodules.self_attention.submodules.apply_rotary_fn = (
-                apply_rotary_pos_emb_ov25_llm
+                apply_rotary_pos_emb_qwen3_5_llm
             )
 
         # Replace all layernorms with Qwen3NextRMSNorm (zero-centered)

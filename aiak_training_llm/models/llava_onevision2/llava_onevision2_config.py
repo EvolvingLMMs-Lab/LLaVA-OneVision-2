@@ -312,15 +312,15 @@ def llava_onevision2_14b():
 
 
 @register_model_config(
-    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-4b-ov25"
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2_5-4b"
 )
-def llava_onevision2_4b_ov25():
+def llava_onevision2_5_4b():
     """llava-onevision2-4b with the Qwen3.5 hybrid-attention LLM backbone.
 
     LLM = ported+validated Qwen3.5-4B (32 hybrid layers: linear gated-delta-net +
     periodic full attention every full_attention_interval, interleaved 3D M-RoPE,
     partial rotary 0.25). ViT/adapter reuse the p16/merge3 encoder (see
-    get_vision_config 'ov25' branch). language_model_type='qwen3_5' triggers the
+    get_vision_config 'onevision2_5' branch). language_model_type='qwen3_5' triggers the
     provider + QwenModel Qwen3.5 branches.
     """
     return LlavaOnevision2Config(
@@ -354,17 +354,17 @@ def llava_onevision2_4b_ov25():
 
 
 @register_model_config(
-    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-2b-ov25"
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2_5-2b"
 )
-def llava_onevision2_2b_ov25():
+def llava_onevision2_5_2b():
     """llava-onevision2-2b with the Qwen3.5-2B hybrid-attention LLM backbone.
 
-    Same architecture family as llava_onevision2_4b_ov25 but with the
+    Same architecture family as llava_onevision2_5_4b but with the
     Qwen3.5-2B dims (from its HF text_config): 24 hybrid layers, hidden 2048,
     ffn 6144, full-attn 8 heads / 2 KV groups (head_dim 256), and
     linear_num_value_heads=16 (4B uses 32). rope/mrope identical to 4B
     (theta 1e7, mrope [11,11,10] interleaved, partial rotary 0.25).
-    ViT/adapter reuse the p16/merge3 encoder ("ov25" in model_name).
+    ViT/adapter reuse the p16/merge3 encoder ("onevision2_5" in model_name).
     """
     return LlavaOnevision2Config(
         num_layers=24,
@@ -397,9 +397,9 @@ def llava_onevision2_2b_ov25():
 
 
 @register_model_config(
-    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-9b-ov25"
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2_5-9b"
 )
-def llava_onevision2_9b_ov25():
+def llava_onevision2_5_9b():
     """llava-onevision2-9b with the Qwen3.5-9B hybrid-attention LLM backbone.
 
     Dims from the Qwen3.5-9B HF text_config: 32 hybrid layers (same count as
@@ -441,9 +441,9 @@ def llava_onevision2_9b_ov25():
 
 
 @register_model_config(
-    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-27b-ov25"
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2_5-27b"
 )
-def llava_onevision2_27b_ov25():
+def llava_onevision2_5_27b():
     """llava-onevision2-27b with the Qwen3.8-27B hybrid-attention LLM backbone.
 
     Dims from the Qwen3.8-27B HF text_config (model_type qwen3_5_text, dense):
@@ -483,9 +483,9 @@ def llava_onevision2_27b_ov25():
 
 
 @register_model_config(
-    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2-35b-a3b-ov25"
+    model_family=VisionLanguageModelFamilies.LLAVA_ONEVISION2, model_arch="llava-onevision2_5-35b-a3b"
 )
-def llava_onevision2_35b_a3b_ov25():
+def llava_onevision2_5_35b_a3b():
     """llava-onevision2 with the Qwen3.6-35B-A3B hybrid-attention MoE LLM backbone.
 
     Dims from the Qwen3.6-35B-A3B HF text_config (model_type qwen3_5_moe_text):
@@ -609,7 +609,7 @@ def get_vision_config(model_family, model_name):
         config.patch_size = 14
         config.image_size = (224, 224)
         config.spatial_merge_size = 2
-    elif "ov25" in model_name:
+    elif "onevision2_5" in model_name:
         # Qwen3.5 VLM reuses the p16/merge3 encoder (patch16, 384px, 3x3 spatial merge).
         config.patch_size = 16
         config.image_size = (384, 384)

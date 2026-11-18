@@ -132,7 +132,7 @@ def convert(src, dst, to):
                 for c in cks[1:]:
                     if not torch.equal(c["model"][key], full):
                         sys.exit(f"[gdn_head_tp] replicated copies differ at {key}: run "
-                                 "ov25_tp_consistency.py resync first")
+                                 "qwen3_5_tp_consistency.py resync first")
                 for r, c in enumerate(cks):
                     c["model"][key] = _shard(name, full, r, tp, d)
             else:
