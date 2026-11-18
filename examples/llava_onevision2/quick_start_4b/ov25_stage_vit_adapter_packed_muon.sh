@@ -20,9 +20,8 @@
 # 0 and skips optimizer/rng/dataloader state, so this stage trains from step 0
 # with a fresh muon optimizer and a fresh cosine LR schedule (warmup from 0).
 #
-# Nodes: 192.0.2.11 (cluster2) + 192.0.2.12 (cluster1). Cross-cluster is one
-# RoCE fabric and works with UNIFORM auto-detect containers (both on the same
-# llava_megatron:26.07 image, no forced-IB NCCL env) -> keep NCCL auto-detect.
+# Multi-node: run every node on the same llava_megatron:26.07 image with no
+# forced-IB NCCL env -> keep NCCL auto-detect.
 # =============================================================================
 TP="${1:-1}"
 PP="${2:-1}"

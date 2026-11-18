@@ -30,8 +30,8 @@ Qwen3.5 LLM ┘                     ▲                                  │
                                   └────────(C) mcore→hf ◀────────────┘ (训练产物回 HF)
 ```
 
-- 合并 HF 模型（已就绪）：`/models/llava_onevision2_4b_ov25_p16m3`
-- mcore 权重（已就绪,TP 1/2/4）：`.../llava_onevision2_4b_ov25_p16m3_mcore_tp{1,2,4}pp1`
+- 合并 HF 模型：`/models/llava_onevision2_4b_ov25_p16m3`
+- mcore 权重（TP 1/2/4）：`.../llava_onevision2_4b_ov25_p16m3_mcore_tp{1,2,4}pp1`
 
 ---
 
@@ -143,9 +143,9 @@ docker exec -w /workspace/LLaVA-OneVision-2.5 llava_megatron_container \
 1. **vision token id**：Qwen3.5 是 image `248056` / video `248057` / start `248053` / end `248054`（Qwen3 是 151655/…）。任何硬编码 151655 的地方会导致「图像没被识别 → adapter 无梯度、grad norm=0」。已在 provider 与 `get_batch` 修正（按 `language_model_type` 选 id）。
 2. **packed M-RoPE(用真实 patch_positions,对齐 Qwen3.5)**：Qwen3.5 的 temporal = **帧序号** arange×1(非秒、非源帧号),真实时序由 `<X.X seconds>` 时间戳文本承载(数据已插)。`get_rope_index_packed` 用 `patch_position.npy`(已铺到 forward、编码器已 block-layout)降到 per-merged-token `(t, h//merge, w//merge)`：temporal=每视觉体内真实 t 的 dense-rank(0/30/60→0/1/2),h/w=merged 网格,每视觉体共享 base,文本顺序位置。断言 `总patch/9==image_pad数`。patch_positions 缺失时回退到 grid 展开路径。
 3. **续训 step 归零**：用 `--finetune`（只载权重、iteration=0、fresh 优化器/LR），而非仅 `--no-load-optim --no-load-rng`（后者会继承 stage-1 的 iteration 计数）。
-4. **TP 与 ckpt 匹配**：训练的 `--load` 必须用同 TP 的 mcore 权重（tp1/tp2/tp4 目录已备好）。TP>1 时脚本会自动加 `--sequence-parallel`。
+4. **TP 与 ckpt 匹配**：训练的 `--load` 必须用同 TP 的 mcore 权重。TP>1 时脚本会自动加 `--sequence-parallel`。
 5. **SSM 参数 fp32**：合并/转换全程保持 48 个 SSM 参数 fp32。
-6. **跨集群 NCCL**：19(cluster2)+22(cluster1) 同属一个 RoCE fabric，只要**所有节点用同一 26.07 镜像(auto-detect NCCL,不强制 IB)**即可通,脚本不设 NCCL env。
+6. **多节点 NCCL**：**所有节点用同一 26.07 镜像(auto-detect NCCL,不强制 IB)**,脚本不设 NCCL env。
 7. **packed 数据免重打**：offline_packing 存的是原始 text+image,加载时**实时 tokenize**,所以换 Qwen3.5 tokenizer 无需重新打包。
 
 ---
@@ -171,4 +171,4 @@ examples/llava_onevision2/quick_start_4b/   # 训练脚本(见 §6)
 ```
 
 ---
-*生成于 2026-07-20，内容基于 `ov25` 分支实际代码与脚本。*
+*内容基于本仓库实际代码与脚本。*

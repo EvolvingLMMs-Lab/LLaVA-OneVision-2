@@ -10,8 +10,7 @@
 #       -i /path/input.jsonl -r /image/root -m /model/path \
 #       -o /out/base -L 32000
 #
-# Conda env (must contain transformers / webdataset / sortedcontainers):
-#   source /root/miniconda3/etc/profile.d/conda.sh && conda activate llava_main_xy
+# The Python environment must contain transformers / webdataset / sortedcontainers.
 
 set -euo pipefail
 export PYTHONUNBUFFERED=1

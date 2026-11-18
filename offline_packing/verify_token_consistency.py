@@ -16,7 +16,7 @@ Usage:
         --token-info /path/output/token_info.txt \
         --webdataset-dir /path/output/webdataset \
         --bins-file /path/output/bins_32klen.pkl \
-        --model-path /ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33 \
+        --model-path /models/lmms-lab/LLaVA-OneVision-2-4B-p16m33 \
         --n-samples 32
 """
 from __future__ import annotations

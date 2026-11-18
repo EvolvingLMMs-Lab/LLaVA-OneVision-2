@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Roll out flash-linear-attention (required by the Qwen3.5 GatedDeltaNet
 # linear-attention layers) into the training container on every node.
-# Idempotent: skips nodes where fla already imports. Modeled on
-# examples/llava_onevision2/quick_start_4b/launch_date05_training.sh.
+# Idempotent: skips nodes where fla already imports.
 #
 # Usage:
 #   bash tools/rollout_fla.sh --ips "192.0.2.11 192.0.2.12 ..." \

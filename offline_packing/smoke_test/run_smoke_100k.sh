@@ -3,8 +3,11 @@
 # Runs auto_pipe.sh twice on the same 100k input and prints ViT-load comparison.
 set -euo pipefail
 export PYTHONUNBUFFERED=1
-source /root/miniconda3/etc/profile.d/conda.sh
-conda activate llava_main_xy
+# Optional: CONDA_ENV=<name> activates that conda env first (needs transformers / webdataset).
+if [[ -n "${CONDA_ENV:-}" ]]; then
+    source "$(conda info --base)/etc/profile.d/conda.sh"
+    conda activate "$CONDA_ENV"
+fi
 
 SRC=/data/jsonls/sft_part1.jsonl
 BASE=/data/smoke_test

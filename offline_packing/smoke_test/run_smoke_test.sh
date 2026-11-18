@@ -9,9 +9,11 @@
 set -euo pipefail
 export PYTHONUNBUFFERED=1
 
-# Activate conda env (transformers / webdataset live here)
-source /root/miniconda3/etc/profile.d/conda.sh
-conda activate llava_main_xy
+# Optional: CONDA_ENV=<name> activates that conda env first (needs transformers / webdataset).
+if [[ -n "${CONDA_ENV:-}" ]]; then
+    source "$(conda info --base)/etc/profile.d/conda.sh"
+    conda activate "$CONDA_ENV"
+fi
 echo "[smoke] using python: $(which python)"
 
 SRC_JSONL=/data/jsonls/sft_part1.jsonl
