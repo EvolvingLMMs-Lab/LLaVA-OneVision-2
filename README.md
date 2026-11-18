@@ -15,7 +15,6 @@
 
 > [!IMPORTANT]
 > 🌟 **The core work on this project is led by [Glint Lab](https://www.glint-mvt.com).**
-> For an interactive online experience, visit **[ve2s.ai](https://ve2s.ai/)**.
 
 </td></tr>
 </table>
