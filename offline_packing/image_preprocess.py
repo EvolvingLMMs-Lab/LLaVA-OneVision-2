@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 """image_preprocess.py — shared offline image resize/re-encode policy.
 
-Per docs/offline_image_preprocess_handoff.md (decisions: Q1=A longest_edge=3072,
-Q2=A small images keep bytes; PNG/WebP forced to JPEG, Q4=A enable by default,
-Q5=EXIF transpose ON).
+Policy: longest_edge=3072; small images keep their bytes; PNG/WebP are forced to
+JPEG; enabled by default; EXIF transpose ON.
 
 Public API:
     policy = ImagePolicy(longest_edge=3072, jpeg_quality=92,

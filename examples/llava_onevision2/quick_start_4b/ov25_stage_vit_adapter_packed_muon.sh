@@ -6,9 +6,7 @@
 # (iter_0002181) and continues training with adapter + vision_model trainable
 # (LLM frozen), on the packed SFT mix, using the muon optimizer.
 #
-# Modeled on the official p16m3 packed-muon recipe
-#   date0511_ax_stage_1_alignment_p16m3_packed_new16_muon.sh
-# with the Qwen3.5-specific plumbing carried over from the stage-1 script:
+# Modeled on the p16m3 packed-muon recipe, with the Qwen3.5-specific plumbing carried over from the stage-1 script:
 #   * AIAK_TRAINING_PATH -> /workspace/LLaVA-OneVision-2.5 (qwen3_5 backbone)
 #   * --model-name llava-onevision2_5-4b + QWEN3_5_ARGS (linear-attn / M-RoPE)
 #   * Qwen3.5 processor tokenizer (vocab 248320); packed wds stores raw

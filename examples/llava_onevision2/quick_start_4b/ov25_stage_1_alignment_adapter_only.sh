@@ -2,8 +2,7 @@
 # =============================================================================
 # Stage-1 Alignment / 4B-*Qwen3.5* / adapter-only / NON-packed
 #
-# Hyperparameters aligned to the official p16m3 stage-1 alignment recipe
-# (ax_stage_1_alignment_p16m3_adapter_only.sh): non-packed 558k LLaVA
+# Hyperparameters aligned to the p16m3 stage-1 alignment recipe: non-packed 558k LLaVA
 # alignment data, TP1/PP1, seq 32k, GBS 256, lr 2e-5, adapter-only.
 #
 # Qwen3.5-specific (vs the p16m3 recipe):
