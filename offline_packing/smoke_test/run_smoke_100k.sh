@@ -6,11 +6,11 @@ export PYTHONUNBUFFERED=1
 source /root/miniconda3/etc/profile.d/conda.sh
 conda activate llava_main_xy
 
-SRC=/data/ov2_wds/47m_sft_cleaned_64k_20w/jsonls/47m_1.jsonl
+SRC=/data/jsonls/sft_part1.jsonl
 BASE=/data/smoke_test
 INPUT=${BASE}/input_100k.jsonl
 PIPE=/workspace/LLaVA-OneVision-2.5/offline_packing
-MODEL=/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33
+MODEL=/models/lmms-lab/LLaVA-OneVision-2-4B-p16m33
 
 [[ -f $INPUT ]] || head -n 100000 "$SRC" > "$INPUT"
 echo "[100k] input lines: $(wc -l <"$INPUT")"

@@ -4,13 +4,13 @@
 # Example:
 #   bash examples/llava_onevision2/quick_start_4b/launch_date05_training.sh \
 #     --script examples/llava_onevision2/quick_start_4b/date0520_ax_stage_2_alignment_p16m3_4n_muon_from_adapter_lr2e5.sh \
-#     --ips "192.0.2.13 192.0.2.14 192.0.2.15 192.0.2.18" \
+#     --ips "192.0.2.11 192.0.2.12 192.0.2.13 192.0.2.14" \
 #     --gbs 128 --master-port 26012 --prewarm
 
 set -euo pipefail
 
 REPO_ROOT="${REPO_ROOT:-/workspace/LLaVA-OneVision-2.5}"
-CONTAINER="${CONTAINER:-llava_megatron_container_ax}"
+CONTAINER="${CONTAINER:-llava_megatron_container}"
 SCRIPT=""
 IPS=""
 TP=1
@@ -24,7 +24,7 @@ LAUNCH_LOG_NAME=""
 DRY_RUN=0
 PREWARM=0
 CHECK_IDLE=1
-TOKENIZER_PATH="/ov2/pretrain_models/lmms-lab/LLaVA-OneVision-2-4B-p16m33"
+TOKENIZER_PATH="/models/lmms-lab/LLaVA-OneVision-2-4B-p16m33"
 EXTRA_ENVS=()
 SSH_OPTS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
 
@@ -45,7 +45,7 @@ Common options:
   --mbs INT              Micro batch size. Default: 1
   --nstep INT            Optional train iters passed as positional arg 6.
   --master-port INT      MASTER_PORT override. Default: 26020
-  --container NAME       Docker container name. Default: llava_megatron_container_ax
+  --container NAME       Docker container name. Default: llava_megatron_container
   --repo-root PATH       Repo root visible on all nodes. Default: /workspace/LLaVA-OneVision-2.5
   --env KEY=VALUE        Extra env override. Repeatable, e.g. --env OUTPUT_DIR=/path
   --prewarm              Prewarm HF AutoConfig/AutoTokenizer once per node before launch.

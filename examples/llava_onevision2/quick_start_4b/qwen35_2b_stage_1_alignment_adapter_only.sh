@@ -35,8 +35,8 @@ NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
-DATA_PATH=${DATA_PATH:-"/vlm/data/blip_laion_cc_sbu_558k_wds"}
+OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
+DATA_PATH=${DATA_PATH:-"/data/blip_laion_cc_sbu_558k_wds"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_2b_qwen35_p16m3_mcore_tp${TP}pp${PP}"}
 
@@ -48,7 +48,7 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    declare -a list_ip=( "192.0.2.12" "192.0.2.14" "192.0.2.17" "192.0.2.27" )
+    declare -a list_ip=( "192.0.2.11" "192.0.2.12" "192.0.2.13" "192.0.2.14" )
 fi
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')

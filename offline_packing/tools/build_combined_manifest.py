@@ -5,7 +5,7 @@ build_combined_manifest.py — concat fix part manifest + selected 47m manifest 
 Inputs:
   --fix-manifest         existing pandas70m_part${i} manifest.jsonl   (kept verbatim)
   --selected             list of 47m sample names selected by topup
-  --pool-manifest-glob   glob to gather 47m manifests, e.g. /data/47m_sft_packed/47m_part*/manifest.jsonl
+  --pool-manifest-glob   glob to gather 47m manifests, e.g. /data/sft_packed/47m_part*/manifest.jsonl
 
 Output:
   --output      manifest_combined.jsonl  (fix entries first, then selected 47m entries)

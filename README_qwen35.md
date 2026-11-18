@@ -1,21 +1,21 @@
-# LLaVA-OneVision2 × Qwen3.5-4B 混合注意力基座 · 使用说明
+# LLaVA-OneVision-2.5 × Qwen3.5-4B 混合注意力基座 · 使用说明
 
-> 分支 `qwen35`。本文件讲清楚 **HF 权重 ↔ Megatron-Core(mcore)权重的双向转换**,以及权重构建、训练、和几处必须知道的坑。所有命令均取自本仓库实际脚本,路径可直接替换使用。
+> 本文件讲清楚 **HF 权重 ↔ Megatron-Core(mcore)权重的双向转换**,以及权重构建、训练、和几处必须知道的坑。所有命令均取自本仓库实际脚本,路径可直接替换使用。
 
 ---
 
 ## 0. 这是什么
 
-把一个 **raw ViT**(p16 / spatial_merge=3)和从 **Qwen3.5-4B VLM** 抽出的 **hybrid-attention LLM**(线性 GatedDeltaNet + 每 4 层一次全注意力,3D M-RoPE,partial rotary 0.25)组合成 OV2.0 模型,并适配 AIAK-Megatron 训练。
+把一个 **raw ViT**(p16 / spatial_merge=3)和从 **Qwen3.5-4B VLM** 抽出的 **hybrid-attention LLM**(线性 GatedDeltaNet + 每 4 层一次全注意力,3D M-RoPE,partial rotary 0.25)组合成 OV2.5 模型,并适配 AIAK-Megatron 训练。
 
-与原 Qwen3 基座的差异见 `~/ov2_qwen35_tech_explainer.html`(逐项对比)。核心:**Qwen3.5 是混合注意力 + M-RoPE + 词表 248320,vision token id 也全变了**,所以转换/训练都要走专用代码路径。
+与原 Qwen3 基座的差异,核心是:**Qwen3.5 是混合注意力 + M-RoPE + 词表 248320,vision token id 也全变了**,所以转换/训练都要走专用代码路径。
 
 ---
 
 ## 1. 环境 / 镜像
 
 - 训练镜像:`llava_megatron:26.07`（已把 **FLA (flash-linear-attention 0.5.1)** 烤进去；GatedDeltaNet 的 triton kernel 依赖它）。
-- 转换/训练都在容器内跑：容器 `llava_megatron_container`，挂载 `/vlm /ov2 /data /rice_vl /train_tmp /mnt /video_vit`，`--network host --ipc host --privileged --gpus all`。
+- 转换/训练都在容器内跑：容器 `llava_megatron_container`，把放权重和数据的盘挂进去（本文档统一写成 `/models` 和 `/data`），`--network host --ipc host --privileged --gpus all`。
 - 首次运行会**冷编译 fla triton kernel（约 5–15 分钟）**，首个 iteration 特别慢属正常，不是卡死。
 - triton 3.2 低于推荐 3.3，只有 warning，可用。
 
@@ -77,7 +77,7 @@ bash examples/llava_onevision2/convert/convert_4b_qwen35_mcore_to_hf.sh \
 
 # 例（从训练产物 TP1 转回 HF）
 bash examples/llava_onevision2/convert/convert_4b_qwen35_mcore_to_hf.sh \
-  /workspace/LLaVA-OneVision-2.5/checkpoints/qwen35_stage_vit_adapter_packed_muon/iter_0002000 \
+  ./checkpoints/qwen35_stage_vit_adapter_packed_muon/iter_0002000 \
   /models/qwen35_stage_vit_adapter_from_mcore  1  1
 ```
 
@@ -112,8 +112,8 @@ python -m transformers_impl.merge_ov2 merge \
 
 | 脚本 | 用途 |
 |---|---|
-| `examples/.../quick_start_4b/qwen35_stage_1_alignment_adapter_only.sh` | stage-1 对齐：非 packed、仅 adapter、adam、TP1、seq32k、GBS256、lr2e-5。**已完成 iter 2181** |
-| `examples/.../quick_start_4b/qwen35_stage_vit_adapter_packed_muon.sh` | 续训练：**packed + muon**，`--trainable-modules adapter vision_model`，`--finetune` 从 step 0 载 stage-1 权重。当前在 19+22 双机跑 |
+| `examples/.../quick_start_4b/qwen35_stage_1_alignment_adapter_only.sh` | stage-1 对齐：非 packed、仅 adapter、adam、TP1、seq32k、GBS256、lr2e-5 |
+| `examples/.../quick_start_4b/qwen35_stage_vit_adapter_packed_muon.sh` | 续训练：**packed + muon**，`--trainable-modules adapter vision_model`，`--finetune` 从 step 0 载 stage-1 权重 |
 | `examples/.../quick_start_4b/qwen35_packed64k_tp4_sp.sh` | TP4+SP+packed 64k 模板 |
 
 启动（双机示例，容器内）：
@@ -122,7 +122,7 @@ python -m transformers_impl.merge_ov2 merge \
 docker exec -w /workspace/LLaVA-OneVision-2.5 llava_megatron_container \
   bash examples/llava_onevision2/quick_start_4b/qwen35_stage_vit_adapter_packed_muon.sh
 ```
-默认节点 `LIST_IP="192.0.2.12 192.0.2.14"`，可用环境变量覆盖：`LIST_IP="ip1 ip2 ..."`。
+默认节点 `LIST_IP="192.0.2.11 192.0.2.12"`，可用环境变量覆盖：`LIST_IP="ip1 ip2 ..."`。
 
 关键 CLI（Qwen3.5 专有,脚本已内置）：
 ```

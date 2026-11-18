@@ -34,8 +34,8 @@ NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
-DATA_PATH=${DATA_PATH:-"/vlm/data/blip_laion_cc_sbu_558k_wds"}
+OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
+DATA_PATH=${DATA_PATH:-"/data/blip_laion_cc_sbu_558k_wds"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp${TP}pp${PP}"}
 

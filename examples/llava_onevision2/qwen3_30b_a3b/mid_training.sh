@@ -31,8 +31,8 @@ CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2/stage_1_alignme
 
 # --- Multi-node configuration ---
 declare -a list_ip=(
-    "172.16.5.36"
-    "172.16.5.37"
+    "192.0.2.11"
+    "192.0.2.12"
 )
 
 CURRENT_IP=$(hostname -I | awk '{print $1}')

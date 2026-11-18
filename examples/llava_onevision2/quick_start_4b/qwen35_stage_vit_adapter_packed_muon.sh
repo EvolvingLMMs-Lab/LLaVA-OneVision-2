@@ -20,7 +20,7 @@
 # 0 and skips optimizer/rng/dataloader state, so this stage trains from step 0
 # with a fresh muon optimizer and a fresh cosine LR schedule (warmup from 0).
 #
-# Nodes: 192.0.2.12 (cluster2) + 192.0.2.14 (cluster1). Cross-cluster is one
+# Nodes: 192.0.2.11 (cluster2) + 192.0.2.12 (cluster1). Cross-cluster is one
 # RoCE fabric and works with UNIFORM auto-detect containers (both on the same
 # llava_megatron:26.07 image, no forced-IB NCCL env) -> keep NCCL auto-detect.
 # =============================================================================
@@ -46,12 +46,12 @@ NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2/}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-# OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
+# OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 OUTPUT_DIR="${OUTPUT_DIR:-output}"
-DATA_PATH=${DATA_PATH:-"/ov2/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
+DATA_PATH=${DATA_PATH:-"/data/dataset_sft/seed85m_video20m_47m5p_packed/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 # Resume weights from the completed stage-1 adapter-only alignment run.
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2.5/checkpoints/qwen35_stage_1_alignment_adapter_only"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"./checkpoints/qwen35_stage_1_alignment_adapter_only"}
 
 export OFFLINE_PACKING_BMR=1
 export OFFLINE_PACKED_DATA=1
@@ -61,7 +61,7 @@ export CUDA_DEVICE_MAX_CONNECTIONS=1
 if [[ -n "${LIST_IP:-}" ]]; then
     read -ra list_ip <<< "$LIST_IP"
 else
-    # declare -a list_ip=( "192.0.2.12" "192.0.2.14" "192.0.2.17" "192.0.2.27" "192.0.2.40" "192.0.2.43" )
+    # declare -a list_ip=( "192.0.2.11" "192.0.2.12" "192.0.2.13" "192.0.2.14" "192.0.2.15" "192.0.2.16" )
     declare -a list_ip=(localhost)
 fi
 

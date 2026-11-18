@@ -47,9 +47,9 @@ NSTEP="${6:-$(( (TOTAL_SAMPLES * EPOCHS + GBS - 1) / GBS ))}"
 AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/checkpoints}"
+OUTPUT_DIR="${OUTPUT_DIR:-./checkpoints}"
 # Existing mixed_64k packed webdataset (raw text + images; tokenized live).
-DATA_PATH=${DATA_PATH:-"/data/yamls/mixed_6sets_packed_64k/mixed_6sets_packed_64k/dataset_fix_recap_w47m_20260624.yaml"}
+DATA_PATH=${DATA_PATH:-"/data/packed_64k/dataset.yaml"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/models/ov2_qwen35_processor"}
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/models/llava_onevision2_4b_qwen35_p16m3_mcore_tp4pp1"}
 

@@ -6,11 +6,11 @@
 #
 # Usage:
 #   bash tools/rollout_fla.sh --ips "192.0.2.11 192.0.2.12 ..." \
-#        [--container llava_megatron_container_ax] \
+#        [--container llava_megatron_container] \
 #        [--proxy http://proxy.example.com:8888] [--version 0.5.1] [--dry-run]
 set -uo pipefail
 
-CONTAINER="${CONTAINER:-llava_megatron_container_ax}"
+CONTAINER="${CONTAINER:-llava_megatron_container}"
 IPS=""
 PROXY="http://proxy.example.com:8888"
 VERSION="0.5.1"

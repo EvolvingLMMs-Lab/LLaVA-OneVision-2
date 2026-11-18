@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOL = os.path.join(REPO, "tools", "data_preprocess", "register_streaming_tokens.py")
 BASE = sys.argv[1] if len(sys.argv) > 1 else \
-    "/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"
+    "/models/preprocessor/preprocessor_llava_onevision1_5"
 # Some processor directories ship no config.json; pass the checkpoint's
 # padded_vocab_size as the second argument to still check the ids fit.
 VOCAB_LIMIT = int(sys.argv[2]) if len(sys.argv) > 2 else None

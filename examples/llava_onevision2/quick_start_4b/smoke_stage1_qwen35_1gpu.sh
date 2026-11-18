@@ -33,7 +33,7 @@ AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 OUTPUT_DIR="${OUTPUT_DIR:-/workspace/LLaVA-OneVision-2.5/tmp_smoke_qwen35}"
-DATA_PATH="${DATA_PATH:-/data/47m_sft_packed_8k/dataset.yaml}"
+DATA_PATH="${DATA_PATH:-/data/sft_packed_8k/dataset.yaml}"
 # p16m3 tokenizer (Qwen2.5-VL token space: image_token_id=151655), consistent
 # with the packed p16m3 data AND the provider's image/video token ids.
 TOKENIZER_PATH="${TOKENIZER_PATH:-/models/ov2_qwen35_processor}"
