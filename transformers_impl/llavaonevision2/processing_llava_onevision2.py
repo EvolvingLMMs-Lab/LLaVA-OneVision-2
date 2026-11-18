@@ -1,4 +1,4 @@
-"""LlavaOnevision2 multi-modal processor (stage 2).
+"""LlavaOnevision2 multi-modal processor.
 
 Combines:
   - ``Qwen2VLImageProcessor[Fast]``    (existing in checkpoint preprocessor_config)
@@ -7,12 +7,12 @@ Combines:
   - ``chat_template.jinja``            (existing, emits <|video_pad|>)
 
 Public API:
-    proc = Llava_Onevision2Processor(image_processor, tokenizer, video_processor)
+    proc = LlavaOnevision2Processor(image_processor, tokenizer, video_processor)
     text = proc.apply_chat_template(messages, add_generation_prompt=True)
     inputs = proc(text=[text], videos=[mp4_or_frames], return_tensors="pt")
     out = model.generate(**inputs)
 
-Design choices (per NATIVE_VIDEO_PLAN.md):
+Design choices:
   - Video path is "in-processor, transformed to multi-image + per-frame
     timestamps" — model.forward sees the image path only.
   - The chat_template's <|vision_start|><|video_pad|><|vision_end|> placeholder
@@ -61,11 +61,11 @@ def _expand_video_block_for_frames(
     return "".join(parts)
 
 
-class Llava_Onevision2Processor:
+class LlavaOnevision2Processor:
     """Native multi-modal processor for LlavaOnevision2.
 
-    NOTE: We deliberately do NOT inherit ``transformers.ProcessorMixin`` for
-    P0. Stage 4 will register this class via ``auto_map`` so
+    NOTE: We deliberately do NOT inherit ``transformers.ProcessorMixin``.
+    This class is registered via ``auto_map`` so
     ``AutoProcessor.from_pretrained(..., trust_remote_code=True)`` returns it.
     """
 
@@ -79,6 +79,7 @@ class Llava_Onevision2Processor:
         tokenizer=None,
         video_processor=None,
         chat_template: Optional[str] = None,
+        codec_config: Optional[dict] = None,
     ):
         self.image_processor = image_processor
         self.tokenizer = tokenizer
@@ -90,7 +91,10 @@ class Llava_Onevision2Processor:
         self.chat_template = chat_template
 
         # Cache the merge size from image_processor for token-count math.
-        self.spatial_merge_size = int(getattr(image_processor, "merge_size", 3) if image_processor is not None else 3)
+        self.spatial_merge_size = int(getattr(image_processor, "merge_size", 2) if image_processor is not None else 2)
+
+        # Codec config defaults (overridden per-call via ``codec_config=``).
+        self._codec_config_defaults: dict = dict(codec_config or {})
 
     # ------------------------------------------------------------------ utils
 
@@ -112,11 +116,10 @@ class Llava_Onevision2Processor:
         kwargs.pop("_from_auto", None)
         kwargs.pop("trust_remote_code", None)
         kwargs.pop("code_revision", None)
+        codec_config_override = kwargs.pop("codec_config", None)
 
-        # Stage 4: explicitly use the SLOW Qwen2VLImageProcessor for
-        # numerical parity with the OLD wrapper (which uses transformers 4.57's
-        # slow processor). The Fast variant has small normalization rounding
-        # differences that change pixel_values bit-for-bit.
+        # Use the SLOW Qwen2VLImageProcessor: the Fast variant has small
+        # normalization rounding differences that change pixel_values bit-for-bit.
         image_processor = Qwen2VLImageProcessor.from_pretrained(pretrained_model_name_or_path, **kwargs)
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path, **kwargs)
 
@@ -135,12 +138,38 @@ class Llava_Onevision2Processor:
             min_pixels=getattr(image_processor, "min_pixels", 256 * 28 * 28),
             max_pixels=getattr(image_processor, "max_pixels", 1605632),
             patch_size=getattr(image_processor, "patch_size", 14),
-            spatial_merge_size=getattr(image_processor, "merge_size", 3),
+            spatial_merge_size=getattr(image_processor, "merge_size", 2),
         )
+
+        # Codec defaults are read from preprocessor_config.json's "codec" field.
+        # We load the JSON directly because Qwen2VLImageProcessor.from_pretrained
+        # may not preserve unknown top-level keys as attributes.
+        if codec_config_override is not None:
+            codec_defaults = codec_config_override
+        else:
+            codec_defaults = {}
+            try:
+                import json as _json
+                import os as _os
+
+                # Try local file first (downloaded snapshot), then HF Hub.
+                cfg_path = _os.path.join(pretrained_model_name_or_path, "preprocessor_config.json")
+                if _os.path.isfile(cfg_path):
+                    with open(cfg_path, "r", encoding="utf-8") as _f:
+                        codec_defaults = _json.load(_f).get("codec", {}) or {}
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    cfg_path = hf_hub_download(pretrained_model_name_or_path, "preprocessor_config.json")
+                    with open(cfg_path, "r", encoding="utf-8") as _f:
+                        codec_defaults = _json.load(_f).get("codec", {}) or {}
+            except Exception:
+                codec_defaults = {}
         return cls(
             image_processor=image_processor,
             tokenizer=tokenizer,
             video_processor=video_processor,
+            codec_config=codec_defaults,
         )
 
     # ------------------------------------------------------------- chat helpers
@@ -163,6 +192,14 @@ class Llava_Onevision2Processor:
         num_frames: Optional[int] = None,
         max_frames: Optional[int] = None,
         target_fps: Optional[float] = None,
+        # Codec video backend (in-processor codec preprocessing). When
+        # ``video_backend="codec"`` and ``videos`` is set, the codec pipeline
+        # (cv-preinfer) replaces the frame-sampling VideoProcessor. The codec
+        # canvas pixel budget is taken from ``max_pixels`` so the user only
+        # configures one pixel knob.
+        video_backend: str = "frames",
+        max_pixels: Optional[int] = None,
+        codec_config: Optional[dict] = None,
         **kwargs,
     ):
         """Process an aligned (text, images, videos) batch.
@@ -195,6 +232,85 @@ class Llava_Onevision2Processor:
         text = list(text)
 
         out: dict = {}
+
+        # ---------------- CODEC VIDEO BACKEND ----------------
+        # Codec path: replaces the frame-sampling VideoProcessor entirely.
+        # Each video -> N canvases + src_patch_position; we rewrite the
+        # <|vision_start|>...<|vision_end|> span in `text` based on the codec
+        # patch_positions (one canvas worth of <|image_pad|>s per timestamp).
+        if videos is not None and str(video_backend).lower() == "codec":
+            try:
+                from .codec_video_processing_llava_onevision2 import (
+                    CodecConfig,
+                    process_codec_video,
+                    drop_padding_canvases,
+                    codec_positions_for_processor,
+                    rewrite_text_with_codec_positions,
+                    codec_image_processor_outputs,
+                )
+            except ImportError:
+                raise ImportError(
+                    "Codec video backend requested, but codec_video_processing_llava_onevision2.py "
+                    "is not packaged in this HF directory. Use video_backend='native' or add the codec file."
+                )
+
+            # Normalise to list[video_url].
+            if isinstance(videos, str):
+                videos_list = [videos]
+            else:
+                videos_list = list(videos)
+
+            # Build effective codec config: defaults < class-level < per-call.
+            cfg_kwargs = dict(self._codec_config_defaults)
+            if codec_config:
+                cfg_kwargs.update(codec_config)
+            # Unify pixel budget with image_processor.
+            effective_max_pixels = int(
+                max_pixels
+                if max_pixels is not None
+                else cfg_kwargs.get("max_pixels", getattr(self.image_processor, "max_pixels", 150000))
+            )
+            cfg_kwargs["max_pixels"] = effective_max_pixels
+            cfg = CodecConfig(**cfg_kwargs)
+
+            all_pixel_values, all_grid_thw, all_patch_positions = [], [], []
+            rewritten_texts = list(text)
+            if len(rewritten_texts) != len(videos_list):
+                if len(rewritten_texts) == 1 and len(videos_list) >= 1:
+                    rewritten_texts = rewritten_texts * len(videos_list)
+                else:
+                    raise ValueError(
+                        f"codec video backend: got {len(rewritten_texts)} texts but {len(videos_list)} videos"
+                    )
+
+            for idx, video_url in enumerate(videos_list):
+                payload = process_codec_video(video_url, cfg)
+                imgs, src_positions, _ = drop_padding_canvases(payload["images"], payload["src_positions"])
+                if not imgs:
+                    raise RuntimeError(f"codec produced no usable canvases for {video_url}")
+                image_data = codec_image_processor_outputs(self.image_processor, imgs, max_pixels=effective_max_pixels)
+                image_grid_thw = image_data["image_grid_thw"]
+                patch_positions = codec_positions_for_processor(
+                    src_positions,
+                    image_grid_thw,
+                    device=image_grid_thw.device,
+                )
+                rewritten_texts[idx] = rewrite_text_with_codec_positions(
+                    rewritten_texts[idx],
+                    patch_positions,
+                    fps=float(payload["fps"]),
+                    decimals=1,
+                )
+                all_pixel_values.append(image_data["pixel_values"])
+                all_grid_thw.append(image_grid_thw)
+                all_patch_positions.append(patch_positions)
+
+            out["pixel_values"] = torch.cat(all_pixel_values, dim=0)
+            out["image_grid_thw"] = torch.cat(all_grid_thw, dim=0)
+            out["patch_positions"] = torch.cat(all_patch_positions, dim=0)
+            text = rewritten_texts
+            # Codec branch handled the video. Suppress the frame-sampling block below.
+            videos = None
 
         # ---------------- VIDEO PATH ----------------
         # Process videos first so we can rewrite their placeholders into the
@@ -283,7 +399,7 @@ class Llava_Onevision2Processor:
             # video, with temporal_patch_size=1), so this row-expansion of
             # image_grid_thw is the only adjustment needed for the model's
             # forward to treat each frame as a separate image (matching the
-            # OLD multi-image inference path used in lmms-eval).
+            # multi-image inference path).
             out["pixel_values"] = video_outputs["pixel_values_videos"]
             vgthw = video_outputs["video_grid_thw"]
             expanded_rows = []
@@ -385,7 +501,7 @@ class Llava_Onevision2Processor:
 
 
 __all__ = [
-    "Llava_Onevision2Processor",
+    "LlavaOnevision2Processor",
     "VISION_START",
     "VISION_END",
     "IMAGE_PAD",

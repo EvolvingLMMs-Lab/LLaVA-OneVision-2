@@ -3,6 +3,7 @@
 import os
 import argparse
 import importlib
+import math
 from dataclasses import fields
 
 from megatron.core.transformer.enums import AttnBackend
@@ -40,6 +41,7 @@ def aiak_extra_train_args_provider(parser: argparse.ArgumentParser):
     parser = _add_extra_video_args(parser)
     parser = _add_extra_training_args(parser)
     parser = _add_extra_multimodal_args(parser)
+    parser = _add_extra_qwen35_args(parser)
     parser = _add_extra_parallel_args(parser)
 
     parser = _add_extra_training_rice_vl_args(parser)
@@ -270,6 +272,36 @@ def _add_extra_sft_args(parser: argparse.ArgumentParser):
                        help="Perform packing in batches, deciding how many samples each batch contains;"
                             "if the --sft-sort-batch option is enabled, the samples will be sorted after packing.")
 
+    group.add_argument(
+        "--streaming-loss-scope",
+        type=str,
+        choices=("all", "last-segment"),
+        default="all",
+        help="Assistant-turn supervision scope. 'last-segment' masks historical "
+             "state, answer and template-end targets while preserving the input context.",
+    )
+
+    group.add_argument(
+        "--state-token-focal-loss",
+        action="store_true",
+        help="Apply focal loss to supervised <silence> and <response> tokens, "
+             "with class alpha computed per original sample.",
+    )
+    group.add_argument(
+        "--state-token-focal-gamma", type=float, default=2.0,
+        help="Focal exponent for state tokens (default: 2.0).",
+    )
+    group.add_argument(
+        "--state-token-focal-captioning", action="store_true",
+        help="Include <captioning> in the speaking state alongside <response> "
+             "when computing per-sample focal alpha.",
+    )
+    group.add_argument(
+        "--state-token-response-alpha-max", type=float, default=None,
+        help="Cap per-sample speaking alpha (<response> and optional <captioning>) at this value (>= 1). "
+             "Default: no cap; <silence> alpha is unchanged.",
+    )
+
     return parser
 
 
@@ -390,6 +422,13 @@ def _add_extra_multimodal_args(parser):
     group.add_argument("--dataloader-save", type=str, default=None,
                        help="Energon dataloader state save path")
 
+    group.add_argument("--vision-frame-windows-size", type=int, default=None,
+                       help="ViT temporal attention window in frames. Video samples are "
+                            "split into windows of this many frames and self-attention is "
+                            "confined within each window (packed cu_seqlens segments). "
+                            "0 disables splitting (full-video attention). "
+                            "Default None keeps the VisionConfig default (4).")
+
     group.add_argument("--packing-pretrain-data", action='store_true',
                        help="Whether to pack multiple pretrain data into one.")
 
@@ -422,6 +461,42 @@ def _add_extra_multimodal_args(parser):
     return parser
 
 
+def _add_extra_qwen35_args(parser):
+    """Register Megatron args for the Qwen3.5 hybrid-attention LLM extras.
+
+    Every field added to LlavaOnevision2Config must have a matching argparse arg,
+    because _validate_extra_model_args asserts hasattr(args, field.name) for each
+    dataclass field. Defaults mirror the dataclass defaults so non-qwen35 archs are
+    unaffected. language_model_type is already registered under extra-multimodal.
+    """
+    group = parser.add_argument_group(title='extra-qwen35')
+    group.add_argument('--linear-key-head-dim', type=int, default=128,
+                       help='Gated delta-net key head dim (Qwen3.5).')
+    group.add_argument('--linear-value-head-dim', type=int, default=128,
+                       help='Gated delta-net value head dim (Qwen3.5).')
+    group.add_argument('--linear-num-key-heads', type=int, default=16,
+                       help='Gated delta-net number of key heads (Qwen3.5).')
+    group.add_argument('--linear-num-value-heads', type=int, default=32,
+                       help='Gated delta-net number of value heads (Qwen3.5).')
+    group.add_argument('--linear-conv-kernel-dim', type=int, default=4,
+                       help='Gated delta-net short-conv kernel size (Qwen3.5).')
+    group.add_argument('--full-attention-interval', type=int, default=4,
+                       help='Every Nth layer is full attention; others are linear '
+                            'gated delta-net (Qwen3.5).')
+    group.add_argument('--mrope-section', type=int, nargs='+', default=None,
+                       help='3D M-RoPE section split [T,H,W] (Qwen3.5).')
+    group.add_argument('--mrope-interleaved', action='store_true', default=False,
+                       help='Use interleaved M-RoPE section layout (Qwen3.5).')
+    group.add_argument('--partial-rotary-factor', type=float, default=1.0,
+                       help='Fraction of head_dim that gets rotary embedding (Qwen3.5).')
+    group.add_argument('--gdn-head-parallel', action='store_true', default=False,
+                       help='Shard gated delta-net layers across TP by head instead of replicating '
+                            'them on every TP rank (Qwen3.5). Changes the checkpoint layout of the '
+                            'GDN params: convert existing checkpoints with '
+                            'tools/convert_checkpoint/custom/llava_onevision2/qwen35_gdn_head_tp.py.')
+    return parser
+
+
 def _add_extra_parallel_args(parser):
     """Add parallel arguments"""
     group = parser.add_argument_group(title='extra-parallel')
@@ -430,6 +505,11 @@ def _add_extra_parallel_args(parser):
     # --context-parallel-ulysses-degree temporarily retained.
     group.add_argument('--context-parallel-ulysses-degree', type=int, default=1,
                        help='Degree of context parallelism in ulysses attention.')
+    group.add_argument('--vision-dp-balance', action=argparse.BooleanOptionalAction, default=True,
+                       help='Spread vision tower + adapter work evenly over the data-parallel ranks '
+                            'every microbatch (training only; LLaVA-OneVision2). Same math, only which '
+                            'GPU encodes which image changes. On by default; turned off automatically '
+                            'with --overlap-grad-reduce. Disable with --no-vision-dp-balance.')
 
     return parser
 
@@ -469,6 +549,15 @@ def _validate_extra_tokenizer_args(args):
 
 def _validate_extra_sft_args(args):
     """Validate SFT arguments"""
+    if args.state_token_focal_loss and (
+        not math.isfinite(args.state_token_focal_gamma) or args.state_token_focal_gamma < 0
+    ):
+        raise ValueError("--state-token-focal-gamma must be finite and non-negative")
+    if args.state_token_response_alpha_max is not None and (
+        not math.isfinite(args.state_token_response_alpha_max) or args.state_token_response_alpha_max < 1
+    ):
+        raise ValueError("--state-token-response-alpha-max must be finite and >= 1")
+
     if args.training_phase != constants.TrainingPhase.SFT:
         return
 
@@ -576,6 +665,11 @@ def _validata_extra_video_args(args):
 
 def _validata_extra_parallel_args(args):
     """Validate parallel arguments"""
+    if getattr(args, "vision_dp_balance", False) and args.overlap_grad_reduce:
+        # Its backward all_to_all runs on the DP group and must not interleave with bucketed async
+        # DP grad reductions on the same group.
+        args.vision_dp_balance = False
+        print_rank_0("WARNING: --vision-dp-balance turned off because --overlap-grad-reduce is on", args.rank)
     # check cp, NOTE: maybe removed in the future
     if args.context_parallel_size > 1:
         if args.context_parallel_ulysses_degree is None or args.context_parallel_ulysses_degree < 1:

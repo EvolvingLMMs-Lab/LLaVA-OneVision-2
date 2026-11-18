@@ -1079,11 +1079,13 @@ class ChainedOptimizer(MegatronOptimizer):
 
         return update_successful, grad_norm, num_zeros_in_grad
 
-    def save_parameter_state(self, filename: str):
+    def save_parameter_state(self, filename: str, save_fn=None):
         """Save the distributed parameter states of all optimizers to a file.
 
         Args:
             filename (str): path to save parameter state to.
+            save_fn (callable, optional): called as save_fn(obj, filename) instead of torch.save
+                (used by async legacy checkpointing to defer the write).
         """
         save_states = False
         states = []
@@ -1102,7 +1104,7 @@ class ChainedOptimizer(MegatronOptimizer):
                 states.append(None)
 
         if save_states:
-            torch.save(states, filename)
+            (save_fn or torch.save)(states, filename)
 
     def load_parameter_state(self, filename: str, *, update_legacy_format: bool = False):
         """Load the distributed parameter states of all optimizers from a file.
