@@ -37,13 +37,13 @@ NSTEP="${6:-2500}"
 #   CUSTOM_PIPELINE_LAYERS=0,6,6,6,6,6,6 (PP=7)
 CUSTOM_PIPELINE_LAYERS="${CUSTOM_PIPELINE_LAYERS:-0,12,12,12}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 OUTPUT_DIR="${OUTPUT_DIR:-output}"
 DATA_PATH=${DATA_PATH:-"/workspace/dataset/LLaVA-558K-Webdataset"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2/llava_onevision2_qwen3_4b_stage0_mcore_tp${TP}_pp${PP}"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2.5/llava_onevision2_qwen3_4b_stage0_mcore_tp${TP}_pp${PP}"}
 
 
 #! /bin/bash

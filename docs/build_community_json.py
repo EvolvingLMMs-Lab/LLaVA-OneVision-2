@@ -333,7 +333,7 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--owner", default="EvolvingLMMs-Lab")
-    parser.add_argument("--repo", default="LLaVA-OneVision-2")
+    parser.add_argument("--repo", default="LLaVA-OneVision-2.5")
     parser.add_argument(
         "--out",
         type=Path,

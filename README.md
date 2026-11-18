@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_2_black.svg">
     <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_2_white.svg">
-    <img alt="LLaVA-OneVision-2" src="asset/llava_onevision_2_white.svg" width="820" style="max-width: 100%;">
+    <img alt="LLaVA-OneVision-2.5" src="asset/llava_onevision_2_white.svg" width="820" style="max-width: 100%;">
   </picture>
 </p>
 
@@ -28,7 +28,7 @@ href="asset/xiaohongshu_group.jpeg">Xiaohongshu Group</a></b> 👈
 <p align="center">
 🤗 <b>2 <a href="https://huggingface.co/lmms-lab-encoder/LLaVA-OneVision-2-8B-Instruct">Models</a></b> · <b><a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-2-Data">Datasets</a></b> · <b><a
 href="https://arxiv.org/pdf/2605.25979">Technical Report</a></b> · <b><a
-href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/">HomePage</a></b> · <b><a
+href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/">HomePage</a></b> · <b><a
 href="https://huggingface.co/spaces/FeilongTang/OneVision-Encoder-Codec-View">Codec&nbsp;Playground</a></b> · <b><a
 href="https://docs.vllm.ai/en/latest/api/vllm/model_executor/models/llava_onevision2/">vLLM</a></b> · <b><a
 href="https://discord.gg/PmdGHMFNP">Discord</a></b>
@@ -41,6 +41,7 @@ href="https://discord.gg/PmdGHMFNP">Discord</a></b>
 ---
 
 ## NEWS
+- 2026-11-18: The repository becomes **LLaVA-OneVision-2.5**, merging the 2.5 line of work: the Qwen3.5 hybrid-attention backbone (GatedDeltaNet + full attention every 4 layers), streaming training, the manifest-based offline packing pipeline, the Muon optimizer and GDN head parallelism. The released LLaVA-OneVision-2 models, datasets and reported numbers below are unchanged.
 - 2026-11-05: Thanks to [ResearchBoost-Agent](https://github.com/DAGroup-PKU/ResearchBoost-Agent) for making [LLaVA-OneVision-2-4B](#quick-start-4b-single-node) SFT 2.2–3.0× faster! See [Training Acceleration](#training-acceleration) for details.
 - 2026-04-30: Released LLaVA-OneVision-2 — next-generation multimodal model, with new [LLaVA-OneVision-2-VideoCaption](#datasets) and [LLaVA-OneVision-2-Spatial](#datasets) datasets.
 - 2026-02-10: Released [OneVision-Encoder](https://huggingface.co/collections/lmms-lab-encoder/onevision-encoder-6978aeb2bbe1aa13fad12d4c) — codec-aligned vision encoders, with [Technical Report](https://arxiv.org/abs/2602.08683).
@@ -195,7 +196,7 @@ The curriculum mixes LLaVA-OneVision-1.5 data, FineVision, and new in-house vide
 > **🚨 Strongly recommended: don't read the rest of this section.** Just hand the prompt below to any code agent (Claude Code, opencode, Cursor, Codex, etc.) from a working directory on your 8×GPU node, and it will reproduce the full SFT run end-to-end — clone, download the 340 GB bundle, load the docker image, and launch detached training — without you reading a single step.
 
 ```text
-Follow these instructions to start training: https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2#quick-start-4b-single-node
+Follow these instructions to start training: https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.5#quick-start-4b-single-node
 ```
 
 > Prefer to do it by hand? Keep reading.
@@ -217,8 +218,8 @@ Follow these instructions to start training: https://github.com/EvolvingLMMs-Lab
 # git, huggingface-cli (only used if the bundle is missing).
 set -euo pipefail
 
-REPO_URL="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.git"
-REPO_DIR="LLaVA-OneVision-2"
+REPO_URL="https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-2.5.git"
+REPO_DIR="LLaVA-OneVision-2.5"
 BUNDLE_DIR="./ov2_quickstart"
 IMAGE="llava_megatron:26.05"
 CONTAINER_NAME="ov2_quickstart_4b"
@@ -264,9 +265,9 @@ docker run -d \
     --gpus all \
     --ipc host --net host --privileged --cap-add IPC_LOCK \
     --ulimit memlock=-1 --ulimit stack=67108864 \
-    -v "$(pwd)":/workspace/LLaVA-OneVision-2 \
-    -e OUTPUT_DIR=/workspace/LLaVA-OneVision-2/output/quick_start_4b \
-    -w /workspace/LLaVA-OneVision-2 \
+    -v "$(pwd)":/workspace/LLaVA-OneVision-2.5 \
+    -e OUTPUT_DIR=/workspace/LLaVA-OneVision-2.5/output/quick_start_4b \
+    -w /workspace/LLaVA-OneVision-2.5 \
     --name "${CONTAINER_NAME}" \
     "${IMAGE}" \
     bash -lc "bash examples/llava_onevision2/quick_start_4b/quick_start.sh"
@@ -287,7 +288,7 @@ The numbered sections below (§0 Prerequisites through §5 Run the quickstart tr
 
 ### 1. Layout
 
-Repo is mounted at `/workspace/LLaVA-OneVision-2` inside the container. The HF bundle goes into `<REPO_ROOT>/ov2_quickstart/`. **Launch all commands from the repo root** — the training script uses relative paths.
+Repo is mounted at `/workspace/LLaVA-OneVision-2.5` inside the container. The HF bundle goes into `<REPO_ROOT>/ov2_quickstart/`. **Launch all commands from the repo root** — the training script uses relative paths.
 
 <details>
 <summary>Full directory tree</summary>
@@ -398,7 +399,7 @@ docker build -t llava_megatron:26.05 .
 
 ### 4. Launch the container
 
-Use the repo's wrapper. It mounts the host repo at `/workspace/LLaVA-OneVision-2`, opens all GPUs, sets NCCL env vars for IB, and drops you into a bash shell.
+Use the repo's wrapper. It mounts the host repo at `/workspace/LLaVA-OneVision-2.5`, opens all GPUs, sets NCCL env vars for IB, and drops you into a bash shell.
 
 ```bash
 cd <REPO_ROOT>
@@ -408,7 +409,7 @@ bash run_docker_local.sh
 You should now be inside the container at:
 
 ```
-root@<host>:/workspace/LLaVA-OneVision-2#
+root@<host>:/workspace/LLaVA-OneVision-2.5#
 ```
 
 <details>
@@ -424,9 +425,9 @@ docker run -d \
     --gpus all \
     --ipc host --net host --privileged --cap-add IPC_LOCK \
     --ulimit memlock=-1 --ulimit stack=67108864 \
-    -v "$(pwd)":/workspace/LLaVA-OneVision-2 \
-    -e OUTPUT_DIR=/workspace/LLaVA-OneVision-2/output/quick_start_4b \
-    -w /workspace/LLaVA-OneVision-2 \
+    -v "$(pwd)":/workspace/LLaVA-OneVision-2.5 \
+    -e OUTPUT_DIR=/workspace/LLaVA-OneVision-2.5/output/quick_start_4b \
+    -w /workspace/LLaVA-OneVision-2.5 \
     --name ov2_quickstart_4b \
     llava_megatron:26.05 \
     bash -lc "bash examples/llava_onevision2/quick_start_4b/quick_start.sh"
@@ -444,11 +445,11 @@ Notes:
 
 ### 5. Run the quickstart training
 
-Inside the container, from `/workspace/LLaVA-OneVision-2`:
+Inside the container, from `/workspace/LLaVA-OneVision-2.5`:
 
 ```bash
 # Optional: pick an output dir on a disk with ≥ 100 GB free for checkpoints + tensorboard.
-export OUTPUT_DIR=/workspace/LLaVA-OneVision-2/output/quick_start_4b
+export OUTPUT_DIR=/workspace/LLaVA-OneVision-2.5/output/quick_start_4b
 
 bash examples/llava_onevision2/quick_start_4b/quick_start.sh
 ```
@@ -520,7 +521,7 @@ Thanks so much to all of our amazing contributors!
 
 <!-- readme: collaborators,contributors,jiankangdeng/- -start -->
 <p align="center">
-  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/projects/index.html#contributors">
+  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/projects/index.html#contributors">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="asset/contributors_dark.svg">
       <source media="(prefers-color-scheme: light)" srcset="asset/contributors_light.svg">
@@ -528,7 +529,7 @@ Thanks so much to all of our amazing contributors!
     </picture>
   </a>
   <br />
-  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/projects/index.html#contributors"><strong>Explore all contributors &rarr;</strong></a>
+  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/projects/index.html#contributors"><strong>Explore all contributors &rarr;</strong></a>
 </p>
 <!-- readme: collaborators,contributors,jiankangdeng/- -end -->
 

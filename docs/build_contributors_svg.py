@@ -208,7 +208,7 @@ def rewrite_readme(readme_path: Path, dark_rel: str, light_rel: str) -> bool:
     new_block = (
         f"{README_MARKER_START}\n"
         f'<p align="center">\n'
-        f'  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/projects/index.html#contributors">\n'
+        f'  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/projects/index.html#contributors">\n'
         f"    <picture>\n"
         f'      <source media="(prefers-color-scheme: dark)" srcset="{dark_rel}">\n'
         f'      <source media="(prefers-color-scheme: light)" srcset="{light_rel}">\n'
@@ -216,7 +216,7 @@ def rewrite_readme(readme_path: Path, dark_rel: str, light_rel: str) -> bool:
         f"    </picture>\n"
         f"  </a>\n"
         f"  <br />\n"
-        f'  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2/projects/index.html#contributors"><strong>Explore all contributors &rarr;</strong></a>\n'
+        f'  <a href="https://evolvinglmms-lab.github.io/LLaVA-OneVision-2.5/projects/index.html#contributors"><strong>Explore all contributors &rarr;</strong></a>\n'
         f"</p>\n"
         f"{README_MARKER_END}"
     )

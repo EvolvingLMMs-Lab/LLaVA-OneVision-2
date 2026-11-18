@@ -16,13 +16,13 @@ MBS="${5:-1}"
 GBS="${6:-128}"
 NSTEP="${7:-500}"
 
-AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2}"
+AIAK_TRAINING_PATH="${AIAK_TRAINING_PATH:-/workspace/LLaVA-OneVision-2.5}"
 AIAK_MAGATRON_PATH="${AIAK_MAGATRON_PATH:-${AIAK_TRAINING_PATH%/}/aiak_megatron}"
 
 OUTPUT_DIR="${OUTPUT_DIR:-/ov2/xiangan/ckpts_30b_a3b_date_0318}"
 DATA_PATH=${DATA_PATH:-"/workspace/dataset/LLaVA-558K-Webdataset"}
 TOKENIZER_PATH=${TOKENIZER_PATH:-"/ov2/pretrain_models/preprocessor/preprocessor_llava_onevision1_5"}
-CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2/stage_0_llava_ov2_30b_a3b_release"}
+CHECKPOINT_PATH=${CHECKPOINT_PATH:-"/workspace/LLaVA-OneVision-2.5/stage_0_llava_ov2_30b_a3b_release"}
 
 #! /bin/bash
 # The script needs to be run on at least 1 nodes.
