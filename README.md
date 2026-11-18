@@ -77,13 +77,12 @@ Beyond uniform patchification. **OneVision-Encoder** and **OneVision-Encoder-Lan
 
 ### 🧊 One Model, Every Modality
 
-Most open multimodal models still live in a 2D, single-image world. **LLaVA-OneVision-2-8B-Instruct** breaks out of it — one model, native resolution, no task-specific adapters, no hidden tricks.
+Most open multimodal models still live in a 2D, single-image world. **LLaVA-OneVision-2.5-4B-Instruct** breaks out of it — one model, native resolution, no task-specific adapters, no hidden tricks.
 
 - **Long video** — multi-frame reasoning with efficient codec-aligned inference
+- **Streaming video** — frames arrive one at a time, and the model decides at every step whether to stay silent or speak
 - **3D-aware spatial reasoning** — depth, layout, object relations
 - **Documents, OCR, charts** — structured visual inputs at native resolution
-
-New open-source SOTA across a broad suite of multimodal benchmarks.
 
 ### 🚀 Fully Open, Reproducible from Day One
 
